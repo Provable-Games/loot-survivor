@@ -578,14 +578,7 @@ mod Game {
                 oracle_address, DataType::SpotEntry(PRAGMA_LORDS_KEY)
             );
 
-            // 25000000000000000000
-            // 
-
-            // 25 * x = 25000000000000000000
-            // x = 25000000000000000000 / 25
-            // x = 1000000000000000000
-            // Pragma's Lords/USD will have 8 decimals of precision
-            // so we multiply by 10^8 to get the target price in cents with 8 decimals
+            // target price is the target price in cents * 10^8 because pragma uses 8 decimals for LORDS price
             let target_price = TARGET_PRICE_USD_CENTS.into() * 100000000;
 
             // new price is the target price (in cents) divided by the current lords price (in cents)
