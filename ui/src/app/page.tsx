@@ -148,7 +148,6 @@ function Home({ updateConnectors }: HomeProps) {
   const topUpDialog = useUIStore((state) => state.topUpDialog);
   const showTopUpDialog = useUIStore((state) => state.showTopUpDialog);
   const setTopUpAccount = useUIStore((state) => state.setTopUpAccount);
-  const setEstimatingFee = useUIStore((state) => state.setEstimatingFee);
   const setSpecialBeast = useUIStore((state) => state.setSpecialBeast);
   const setIsMintingLords = useUIStore((state) => state.setIsMintingLords);
   const hash = useLoadingStore((state) => state.hash);
@@ -193,9 +192,7 @@ function Home({ updateConnectors }: HomeProps) {
   const setDeathMessage = useLoadingStore((state) => state.setDeathMessage);
   const showDeathDialog = useUIStore((state) => state.showDeathDialog);
   const setStartOption = useUIStore((state) => state.setStartOption);
-  const setUpdateDeathPenalty = useUIStore(
-    (state) => state.setUpdateDeathPenalty
-  );
+  const setEntropyReady = useUIStore((state) => state.setEntropyReady);
   const [accountChainId, setAccountChainId] = useState<
     constants.StarknetChainId | undefined
   >();
@@ -264,16 +261,14 @@ function Home({ updateConnectors }: HomeProps) {
     ethBalance: ethBalance,
     showTopUpDialog,
     setTopUpAccount,
-    setEstimatingFee,
     account: account!,
-    resetCalls,
     setSpecialBeastDefeated,
     setSpecialBeast,
     connector,
     getEthBalance,
     getBalances,
     setIsMintingLords,
-    setUpdateDeathPenalty,
+    setEntropyReady,
   });
 
   const playState = useMemo(

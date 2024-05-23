@@ -4,6 +4,7 @@ import { encodeIntAsBytes, checkExistsInt } from "./encode.ts";
 export function insertAdventurer({
   id,
   owner,
+  entropy,
   lastAction,
   health,
   xp,
@@ -42,6 +43,7 @@ export function insertAdventurer({
     update: {
       $set: {
         ...entity,
+        entropy: encodeIntAsBytes(BigInt(entropy)),
         lastAction: encodeIntAsBytes(BigInt(lastAction)),
         health: encodeIntAsBytes(BigInt(health)),
         xp: encodeIntAsBytes(BigInt(xp)),
@@ -171,6 +173,7 @@ export function updateAdventurer({
     update: {
       $set: {
         ...entity,
+        entropy: encodeIntAsBytes(BigInt(adventurerState.adventurerEntropy)),
         lastAction: encodeIntAsBytes(BigInt(adventurer.lastActionBlock)),
         health: encodeIntAsBytes(BigInt(adventurer.health)),
         xp: encodeIntAsBytes(BigInt(adventurer.xp)),

@@ -23,7 +23,6 @@ import {
   AdventurerDiedEvent,
   AdventurerLeveledUpEvent,
   UpgradesAvailableEvent,
-  IdleDeathPenaltyEvent,
   AdventurerUpgradedEvent,
 } from "@/app/types/events";
 import {
@@ -62,7 +61,6 @@ type EventData =
   | AdventurerDiedEvent
   | AdventurerLeveledUpEvent
   | UpgradesAvailableEvent
-  | IdleDeathPenaltyEvent
   | AdventurerUpgradedEvent;
 
 function processAdventurerState(
@@ -73,6 +71,7 @@ function processAdventurerState(
   const updateAdventurerDoc: Adventurer = {
     id: data.adventurerState["adventurerId"],
     owner: data.adventurerState["owner"],
+    entropy: data.adventurerState["adventurerEntropy"],
     lastAction: data.adventurerState["adventurer"]["lastAction"],
     health: data.adventurerState["adventurer"]["health"],
     xp: data.adventurerState["adventurer"]["xp"],
@@ -171,6 +170,7 @@ export function processData(
       const updateAdventurerDoc: Adventurer = {
         id: startGameEvent.adventurerState["adventurerId"],
         owner: startGameEvent.adventurerState["owner"],
+        entropy: startGameEvent.adventurerState["adventurerEntropy"],
         lastAction: startGameEvent.adventurerState["adventurer"]["lastAction"],
         health: startGameEvent.adventurerState["adventurer"]["health"],
         xp: startGameEvent.adventurerState["adventurer"]["xp"],
@@ -893,63 +893,5 @@ export function processData(
         formattedNewItems.push(gameData.ITEMS[upgradesAvailableEvent.items[i]]);
       }
       return [upgradesAvailableData, formattedNewItems];
-    case "IdleDeathPenalty":
-      const idleDeathPenaltyEvent = event as IdleDeathPenaltyEvent;
-      const penaltyAdventurerData = processAdventurerState(
-        idleDeathPenaltyEvent,
-        currentAdventurer
-      );
-      const penaltyBattleData: Battle = {
-        txHash: txHash,
-        beast: undefined,
-        beastHealth: 0,
-        beastLevel: 0,
-        special1: undefined,
-        special2: undefined,
-        special3: undefined,
-        seed: 0,
-        adventurerId: idleDeathPenaltyEvent.adventurerState["adventurerId"],
-        adventurerHealth:
-          idleDeathPenaltyEvent.adventurerState["adventurer"]["health"],
-        attacker: undefined,
-        fled: undefined,
-        damageDealt: 0,
-        criticalHit: false,
-        damageTaken: 0,
-        damageLocation: undefined,
-        xpEarnedAdventurer: 0,
-        xpEarnedItems: 0,
-        goldEarned: 0,
-        discoveryTime: new Date(),
-        blockTime: new Date(),
-        timestamp: new Date(),
-      };
-      const penaltyDiscoveryData: Discovery = {
-        txHash: txHash,
-        adventurerId: idleDeathPenaltyEvent.adventurerState["adventurerId"],
-        adventurerHealth:
-          idleDeathPenaltyEvent.adventurerState["adventurer"]["health"],
-        discoveryType: undefined,
-        subDiscoveryType: undefined,
-        outputAmount: 0,
-        obstacle: undefined,
-        obstacleLevel: undefined,
-        dodgedObstacle: false,
-        damageTaken: 0,
-        damageLocation: undefined,
-        xpEarnedAdventurer: undefined,
-        xpEarnedItems: undefined,
-        entity: undefined,
-        entityLevel: undefined,
-        entityHealth: 0,
-        special1: undefined,
-        special2: undefined,
-        special3: undefined,
-        ambushed: false,
-        seed: 0,
-        discoveryTime: new Date(),
-        timestamp: new Date(),
-      };
-      return [penaltyAdventurerData, penaltyBattleData, penaltyDiscoveryData];
   }
 }

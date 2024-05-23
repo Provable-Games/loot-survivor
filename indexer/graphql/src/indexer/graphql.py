@@ -653,6 +653,7 @@ class OrderByInput:
 @strawberry.input
 class AdventurersFilter:
     id: Optional[FeltValueFilter] = None
+    entropy: Optional[HexValueFilter] = None
     lastAction: Optional[FeltValueFilter] = None
     owner: Optional[HexValueFilter] = None
     name: Optional[StringFilter] = None
@@ -778,6 +779,7 @@ class ItemsFilter:
 @strawberry.input
 class AdventurersOrderByInput:
     id: Optional[OrderByInput] = None
+    entropy: Optional[OrderByInput] = None
     lastAction: Optional[OrderByInput] = None
     owner: Optional[OrderByInput] = None
     name: Optional[OrderByInput] = None
@@ -905,6 +907,7 @@ class ItemsOrderByInput:
 @strawberry.type
 class Adventurer:
     id: Optional[FeltValue]
+    entropy: Optional[HexValue]
     lastAction: Optional[FeltValue]
     owner: Optional[HexValue]
     name: Optional[StringValue]
@@ -939,6 +942,7 @@ class Adventurer:
     def from_mongo(cls, data):
         return cls(
             id=data["id"],
+            entropy=data["entropy"],
             lastAction=data["lastAction"],
             owner=data["owner"],
             name=data["name"],

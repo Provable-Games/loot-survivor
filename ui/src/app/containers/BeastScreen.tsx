@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useBlock } from "@starknet-react/core";
-import { Contract, Block } from "starknet";
+import { Contract } from "starknet";
 import { BattleDisplay } from "@/app/components/beast/BattleDisplay";
 import { BeastDisplay } from "@/app/components/beast/BeastDisplay";
 import useLoadingStore from "@/app/hooks/useLoadingStore";
@@ -22,6 +21,7 @@ interface BeastScreenProps {
   ) => Promise<void>;
   flee: (tillDeath: boolean, beastData: Beast) => Promise<void>;
   beastsContract: Contract;
+  gameContract: Contract;
 }
 
 /**
@@ -32,15 +32,13 @@ export default function BeastScreen({
   attack,
   flee,
   beastsContract,
+  gameContract,
 }: BeastScreenProps) {
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const loading = useLoadingStore((state) => state.loading);
   const estimatingFee = useUIStore((state) => state.estimatingFee);
-  const averageBlockTime = useUIStore((state) => state.averageBlockTime);
-  const setUpdateDeathPenalty = useUIStore(
-    (state) => state.setUpdateDeathPenalty
-  );
-  const setStartPenalty = useUIStore((state) => state.setStartPenalty);
+  const entropyReady = useUIStore((state) => state.entropyReady);
+  const setEntropyReady = useUIStore((state) => state.setEntropyReady);
   const resetNotification = useLoadingStore((state) => state.resetNotification);
   const [showBattleLog, setShowBattleLog] = useState(false);
   const hasBeast = useAdventurerStore((state) => state.computed.hasBeast);
@@ -51,13 +49,6 @@ export default function BeastScreen({
   const formatBattles = useQueriesStore(
     (state) => state.data.battlesByBeastQuery?.battles || []
   );
-
-  const mainnetBotProtection = process.env.NEXT_PUBLIC_NETWORK === "mainnet";
-
-  const { data: blockData } = useBlock({
-    refetchInterval:
-      adventurer?.level === 1 && mainnetBotProtection ? 30000 : false,
-  });
 
   const [buttonText, setButtonText] = useState("Flee");
 
@@ -181,17 +172,22 @@ export default function BeastScreen({
     </div>
   );
 
-  const currentBlockNumber = (blockData as Block)?.block_number ?? 0;
-
-  const revealBlockReached =
-    currentBlockNumber >= (adventurer?.revealBlock ?? 0);
-
   useEffect(() => {
-    if (revealBlockReached) {
-      setStartPenalty(true);
-      setUpdateDeathPenalty(true);
-    }
-  }, [currentBlockNumber]);
+    const interval = setInterval(async () => {
+      const entropy = await gameContract!.call("get_adventurer_entropy", [
+        adventurer?.id!,
+      ]);
+      console.log(entropy);
+      if (entropy !== BigInt(0)) {
+        setEntropyReady(true);
+        clearInterval(interval);
+      }
+    }, 10000); // We call the getAdventurerEntropy function every 30 seconds
+
+    return () => clearInterval(interval); // Cleanup on component unmount
+  }, []);
+
+  console.log(entropyReady);
 
   if (showBattleLog) {
     return <BattleLog />;
@@ -199,12 +195,7 @@ export default function BeastScreen({
 
   return (
     <div className="sm:w-2/3 flex flex-col sm:flex-row h-full">
-      {!revealBlockReached && mainnetBotProtection && (
-        <InterludeScreen
-          currentBlockNumber={currentBlockNumber}
-          averageBlockTime={averageBlockTime}
-        />
-      )}
+      {!entropyReady && <InterludeScreen />}
       <div className="sm:w-1/2 order-1 sm:order-2 h-3/4 sm:h-full">
         {hasBeast ? (
           <BeastDisplay beastData={beastData} beastsContract={beastsContract} />
@@ -220,7 +211,7 @@ export default function BeastScreen({
       <div className="flex flex-col gap-1 sm:gap-5 items-center sm:w-1/2 order-1 text-lg h-1/4 sm:h-full">
         {isAlive && (
           <>
-            {revealBlockReached || !mainnetBotProtection ? (
+            {entropyReady ? (
               <>
                 <div className="sm:hidden flex flex-row sm:flex-col gap-5 items-center justify-center sm:justify-start w-full h-3/4 sm:h-1/4">
                   <div className="flex flex-col items-center w-1/2 sm:w-full h-1/2 sm:h-full">
@@ -257,7 +248,7 @@ export default function BeastScreen({
               </>
             ) : (
               <div className="flex flex-col gap-5 items-center">
-                <div className="flex flex-row gap-5">
+                {/* <div className="flex flex-row gap-5">
                   <div className="flex flex-row items-center gap-2">
                     Current:
                     <div className="border border-terminal-green p-2">
@@ -273,7 +264,7 @@ export default function BeastScreen({
                 </div>
                 <p className="text-2xl loading-ellipsis">
                   Waiting for Block Reveal
-                </p>
+                </p> */}
               </div>
             )}
           </>

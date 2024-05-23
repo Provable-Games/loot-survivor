@@ -107,6 +107,7 @@ export default function transform({ header, events }: Block) {
           insertAdventurer({
             id: as.adventurerId,
             owner: as.owner,
+            entropy: as.adventurerEntropy,
             lastAction: as.adventurer.lastActionBlock,
             health: as.adventurer.health,
             xp: as.adventurer.xp,

@@ -6,6 +6,7 @@ export interface Adventurer {
   [key: string]: number | string | Date | undefined;
   id?: number; // Adventurer ID
   lastAction?: number; // Block number from last action
+  entropy?: string; // Entropy of the adventurer
   owner?: string; // Hex address of the owner
   classType?: string; // Class of the adventurer
   homeRealm?: number; // Home Realm of the adventurer

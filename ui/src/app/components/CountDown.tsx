@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useCountUp } from "react-countup";
 import { useState } from "react";
-import { penaltyTime } from "../lib/constants";
 
 const formatTime = (totalSeconds: number) => {
   const hours = Math.floor(totalSeconds / 3600);
@@ -32,69 +31,6 @@ export const HealthCountDown = ({ health }: any) => {
   return (
     <div>
       <div ref={countUpRef} />
-    </div>
-  );
-};
-
-export interface PenaltyCountDownProps {
-  dataLoading: boolean;
-  startCountdown: boolean;
-  updateDeathPenalty: boolean;
-  setUpdateDeathPenalty: (value: boolean) => void;
-}
-
-export const PenaltyCountDown: React.FC<PenaltyCountDownProps> = ({
-  dataLoading,
-  startCountdown,
-  updateDeathPenalty,
-  setUpdateDeathPenalty,
-}) => {
-  const [seconds, setSeconds] = useState(penaltyTime);
-  const [intervalId, setIntervalId] = useState<number | null>(null);
-
-  useEffect(() => {
-    const startTimer = () => {
-      setSeconds(penaltyTime);
-      const targetTime = new Date().getTime() + penaltyTime * 1000;
-
-      // Clear previous interval if it exists
-      if (intervalId !== null) {
-        window.clearInterval(intervalId);
-      }
-
-      const newIntervalId = window.setInterval(() => {
-        const currentTime = new Date().getTime();
-        const timeRemaining = Math.max(
-          0,
-          Math.floor((targetTime - currentTime) / 1000)
-        );
-        setSeconds(timeRemaining);
-      }, 1000);
-
-      // Store the new interval ID
-      setIntervalId(newIntervalId);
-    };
-
-    if (updateDeathPenalty) {
-      startTimer();
-      setUpdateDeathPenalty(false);
-    }
-  }, [updateDeathPenalty]);
-
-  return (
-    <div className="text-xs sm:text-lg self-center border px-1 border border-terminal-green">
-      {startCountdown ? (
-        seconds > 0 ? (
-          <span className="flex flex-row gap-1 items-center">
-            <p className="hidden sm:block">Penalty:</p>
-            <p className="animate-pulse">{formatTime(seconds)}</p>
-          </span>
-        ) : (
-          <p>Penalty Reached!</p>
-        )
-      ) : (
-        <p>Not Started</p>
-      )}
     </div>
   );
 };

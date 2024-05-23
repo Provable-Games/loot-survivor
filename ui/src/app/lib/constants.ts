@@ -28,13 +28,12 @@ let onMainnet = process.env.NEXT_PUBLIC_NETWORK === "mainnet";
 let onSepolia = process.env.NEXT_PUBLIC_NETWORK === "sepolia";
 
 // ---- CONTRACT PARAMS
-// Penalty time is 12 blocks, where each block is ~ 15 seconds
-export const penaltyTime = 420;
 export const itemCharismaDiscount = 1;
 export const itemBasePrice = 4;
 export const itemMinimumPrice = 1;
 export const potionCharismaDiscount = 2;
 export const potionBasePrice = 2;
+export const VRF_FEE_LIMIT = 5000000000000000; // 0.005 ETH
 
 // UI PARAMS
 export const MIN_BALANCE = 100000000000000; // 0.00001ETH or $0.15

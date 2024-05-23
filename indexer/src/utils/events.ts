@@ -99,7 +99,8 @@ export const parseAdventurer = combineParsers({
 export const parseAdventurerState = combineParsers({
   owner: { index: 0, parser: parseFelt252 },
   adventurerId: { index: 1, parser: parseFelt252 },
-  adventurer: { index: 2, parser: parseAdventurer },
+  adventurerEntropy: { index: 2, parser: parseFelt252 },
+  adventurer: { index: 3, parser: parseAdventurer },
 });
 
 export const parseSpecialPowers = combineParsers({

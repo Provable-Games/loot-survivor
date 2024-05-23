@@ -113,6 +113,7 @@ type ContractAddress = string;
 export type AdventurerState = {
   owner: ContractAddress;
   adventurerId: u128;
+  adventurerEntropy: string;
   adventurer: Adventurer;
 };
 
@@ -304,13 +305,6 @@ export type AdventurerLeveledUpEvent = {
 export type UpgradesAvailableEvent = {
   adventurerState: AdventurerState;
   items: number[];
-};
-
-export type IdleDeathPenaltyEvent = {
-  adventurerState: AdventurerState;
-  idleBlocks: u16;
-  penaltyThreshold: u16;
-  caller: ContractAddress;
 };
 
 export type AdventurerUpgradedEvent = {

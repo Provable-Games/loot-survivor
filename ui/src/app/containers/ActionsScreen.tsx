@@ -85,6 +85,7 @@ export default function ActionsScreen({
           attack={attack}
           flee={flee}
           beastsContract={beastsContract}
+          gameContract={gameContract}
         />
       ) : (
         <div className="flex flex-col sm:flex-row h-full w-full sm:w-1/2 lg:w-2/3">
