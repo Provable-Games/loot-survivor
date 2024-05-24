@@ -197,7 +197,7 @@ export default function BeastScreen({
 
   return (
     <div className="sm:w-2/3 flex flex-col sm:flex-row h-full">
-      {!entropyReady && <InterludeScreen />}
+      {adventurer?.level == 1 && !entropyReady && <InterludeScreen />}
       <div className="sm:w-1/2 order-1 sm:order-2 h-3/4 sm:h-full">
         {hasBeast ? (
           <BeastDisplay beastData={beastData} beastsContract={beastsContract} />
