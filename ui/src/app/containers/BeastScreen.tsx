@@ -173,18 +173,20 @@ export default function BeastScreen({
   );
 
   useEffect(() => {
-    const interval = setInterval(async () => {
-      const entropy = await gameContract!.call("get_adventurer_entropy", [
-        adventurer?.id!,
-      ]);
-      console.log(entropy);
-      if (entropy !== BigInt(0)) {
-        setEntropyReady(true);
-        clearInterval(interval);
-      }
-    }, 10000); // We call the getAdventurerEntropy function every 30 seconds
+    if (adventurer?.level == 1) {
+      const interval = setInterval(async () => {
+        const entropy = await gameContract!.call("get_adventurer_entropy", [
+          adventurer?.id!,
+        ]);
+        console.log(entropy);
+        if (entropy !== BigInt(0)) {
+          setEntropyReady(true);
+          clearInterval(interval);
+        }
+      }, 10000); // We call the getAdventurerEntropy function every 30 seconds
 
-    return () => clearInterval(interval); // Cleanup on component unmount
+      return () => clearInterval(interval); // Cleanup on component unmount
+    }
   }, []);
 
   console.log(entropyReady);
