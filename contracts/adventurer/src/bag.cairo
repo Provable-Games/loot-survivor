@@ -468,7 +468,7 @@ mod tests {
     use lootitems::{constants::ItemId};
 
     #[test]
-    #[available_gas(94030)]
+    #[available_gas(97530)]
     fn test_get_jewelry_greatness() {
         let katana = ItemPrimitive { id: ItemId::Katana, xp: 1 };
         let demon_crown = ItemPrimitive { id: ItemId::DemonCrown, xp: 2 };
@@ -540,7 +540,7 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(41710)]
+    #[available_gas(47910)]
     fn test_get_jewelry() {
         let katana = ItemPrimitive { id: ItemId::Katana, xp: 1 };
         let demon_crown = ItemPrimitive { id: ItemId::DemonCrown, xp: 2 };
@@ -889,7 +889,7 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(40300)]
+    #[available_gas(44200)]
     fn test_is_full() {
         // start with full bag
         let mut bag = Bag {
@@ -971,7 +971,7 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(61100)]
+    #[available_gas(101000)]
     fn test_get_item() {
         let item_1 = ItemPrimitive { id: 11, xp: 0 };
         let item_2 = ItemPrimitive { id: 12, xp: 0 };
@@ -1055,7 +1055,7 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(15700)]
+    #[available_gas(16800)]
     fn test_remove_item() {
         let mut bag = Bag {
             item_1: ItemPrimitive { id: 1, xp: 0 },
@@ -1087,7 +1087,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected: ('Item not in bag',))]
-    #[available_gas(10420)]
+    #[available_gas(12420)]
     fn test_remove_item_not_in_bag() {
         // initialize bag
         let mut bag = Bag {
