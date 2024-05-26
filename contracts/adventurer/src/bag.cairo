@@ -822,7 +822,33 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(129100)]
+    #[available_gas(6740)]
+    fn test_add_item_gas() {
+        // start with empty bag
+        let mut bag = Bag {
+            item_1: Item { id: 0, xp: 0 },
+            item_2: Item { id: 0, xp: 0 },
+            item_3: Item { id: 0, xp: 0 },
+            item_4: Item { id: 0, xp: 0 },
+            item_5: Item { id: 0, xp: 0 },
+            item_6: Item { id: 0, xp: 0 },
+            item_7: Item { id: 0, xp: 0 },
+            item_8: Item { id: 0, xp: 0 },
+            item_9: Item { id: 0, xp: 0 },
+            item_10: Item { id: 0, xp: 0 },
+            item_11: Item { id: 0, xp: 0 },
+            item_12: Item { id: 0, xp: 0 },
+            item_13: Item { id: 0, xp: 0 },
+            item_14: Item { id: 0, xp: 0 },
+            item_15: Item { id: 0, xp: 0 },
+            mutated: false
+        };
+
+        // add item to bag
+        bag.add_item(Item { id: ItemId::Katana, xp: 1 });
+    }
+
+    #[test]
     fn test_add_item() {
         // start with empty bag
         let mut bag = Bag {
@@ -885,7 +911,46 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(44200)]
+    #[available_gas(59500)]
+    fn test_is_full_gas() {
+        // start with full bag
+        let mut bag = Bag {
+            item_1: Item { id: 1, xp: 0 },
+            item_2: Item { id: 2, xp: 0 },
+            item_3: Item { id: 3, xp: 0 },
+            item_4: Item { id: 4, xp: 0 },
+            item_5: Item { id: 5, xp: 0 },
+            item_6: Item { id: 8, xp: 0 },
+            item_7: Item { id: 9, xp: 0 },
+            item_8: Item { id: 11, xp: 0 },
+            item_9: Item { id: 12, xp: 0 },
+            item_10: Item { id: 13, xp: 0 },
+            item_11: Item { id: 14, xp: 0 },
+            item_12: Item { id: 15, xp: 0 },
+            item_13: Item { id: 16, xp: 0 },
+            item_14: Item { id: 17, xp: 0 },
+            item_15: Item { id: 18, xp: 0 },
+            mutated: false
+        };
+
+        // assert bag is full
+        assert(bag.is_full() == true, 'Bag should be full');
+
+        // remove an item
+        bag.remove_item(1);
+
+        // assert bag is not full
+        assert(bag.is_full() == false, 'Bag should be not full');
+
+        // add a new item
+        let mut warhammer = Item { id: ItemId::Warhammer, xp: 1 };
+        bag.add_item(warhammer);
+
+        // assert bag is full again
+        assert(bag.is_full() == true, 'Bag should be full again');
+    }
+
+    #[test]
     fn test_is_full() {
         // start with full bag
         let mut bag = Bag {
@@ -1051,7 +1116,30 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(16800)]
+    #[available_gas(12440)]
+    fn test_remove_item_gas() {
+        let mut bag = Bag {
+            item_1: Item { id: 1, xp: 0 },
+            item_2: Item { id: 2, xp: 0 },
+            item_3: Item { id: 3, xp: 0 },
+            item_4: Item { id: 4, xp: 0 },
+            item_5: Item { id: 5, xp: 0 },
+            item_6: Item { id: 6, xp: 0 },
+            item_7: Item { id: 7, xp: 0 },
+            item_8: Item { id: 8, xp: 1 },
+            item_9: Item { id: 9, xp: 0 },
+            item_10: Item { id: 10, xp: 0 },
+            item_11: Item { id: 11, xp: 0 },
+            item_12: Item { id: 12, xp: 0 },
+            item_13: Item { id: 13, xp: 0 },
+            item_14: Item { id: 14, xp: 0 },
+            item_15: Item { id: 15, xp: 0 },
+            mutated: false
+        };
+        bag.remove_item(6);
+    }
+
+    #[test]
     fn test_remove_item() {
         let mut bag = Bag {
             item_1: Item { id: 1, xp: 0 },
@@ -1083,7 +1171,6 @@ mod tests {
 
     #[test]
     #[should_panic(expected: ('Item not in bag',))]
-    #[available_gas(12420)]
     fn test_remove_item_not_in_bag() {
         // initialize bag
         let mut bag = Bag {
