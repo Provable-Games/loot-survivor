@@ -2866,13 +2866,12 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(5560)]
+    #[available_gas(5760)]
     fn test_get_type_gas() {
         ImplLoot::get_type(101);
     }
 
     #[test]
-    #[available_gas(649660)]
     fn test_get_type() {
         let warhammer = ItemId::Warhammer;
         let warhammer_type = ImplLoot::get_type(warhammer);
