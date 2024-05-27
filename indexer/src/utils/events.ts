@@ -89,9 +89,9 @@ export const parseEquipment = combineParsers({
 export const parseAdventurer = combineParsers({
   health: { index: 0, parser: parseU16 },
   xp: { index: 1, parser: parseU16 },
-  beastHealth: { index: 2, parser: parseU16 },
-  statsUpgradesAvailable: { index: 3, parser: parseU8 },
-  gold: { index: 4, parser: parseU16 },
+  gold: { index: 2, parser: parseU16 },
+  beastHealth: { index: 3, parser: parseU16 },
+  statsUpgradesAvailable: { index: 4, parser: parseU8 },
   stats: { index: 5, parser: parseStats },
   equipment: { index: 6, parser: parseEquipment },
   mutated: { index: 7, parser: parseBoolean },
@@ -176,8 +176,8 @@ export const parseAdventurerDied = combineParsers({
 export const parseAdventurerMetadata = combineParsers({
   startEntropy: { index: 0, parser: parseU128 },
   startingStats: { index: 1, parser: parseStats },
-  name: { index: 2, parser: parseU128 },
-  interfaceCamel: { index: 3, parser: parseBoolean },
+  interfaceCamel: { index: 2, parser: parseBoolean },
+  name: { index: 3, parser: parseU128 },
 });
 
 export const parseStartGame = combineParsers({
