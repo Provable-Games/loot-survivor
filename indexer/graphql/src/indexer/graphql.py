@@ -908,7 +908,6 @@ class ItemsOrderByInput:
 class Adventurer:
     id: Optional[FeltValue]
     entropy: Optional[HexValue]
-    lastAction: Optional[FeltValue]
     owner: Optional[HexValue]
     name: Optional[StringValue]
     health: Optional[FeltValue]
@@ -930,9 +929,8 @@ class Adventurer:
     ring: Optional[ItemValue]
     beastHealth: Optional[FeltValue]
     statUpgrades: Optional[FeltValue]
-    startBlock: Optional[FeltValue]
+    startEntropy: Optional[FeltValue]
     revealBlock: Optional[FeltValue]
-    actionsPerBlock: Optional[FeltValue]
     gold: Optional[FeltValue]
     createdTime: Optional[str]
     lastUpdatedTime: Optional[str]
@@ -943,7 +941,6 @@ class Adventurer:
         return cls(
             id=data["id"],
             entropy=data["entropy"],
-            lastAction=data["lastAction"],
             owner=data["owner"],
             name=data["name"],
             health=data["health"],
@@ -965,9 +962,8 @@ class Adventurer:
             ring=data["ring"],
             beastHealth=data["beastHealth"],
             statUpgrades=data["statUpgrades"],
-            startBlock=data["startBlock"],
+            startEntropy=data["startEntropy"],
             revealBlock=data["revealBlock"],
-            actionsPerBlock=data["actionsPerBlock"],
             gold=data["gold"],
             createdTime=data["createdTime"],
             lastUpdatedTime=data["lastUpdatedTime"],

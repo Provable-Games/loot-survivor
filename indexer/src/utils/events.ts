@@ -61,7 +61,6 @@ export const parseStats = combineParsers({
 export const parseLootStatistics = combineParsers({
   id: { index: 0, parser: parseU8 },
   xp: { index: 1, parser: parseU16 },
-  metadata: { index: 2, parser: parseU8 },
 });
 
 export const parseLoot = combineParsers({
@@ -76,24 +75,26 @@ export const parseLootWithPrice = combineParsers({
   price: { index: 1, parser: parseU16 },
 });
 
+export const parseEquipment = combineParsers({
+  weapon: { index: 0, parser: parseLootStatistics },
+  chest: { index: 1, parser: parseLootStatistics },
+  head: { index: 2, parser: parseLootStatistics },
+  waist: { index: 3, parser: parseLootStatistics },
+  foot: { index: 4, parser: parseLootStatistics },
+  hand: { index: 5, parser: parseLootStatistics },
+  neck: { index: 6, parser: parseLootStatistics },
+  ring: { index: 7, parser: parseLootStatistics },
+});
+
 export const parseAdventurer = combineParsers({
-  lastActionBlock: { index: 0, parser: parseU16 },
-  health: { index: 1, parser: parseU16 },
-  xp: { index: 2, parser: parseU16 },
-  stats: { index: 3, parser: parseStats },
+  health: { index: 0, parser: parseU16 },
+  xp: { index: 1, parser: parseU16 },
+  beastHealth: { index: 2, parser: parseU16 },
+  statsUpgradesAvailable: { index: 3, parser: parseU8 },
   gold: { index: 4, parser: parseU16 },
-  weapon: { index: 5, parser: parseLootStatistics },
-  chest: { index: 6, parser: parseLootStatistics },
-  head: { index: 7, parser: parseLootStatistics },
-  waist: { index: 8, parser: parseLootStatistics },
-  foot: { index: 9, parser: parseLootStatistics },
-  hand: { index: 10, parser: parseLootStatistics },
-  neck: { index: 11, parser: parseLootStatistics },
-  ring: { index: 12, parser: parseLootStatistics },
-  beastHealth: { index: 13, parser: parseU16 },
-  statsPointsAvailable: { index: 14, parser: parseU8 },
-  actionsPerBlock: { index: 15, parser: parseU8 },
-  mutated: { index: 16, parser: parseBoolean },
+  stats: { index: 5, parser: parseStats },
+  equipment: { index: 6, parser: parseEquipment },
+  mutated: { index: 7, parser: parseBoolean },
 });
 
 export const parseAdventurerState = combineParsers({
@@ -173,7 +174,7 @@ export const parseAdventurerDied = combineParsers({
 });
 
 export const parseAdventurerMetadata = combineParsers({
-  startBlock: { index: 0, parser: parseU128 },
+  startEntropy: { index: 0, parser: parseU128 },
   startingStats: { index: 1, parser: parseStats },
   name: { index: 2, parser: parseU128 },
   interfaceCamel: { index: 3, parser: parseBoolean },
