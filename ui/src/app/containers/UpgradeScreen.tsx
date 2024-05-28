@@ -39,6 +39,7 @@ import { HealthCountDown } from "@/app/components/CountDown";
 import { calculateVitBoostRemoved } from "@/app/lib/utils";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import InterludeScreen from "@/app/containers/InterludeScreen";
+import { stat } from "fs";
 
 interface UpgradeScreenProps {
   upgrade: (
@@ -59,6 +60,9 @@ export default function UpgradeScreen({
   gameContract,
 }: UpgradeScreenProps) {
   const adventurer = useAdventurerStore((state) => state.adventurer);
+  const updateAdventurerStats = useAdventurerStore(
+    (state) => state.updateAdventurerStats
+  );
   const loading = useLoadingStore((state) => state.loading);
   const estimatingFee = useUIStore((state) => state.estimatingFee);
   const resetNotification = useLoadingStore((state) => state.resetNotification);
@@ -142,10 +146,30 @@ export default function UpgradeScreen({
       }
     };
 
+    const fetchAdventurerStats = async () => {
+      if (entropyReady && adventurer?.level == 2) {
+        const stats = (await gameContract!.call("get_stats", [
+          adventurer?.id!,
+        ])) as any;
+        console.log(stats);
+        updateAdventurerStats({
+          strength: parseInt(stats.strength),
+          dexterity: parseInt(stats.dexterity),
+          vitality: parseInt(stats.vitality),
+          intelligence: parseInt(stats.intelligence),
+          wisdom: parseInt(stats.wisdom),
+          charisma: parseInt(stats.charisma),
+          luck: parseInt(stats.luck),
+        });
+      }
+    };
+
     fetchMarketItems();
+    fetchAdventurerStats();
   }, [entropyReady]);
 
   console.log(entropyReady);
+  console.log(adventurer);
 
   const gameData = new GameData();
 

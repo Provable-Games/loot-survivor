@@ -657,27 +657,14 @@ export function syscalls({
     }
   };
 
-  const attack = async (
-    tillDeath: boolean,
-    beastData: Beast,
-    blockHash?: string
-  ) => {
+  const attack = async (tillDeath: boolean, beastData: Beast) => {
     resetData("latestMarketItemsQuery");
-    // First we send the current block hash to the contract
-    const setBlockHashTx: Call = {
-      contractAddress: gameContract?.address ?? "",
-      entrypoint: "set_starting_entropy",
-      calldata: [adventurer?.id?.toString() ?? "", blockHash!],
-    };
     const attackTx: Call = {
       contractAddress: gameContract?.address ?? "",
       entrypoint: "attack",
       calldata: [adventurer?.id?.toString() ?? "", tillDeath ? "1" : "0"],
     };
-    const attackCalls =
-      process.env.NEXT_PUBLIC_NETWORK === "mainnet"
-        ? [setBlockHashTx, attackTx]
-        : [attackTx];
+
     addToCalls(attackTx);
 
     const isArcade = checkArcadeConnector(connector!);
@@ -685,7 +672,7 @@ export function syscalls({
     try {
       const tx = await handleSubmitCalls(
         account,
-        [...calls, ...attackCalls],
+        [...calls, attackTx],
         isArcade,
         Number(ethBalance),
         showTopUpDialog,

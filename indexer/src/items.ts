@@ -71,16 +71,15 @@ export default function transform({ header, events }: Block) {
       case START_GAME: {
         const { value } = parseStartGame(event.data, 0);
         const as = value.adventurerState;
-        const itemInserts: any[] = [];
         console.log("START_GAME", "->", "ITEMS UPDATES");
         const starterWeapon = {
           entity: {
-            item: checkExistsInt(BigInt(as.adventurer.weapon.id)),
+            item: checkExistsInt(BigInt(as.adventurer.equipment.weapon.id)),
             adventurerId: checkExistsInt(BigInt(as.adventurerId)),
           },
           update: {
             $set: {
-              item: checkExistsInt(BigInt(as.adventurer.weapon.id)),
+              item: checkExistsInt(BigInt(as.adventurer.equipment.weapon.id)),
               adventurerId: checkExistsInt(BigInt(as.adventurerId)),
               owner: true,
               equipped: true,

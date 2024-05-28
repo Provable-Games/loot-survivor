@@ -9,7 +9,7 @@ type u16 = number;
 type u8 = number;
 
 type AdventurerMetadata = {
-  startEntropy: u64;
+  startEntropy: string;
   startingStats: Stats;
   interfaceCamel: boolean;
   name: u128;

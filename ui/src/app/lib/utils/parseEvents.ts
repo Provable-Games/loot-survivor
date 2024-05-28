@@ -250,7 +250,7 @@ export async function parseEvents(
         const startGameData: StartGameEvent = {
           adventurerState: parseAdventurerState(raw.data.slice(0, 31)),
           adventurerMeta: {
-            startEntropy: parseInt(raw.data[32]),
+            startEntropy: raw.data[32],
             startingStats: {
               strength: parseInt(raw.data[33]),
               dexterity: parseInt(raw.data[34]),
