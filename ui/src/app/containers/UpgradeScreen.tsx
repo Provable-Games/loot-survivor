@@ -90,7 +90,7 @@ export default function UpgradeScreen({
   });
 
   useEffect(() => {
-    const interval = setInterval(async () => {
+    const fetchEntropy = async () => {
       const entropy = await gameContract!.call("get_adventurer_entropy", [
         adventurer?.id!,
       ]);
@@ -99,7 +99,13 @@ export default function UpgradeScreen({
         setEntropyReady(true);
         clearInterval(interval);
       }
-    }, 10000); // We call the getAdventurerEntropy function every 30 seconds
+    };
+
+    // Call the function immediately
+    fetchEntropy();
+
+    // Set up the interval to call the function every 10 seconds
+    const interval = setInterval(fetchEntropy, 10000);
 
     return () => clearInterval(interval); // Cleanup on component unmount
   }, []);
