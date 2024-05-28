@@ -198,7 +198,11 @@ export const parseBag = combineParsers({
   item9: { index: 8, parser: parseLootStatistics },
   item10: { index: 9, parser: parseLootStatistics },
   item11: { index: 10, parser: parseLootStatistics },
-  mutated: { index: 11, parser: parseBoolean },
+  item12: { index: 11, parser: parseLootStatistics },
+  item13: { index: 12, parser: parseLootStatistics },
+  item14: { index: 13, parser: parseLootStatistics },
+  item15: { index: 14, parser: parseLootStatistics },
+  mutated: { index: 15, parser: parseBoolean },
 });
 
 export const parseAdventurerStateWithBag = combineParsers({
