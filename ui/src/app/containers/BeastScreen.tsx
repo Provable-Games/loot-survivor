@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Contract } from "starknet";
 import { BattleDisplay } from "@/app/components/beast/BattleDisplay";
 import { BeastDisplay } from "@/app/components/beast/BeastDisplay";
@@ -10,7 +10,6 @@ import { Battle, NullBeast, ButtonData, Beast } from "@/app/types";
 import { Button } from "@/app/components/buttons/Button";
 import useUIStore from "@/app/hooks/useUIStore";
 import ActionMenu from "@/app/components/menu/ActionMenu";
-import { getBlock } from "@/app/api/api";
 
 interface BeastScreenProps {
   attack: (

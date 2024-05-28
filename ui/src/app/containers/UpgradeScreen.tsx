@@ -39,7 +39,6 @@ import { HealthCountDown } from "@/app/components/CountDown";
 import { calculateVitBoostRemoved } from "@/app/lib/utils";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import InterludeScreen from "@/app/containers/InterludeScreen";
-import { stat } from "fs";
 
 interface UpgradeScreenProps {
   upgrade: (
