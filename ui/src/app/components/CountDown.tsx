@@ -72,15 +72,14 @@ export const EntropyCountDown = ({
       <span className="flex flex-col gap-1 items-center justify-center">
         {targetTime ? (
           <>
-            <p className="text-2xl">Session Starts in</p>
             <p
               className={`text-6xl ${
                 seconds < 10
-                  ? "animate-pulse text-red-600"
+                  ? "animate-pulse text-terminal-yellow"
                   : "text-terminal-yellow"
               }`}
             >
-              {seconds === 0 ? "GO" : formatTime(seconds)}
+              {formatTime(seconds)}
             </p>
           </>
         ) : (
