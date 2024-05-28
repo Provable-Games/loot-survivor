@@ -50,9 +50,6 @@ export default function Info({
     ? data.itemsByAdventurerQuery.items
     : [];
 
-  console.log(items);
-  console.log(formatAdventurer);
-
   const handleDropItems = (item: string) => {
     const newDropItems = [
       ...dropItems,

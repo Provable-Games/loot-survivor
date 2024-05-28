@@ -100,7 +100,6 @@ export default function transform({ header, events }: Block) {
         const { value } = parsePurchasedItems(event.data, 0);
         const as = value.adventurerStateWithBag.adventurerState;
         console.log("PURCHASED_ITEMS", "->", "ITEMS UPDATES");
-        console.log(value.purchases);
         const result = value.purchases.map((item) => ({
           entity: {
             item: checkExistsInt(BigInt(item.item.id)),
@@ -124,7 +123,6 @@ export default function transform({ header, events }: Block) {
         const { value } = parseEquippedItems(event.data, 0);
         const as = value.adventurerStateWithBag.adventurerState;
         console.log("EQUIPPED_ITEMS", "->", "ITEMS UPDATES");
-        console.log(value.equippedItems);
         const equippedResult = value.equippedItems.map((item) => ({
           entity: {
             item: checkExistsInt(BigInt(item)),

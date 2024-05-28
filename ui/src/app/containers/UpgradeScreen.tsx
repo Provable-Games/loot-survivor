@@ -98,7 +98,6 @@ export default function UpgradeScreen({
       const entropy = await gameContract!.call("get_adventurer_entropy", [
         adventurer?.id!,
       ]);
-      console.log(entropy);
       if (entropy !== BigInt(0)) {
         setEntropyReady(true);
         clearInterval(interval);
@@ -123,7 +122,6 @@ export default function UpgradeScreen({
           adventurer?.id!,
         ])) as string[];
         const itemData = [];
-        console.log(marketItems);
         for (let item of marketItems) {
           itemData.unshift({
             item: gameData.ITEMS[parseInt(item)],
@@ -148,18 +146,18 @@ export default function UpgradeScreen({
 
     const fetchAdventurerStats = async () => {
       if (entropyReady && adventurer?.level == 2) {
-        const stats = (await gameContract!.call("get_stats", [
+        const updatedAdventurer = (await gameContract!.call("get_adventurer", [
           adventurer?.id!,
         ])) as any;
-        console.log(stats);
         updateAdventurerStats({
-          strength: parseInt(stats.strength),
-          dexterity: parseInt(stats.dexterity),
-          vitality: parseInt(stats.vitality),
-          intelligence: parseInt(stats.intelligence),
-          wisdom: parseInt(stats.wisdom),
-          charisma: parseInt(stats.charisma),
-          luck: parseInt(stats.luck),
+          health: parseInt(updatedAdventurer.health),
+          strength: parseInt(updatedAdventurer.stats.strength),
+          dexterity: parseInt(updatedAdventurer.stats.dexterity),
+          vitality: parseInt(updatedAdventurer.stats.vitality),
+          intelligence: parseInt(updatedAdventurer.stats.intelligence),
+          wisdom: parseInt(updatedAdventurer.stats.wisdom),
+          charisma: parseInt(updatedAdventurer.stats.charisma),
+          luck: parseInt(updatedAdventurer.stats.luck),
         });
       }
     };
@@ -167,9 +165,6 @@ export default function UpgradeScreen({
     fetchMarketItems();
     fetchAdventurerStats();
   }, [entropyReady]);
-
-  console.log(entropyReady);
-  console.log(adventurer);
 
   const gameData = new GameData();
 
@@ -307,8 +302,13 @@ export default function UpgradeScreen({
   const selectedCharisma = upgrades["Charisma"] ?? 0;
   const selectedVitality = upgrades["Vitality"] ?? 0;
 
-  const totalVitality = (adventurer?.vitality ?? 0) + selectedVitality;
-  const totalCharisma = (adventurer?.charisma ?? 0) + selectedCharisma;
+  const [totalVitality, setTotalVitality] = useState(0);
+  const [totalCharisma, setTotalCharisma] = useState(0);
+
+  useEffect(() => {
+    setTotalVitality((adventurer?.vitality ?? 0) + selectedVitality);
+    setTotalCharisma((adventurer?.charisma ?? 0) + selectedCharisma);
+  }, [adventurer, selectedVitality, selectedCharisma]);
 
   const purchaseGoldAmount =
     potionAmount * getPotionPrice(adventurer?.level ?? 0, totalCharisma);

@@ -370,7 +370,6 @@ export function syscalls({
           createdTime: new Date(),
         }
       );
-      console.log(startGameEvents);
       const adventurerState = events.find(
         (event) => event.name === "AmbushedByBeast"
       ).data[0];
@@ -1152,12 +1151,6 @@ export function syscalls({
       ]?.filter((item: Item) => !droppedItems.includes(item.item ?? ""));
       setData("itemsByAdventurerQuery", {
         items: [...filteredDrops, ...purchasedItems],
-      });
-
-      console.log({
-        Stats: upgrades,
-        Items: purchaseItems,
-        Potions: potionAmount,
       });
 
       // Reset items to no availability

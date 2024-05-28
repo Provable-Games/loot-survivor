@@ -557,7 +557,7 @@ export async function parseEvents(
             bag: parseBag(raw.data.slice(32, 63)),
           },
           // Skip array length
-          purchases: parseItems(raw.data.slice(65)),
+          purchases: parseItems(raw.data.slice(64)),
         };
         const purchasedItemsEvent = processData(
           purchasedItemsData,
@@ -585,7 +585,7 @@ export async function parseEvents(
       case "EquippedItems":
         const { equippedItems, unequippedItems } = parseEquippedItems(
           // Include equipped array length
-          raw.data.slice(65)
+          raw.data.slice(63)
         );
         const equippedItemsData: EquippedItemsEvent = {
           adventurerStateWithBag: {

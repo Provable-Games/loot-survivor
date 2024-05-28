@@ -21,8 +21,6 @@ import LootIcon from "@/app/components/icons/LootIcon";
 import { HealthPotionIcon } from "@/app/components/icons/Icons";
 
 const handleUpgrade = (notificationData: any, notifications: any[]) => {
-  console.log("here");
-  console.log(notificationData, notifications);
   const gameData = new GameData();
   notifications.push({
     message: (
