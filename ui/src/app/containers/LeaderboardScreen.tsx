@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Block, Contract } from "starknet";
-import { useBlock } from "@starknet-react/core";
+import { Contract } from "starknet";
 import {
   getAdventurerByXP,
   getAdventurerById,
@@ -10,13 +9,12 @@ import { Button } from "@/app/components/buttons/Button";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import useUIStore from "@/app/hooks/useUIStore";
 import useCustomQuery from "@/app/hooks/useCustomQuery";
-import { Adventurer, GameEntropy } from "@/app/types";
+import { Adventurer } from "@/app/types";
 import ScoreTable from "@/app/components/leaderboard/ScoreTable";
 import LiveTable from "@/app/components/leaderboard/LiveTable";
 import { RefreshIcon } from "@/app/components/icons/Icons";
 import LootIconLoader from "@/app/components/icons/Loader";
 import { ProfileIcon, SkullIcon } from "@/app/components/icons/Icons";
-import { IsIdleResult } from "@/app/types";
 
 interface LeaderboardScreenProps {
   slayIdles: (slayAdventurers: string[]) => Promise<void>;
@@ -33,19 +31,10 @@ export default function LeaderboardScreen({
 }: LeaderboardScreenProps) {
   const itemsPerPage = 10;
   const [showScores, setShowScores] = useState(false);
-  const [gameEntropyUpdateTime, setGameEntropyUpdateTime] = useState<
-    number | null
-  >();
-  const [idleAdventurers, setIdleAdventurers] = useState<
+  const [idleAdventurers, _setIdleAdventurers] = useState<
     string[] | undefined
   >();
-  const [loadingIdles, setLoadingIdles] = useState(false);
-
-  const { data: blockData } = useBlock({
-    refetchInterval: false,
-  });
-
-  const currentBlock = (blockData as Block)?.block_number;
+  const [loadingIdles, _setLoadingIdles] = useState(false);
 
   const { data, refetch, setData, setIsLoading, setNotLoading } =
     useQueriesStore();
@@ -109,40 +98,27 @@ export default function LeaderboardScreen({
     }
   }, [adventurersByXPdata]);
 
-  const getGameEntropy = async () => {
-    const gameEntropy = await gameContract.call("get_game_entropy");
-    const formattedEntropy = gameEntropy as GameEntropy;
-    const gameEntropyUpdateTime =
-      Number(formattedEntropy.next_update_block) -
-      Number(formattedEntropy.last_updated_block);
-    setGameEntropyUpdateTime(gameEntropyUpdateTime);
-  };
+  // const getIdleAdventurers = async (adventurers: Adventurer[]) => {
+  //   setLoadingIdles(true);
+  //   const idleAdventurers = [];
+  //   for (let adventurer of adventurers) {
+  //     const isIdleResult = await gameContract.call("is_idle", [
+  //       adventurer?.id ?? "0",
+  //     ]);
+  //     const isIdle = (isIdleResult as IsIdleResult)["0"];
+  //     if (isIdle) {
+  //       idleAdventurers.push(adventurer?.id?.toString() ?? "0");
+  //     }
+  //   }
+  //   setIdleAdventurers(idleAdventurers);
+  //   setLoadingIdles(false);
+  // };
 
-  const getIdleAdventurers = async (adventurers: Adventurer[]) => {
-    setLoadingIdles(true);
-    const idleAdventurers = [];
-    for (let adventurer of adventurers) {
-      const isIdleResult = await gameContract.call("is_idle", [
-        adventurer?.id ?? "0",
-      ]);
-      const isIdle = (isIdleResult as IsIdleResult)["0"];
-      if (isIdle) {
-        idleAdventurers.push(adventurer?.id?.toString() ?? "0");
-      }
-    }
-    setIdleAdventurers(idleAdventurers);
-    setLoadingIdles(false);
-  };
-
-  useEffect(() => {
-    getGameEntropy();
-  }, []);
-
-  useEffect(() => {
-    if (data.adventurersByXPQuery?.adventurers) {
-      getIdleAdventurers(aliveAdventurers);
-    }
-  }, [adventurers]);
+  // useEffect(() => {
+  //   if (data.adventurersByXPQuery?.adventurers) {
+  //     getIdleAdventurers(aliveAdventurers);
+  //   }
+  // }, [adventurers]);
 
   return (
     <div className="flex flex-col items-center h-full xl:overflow-y-auto 2xl:overflow-hidden mt-5 sm:mt-0">
@@ -197,8 +173,6 @@ export default function LeaderboardScreen({
                 handleFetchProfileData={handlefetchProfileData}
                 adventurers={aliveAdventurers}
                 gameContract={gameContract}
-                gameEntropyUpdateTime={gameEntropyUpdateTime!}
-                currentBlock={currentBlock!}
                 idleAdventurers={idleAdventurers}
               />
             </div>

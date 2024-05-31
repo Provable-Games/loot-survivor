@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Block, CallData, Contract } from "starknet";
-import { useAccount, useConnect, useBlock } from "@starknet-react/core";
+import { CallData, Contract } from "starknet";
+import { useAccount, useConnect } from "@starknet-react/core";
 import Image from "next/image";
 import { TypeAnimation } from "react-type-animation";
 import { MdClose } from "react-icons/md";
@@ -16,7 +16,6 @@ import Lords from "public/icons/lords.svg";
 import {
   indexAddress,
   formatTimeSeconds,
-  fetchAverageBlockTime,
   formatCurrency,
 } from "@/app/lib/utils";
 
@@ -53,8 +52,6 @@ export const Spawn = ({
   const isWrongNetwork = useUIStore((state) => state.isWrongNetwork);
   const loading = useLoadingStore((state) => state.loading);
   const estimatingFee = useUIStore((state) => state.estimatingFee);
-  const averageBlockTime = useUIStore((state) => state.averageBlockTime);
-  const setAverageBlockTime = useUIStore((state) => state.setAverageBlockTime);
   const resetNotification = useLoadingStore((state) => state.resetNotification);
 
   useEffect(() => {
@@ -114,28 +111,6 @@ export const Spawn = ({
 
   const onMainnet = process.env.NEXT_PUBLIC_NETWORK === "mainnet";
 
-  const waitEstimate = 12 * averageBlockTime; // add one for closer estimate
-
-  const { data: blockData } = useBlock({
-    refetchInterval: false,
-  });
-
-  const currentBlockNumber = (blockData as Block)?.block_number ?? 0;
-
-  const [fetchedAverageBlockTime, setFetchedAverageBlockTime] = useState(false);
-
-  const fetchData = async () => {
-    const result = await fetchAverageBlockTime(currentBlockNumber, 20);
-    setAverageBlockTime(result!);
-    setFetchedAverageBlockTime(true);
-  };
-
-  useEffect(() => {
-    if (onMainnet && !fetchedAverageBlockTime && currentBlockNumber > 0) {
-      fetchData();
-    }
-  }, [currentBlockNumber]);
-
   useEffect(() => {
     getUsableGoldenToken(goldenTokens ?? []);
   }, []);
@@ -168,15 +143,9 @@ export const Spawn = ({
         {onMainnet && (
           <div className="absolute top-1/6 left-0 right-0 flex flex-col items-center text-center">
             <p className="text-2xl">Estimated wait time:</p>
-            {averageBlockTime > 0 ? (
-              <p className="text-4xl text-terminal-yellow">
-                {formatTimeSeconds(Math.floor(waitEstimate))}
-              </p>
-            ) : (
-              <p className="text-2xl loading-ellipsis text-terminal-yellow">
-                Loading
-              </p>
-            )}
+            <p className="text-4xl text-terminal-yellow">
+              {formatTimeSeconds(Math.floor(30))}
+            </p>
           </div>
         )}
 
@@ -239,8 +208,7 @@ export const Spawn = ({
                     isWrongNetwork ||
                     loading ||
                     estimatingFee ||
-                    !checkEnoughLords ||
-                    (!fetchedAverageBlockTime && onMainnet)
+                    !checkEnoughLords
                   }
                   onClick={() => handleSubmitLords()}
                   className="relative"
@@ -269,8 +237,7 @@ export const Spawn = ({
                       loading ||
                       estimatingFee ||
                       !goldenTokenExists ||
-                      usableToken === "0" ||
-                      (!fetchedAverageBlockTime && onMainnet)
+                      usableToken === "0"
                     }
                     className="relative w-full"
                   >

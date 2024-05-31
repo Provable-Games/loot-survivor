@@ -296,7 +296,7 @@ export default function InventoryScreen({
                 </span>
                 <span className="flex flex-row gap-1 text-lg items-center sm:text-3xl">
                   <LootIcon type="bag" size="w-5" />
-                  {`${bagItems.length}/${11}`}
+                  {`${bagItems.length}/${15}`}
                 </span>
               </span>
             </span>

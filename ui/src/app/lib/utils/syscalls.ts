@@ -34,7 +34,10 @@ import {
 import { QueryData, QueryKey } from "@/app/hooks/useQueryStore";
 import { AdventurerClass } from "@/app/lib/classes";
 import { ScreenPage } from "@/app/hooks/useUIStore";
-import { TRANSACTION_WAIT_RETRY_INTERVAL } from "@/app/lib/constants";
+import {
+  TRANSACTION_WAIT_RETRY_INTERVAL,
+  VRF_FEE_LIMIT,
+} from "@/app/lib/constants";
 
 const rpc_addr = process.env.NEXT_PUBLIC_RPC_URL;
 const provider = new Provider({
@@ -89,16 +92,14 @@ export interface SyscallsProps {
   ethBalance: bigint;
   showTopUpDialog: (value: boolean) => void;
   setTopUpAccount: (value: string) => void;
-  setEstimatingFee: (value: boolean) => void;
   account: AccountInterface;
-  resetCalls: () => void;
   setSpecialBeastDefeated: (value: boolean) => void;
   setSpecialBeast: (value: SpecialBeast) => void;
   connector?: Connector;
   getEthBalance: () => Promise<void>;
   getBalances: () => Promise<void>;
   setIsMintingLords: (value: boolean) => void;
-  setUpdateDeathPenalty: (value: boolean) => void;
+  setEntropyReady: (value: boolean) => void;
 }
 
 function handleEquip(
@@ -199,15 +200,13 @@ export function syscalls({
   ethBalance,
   showTopUpDialog,
   setTopUpAccount,
-  setEstimatingFee,
-  resetCalls,
   setSpecialBeastDefeated,
   setSpecialBeast,
   connector,
   getEthBalance,
   getBalances,
   setIsMintingLords,
-  setUpdateDeathPenalty,
+  setEntropyReady,
 }: SyscallsProps) {
   const gameData = new GameData();
 
@@ -304,6 +303,7 @@ export function syscalls({
         goldenTokenId,
         "0",
         interfaceCamel,
+        VRF_FEE_LIMIT.toString(),
       ],
     };
 
@@ -596,19 +596,6 @@ export function syscalls({
         }
       }
 
-      const idleDeathPenaltyEvents = events.filter(
-        (event) => event.name === "IdleDeathPenalty"
-      );
-      if (idleDeathPenaltyEvents.length > 0) {
-        for (let idleDeathPenaltyEvent of idleDeathPenaltyEvents) {
-          setData("adventurerByIdQuery", {
-            adventurers: [idleDeathPenaltyEvent.data[0]],
-          });
-          setAdventurer(idleDeathPenaltyEvent.data[0]);
-          discoveries.unshift(idleDeathPenaltyEvent.data[2]);
-        }
-      }
-
       const reversedDiscoveries = discoveries.slice().reverse();
 
       const adventurerDiedEvents = events.filter(
@@ -628,13 +615,10 @@ export function syscalls({
         const killedByObstacle =
           reversedDiscoveries[0]?.discoveryType == "Obstacle" &&
           reversedDiscoveries[0]?.adventurerHealth == 0;
-        const killedByPenalty =
-          !reversedDiscoveries[0]?.discoveryType &&
-          reversedDiscoveries[0]?.adventurerHealth == 0;
         const killedByAmbush =
           reversedDiscoveries[0]?.ambushed &&
           reversedDiscoveries[0]?.adventurerHealth == 0;
-        if (killedByObstacle || killedByPenalty || killedByAmbush) {
+        if (killedByObstacle || killedByAmbush) {
           setDeathNotification(
             "Explore",
             discoveries.reverse(),
@@ -645,37 +629,10 @@ export function syscalls({
         setStartOption("create adventurer");
       }
 
-      const upgradesAvailableEvents = events.filter(
-        (event) => event.name === "UpgradesAvailable"
+      const leveledUpEvents = events.filter(
+        (event) => event.name === "AdventurerLeveledUp"
       );
-      if (upgradesAvailableEvents.length > 0) {
-        for (let upgradesAvailableEvent of upgradesAvailableEvents) {
-          setData("adventurerByIdQuery", {
-            adventurers: [upgradesAvailableEvent.data[0]],
-          });
-          setAdventurer(upgradesAvailableEvent.data[0]);
-          const newItems = upgradesAvailableEvent.data[1];
-          const itemData = [];
-          for (let newItem of newItems) {
-            itemData.unshift({
-              item: newItem,
-              adventurerId: upgradesAvailableEvent.data[0]["id"],
-              owner: false,
-              equipped: false,
-              ownerAddress: upgradesAvailableEvent.data[0]["owner"],
-              xp: 0,
-              special1: null,
-              special2: null,
-              special3: null,
-              isAvailable: false,
-              purchasedTime: null,
-              timestamp: new Date(),
-            });
-          }
-          setData("latestMarketItemsQuery", {
-            items: itemData,
-          });
-        }
+      if (leveledUpEvents.length > 0) {
         setScreen("upgrade");
       }
 
@@ -693,34 +650,20 @@ export function syscalls({
       setDropItems([]);
       stopLoading(reversedDiscoveries, false, "Explore");
       getEthBalance();
-      setUpdateDeathPenalty(true);
     } catch (e) {
       console.log(e);
       stopLoading(e, true);
     }
   };
 
-  const attack = async (
-    tillDeath: boolean,
-    beastData: Beast,
-    blockHash?: string
-  ) => {
+  const attack = async (tillDeath: boolean, beastData: Beast) => {
     resetData("latestMarketItemsQuery");
-    // First we send the current block hash to the contract
-    const setBlockHashTx: Call = {
-      contractAddress: gameContract?.address ?? "",
-      entrypoint: "set_starting_entropy",
-      calldata: [adventurer?.id?.toString() ?? "", blockHash!],
-    };
     const attackTx: Call = {
       contractAddress: gameContract?.address ?? "",
       entrypoint: "attack",
       calldata: [adventurer?.id?.toString() ?? "", tillDeath ? "1" : "0"],
     };
-    const attackCalls =
-      process.env.NEXT_PUBLIC_NETWORK === "mainnet"
-        ? [setBlockHashTx, attackTx]
-        : [attackTx];
+
     addToCalls(attackTx);
 
     const isArcade = checkArcadeConnector(connector!);
@@ -728,7 +671,7 @@ export function syscalls({
     try {
       const tx = await handleSubmitCalls(
         account,
-        [...calls, ...attackCalls],
+        [...calls, attackTx],
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
@@ -876,19 +819,6 @@ export function syscalls({
         }
       }
 
-      const idleDeathPenaltyEvents = events.filter(
-        (event) => event.name === "IdleDeathPenalty"
-      );
-      if (idleDeathPenaltyEvents.length > 0) {
-        for (let idleDeathPenaltyEvent of idleDeathPenaltyEvents) {
-          setData("adventurerByIdQuery", {
-            adventurers: [idleDeathPenaltyEvent.data[0]],
-          });
-          setAdventurer(idleDeathPenaltyEvent.data[0]);
-          battles.unshift(idleDeathPenaltyEvent.data[1]);
-        }
-      }
-
       const reversedBattles = battles.slice().reverse();
 
       const adventurerDiedEvents = events.filter(
@@ -908,10 +838,7 @@ export function syscalls({
         const killedByBeast = battles.some(
           (battle) => battle.attacker == "Beast" && battle.adventurerHealth == 0
         );
-        const killedByPenalty = battles.some(
-          (battle) => !battle.attacker && battle.adventurerHealth == 0
-        );
-        if (killedByBeast || killedByPenalty) {
+        if (killedByBeast) {
           setDeathNotification(
             "Attack",
             reversedBattles,
@@ -922,37 +849,10 @@ export function syscalls({
         setStartOption("create adventurer");
       }
 
-      const upgradesAvailableEvents = events.filter(
-        (event) => event.name === "UpgradesAvailable"
+      const leveledUpEvents = events.filter(
+        (event) => event.name === "AdventurerLeveledUp"
       );
-      if (upgradesAvailableEvents.length > 0) {
-        for (let upgradesAvailableEvent of upgradesAvailableEvents) {
-          setData("adventurerByIdQuery", {
-            adventurers: [upgradesAvailableEvent.data[0]],
-          });
-          setAdventurer(upgradesAvailableEvent.data[0]);
-          const newItems = upgradesAvailableEvent.data[1];
-          const itemData = [];
-          for (let newItem of newItems) {
-            itemData.unshift({
-              item: newItem,
-              adventurerId: upgradesAvailableEvent.data[0]["id"],
-              owner: false,
-              equipped: false,
-              ownerAddress: upgradesAvailableEvent.data[0]["owner"],
-              xp: 0,
-              special1: null,
-              special2: null,
-              special3: null,
-              isAvailable: false,
-              purchasedTime: null,
-              timestamp: new Date(),
-            });
-          }
-          setData("latestMarketItemsQuery", {
-            items: itemData,
-          });
-        }
+      if (leveledUpEvents.length > 0) {
         setScreen("upgrade");
       }
 
@@ -976,7 +876,7 @@ export function syscalls({
       setEquipItems([]);
       setDropItems([]);
       getEthBalance();
-      setUpdateDeathPenalty(true);
+      setEntropyReady(false);
     } catch (e) {
       console.log(e);
       stopLoading(e, true);
@@ -1078,19 +978,6 @@ export function syscalls({
         battles.unshift(fleeSucceededEvent.data[1]);
       }
 
-      const idleDeathPenaltyEvents = events.filter(
-        (event) => event.name === "IdleDeathPenalty"
-      );
-      if (idleDeathPenaltyEvents.length > 0) {
-        for (let idleDeathPenaltyEvent of idleDeathPenaltyEvents) {
-          setData("adventurerByIdQuery", {
-            adventurers: [idleDeathPenaltyEvent.data[0]],
-          });
-          setAdventurer(idleDeathPenaltyEvent.data[0]);
-          battles.unshift(idleDeathPenaltyEvent.data[1]);
-        }
-      }
-
       const reversedBattles = battles.slice().reverse();
 
       const adventurerDiedEvents = events.filter(
@@ -1110,10 +997,7 @@ export function syscalls({
         const killedByBeast = battles.some(
           (battle) => battle.attacker == "Beast" && battle.adventurerHealth == 0
         );
-        const killedByPenalty = battles.some(
-          (battle) => !battle.attacker && battle.adventurerHealth == 0
-        );
-        if (killedByBeast || killedByPenalty) {
+        if (killedByBeast) {
           setDeathNotification(
             "Flee",
             reversedBattles,
@@ -1124,33 +1008,10 @@ export function syscalls({
         setStartOption("create adventurer");
       }
 
-      const upgradesAvailableEvents = events.filter(
-        (event) => event.name === "UpgradesAvailable"
+      const leveledUpEvents = events.filter(
+        (event) => event.name === "AdventurerLeveledUp"
       );
-      if (upgradesAvailableEvents.length > 0) {
-        for (let upgradesAvailableEvent of upgradesAvailableEvents) {
-          const newItems = upgradesAvailableEvent.data[1];
-          const itemData = [];
-          for (let newItem of newItems) {
-            itemData.unshift({
-              item: newItem,
-              adventurerId: upgradesAvailableEvent.data[0]["id"],
-              owner: false,
-              equipped: false,
-              ownerAddress: upgradesAvailableEvent.data[0]["owner"],
-              xp: 0,
-              special1: null,
-              special2: null,
-              special3: null,
-              isAvailable: false,
-              purchasedTime: null,
-              timestamp: new Date(),
-            });
-          }
-          setData("latestMarketItemsQuery", {
-            items: itemData,
-          });
-        }
+      if (leveledUpEvents.length > 0) {
         setScreen("upgrade");
       }
 
@@ -1173,7 +1034,6 @@ export function syscalls({
       setEquipItems([]);
       setDropItems([]);
       getEthBalance();
-      setUpdateDeathPenalty(true);
     } catch (e) {
       console.log(e);
       stopLoading(e, true);
@@ -1293,47 +1153,21 @@ export function syscalls({
         items: [...filteredDrops, ...purchasedItems],
       });
 
-      const adventurerDiedEvents = events.filter(
-        (event) => event.name === "AdventurerDied"
-      );
-      if (adventurerDiedEvents.length > 0) {
-        for (let adventurerDiedEvent of adventurerDiedEvents) {
-          setData("adventurerByIdQuery", {
-            adventurers: [adventurerDiedEvent.data[0]],
-          });
-          const deadAdventurerIndex =
-            queryData.adventurersByOwnerQuery?.adventurers.findIndex(
-              (adventurer: Adventurer) =>
-                adventurer.id == adventurerDiedEvent.data[0].id
-            );
-          setData("adventurersByOwnerQuery", 0, "health", deadAdventurerIndex);
-          setAdventurer(adventurerDiedEvent.data[0]);
-          setDeathNotification("Upgrade", "Death Penalty");
-          setScreen("start");
-          setStartOption("create adventurer");
-        }
-      }
-
       // Reset items to no availability
       setData("latestMarketItemsQuery", null);
-      if (events.some((event) => event.name === "AdventurerDied")) {
-        setScreen("start");
-        setStartOption("create adventurer");
-        stopLoading("Death Penalty");
-      } else {
-        stopLoading(
-          {
-            Stats: upgrades,
-            Items: purchaseItems,
-            Potions: potionAmount,
-          },
-          false,
-          "Upgrade"
-        );
-        setScreen("play");
-      }
+      stopLoading(
+        {
+          Stats: upgrades,
+          Items: purchaseItems,
+          Potions: potionAmount,
+        },
+        false,
+        "Upgrade"
+      );
+      setScreen("play");
+
       getEthBalance();
-      setUpdateDeathPenalty(true);
+      setEntropyReady(false);
     } catch (e) {
       console.log(e);
       stopLoading(e, true);
@@ -1531,15 +1365,12 @@ export function syscalls({
             (battle) =>
               battle.attacker == "Beast" && battle.adventurerHealth == 0
           );
-          // In a multicall someone can either die from swapping inventory or the death penalty. Here we handle those cases
           if (killedByBeast) {
             setDeathNotification(
               "Multicall",
               ["You equipped"],
               adventurerDiedEvent.data[0]
             );
-          } else {
-            setDeathNotification("Upgrade", "Death Penalty");
           }
           setScreen("start");
           setStartOption("create adventurer");
@@ -1575,7 +1406,6 @@ export function syscalls({
         // Reset items to no availability
         setData("latestMarketItemsQuery", null);
         setScreen("play");
-        setUpdateDeathPenalty(true);
       }
 
       const droppedItems = handleDrop(events, setData, setAdventurer);
@@ -1633,8 +1463,8 @@ export function syscalls({
   const mintLords = async () => {
     const mintLords: Call = {
       contractAddress: lordsContract?.address ?? "",
-      entrypoint: "mint_lords",
-      calldata: [],
+      entrypoint: "mint",
+      calldata: [account.address, "50000000000000000000000", "0"],
     };
     const isArcade = checkArcadeConnector(connector!);
     try {
