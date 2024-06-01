@@ -653,6 +653,7 @@ class OrderByInput:
 @strawberry.input
 class AdventurersFilter:
     id: Optional[FeltValueFilter] = None
+    entropy: Optional[HexValueFilter] = None
     lastAction: Optional[FeltValueFilter] = None
     owner: Optional[HexValueFilter] = None
     name: Optional[StringFilter] = None
@@ -778,6 +779,7 @@ class ItemsFilter:
 @strawberry.input
 class AdventurersOrderByInput:
     id: Optional[OrderByInput] = None
+    entropy: Optional[OrderByInput] = None
     lastAction: Optional[OrderByInput] = None
     owner: Optional[OrderByInput] = None
     name: Optional[OrderByInput] = None
@@ -905,7 +907,7 @@ class ItemsOrderByInput:
 @strawberry.type
 class Adventurer:
     id: Optional[FeltValue]
-    lastAction: Optional[FeltValue]
+    entropy: Optional[HexValue]
     owner: Optional[HexValue]
     name: Optional[StringValue]
     health: Optional[FeltValue]
@@ -927,9 +929,8 @@ class Adventurer:
     ring: Optional[ItemValue]
     beastHealth: Optional[FeltValue]
     statUpgrades: Optional[FeltValue]
-    startBlock: Optional[FeltValue]
+    startEntropy: Optional[FeltValue]
     revealBlock: Optional[FeltValue]
-    actionsPerBlock: Optional[FeltValue]
     gold: Optional[FeltValue]
     createdTime: Optional[str]
     lastUpdatedTime: Optional[str]
@@ -939,7 +940,7 @@ class Adventurer:
     def from_mongo(cls, data):
         return cls(
             id=data["id"],
-            lastAction=data["lastAction"],
+            entropy=data["entropy"],
             owner=data["owner"],
             name=data["name"],
             health=data["health"],
@@ -961,9 +962,8 @@ class Adventurer:
             ring=data["ring"],
             beastHealth=data["beastHealth"],
             statUpgrades=data["statUpgrades"],
-            startBlock=data["startBlock"],
+            startEntropy=data["startEntropy"],
             revealBlock=data["revealBlock"],
-            actionsPerBlock=data["actionsPerBlock"],
             gold=data["gold"],
             createdTime=data["createdTime"],
             lastUpdatedTime=data["lastUpdatedTime"],
@@ -1601,8 +1601,8 @@ async def run_graphql_api(mongo=None, port="8080"):
 
     ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     ssl_context.load_cert_chain(
-        "/etc/letsencrypt/live/survivor-sepolia-indexer.realms.world/fullchain.pem",
-        "/etc/letsencrypt/live/survivor-sepolia-indexer.realms.world/privkey.pem",
+        "/etc/letsencrypt/live/ls-indexer-sepolia.provable.games/fullchain.pem",
+        "/etc/letsencrypt/live/ls-indexer-sepolia.provable.games/privkey.pem",
     )
 
     runner = web.AppRunner(app)
