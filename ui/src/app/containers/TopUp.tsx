@@ -192,7 +192,7 @@ const SectionContent = ({
                     ? `Connect ${connector.id}`
                     : connector.id === "argentWebWallet"
                     ? "Login With Email"
-                    : "Login with Argent Mobile"}
+                    : "Login with Cartridge Controller"}
                 </Button>
               ))}
             </div>
@@ -210,7 +210,7 @@ const SectionContent = ({
                     ? `Connect ${connector.id}`
                     : connector.id === "argentWebWallet"
                     ? "Login With Email"
-                    : "Login with Argent Mobile"}
+                    : "Login with Cartridge Controller"}
                 </Button>
               ))}
             </div>

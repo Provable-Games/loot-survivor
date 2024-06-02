@@ -58,9 +58,6 @@ export default function Header({
   const resetData = useQueriesStore((state) => state.resetData);
 
   const setDisconnected = useUIStore((state) => state.setDisconnected);
-  const arcadeDialog = useUIStore((state) => state.arcadeDialog);
-  const showArcadeDialog = useUIStore((state) => state.showArcadeDialog);
-  const isWrongNetwork = useUIStore((state) => state.isWrongNetwork);
   const isMuted = useUIStore((state) => state.isMuted);
   const setIsMuted = useUIStore((state) => state.setIsMuted);
   const displayCart = useUIStore((state) => state.displayCart);
