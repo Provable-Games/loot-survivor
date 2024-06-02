@@ -1,14 +1,6 @@
 "use client";
-import {
-  useAccount,
-  useConnect,
-  useContract,
-  Connector,
-} from "@starknet-react/core";
+import { useAccount, useConnect, useContract } from "@starknet-react/core";
 import { sepolia } from "@starknet-react/chains";
-import { InjectedConnector } from "starknetkit/injected";
-import { ArgentMobileConnector } from "starknetkit/argentMobile";
-import { WebWalletConnector } from "starknetkit/webwallet";
 import { constants } from "starknet";
 import { useState, useEffect, useMemo } from "react";
 import ActionsScreen from "@/app/containers/ActionsScreen";
@@ -49,7 +41,6 @@ import {
   getLatestMarketItems,
   getGoldenTokensByOwner,
 } from "@/app/hooks/graphql/queries";
-import { ArcadeDialog } from "@/app/components/ArcadeDialog";
 import NetworkSwitchError from "@/app/components/navigation/NetworkSwitchError";
 import { syscalls } from "@/app/lib/utils/syscalls";
 import Game from "@/app/abi/Game.json";
@@ -66,8 +57,6 @@ import { fetchBalances, fetchEthBalance } from "@/app/lib/balances";
 import useTransactionManager from "@/app/hooks/useTransactionManager";
 import { StarknetProvider } from "@/app//provider";
 import { SpecialBeast } from "@/app/components/notifications/SpecialBeast";
-import { useBurner } from "@/app/lib/burner";
-import { connectors } from "@/app/lib/connectors";
 import Storage from "@/app/lib/storage";
 import Onboarding from "./containers/Onboarding";
 import TopUp from "./containers/TopUp";
@@ -92,37 +81,14 @@ const mobileMenuItems: Menu[] = [
 ];
 
 export default function Main() {
-  const [appConnectors, setAppConnectors] = useState<
-    (
-      | Connector
-      | WebWalletConnector
-      | InjectedConnector
-      | ArgentMobileConnector
-    )[]
-  >([]);
-
-  const { listConnectors } = useBurner({});
-
-  const updateConnectors = () => {
-    const arcadeConnectors = listConnectors();
-    setAppConnectors([...arcadeConnectors, ...connectors]);
-  };
-
-  useEffect(() => {
-    updateConnectors();
-  }, []);
   return (
-    <StarknetProvider connectors={appConnectors}>
-      <Home updateConnectors={updateConnectors} />
+    <StarknetProvider>
+      <Home />
     </StarknetProvider>
   );
 }
 
-interface HomeProps {
-  updateConnectors: () => void;
-}
-
-function Home({ updateConnectors }: HomeProps) {
+function Home() {
   const { connect, connector, connectors } = useConnect();
   const disconnected = useUIStore((state) => state.disconnected);
   const setDisconnected = useUIStore((state) => state.setDisconnected);
@@ -143,7 +109,6 @@ function Home({ updateConnectors }: HomeProps) {
   const owner = account?.address ? padAddress(account.address) : "";
   const isWrongNetwork = useUIStore((state) => state.isWrongNetwork);
   const setIsWrongNetwork = useUIStore((state) => state.setIsWrongNetwork);
-  const arcadeDialog = useUIStore((state) => state.arcadeDialog);
   const onboarded = useUIStore((state) => state.onboarded);
   const topUpDialog = useUIStore((state) => state.topUpDialog);
   const showTopUpDialog = useUIStore((state) => state.showTopUpDialog);
@@ -548,7 +513,6 @@ function Home({ updateConnectors }: HomeProps) {
               gameContract={gameContract!}
               lordsContract={lordsContract!}
               ethContract={ethContract!}
-              updateConnectors={updateConnectors}
             />
           ) : status == "connected" && topUpDialog ? (
             <TopUp
@@ -559,7 +523,6 @@ function Home({ updateConnectors }: HomeProps) {
               gameContract={gameContract!}
               lordsContract={lordsContract!}
               ethContract={ethContract!}
-              updateConnectors={updateConnectors}
               showTopUpDialog={showTopUpDialog}
             />
           ) : (
@@ -590,18 +553,6 @@ function Home({ updateConnectors }: HomeProps) {
               <NotificationDisplay />
 
               {deathDialog && <DeathDialog />}
-              {status == "connected" && arcadeDialog && (
-                <ArcadeDialog
-                  gameContract={gameContract!}
-                  lordsContract={lordsContract!}
-                  ethContract={ethContract!}
-                  updateConnectors={updateConnectors}
-                  lordsBalance={Number(lordsBalance)}
-                  ethBalance={Number(ethBalance)}
-                  costToPlay={costToPlay!}
-                  getAccountBalances={getBalances}
-                />
-              )}
               {introComplete ? (
                 <div className="flex flex-col w-full h-[600px] sm:h-[625px]">
                   <>
