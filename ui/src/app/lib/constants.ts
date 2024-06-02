@@ -41,7 +41,7 @@ export const TRANSACTION_WAIT_RETRY_INTERVAL = 6000; // 6 seconds
 export const ETH_INCREMENT = 0.001;
 export const LORDS_INCREMENT = 5;
 export const MAX_FEE_CHECK =
-  onMainnet || onSepolia ? 0.03 * 10 ** 18 : 0.0003 * 10 ** 18; // 0.003ETH on mainnet or sepolia, 0.0003ETH on goerli
+  onMainnet || onSepolia ? 0.3 * 10 ** 18 : 0.03 * 10 ** 18; // 0.003ETH on mainnet or sepolia, 0.0003ETH on goerli
 
 export const deathMessages = [
   {
