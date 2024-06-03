@@ -66,7 +66,6 @@ interface SectionContentProps {
     lordsAmount: number
   ) => Promise<Account | undefined>;
   listConnectors: () => any[];
-  updateConnectors: () => void;
   handleOnboarded: () => void;
   setScreen: (value: ScreenPage) => void;
   masterConnected: boolean;
@@ -108,7 +107,6 @@ const SectionContent = ({
   connector,
   create,
   listConnectors,
-  updateConnectors,
   handleOnboarded,
   setScreen,
   masterConnected,
@@ -194,7 +192,7 @@ const SectionContent = ({
                     ? `Connect ${connector.id}`
                     : connector.id === "argentWebWallet"
                     ? "Login With Email"
-                    : "Login with Argent Mobile"}
+                    : "Login with Cartridge Controller"}
                 </Button>
               ))}
             </div>
@@ -212,7 +210,7 @@ const SectionContent = ({
                     ? `Connect ${connector.id}`
                     : connector.id === "argentWebWallet"
                     ? "Login With Email"
-                    : "Login with Argent Mobile"}
+                    : "Login with Cartridge Controller"}
                 </Button>
               ))}
             </div>
@@ -497,7 +495,6 @@ interface TopUpProps {
   gameContract: Contract;
   lordsContract: Contract;
   ethContract: Contract;
-  updateConnectors: () => void;
   showTopUpDialog: (value: boolean) => void;
 }
 
@@ -509,7 +506,6 @@ const TopUp = ({
   gameContract,
   lordsContract,
   ethContract,
-  updateConnectors,
   showTopUpDialog,
 }: TopUpProps) => {
   const { account, address, connector } = useAccount();
@@ -651,7 +647,6 @@ const TopUp = ({
                 connector={connector}
                 create={create}
                 listConnectors={listConnectors}
-                updateConnectors={updateConnectors}
                 handleOnboarded={handleOnboarded}
                 setScreen={setScreen}
                 masterConnected={masterConnected}
@@ -687,7 +682,6 @@ const TopUp = ({
                 connector={connector}
                 create={create}
                 listConnectors={listConnectors}
-                updateConnectors={updateConnectors}
                 handleOnboarded={handleOnboarded}
                 setScreen={setScreen}
                 masterConnected={masterConnected}
@@ -723,7 +717,6 @@ const TopUp = ({
                 connector={connector}
                 create={create}
                 listConnectors={listConnectors}
-                updateConnectors={updateConnectors}
                 handleOnboarded={handleOnboarded}
                 setScreen={setScreen}
                 masterConnected={masterConnected}
@@ -760,7 +753,6 @@ const TopUp = ({
                 connector={connector}
                 create={create}
                 listConnectors={listConnectors}
-                updateConnectors={updateConnectors}
                 handleOnboarded={handleOnboarded}
                 setScreen={setScreen}
                 masterConnected={masterConnected}
@@ -795,7 +787,6 @@ const TopUp = ({
                 connector={connector}
                 create={create}
                 listConnectors={listConnectors}
-                updateConnectors={updateConnectors}
                 handleOnboarded={handleOnboarded}
                 setScreen={setScreen}
                 masterConnected={masterConnected}
@@ -830,7 +821,6 @@ const TopUp = ({
                 connector={connector}
                 create={create}
                 listConnectors={listConnectors}
-                updateConnectors={updateConnectors}
                 handleOnboarded={handleOnboarded}
                 setScreen={setScreen}
                 masterConnected={masterConnected}

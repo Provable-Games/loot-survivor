@@ -59,7 +59,6 @@ interface SectionContentProps {
     lordsAmount: number
   ) => Promise<Account | undefined>;
   listConnectors: () => any[];
-  updateConnectors: () => void;
   handleOnboarded: () => void;
   setScreen: (value: ScreenPage) => void;
 }
@@ -86,7 +85,6 @@ const SectionContent = ({
   connector,
   create,
   listConnectors,
-  updateConnectors,
   handleOnboarded,
   setScreen,
 }: SectionContentProps) => {
@@ -132,7 +130,11 @@ const SectionContent = ({
                   }}
                   key={index}
                 >
-                  {connector.name}
+                  {connector.id === "braavos" || connector.id === "argentX"
+                    ? `Connect ${connector.id}`
+                    : connector.id === "argentWebWallet"
+                    ? "Login With Email"
+                    : "Login with Cartridge Controller"}
                 </Button>
               ))}
             </div>
@@ -147,7 +149,11 @@ const SectionContent = ({
                   }}
                   key={index}
                 >
-                  {connector.name}
+                  {connector.id === "braavos" || connector.id === "argentX"
+                    ? `Connect ${connector.id}`
+                    : connector.id === "argentWebWallet"
+                    ? "Login With Email"
+                    : "Login with Cartridge Controller"}
                 </Button>
               ))}
             </div>
@@ -364,27 +370,6 @@ const SectionContent = ({
                 <Lords className="fill-current w-2" />
                 {formatCurrency(lordsGameCost * prefundGames)} LORDS Required
               </span>
-              <span className="w-3/4 h-10">
-                <Button
-                  size={"fill"}
-                  onClick={async () => {
-                    try {
-                      setFullDeployment(true);
-                      await create(connector!, prefundGames * lordsGameCost);
-                      disconnect();
-                      connect({ connector: listConnectors()[0] });
-                      updateConnectors();
-                      setFullDeployment(false);
-                      handleOnboarded();
-                      setScreen("start");
-                    } catch (e) {
-                      console.log("Arcade deployment cancelled");
-                    }
-                  }}
-                >
-                  Deploy
-                </Button>
-              </span>
             </div>
           </div>
         </div>
@@ -543,7 +528,6 @@ interface OnboardingProps {
   gameContract: Contract;
   lordsContract: Contract;
   ethContract: Contract;
-  updateConnectors: () => void;
 }
 
 const Onboarding = ({
@@ -554,7 +538,6 @@ const Onboarding = ({
   gameContract,
   lordsContract,
   ethContract,
-  updateConnectors,
 }: OnboardingProps) => {
   const { account, address, connector } = useAccount();
   const { connect, connectors } = useConnect();
@@ -684,7 +667,6 @@ const Onboarding = ({
               connector={connector}
               create={create}
               listConnectors={listConnectors}
-              updateConnectors={updateConnectors}
               handleOnboarded={handleOnboarded}
               setScreen={setScreen}
             />
@@ -713,7 +695,6 @@ const Onboarding = ({
               connector={connector}
               create={create}
               listConnectors={listConnectors}
-              updateConnectors={updateConnectors}
               handleOnboarded={handleOnboarded}
               setScreen={setScreen}
             />
@@ -742,7 +723,6 @@ const Onboarding = ({
               connector={connector}
               create={create}
               listConnectors={listConnectors}
-              updateConnectors={updateConnectors}
               handleOnboarded={handleOnboarded}
               setScreen={setScreen}
             />
@@ -771,7 +751,6 @@ const Onboarding = ({
               connector={connector}
               create={create}
               listConnectors={listConnectors}
-              updateConnectors={updateConnectors}
               handleOnboarded={handleOnboarded}
               setScreen={setScreen}
             />
@@ -815,7 +794,6 @@ const Onboarding = ({
               connector={connector}
               create={create}
               listConnectors={listConnectors}
-              updateConnectors={updateConnectors}
               handleOnboarded={handleOnboarded}
               setScreen={setScreen}
             />
@@ -843,7 +821,6 @@ const Onboarding = ({
               connector={connector}
               create={create}
               listConnectors={listConnectors}
-              updateConnectors={updateConnectors}
               handleOnboarded={handleOnboarded}
               setScreen={setScreen}
             />
@@ -871,7 +848,6 @@ const Onboarding = ({
               connector={connector}
               create={create}
               listConnectors={listConnectors}
-              updateConnectors={updateConnectors}
               handleOnboarded={handleOnboarded}
               setScreen={setScreen}
             />
@@ -899,7 +875,6 @@ const Onboarding = ({
               connector={connector}
               create={create}
               listConnectors={listConnectors}
-              updateConnectors={updateConnectors}
               handleOnboarded={handleOnboarded}
               setScreen={setScreen}
             />

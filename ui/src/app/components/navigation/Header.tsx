@@ -58,9 +58,6 @@ export default function Header({
   const resetData = useQueriesStore((state) => state.resetData);
 
   const setDisconnected = useUIStore((state) => state.setDisconnected);
-  const arcadeDialog = useUIStore((state) => state.arcadeDialog);
-  const showArcadeDialog = useUIStore((state) => state.showArcadeDialog);
-  const isWrongNetwork = useUIStore((state) => state.isWrongNetwork);
   const isMuted = useUIStore((state) => state.isMuted);
   const setIsMuted = useUIStore((state) => state.setIsMuted);
   const displayCart = useUIStore((state) => state.displayCart);
@@ -154,30 +151,6 @@ export default function Header({
             )}
           </span>
         </Button>
-        {/* <span className="sm:hidden w-5 h-5">
-          <Button
-            size={"fill"}
-            variant={checkArcade ? "outline" : "default"}
-            onClick={() => showArcadeDialog(!arcadeDialog)}
-            disabled={isWrongNetwork || !account}
-            className={`xl:px-5 ${checkArcade ? "" : "animate-pulse"}`}
-          >
-            <ArcadeIcon className="w-5 h-5 justify-center fill-current sm:mr-2" />
-            <span className="hidden sm:block">arcade account</span>
-          </Button>
-        </span> */}
-        {/* <Button
-          size={"xs"}
-          variant={checkArcade ? "outline" : "default"}
-          onClick={() => showArcadeDialog(!arcadeDialog)}
-          disabled={isWrongNetwork || !account}
-          className={`hidden sm:flex xl:px-5 ${
-            checkArcade ? "" : "animate-pulse"
-          }`}
-        >
-          <ArcadeIcon className="w-5 h-5 justify-center fill-current mr-2" />
-          <span className="hidden sm:block">arcade account</span>
-        </Button> */}
         <Button
           size={"xs"}
           variant={"outline"}
@@ -247,11 +220,6 @@ export default function Header({
             >
               {account ? displayAddress(account.address) : "Connect"}
             </Button>
-            {checkArcade && (
-              <div className="absolute top-0 right-0">
-                <ArcadeIcon className="fill-current w-2 sm:w-4" />
-              </div>
-            )}
           </div>
           <Button
             size={"fill"}
