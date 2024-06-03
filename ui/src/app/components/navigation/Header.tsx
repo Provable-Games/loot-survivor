@@ -154,7 +154,7 @@ export default function Header({
             )}
           </span>
         </Button>
-        <span className="sm:hidden w-5 h-5">
+        {/* <span className="sm:hidden w-5 h-5">
           <Button
             size={"fill"}
             variant={checkArcade ? "outline" : "default"}
@@ -165,8 +165,8 @@ export default function Header({
             <ArcadeIcon className="w-5 h-5 justify-center fill-current sm:mr-2" />
             <span className="hidden sm:block">arcade account</span>
           </Button>
-        </span>
-        <Button
+        </span> */}
+        {/* <Button
           size={"xs"}
           variant={checkArcade ? "outline" : "default"}
           onClick={() => showArcadeDialog(!arcadeDialog)}
@@ -177,7 +177,7 @@ export default function Header({
         >
           <ArcadeIcon className="w-5 h-5 justify-center fill-current mr-2" />
           <span className="hidden sm:block">arcade account</span>
-        </Button>
+        </Button> */}
         <Button
           size={"xs"}
           variant={"outline"}

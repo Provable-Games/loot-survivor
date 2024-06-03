@@ -49,11 +49,7 @@ const WalletSelect = ({}: WalletSelectProps) => {
                     key={index}
                     className="w-full"
                   >
-                    {connector.id === "braavos" || connector.id === "argentX"
-                      ? `Connect ${connector.id}`
-                      : connector.id === "argentWebWallet"
-                      ? "Login With Email"
-                      : "Login with Argent Mobile"}
+                    {connector.name}
                   </Button>
                 ))}
               </div>

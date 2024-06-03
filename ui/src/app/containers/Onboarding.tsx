@@ -111,7 +111,7 @@ const SectionContent = ({
               In order to play LOOT SURVIVOR you are required to connect a
               Starknet wallet.
             </p>
-            <span
+            {/* <span
               className="flex items-center justify-center border border-terminal-green w-1/2 p-2 cursor-pointer"
               onClick={() => setSection("connect")}
             >
@@ -121,7 +121,7 @@ const SectionContent = ({
                   <InfoIcon />
                 </span>
               </span>
-            </span>
+            </span> */}
             <div className="hidden sm:flex flex-col">
               {walletConnectors.map((connector, index) => (
                 <Button
@@ -132,11 +132,7 @@ const SectionContent = ({
                   }}
                   key={index}
                 >
-                  {connector.id === "braavos" || connector.id === "argentX"
-                    ? `Connect ${connector.id}`
-                    : connector.id === "argentWebWallet"
-                    ? "Login With Email"
-                    : "Login with Argent Mobile"}
+                  {connector.name}
                 </Button>
               ))}
             </div>
@@ -151,11 +147,7 @@ const SectionContent = ({
                   }}
                   key={index}
                 >
-                  {connector.id === "braavos" || connector.id === "argentX"
-                    ? `Connect ${connector.id}`
-                    : connector.id === "argentWebWallet"
-                    ? "Login With Email"
-                    : "Login with Argent Mobile"}
+                  {connector.name}
                 </Button>
               ))}
             </div>
@@ -612,6 +604,8 @@ const Onboarding = ({
 
   useEffect(() => {
     if (account && checkEnoughEth && checkEnoughLords) {
+      setScreen("start");
+      handleOnboarded();
       setStep(4);
     } else if (account && checkEnoughEth) {
       setStep(3);
@@ -663,15 +657,10 @@ const Onboarding = ({
         Skip to game
       </Button>
       <div className="flex flex-col items-center gap-5 py-20 sm:p-0">
-        <h1 className="m-0 uppercase text-6xl text-center">
-          Welcome to Loot Survivor
-        </h1>
-        <p className="hidden sm:block text-lg">
-          A fully on-chain arcade game on Starknet. Follow the steps below to
-          get setup smoothly:
-        </p>
+        <h1 className="m-0 uppercase text-6xl text-center">Loot Survivor</h1>
+        <p className="hidden sm:block text-2xl">an onchain arcade</p>
         <div className="hidden sm:flex flex-row h-5/6 gap-5">
-          <div className="flex flex-col items-center w-1/4">
+          <div className="flex flex-col items-center w-1/3">
             <h2 className="m-0">1</h2>
             <SectionContent
               section={"connect"}
@@ -700,7 +689,7 @@ const Onboarding = ({
               setScreen={setScreen}
             />
           </div>
-          <div className="flex flex-col items-center w-1/4">
+          <div className="flex flex-col items-center w-1/3">
             <h2 className="m-0">2</h2>
             <SectionContent
               section={"eth"}
@@ -729,7 +718,7 @@ const Onboarding = ({
               setScreen={setScreen}
             />
           </div>
-          <div className="flex flex-col items-center w-1/4">
+          <div className="flex flex-col items-center w-1/3">
             <h2 className="m-0">3</h2>
             <SectionContent
               section={"lords"}
@@ -758,7 +747,7 @@ const Onboarding = ({
               setScreen={setScreen}
             />
           </div>
-          <div className="flex flex-col items-center w-1/4">
+          {/* <div className="flex flex-col items-center w-1/4">
             <h2 className="m-0">4</h2>
             <SectionContent
               section={"arcade"}
@@ -786,7 +775,7 @@ const Onboarding = ({
               handleOnboarded={handleOnboarded}
               setScreen={setScreen}
             />
-          </div>
+          </div> */}
         </div>
         <div className="hidden sm:flex flex-row items-center gap-10">
           <p className="uppercase text-xl">
@@ -887,7 +876,7 @@ const Onboarding = ({
               setScreen={setScreen}
             />
           )}
-          {step == 4 && (
+          {/* {step == 4 && (
             <SectionContent
               section={"arcade"}
               setSection={setSection}
@@ -914,7 +903,7 @@ const Onboarding = ({
               handleOnboarded={handleOnboarded}
               setScreen={setScreen}
             />
-          )}
+          )} */}
         </div>
         <div className="sm:hidden flex items-center justify-center w-full h-1/5">
           <div className="flex flex-row justify-between items-center w-1/2 h-full">
@@ -945,7 +934,7 @@ const Onboarding = ({
             >
               {step > 3 ? <CompleteIcon /> : 3}
             </div>
-            <div
+            {/* <div
               className={`flex justify-center items-center w-8 h-8 sm:w-12 sm:h-12  ${
                 step == 4
                   ? "bg-terminal-green text-terminal-black"
@@ -953,7 +942,7 @@ const Onboarding = ({
               }`}
             >
               4
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
