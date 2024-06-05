@@ -60,7 +60,7 @@ mod Game {
         interfaces::{IGame},
         constants::{
             messages, Rewards, REWARD_DISTRIBUTIONS_PHASE1_BP, REWARD_DISTRIBUTIONS_PHASE2_BP,
-            REWARD_DISTRIBUTIONS_PHASE3_BP, BLOCKS_IN_A_WEEK, COST_TO_PLAY, U64_MAX, U128_MAX,
+            REWARD_DISTRIBUTIONS_PHASE3_BP, BLOCKS_IN_A_WEEK, U64_MAX, U128_MAX,
             STARTER_BEAST_ATTACK_DAMAGE, NUM_STARTING_STATS, MINIMUM_DAMAGE_FROM_BEASTS
         }
     };
@@ -163,7 +163,8 @@ mod Game {
         terminal_timestamp: u64,
         randomness_contract_address: ContractAddress,
         randomness_rotation_interval: u8,
-        oracle_address: ContractAddress
+        oracle_address: ContractAddress,
+        cost_to_play: u128
     ) {
         // init storage
         self._lords.write(lords);
@@ -190,7 +191,7 @@ mod Game {
         self._golden_token.write(golden_token_address);
 
         // set the cost to play
-        self._cost_to_play.write(COST_TO_PLAY);
+        self._cost_to_play.write(cost_to_play);
     }
 
     // ------------------------------------------ //
@@ -280,7 +281,7 @@ mod Game {
             // process payment for game and distribute rewards
             if (golden_token_id != 0) {
                 _play_with_token(ref self, golden_token_id, interface_camel);
-            } else {
+            } else if (self._cost_to_play.read() != 0) {
                 _process_payment_and_distribute_rewards(ref self, client_reward_address);
             }
 

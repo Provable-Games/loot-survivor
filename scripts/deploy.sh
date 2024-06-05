@@ -17,6 +17,7 @@ golden_token_id="0 0"
 interface_camel=0
 vrf_fee_limit=5000000000000000
 eth_contract=0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
+STARKNET_RPC=http://0.0.0.0:5050
 
 # Source env vars
 ENV_FILE="/workspaces/loot-survivor/.env"
@@ -24,38 +25,93 @@ source $ENV_FILE
 
 # build game contract
 cd /workspaces/loot-survivor/contracts/
-scarb build
+#scarb build
 
-#declare lords contract
-lords_class_hash=$(starkli declare --watch /workspaces/loot-survivor/target/dev/lords_ERC20.contract_class.json --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY 2>/dev/null)
+# check if '-katana' argument was provided to script
+# script should provide three options: {mainnet, sepolia, katana}
+# if no argument is provided, default to katana
+# can you write that code?
+if [ -z "$1" ]; then
+    echo "No network specified, defaulting to katana"
+    network="katana"
+else
+    case "$1" in
+    -mainnet)
+        network="mainnet"
+        ;;
+    -sepolia)
+        network="sepolia"
+        ;;
+    -katana)
+        network="katana"
+        ;;
+    *)
+        echo "Invalid argument: $1. Use -mainnet, -sepolia, or -katana."
+        exit 1
+        ;;
+    esac
+fi
 
-# declare game contract
-game_class_hash=$(starkli declare --watch /workspaces/loot-survivor/target/dev/game_Game.contract_class.json --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY 2>/dev/null)
+# if network is katana
+if [ "$network" == "katana" ]; then
+    # start katana service in the background and direct output to ~/katana/logs.txt
+    katana --disable-fee --dev --disable-validate --block-time 500 --db-dir ~/katana/db --silent &>>~/katana/logs &
+    katana_pid=$!
+    echo $katana_pid >~/katana/pid
+    echo "Katana service started with PID: $katana_pid, logs at ~/katana/logs"
+    export STARKNET_RPC=http://0.0.0.0:5050
+    cost_to_play=0
 
-# deploy lords
-lords_contract=$(starkli deploy --watch $lords_class_hash $lords_cairo_string $lords_cairo_string $initial_supply 0 $ACCOUNT_ADDRESS --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null)
+    # declare game contract
+    game_class_hash=$(starkli declare --watch /workspaces/loot-survivor/target/dev/game_Game.contract_class.json --rpc $STARKNET_RPC 2>/dev/null)
+    # deploy game
+    game_contract=$(starkli deploy --watch $game_class_hash 0 0 0 0 0 0 1 0 0 --rpc $STARKNET_RPC 2>/dev/null)
 
-# deploy game
-game_contract=$(starkli deploy --watch $game_class_hash $lords_contract $dao_address $collectible_address $golden_token_address $terminal_timestamp $randomness_contract $randomness_rotation_interval $oracle_address --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null)
+    # transfer eth to game contract so it can pay for VRF
+    echo "transfering eth to game contract"
+    starkli invoke --watch $eth_contract transfer $game_contract 50000000000000000 0 --rpc $STARKNET_RPC 2>/dev/null
 
-# mint lords
-echo "minting lords"
-starkli invoke --watch $lords_contract mint $ACCOUNT_ADDRESS 1000000000000000000000 0 --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null
+    # start new game
+    echo "starting new game"
+    starkli invoke --watch $game_contract new_game $client_reward_address $starting_weapon $player_name $golden_token_id $interface_camel $vrf_fee_limit --rpc $STARKNET_RPC 2>/dev/null
 
-# give game contract approval to spent lords
-echo "approving game contract to spend lords"
-starkli invoke --watch $lords_contract approve $game_contract 1000000000000000000000 0 --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null
+    #output contracts and export contract vars
+    echo "game contract: " $game_contract
+    echo "lords contract: " $lords_contract
+    export game_contract
+    export lords_contract
+else
+    #declare lords contract
+    lords_class_hash=$(starkli declare --watch /workspaces/loot-survivor/target/dev/lords_ERC20.contract_class.json --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY 2>/dev/null)
 
-# transfer eth to game contract so it can pay for VRF
-echo "transfering eth to game contract"
-starkli invoke --watch $eth_contract transfer $game_contract 50000000000000000 0 --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null
+    # declare game contract
+    game_class_hash=$(starkli declare --watch /workspaces/loot-survivor/target/dev/game_Game.contract_class.json --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY 2>/dev/null)
 
-# start new game
-echo "starting new game"
-starkli invoke --watch $game_contract new_game $client_reward_address $starting_weapon $player_name $golden_token_id $interface_camel $vrf_fee_limit --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null
+    # deploy lords
+    lords_contract=$(starkli deploy --watch $lords_class_hash $lords_cairo_string $lords_cairo_string $initial_supply 0 $ACCOUNT_ADDRESS --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null)
 
-#output contracts and export contract vars
-echo "game contract: " $game_contract
-echo "lords contract: " $lords_contract
-export game_contract
-export lords_contract
+    # deploy game
+    game_contract=$(starkli deploy --watch $game_class_hash $lords_contract $dao_address $collectible_address $golden_token_address $terminal_timestamp $randomness_contract $randomness_rotation_interval $oracle_address --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null)
+
+    # mint lords
+    echo "minting lords"
+    starkli invoke --watch $lords_contract mint $ACCOUNT_ADDRESS 1000000000000000000000 0 --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null
+
+    # give game contract approval to spent lords
+    echo "approving game contract to spend lords"
+    starkli invoke --watch $lords_contract approve $game_contract 1000000000000000000000 0 --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null
+
+    # transfer eth to game contract so it can pay for VRF
+    echo "transfering eth to game contract"
+    starkli invoke --watch $eth_contract transfer $game_contract 50000000000000000 0 --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null
+
+    # start new game
+    echo "starting new game"
+    starkli invoke --watch $game_contract new_game $client_reward_address $starting_weapon $player_name $golden_token_id $interface_camel $vrf_fee_limit --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null
+
+    #output contracts and export contract vars
+    echo "game contract: " $game_contract
+    echo "lords contract: " $lords_contract
+    export game_contract
+    export lords_contract
+fi

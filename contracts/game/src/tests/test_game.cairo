@@ -30,7 +30,7 @@ mod tests {
         game::{
             interfaces::{IGameDispatcherTrait, IGameDispatcher},
             constants::{
-                COST_TO_PLAY, BLOCKS_IN_A_WEEK, Rewards, REWARD_DISTRIBUTIONS_PHASE1_BP,
+                BLOCKS_IN_A_WEEK, Rewards, REWARD_DISTRIBUTIONS_PHASE1_BP,
                 REWARD_DISTRIBUTIONS_PHASE2_BP, REWARD_DISTRIBUTIONS_PHASE3_BP,
                 messages::{STAT_UPGRADES_AVAILABLE}, STARTER_BEAST_ATTACK_DAMAGE,
                 MAINNET_REVEAL_DELAY_BLOCKS
@@ -86,6 +86,7 @@ mod tests {
 
     const PUBLIC_KEY: felt252 = 0x333333;
     const NEW_PUBKEY: felt252 = 0x789789;
+    const COST_TO_PLAY: u128 = 25000000000000000000;
     const SALT: felt252 = 123;
     #[derive(Drop)]
     struct SignedTransactionData {
@@ -171,7 +172,8 @@ mod tests {
         lords: ContractAddress,
         golden_token: ContractAddress,
         terminal_block: u64,
-        randomness: ContractAddress
+        randomness: ContractAddress,
+        cost_to_play: u128
     ) -> IGameDispatcher {
         let mut calldata = ArrayTrait::<felt252>::new();
         calldata.append(lords.into());
@@ -182,6 +184,7 @@ mod tests {
         calldata.append(randomness.into());
         let vrf_level_interval = 3;
         calldata.append(vrf_level_interval);
+        calldata.append(cost_to_play.into());
 
         IGameDispatcher { contract_address: utils::deploy(Game::TEST_CLASS_HASH, calldata) }
     }

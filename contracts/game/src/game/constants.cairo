@@ -41,7 +41,6 @@ mod messages {
 
 // TODO: Update for mainnet
 const BLOCKS_IN_A_WEEK: u64 = 1000;
-const COST_TO_PLAY: u128 = 25000000000000000000;
 const NUM_STARTING_STATS: u8 = 9;
 const MINIMUM_DAMAGE_FROM_BEASTS: u8 = 2;
 const MAINNET_REVEAL_DELAY_BLOCKS: u8 = 11;
