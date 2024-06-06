@@ -40,9 +40,6 @@ const WalletSelect = ({}: WalletSelectProps) => {
 
             <div className="flex flex-col gap-2 m-auto items-center justify-center overflow-y-auto">
               <div className="flex flex-col gap-2 w-full">
-                <Button onClick={() => setScreen("tutorial")}>
-                  I don&apos;t have a wallet
-                </Button>
                 {walletConnectors.map((connector, index) => (
                   <Button
                     onClick={() => connect({ connector })}

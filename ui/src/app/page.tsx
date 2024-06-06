@@ -60,6 +60,8 @@ import { SpecialBeast } from "@/app/components/notifications/SpecialBeast";
 import Storage from "@/app/lib/storage";
 import Onboarding from "./containers/Onboarding";
 import TopUp from "./containers/TopUp";
+import { useController } from "@/app/context/ControllerContext";
+import useControls from "@/app/hooks/useControls";
 
 const allMenuItems: Menu[] = [
   { id: 1, label: "Start", screen: "start", disabled: false },
@@ -175,6 +177,7 @@ function Home() {
       lordsContract,
       gameContract
     );
+    console.log(balances);
     setEthBalance(balances[0]);
     setLordsBalance(balances[1]);
   };
@@ -185,6 +188,7 @@ function Home() {
   };
 
   useEffect(() => {
+    console.log("get balance");
     getBalances();
   }, [account]);
 
@@ -493,6 +497,21 @@ function Home() {
     getCostToPlay();
   }, []);
 
+  const { addControl } = useController();
+
+  useEffect(() => {
+    addControl("i", () => {
+      console.log("Key i pressed");
+      setScreen("inventory");
+    });
+    addControl("i=l", () => {
+      console.log("Key l pressed");
+      setScreen("leaderboard");
+    });
+  }, []);
+
+  useControls();
+
   if (!isConnected && introComplete && disconnected) {
     return <WalletSelect />;
   }
@@ -538,6 +557,7 @@ function Home() {
                   multicall={multicall}
                   mintLords={mintLords}
                   suicide={suicide}
+                  ethBalance={ethBalance}
                   lordsBalance={lordsBalance}
                   gameContract={gameContract!}
                   costToPlay={costToPlay!}

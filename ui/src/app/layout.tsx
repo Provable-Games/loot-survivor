@@ -1,6 +1,7 @@
 "use client";
 
 import { ApolloProvider } from "@apollo/client";
+import { ControllerProvider } from "@/app/context/ControllerContext";
 import { gameClient, goldenTokenClient } from "@/app/lib/clients";
 import "@/app/globals.css";
 
@@ -21,7 +22,9 @@ export default function RootLayout({
           className="absolute w-full pointer-events-none crt-frame hidden sm:block"
         />
         <ApolloProvider client={gameClient}>
-          <ApolloProvider client={goldenTokenClient}>{children}</ApolloProvider>
+          <ApolloProvider client={goldenTokenClient}>
+            <ControllerProvider>{children}</ControllerProvider>
+          </ApolloProvider>
         </ApolloProvider>
       </body>
     </html>

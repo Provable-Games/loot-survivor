@@ -7,6 +7,7 @@ import useUIStore from "@/app/hooks/useUIStore";
 import { useUiSounds } from "@/app/hooks/useUiSound";
 import { soundSelector } from "@/app/hooks/useUiSound";
 import Logo from "public/icons/logo.svg";
+import Eth from "public/icons/eth.svg";
 import Lords from "public/icons/lords.svg";
 import { Button } from "@/app/components/buttons/Button";
 import { formatNumber, displayAddress, indexAddress } from "@/app/lib/utils";
@@ -35,6 +36,7 @@ export interface HeaderProps {
   ) => Promise<void>;
   mintLords: (lordsAmount: number) => Promise<void>;
   suicide: () => Promise<void>;
+  ethBalance: bigint;
   lordsBalance: bigint;
   gameContract: Contract;
   costToPlay: bigint;
@@ -44,6 +46,7 @@ export default function Header({
   multicall,
   mintLords,
   suicide,
+  ethBalance,
   lordsBalance,
   gameContract,
   costToPlay,
@@ -114,6 +117,12 @@ export default function Header({
           onClick={() => window.open(appUrl, "_blank")}
         >
           {isOnMainnet ? "Play on Testnet" : "Play on Mainnet"}
+        </Button>
+        <Button size={"xs"} variant={"outline"} className="self-center xl:px-5">
+          <span className="flex flex-row items-center justify-between w-full">
+            <Eth className="self-center sm:w-5 sm:h-5  h-3 w-3 fill-current mr-1" />
+            <p>{formatNumber(parseInt(ethBalance.toString()) / 10 ** 18)}</p>
+          </span>
         </Button>
         <Button
           size={"xs"}

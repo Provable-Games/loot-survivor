@@ -1,14 +1,13 @@
 "use client";
 import React from "react";
 import {
-  Connector,
   StarknetConfig,
   starkscan,
   jsonRpcProvider,
 } from "@starknet-react/core";
-import { goerli, mainnet, sepolia } from "@starknet-react/chains";
+import { sepolia } from "@starknet-react/chains";
 import { Chain } from "@starknet-react/chains";
-import CartridgeConnector from "@cartridge/connector";
+import { connectors } from "@/app/lib/connectors";
 
 function rpc(_chain: Chain) {
   return {
@@ -16,62 +15,15 @@ function rpc(_chain: Chain) {
   };
 }
 
-const cartridgeConnectors = [
-  new CartridgeConnector(
-    [
-      {
-        target: process.env.NEXT_PUBLIC_GAME_ADDRESS!,
-        method: "new_game",
-      },
-      {
-        target: process.env.NEXT_PUBLIC_GAME_ADDRESS!,
-        method: "explore",
-      },
-      {
-        target: process.env.NEXT_PUBLIC_GAME_ADDRESS!,
-        method: "attack",
-      },
-      {
-        target: process.env.NEXT_PUBLIC_GAME_ADDRESS!,
-        method: "flee",
-      },
-      {
-        target: process.env.NEXT_PUBLIC_GAME_ADDRESS!,
-        method: "equip",
-      },
-      {
-        target: process.env.NEXT_PUBLIC_GAME_ADDRESS!,
-        method: "drop",
-      },
-      {
-        target: process.env.NEXT_PUBLIC_GAME_ADDRESS!,
-        method: "upgrade",
-      },
-      {
-        target: process.env.NEXT_PUBLIC_LORDS_ADDRESS!,
-        method: "approve",
-      },
-    ]
-    // {
-    //   theme: {
-    //     colors: {
-    //       primary: "#0ad3ff",
-    //       secondary: "#78ffd6",
-    //     },
-    //   },
-    // }
-  ) as never as Connector,
-];
-
 export function StarknetProvider({ children }: { children: React.ReactNode }) {
-  const onMainnet = process.env.NEXT_PUBLIC_NETWORK === "mainnet";
-  const onSepolia = process.env.NEXT_PUBLIC_NETWORK === "sepolia";
-  const chains = onMainnet ? [mainnet] : onSepolia ? [sepolia] : [goerli];
+  // const onMainnet = process.env.NEXT_PUBLIC_NETWORK === "mainnet";
+  // const onSepolia = process.env.NEXT_PUBLIC_NETWORK === "sepolia";
+  // const chains = onMainnet ? [mainnet] : onSepolia ? [sepolia] : [goerli];
   return (
     <StarknetConfig
       autoConnect
-      chains={chains}
-      connectors={cartridgeConnectors}
+      chains={[sepolia]}
+      connectors={connectors}
       explorer={starkscan}
       provider={jsonRpcProvider({ rpc })}
     >

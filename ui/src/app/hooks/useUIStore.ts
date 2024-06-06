@@ -89,6 +89,8 @@ type State = {
   setAverageBlockTime: (value: number) => void;
   entropyReady: boolean;
   setEntropyReady: (value: boolean) => void;
+  loginScreen: boolean;
+  setLoginScreen: (value: boolean) => void;
 };
 
 const useUIStore = create<State>((set) => ({
@@ -158,6 +160,8 @@ const useUIStore = create<State>((set) => ({
   setAverageBlockTime: (value) => set({ averageBlockTime: value }),
   entropyReady: false,
   setEntropyReady: (value) => set({ entropyReady: value }),
+  loginScreen: false,
+  setLoginScreen: (value) => set({ loginScreen: value }),
 }));
 
 export default useUIStore;
