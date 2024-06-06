@@ -2,6 +2,7 @@ import { Connector } from "@starknet-react/core";
 import { InjectedConnector } from "starknetkit/injected";
 import { WebWalletConnector } from "starknetkit/webwallet";
 import CartridgeConnector from "@cartridge/connector";
+import CartridgeConnector from "@cartridge/connector";
 
 export const checkArcadeConnector = (connector?: Connector) => {
   return typeof connector?.id === "string" && connector?.id.includes("0x");
