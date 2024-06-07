@@ -16,3 +16,4 @@ loot-survivor.pem
 
 scripts/stress_test.py
 .env
+katana.log
