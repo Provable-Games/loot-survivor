@@ -5,6 +5,7 @@ import ScoreRow from "@/app/components/leaderboard/ScoreRow";
 import useUIStore from "@/app/hooks/useUIStore";
 import { getScoresInList } from "@/app/hooks/graphql/queries";
 import useCustomQuery from "@/app/hooks/useCustomQuery";
+import { networkConfig } from "@/app/lib/networkConfig";
 
 export interface ScoreLeaderboardTableProps {
   itemsPerPage: number;
@@ -21,15 +22,23 @@ const ScoreLeaderboardTable = ({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const setScreen = useUIStore((state) => state.setScreen);
   const setProfile = useUIStore((state) => state.setProfile);
+  const onMainnet = useUIStore((state) => state.onMainnet);
+  const onSepolia = useUIStore((state) => state.onSepolia);
+  const network = useUIStore((state) => state.network);
   const displayScores = adventurers?.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
   const scoreIds = adventurers?.map((score) => score.id ?? 0);
 
-  const scoresData = useCustomQuery("topScoresQuery", getScoresInList, {
-    ids: scoreIds,
-  });
+  const scoresData = useCustomQuery(
+    networkConfig[network!].lsGQLURL!,
+    "topScoresQuery",
+    getScoresInList,
+    {
+      ids: scoreIds,
+    }
+  );
 
   const mergedScores = displayScores.map((item1) => {
     const matchingItem2 = scoresData?.scores.find(
@@ -43,9 +52,6 @@ const ScoreLeaderboardTable = ({
   });
 
   const scoresWithLords = mergedScores;
-
-  const onMainnet = process.env.NEXT_PUBLIC_NETWORK === "mainnet";
-  const onSepolia = process.env.NEXT_PUBLIC_NETWORK === "sepolia";
 
   const totalPages = Math.ceil(adventurers.length / itemsPerPage);
 

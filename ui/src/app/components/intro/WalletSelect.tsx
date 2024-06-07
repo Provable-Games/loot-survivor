@@ -6,11 +6,14 @@ import { WalletTutorial } from "@/app/components/intro/WalletTutorial";
 import Storage from "@/app/lib/storage";
 import { BurnerStorage } from "@/app/types";
 import { getArcadeConnectors, getWalletConnectors } from "@/app/lib/connectors";
+import useUIStore from "@/app/hooks/useUIStore";
+import { networkConfig } from "@/app/lib/networkConfig";
 
 interface WalletSelectProps {}
 
 const WalletSelect = ({}: WalletSelectProps) => {
   const { connectors, connect } = useConnect();
+  const network = useUIStore((state) => state.network);
   const [screen, setScreen] = useState("wallet");
 
   if (!connectors) return <div></div>;
@@ -61,7 +64,7 @@ const WalletSelect = ({}: WalletSelectProps) => {
                     {arcadeConnectors.map((connector, index) => {
                       const currentGamePermissions =
                         storage[connector.name].gameContract ==
-                        process.env.NEXT_PUBLIC_GAME_ADDRESS;
+                        networkConfig[network!].gameAddress;
                       return (
                         <Button
                           onClick={() => connect({ connector })}

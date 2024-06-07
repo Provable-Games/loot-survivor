@@ -3,12 +3,14 @@ import Eth from "public/icons/eth-2.svg";
 import { CompleteIcon, InfoIcon } from "@/app/components/icons/Icons";
 import { Button } from "@/app/components/buttons/Button";
 import { Section } from "@/app/containers/Onboarding";
+import { networkConfig } from "@/app/lib/networkConfig";
+import { Network } from "@/app/hooks/useUIStore";
 
 interface EthSectionProps {
   step: number;
   eth: number;
   onMainnet: boolean;
-  network: string;
+  network: Network;
   setSection: (section: Section) => void;
 }
 
@@ -73,7 +75,7 @@ const EthSection = ({
             onClick={() =>
               onMainnet
                 ? window.open("https://starkgate.starknet.io//", "_blank")
-                : window.open(process.env.NEXT_PUBLIC_FAUCET_URL, "_blank")
+                : window.open(networkConfig[network!].faucetUrl, "_blank")
             }
           >
             {onMainnet ? "Bridge Eth" : "Get ETH"}

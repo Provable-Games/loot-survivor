@@ -39,11 +39,6 @@ import {
   VRF_FEE_LIMIT,
 } from "@/app/lib/constants";
 
-const rpc_addr = process.env.NEXT_PUBLIC_RPC_URL;
-const provider = new Provider({
-  nodeUrl: rpc_addr!,
-});
-
 export interface SyscallsProps {
   gameContract: Contract;
   lordsContract: Contract;
@@ -100,6 +95,7 @@ export interface SyscallsProps {
   getBalances: () => Promise<void>;
   setIsMintingLords: (value: boolean) => void;
   setEntropyReady: (value: boolean) => void;
+  rpc_addr: string;
 }
 
 function handleEquip(
@@ -207,8 +203,13 @@ export function syscalls({
   getBalances,
   setIsMintingLords,
   setEntropyReady,
+  rpc_addr,
 }: SyscallsProps) {
   const gameData = new GameData();
+
+  const provider = new Provider({
+    nodeUrl: rpc_addr!,
+  });
 
   const updateItemsXP = (adventurerState: Adventurer, itemsXP: number[]) => {
     const weapon = adventurerState.weapon;
@@ -275,6 +276,7 @@ export function syscalls({
   const spawn = async (
     formData: FormData,
     goldenTokenId: string,
+    revenueAddress: string,
     costToPlay?: number
   ) => {
     const storage: BurnerStorage = Storage.get("burners");
@@ -297,7 +299,7 @@ export function syscalls({
       contractAddress: gameContract?.address ?? "",
       entrypoint: "new_game",
       calldata: [
-        process.env.NEXT_PUBLIC_DAO_ADDRESS ?? "",
+        revenueAddress,
         getKeyFromValue(gameData.ITEMS, formData.startingWeapon) ?? "",
         stringToFelt(formData.name).toString(),
         goldenTokenId,

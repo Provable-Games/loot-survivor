@@ -4,10 +4,10 @@ import { CompleteIcon } from "@/app/components/icons/Icons";
 import WalletSection from "@/app/components/onboarding/Sections/WalletSection";
 import EthSection from "@/app/components/onboarding/Sections/EthSection";
 import LordsSection from "@/app/components/onboarding/Sections/LordsSection";
-import { ETH_PREFUND_AMOUNT } from "@/app/lib/burner";
 import { useAccount } from "@starknet-react/core";
 import { ScreenPage } from "@/app/hooks/useUIStore";
 import useUIStore from "@/app/hooks/useUIStore";
+import { ETH_PREFUND_AMOUNT } from "@/app/lib/constants";
 
 interface LoginProps {
   eth: number;
@@ -31,13 +31,10 @@ const Login = ({
   const { account } = useAccount();
   const [step, setStep] = useState(1);
 
-  const network = process.env.NEXT_PUBLIC_NETWORK;
-  const onMainnet = process.env.NEXT_PUBLIC_NETWORK === "mainnet";
+  const { handleOnboarded, network, onMainnet } = useUIStore();
 
-  const checkEnoughEth = eth >= parseInt(ETH_PREFUND_AMOUNT);
+  const checkEnoughEth = eth >= parseInt(ETH_PREFUND_AMOUNT(network!));
   const checkEnoughLords = lords > lordsGameCost;
-
-  const { handleOnboarded } = useUIStore();
 
   useEffect(() => {
     if (account && checkEnoughEth && checkEnoughLords) {

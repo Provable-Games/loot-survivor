@@ -3,12 +3,14 @@ import Lords from "public/icons/lords.svg";
 import { CompleteIcon, InfoIcon } from "@/app/components/icons/Icons";
 import { Button } from "@/app/components/buttons/Button";
 import { Section } from "@/app/containers/Onboarding";
+import { Network } from "@/app/hooks/useUIStore";
+import { networkConfig } from "@/app/lib/networkConfig";
 
 interface LordsSectionProps {
   step: number;
   lords: number;
   onMainnet: boolean;
-  network: string;
+  network: Network;
   setSection: (section: Section) => void;
   mintLords: (lordsAmount: number) => Promise<void>;
   setMintingLords: (value: boolean) => void;
@@ -76,9 +78,9 @@ const LordsSection = ({
             onClick={async () => {
               if (onMainnet) {
                 const avnuLords = `https://app.avnu.fi/en?tokenFrom=${indexAddress(
-                  process.env.NEXT_PUBLIC_ETH_ADDRESS ?? ""
+                  networkConfig[network!].ethAddress ?? ""
                 )}&tokenTo=${indexAddress(
-                  process.env.NEXT_PUBLIC_LORDS_ADDRESS ?? ""
+                  networkConfig[network!].lordsAddress ?? ""
                 )}&amount=0.001`;
                 window.open(avnuLords, "_blank");
               } else {

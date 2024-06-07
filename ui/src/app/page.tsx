@@ -11,7 +11,6 @@ import EncountersScreen from "@/app/containers/EncountersScreen";
 import GuideScreen from "@/app/containers/GuideScreen";
 import UpgradeScreen from "@/app/containers/UpgradeScreen";
 import { padAddress } from "@/app/lib/utils";
-import Intro from "@/app/components/intro/Intro";
 import { TxActivity } from "@/app/components/navigation/TxActivity";
 import useLoadingStore from "@/app/hooks/useLoadingStore";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
@@ -48,20 +47,17 @@ import Lords from "@/app/abi/Lords.json";
 import EthBalanceFragment from "@/app/abi/EthBalanceFragment.json";
 import Beasts from "@/app/abi/Beasts.json";
 import ScreenMenu from "@/app/components/menu/ScreenMenu";
-import {
-  getArcadeConnectors,
-  checkArcadeConnector,
-} from "@/app/lib/connectors";
+import { checkArcadeConnector } from "@/app/lib/connectors";
 import Header from "@/app/components/navigation/Header";
 import { fetchBalances, fetchEthBalance } from "@/app/lib/balances";
 import useTransactionManager from "@/app/hooks/useTransactionManager";
-import { StarknetProvider } from "@/app//provider";
 import { SpecialBeast } from "@/app/components/notifications/SpecialBeast";
 import Storage from "@/app/lib/storage";
 import Onboarding from "./containers/Onboarding";
 import TopUp from "./containers/TopUp";
 import { useController } from "@/app/context/ControllerContext";
 import useControls from "@/app/hooks/useControls";
+import { networkConfig } from "@/app/lib/networkConfig";
 
 const allMenuItems: Menu[] = [
   { id: 1, label: "Start", screen: "start", disabled: false },
@@ -84,25 +80,26 @@ const mobileMenuItems: Menu[] = [
 
 export default function Main() {
   return (
-    <StarknetProvider>
+    <main
+      className={`min-h-screen container mx-auto flex flex-col sm:pt-8 sm:p-8 lg:p-10 2xl:p-20 `}
+    >
       <Home />
-    </StarknetProvider>
+    </main>
   );
 }
 
 function Home() {
-  const { connect, connector, connectors } = useConnect();
+  console.log("test home rerender");
+  const { connector } = useConnect();
   const disconnected = useUIStore((state) => state.disconnected);
   const setDisconnected = useUIStore((state) => state.setDisconnected);
   const { account, address, status, isConnected } = useAccount();
   const isMuted = useUIStore((state) => state.isMuted);
-  const [introComplete, setIntroComplete] = useState(false);
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
   const calls = useTransactionCartStore((state) => state.calls);
   const screen = useUIStore((state) => state.screen);
   const setScreen = useUIStore((state) => state.setScreen);
-  const handleOnboarded = useUIStore((state) => state.handleOnboarded);
   const deathDialog = useUIStore((state) => state.deathDialog);
   const hasBeast = useAdventurerStore((state) => state.computed.hasBeast);
   const hasStatUpgrades = useAdventurerStore(
@@ -111,7 +108,6 @@ function Home() {
   const owner = account?.address ? padAddress(account.address) : "";
   const isWrongNetwork = useUIStore((state) => state.isWrongNetwork);
   const setIsWrongNetwork = useUIStore((state) => state.setIsWrongNetwork);
-  const onboarded = useUIStore((state) => state.onboarded);
   const topUpDialog = useUIStore((state) => state.topUpDialog);
   const showTopUpDialog = useUIStore((state) => state.showTopUpDialog);
   const setTopUpAccount = useUIStore((state) => state.setTopUpAccount);
@@ -121,23 +117,25 @@ function Home() {
   const specialBeastDefeated = useUIStore(
     (state) => state.specialBeastDefeated
   );
+  const network = useUIStore((state) => state.network);
+  const onboarded = useUIStore((state) => state.onboarded);
   const setSpecialBeastDefeated = useUIStore(
     (state) => state.setSpecialBeastDefeated
   );
   const { contract: gameContract } = useContract({
-    address: process.env.NEXT_PUBLIC_GAME_ADDRESS,
+    address: networkConfig[network!].gameAddress,
     abi: Game,
   });
   const { contract: lordsContract } = useContract({
-    address: process.env.NEXT_PUBLIC_LORDS_ADDRESS,
+    address: networkConfig[network!].lordsAddress,
     abi: Lords,
   });
   const { contract: ethContract } = useContract({
-    address: process.env.NEXT_PUBLIC_ETH_ADDRESS,
+    address: networkConfig[network!].ethAddress,
     abi: EthBalanceFragment,
   });
   const { contract: beastsContract } = useContract({
-    address: process.env.NEXT_PUBLIC_BEASTS_ADDRESS,
+    address: networkConfig[network!].beastsAddress,
     abi: Beasts,
   });
 
@@ -164,8 +162,6 @@ function Home() {
     constants.StarknetChainId | undefined
   >();
 
-  const arcadeConnectors = getArcadeConnectors(connectors);
-
   const [ethBalance, setEthBalance] = useState<bigint>(BigInt(0));
   const [lordsBalance, setLordsBalance] = useState<bigint>(BigInt(0));
   const [costToPlay, setCostToPlay] = useState<bigint | undefined>();
@@ -177,7 +173,6 @@ function Home() {
       lordsContract,
       gameContract
     );
-    console.log(balances);
     setEthBalance(balances[0]);
     setLordsBalance(balances[1]);
   };
@@ -188,7 +183,6 @@ function Home() {
   };
 
   useEffect(() => {
-    console.log("get balance");
     getBalances();
   }, [account]);
 
@@ -238,6 +232,7 @@ function Home() {
     getBalances,
     setIsMintingLords,
     setEntropyReady,
+    rpc_addr: networkConfig[network!].rpcUrl,
   });
 
   const playState = useMemo(
@@ -254,10 +249,6 @@ function Home() {
     loop: true,
   });
 
-  const handleIntroComplete = () => {
-    setIntroComplete(true);
-  };
-
   const ownerVariables = useMemo(() => {
     return {
       owner: owner,
@@ -265,6 +256,7 @@ function Home() {
   }, [owner]);
 
   const adventurersData = useCustomQuery(
+    networkConfig[network!].lsGQLURL!,
     "adventurersByOwnerQuery",
     getAdventurersByOwner,
     ownerVariables,
@@ -277,27 +269,36 @@ function Home() {
     };
   }, [adventurer?.id ?? 0]);
 
-  useCustomQuery("adventurerByIdQuery", getAdventurerById, adventurerVariables);
+  useCustomQuery(
+    networkConfig[network!].lsGQLURL!,
+    "adventurerByIdQuery",
+    getAdventurerById,
+    adventurerVariables
+  );
 
   useCustomQuery(
+    networkConfig[network!].lsGQLURL!,
     "latestDiscoveriesQuery",
     getLatestDiscoveries,
     adventurerVariables
   );
 
   useCustomQuery(
+    networkConfig[network!].lsGQLURL!,
     "itemsByAdventurerQuery",
     getItemsByAdventurer,
     adventurerVariables
   );
 
   useCustomQuery(
+    networkConfig[network!].lsGQLURL!,
     "latestMarketItemsQuery",
     getLatestMarketItems,
     adventurerVariables
   );
 
   const lastBeastData = useCustomQuery(
+    networkConfig[network!].lsGQLURL!,
     "lastBeastQuery",
     getLastBeastDiscovery,
     adventurerVariables
@@ -315,9 +316,19 @@ function Home() {
     lastBeastData?.discoveries[0]?.seed,
   ]);
 
-  useCustomQuery("beastQuery", getBeast, beastVariables);
+  useCustomQuery(
+    networkConfig[network!].lsGQLURL!,
+    "beastQuery",
+    getBeast,
+    beastVariables
+  );
 
-  useCustomQuery("battlesByBeastQuery", getBattlesByBeast, beastVariables);
+  useCustomQuery(
+    networkConfig[network!].lsGQLURL!,
+    "battlesByBeastQuery",
+    getBattlesByBeast,
+    beastVariables
+  );
 
   const goldenTokenVariables = useMemo(() => {
     const storage: BurnerStorage = Storage.get("burners");
@@ -326,20 +337,25 @@ function Home() {
       const masterAccount = storage[address].masterAccount;
       return {
         contractAddress:
-          process.env.NEXT_PUBLIC_GOLDEN_TOKEN_ADDRESS?.toLowerCase(),
+          networkConfig[network!].goldenTokenAddress.toLowerCase(),
         owner: padAddress(masterAccount ?? ""),
       };
     } else {
       return {
         contractAddress:
-          process.env.NEXT_PUBLIC_GOLDEN_TOKEN_ADDRESS?.toLowerCase(),
+          networkConfig[network!].goldenTokenAddress.toLowerCase(),
         owner: padAddress(address ?? ""),
       };
     }
   }, [address]);
 
+  const goldenTokenClientInstance = useMemo(
+    () => goldenTokenClient(networkConfig[network!].tokensGQLURL),
+    [network]
+  );
+
   const { data: goldenTokenData } = useQuery(getGoldenTokensByOwner, {
-    client: goldenTokenClient,
+    client: goldenTokenClientInstance,
     variables: goldenTokenVariables,
   });
 
@@ -421,12 +437,6 @@ function Home() {
   const adventurers = adventurersData?.adventurers;
 
   useEffect(() => {
-    if (!address && arcadeConnectors.length > 0) {
-      connect({ connector: arcadeConnectors[0] });
-    }
-  }, [screen]);
-
-  useEffect(() => {
     if (adventurers && adventurers.length > 0) {
       const latestAdventurer: Adventurer = adventurers[adventurers.length - 1];
       if (latestAdventurer.health !== 0) {
@@ -434,7 +444,7 @@ function Home() {
         handleSwitchAdventurer(latestAdventurer.id!);
       }
     }
-  }, [introComplete, adventurers]);
+  }, [adventurers]);
 
   useEffect(() => {
     if (adventurer?.id && adventurer.health !== 0) {
@@ -444,7 +454,7 @@ function Home() {
         setScreen("upgrade");
       }
     }
-  }, [introComplete, adventurer]);
+  }, [adventurer]);
 
   const getAccountChainId = async () => {
     if (account) {
@@ -457,22 +467,13 @@ function Home() {
     getAccountChainId();
     const isWrongNetwork =
       accountChainId !==
-      (process.env.NEXT_PUBLIC_NETWORK === "mainnet"
+      (network === "mainnet"
         ? constants.StarknetChainId.SN_MAIN
-        : process.env.NEXT_PUBLIC_NETWORK === "sepolia"
+        : network === "sepolia"
         ? "0x" + sepolia.id.toString(16)
         : constants.StarknetChainId.SN_GOERLI);
     setIsWrongNetwork(isWrongNetwork);
   }, [account, accountChainId, isConnected]);
-
-  useEffect(() => {
-    if (arcadeConnectors.length === 0 && !onboarded) {
-      setScreen("onboarding");
-    } else if (!onboarded) {
-      handleOnboarded();
-      setScreen("start");
-    }
-  }, [arcadeConnectors]);
 
   useEffect(() => {
     resetCalls();
@@ -512,149 +513,146 @@ function Home() {
 
   useControls();
 
-  if (!isConnected && introComplete && disconnected) {
+  console.log(account);
+
+  useEffect(() => {
+    if (!onboarded) {
+      setScreen("onboarding");
+    } else if (onboarded) {
+      setScreen("start");
+    }
+  }, [onboarded]);
+
+  if (!isConnected && disconnected) {
     return <WalletSelect />;
   }
 
   return (
-    <main
-      className={`min-h-screen container mx-auto flex flex-col sm:pt-8 sm:p-8 lg:p-10 2xl:p-20 `}
-    >
-      {introComplete ? (
+    <>
+      <NetworkSwitchError network={network} isWrongNetwork={isWrongNetwork} />
+      {screen === "onboarding" ? (
+        <Onboarding
+          ethBalance={ethBalance}
+          lordsBalance={lordsBalance}
+          costToPlay={costToPlay!}
+          mintLords={mintLords}
+        />
+      ) : status == "connected" && topUpDialog ? (
+        <TopUp
+          ethBalance={ethBalance}
+          lordsBalance={lordsBalance}
+          costToPlay={costToPlay!}
+          mintLords={mintLords}
+          gameContract={gameContract!}
+          lordsContract={lordsContract!}
+          ethContract={ethContract!}
+          showTopUpDialog={showTopUpDialog}
+        />
+      ) : (
         <>
-          <NetworkSwitchError isWrongNetwork={isWrongNetwork} />
-          {screen === "onboarding" ? (
-            <Onboarding
+          <div className="flex flex-col w-full">
+            {specialBeastDefeated && (
+              <SpecialBeast beastsContract={beastsContract!} />
+            )}
+            {!spawnLoader && hash && (
+              <div className="sm:hidden">
+                <TxActivity />
+              </div>
+            )}
+            <Header
+              multicall={multicall}
+              mintLords={mintLords}
+              suicide={suicide}
               ethBalance={ethBalance}
               lordsBalance={lordsBalance}
-              costToPlay={costToPlay!}
-              mintLords={mintLords}
               gameContract={gameContract!}
-              lordsContract={lordsContract!}
-              ethContract={ethContract!}
-            />
-          ) : status == "connected" && topUpDialog ? (
-            <TopUp
-              ethBalance={ethBalance}
-              lordsBalance={lordsBalance}
               costToPlay={costToPlay!}
-              mintLords={mintLords}
-              gameContract={gameContract!}
-              lordsContract={lordsContract!}
-              ethContract={ethContract!}
-              showTopUpDialog={showTopUpDialog}
             />
-          ) : (
+          </div>
+          <div className="w-full h-1 sm:h-6 sm:my-2 bg-terminal-green text-terminal-black px-4">
+            {!spawnLoader && hash && (
+              <div className="hidden sm:block">
+                <TxActivity />
+              </div>
+            )}
+          </div>
+          <NotificationDisplay />
+
+          {deathDialog && <DeathDialog />}
+          <div className="flex flex-col w-full h-[600px] sm:h-[625px]">
             <>
-              <div className="flex flex-col w-full">
-                {specialBeastDefeated && <SpecialBeast />}
-                {!spawnLoader && hash && (
-                  <div className="sm:hidden">
-                    <TxActivity />
-                  </div>
-                )}
-                <Header
-                  multicall={multicall}
-                  mintLords={mintLords}
-                  suicide={suicide}
-                  ethBalance={ethBalance}
-                  lordsBalance={lordsBalance}
-                  gameContract={gameContract!}
-                  costToPlay={costToPlay!}
+              <div className="sm:hidden flex  sm:justify-normal sm:pb-2">
+                <ScreenMenu
+                  buttonsData={mobileMenuItems}
+                  onButtonClick={(value) => {
+                    setScreen(value);
+                  }}
+                  disabled={mobileMenuDisabled}
                 />
               </div>
-              <div className="w-full h-1 sm:h-6 sm:my-2 bg-terminal-green text-terminal-black px-4">
-                {!spawnLoader && hash && (
-                  <div className="hidden sm:block">
-                    <TxActivity />
-                  </div>
-                )}
+              <div className="hidden sm:block flex justify-center sm:justify-normal sm:pb-2">
+                <ScreenMenu
+                  buttonsData={allMenuItems}
+                  onButtonClick={(value) => {
+                    setScreen(value);
+                  }}
+                  disabled={allMenuDisabled}
+                />
               </div>
-              <NotificationDisplay />
 
-              {deathDialog && <DeathDialog />}
-              {introComplete ? (
-                <div className="flex flex-col w-full h-[600px] sm:h-[625px]">
-                  <>
-                    <div className="sm:hidden flex  sm:justify-normal sm:pb-2">
-                      <ScreenMenu
-                        buttonsData={mobileMenuItems}
-                        onButtonClick={(value) => {
-                          setScreen(value);
-                        }}
-                        disabled={mobileMenuDisabled}
-                      />
-                    </div>
-                    <div className="hidden sm:block flex justify-center sm:justify-normal sm:pb-2">
-                      <ScreenMenu
-                        buttonsData={allMenuItems}
-                        onButtonClick={(value) => {
-                          setScreen(value);
-                        }}
-                        disabled={allMenuDisabled}
-                      />
-                    </div>
-
-                    <div className="sm:hidden">
-                      <MobileHeader />
-                    </div>
-                    <div className="h-[550px] xl:h-[500px] 2xl:h-[580px]">
-                      {screen === "start" && (
-                        <AdventurerScreen
-                          spawn={spawn}
-                          handleSwitchAdventurer={handleSwitchAdventurer}
-                          lordsBalance={lordsBalance}
-                          gameContract={gameContract!}
-                          goldenTokenData={goldenTokenData}
-                          getBalances={getBalances}
-                          mintLords={mintLords}
-                          costToPlay={costToPlay!}
-                        />
-                      )}
-                      {screen === "play" && (
-                        <ActionsScreen
-                          explore={explore}
-                          attack={attack}
-                          flee={flee}
-                          gameContract={gameContract!}
-                          beastsContract={beastsContract!}
-                        />
-                      )}
-                      {screen === "inventory" && (
-                        <InventoryScreen gameContract={gameContract!} />
-                      )}
-                      {screen === "leaderboard" && (
-                        <LeaderboardScreen
-                          slayIdles={slayIdles}
-                          gameContract={gameContract!}
-                        />
-                      )}
-                      {screen === "upgrade" && (
-                        <UpgradeScreen
-                          upgrade={upgrade}
-                          gameContract={gameContract!}
-                        />
-                      )}
-                      {screen === "profile" && (
-                        <Profile gameContract={gameContract!} />
-                      )}
-                      {screen === "encounters" && <EncountersScreen />}
-                      {screen === "guide" && <GuideScreen />}
-                      {screen === "settings" && <Settings />}
-                      {screen === "player" && (
-                        <Player gameContract={gameContract!} />
-                      )}
-                      {screen === "wallet" && <WalletSelect />}
-                    </div>
-                  </>
-                </div>
-              ) : null}
+              <div className="sm:hidden">
+                <MobileHeader />
+              </div>
+              <div className="h-[550px] xl:h-[500px] 2xl:h-[580px]">
+                {screen === "start" && (
+                  <AdventurerScreen
+                    spawn={spawn}
+                    handleSwitchAdventurer={handleSwitchAdventurer}
+                    lordsBalance={lordsBalance}
+                    gameContract={gameContract!}
+                    goldenTokenData={goldenTokenData}
+                    getBalances={getBalances}
+                    mintLords={mintLords}
+                    costToPlay={costToPlay!}
+                  />
+                )}
+                {screen === "play" && (
+                  <ActionsScreen
+                    explore={explore}
+                    attack={attack}
+                    flee={flee}
+                    gameContract={gameContract!}
+                    beastsContract={beastsContract!}
+                  />
+                )}
+                {screen === "inventory" && (
+                  <InventoryScreen gameContract={gameContract!} />
+                )}
+                {screen === "leaderboard" && (
+                  <LeaderboardScreen
+                    slayIdles={slayIdles}
+                    gameContract={gameContract!}
+                  />
+                )}
+                {screen === "upgrade" && (
+                  <UpgradeScreen
+                    upgrade={upgrade}
+                    gameContract={gameContract!}
+                  />
+                )}
+                {screen === "profile" && (
+                  <Profile gameContract={gameContract!} />
+                )}
+                {screen === "encounters" && <EncountersScreen />}
+                {screen === "guide" && <GuideScreen />}
+                {screen === "settings" && <Settings />}
+                {screen === "player" && <Player gameContract={gameContract!} />}
+                {screen === "wallet" && <WalletSelect />}
+              </div>
             </>
-          )}
+          </div>
         </>
-      ) : (
-        <Intro onIntroComplete={handleIntroComplete} />
       )}
-    </main>
+    </>
   );
 }

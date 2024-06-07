@@ -24,6 +24,8 @@ export type ScreenPage =
   | "onboarding"
   | "create adventurer";
 
+export type Network = "mainnet" | "katana" | "sepolia" | undefined;
+
 type State = {
   disconnected: boolean;
   setDisconnected: (value: boolean) => void;
@@ -91,6 +93,11 @@ type State = {
   setEntropyReady: (value: boolean) => void;
   loginScreen: boolean;
   setLoginScreen: (value: boolean) => void;
+  network: Network;
+  setNetwork: (value: Network) => void;
+  onMainnet: boolean;
+  onSepolia: boolean;
+  onKatana: boolean;
 };
 
 const useUIStore = create<State>((set) => ({
@@ -162,6 +169,17 @@ const useUIStore = create<State>((set) => ({
   setEntropyReady: (value) => set({ entropyReady: value }),
   loginScreen: false,
   setLoginScreen: (value) => set({ loginScreen: value }),
+  network: undefined,
+  setNetwork: (value) => {
+    console.log("setting network again");
+    set({ network: value });
+    set({ onMainnet: value === "mainnet" });
+    set({ onSepolia: value === "sepolia" });
+    set({ onKatana: value === "katana" });
+  },
+  onMainnet: false,
+  onSepolia: false,
+  onKatana: false,
 }));
 
 export default useUIStore;

@@ -28,6 +28,7 @@ import ApibaraStatus from "@/app/components/navigation/ApibaraStatus";
 import TokenLoader from "@/app/components/animations/TokenLoader";
 import { checkArcadeConnector } from "@/app/lib/connectors";
 import { SkullIcon } from "@/app/components/icons/Icons";
+import { networkConfig } from "@/app/lib/networkConfig";
 
 export interface HeaderProps {
   multicall: (
@@ -68,6 +69,8 @@ export default function Header({
   const displayHistory = useUIStore((state) => state.displayHistory);
   const setDisplayHistory = useUIStore((state) => state.setDisplayHistory);
   const setScreen = useUIStore((state) => state.setScreen);
+  const network = useUIStore((state) => state.network);
+  const onMainnet = useUIStore((state) => state.onMainnet);
 
   const calls = useTransactionCartStore((state) => state.calls);
   const txInCart = calls.length > 0;
@@ -92,8 +95,7 @@ export default function Header({
     handleApibaraStatus();
   }, []);
 
-  const isOnMainnet = process.env.NEXT_PUBLIC_NETWORK === "mainnet";
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const appUrl = networkConfig[network!].appUrl;
 
   return (
     <div className="flex flex-row justify-between px-1 h-10 ">
@@ -116,7 +118,7 @@ export default function Header({
           className="hidden sm:block self-center xl:px-5"
           onClick={() => window.open(appUrl, "_blank")}
         >
-          {isOnMainnet ? "Play on Testnet" : "Play on Mainnet"}
+          {onMainnet ? "Play on Testnet" : "Play on Mainnet"}
         </Button>
         <Button size={"xs"} variant={"outline"} className="self-center xl:px-5">
           <span className="flex flex-row items-center justify-between w-full">
@@ -129,11 +131,11 @@ export default function Header({
           variant={"outline"}
           className="self-center xl:px-5 hover:bg-terminal-green"
           onClick={async () => {
-            if (isOnMainnet) {
+            if (onMainnet) {
               const avnuLords = `https://app.avnu.fi/en?tokenFrom=${indexAddress(
-                process.env.NEXT_PUBLIC_ETH_ADDRESS ?? ""
+                networkConfig[network!].ethAddress ?? ""
               )}&tokenTo=${indexAddress(
-                process.env.NEXT_PUBLIC_LORDS_ADDRESS ?? ""
+                networkConfig[network!].lordsAddress ?? ""
               )}&amount=0.001`;
               window.open(avnuLords, "_blank");
             } else {
@@ -155,7 +157,7 @@ export default function Header({
               </>
             ) : (
               <p className="text-black">
-                {isOnMainnet ? "Buy Lords" : "Mint Lords"}
+                {onMainnet ? "Buy Lords" : "Mint Lords"}
               </p>
             )}
           </span>

@@ -18,12 +18,14 @@ import {
   formatTimeSeconds,
   formatCurrency,
 } from "@/app/lib/utils";
+import { networkConfig } from "@/app/lib/networkConfig";
 
 export interface SpawnProps {
   formData: FormData;
   spawn: (
     formData: FormData,
     goldenTokenId: string,
+    revenueAddress: string,
     costToPlay?: number
   ) => Promise<void>;
   handleBack: () => void;
@@ -52,6 +54,8 @@ export const Spawn = ({
   const isWrongNetwork = useUIStore((state) => state.isWrongNetwork);
   const loading = useLoadingStore((state) => state.loading);
   const estimatingFee = useUIStore((state) => state.estimatingFee);
+  const onMainnet = useUIStore((state) => state.onMainnet);
+  const network = useUIStore((state) => state.network);
   const resetNotification = useLoadingStore((state) => state.resetNotification);
 
   useEffect(() => {
@@ -76,13 +80,23 @@ export const Spawn = ({
 
   const handleSubmitLords = async () => {
     resetNotification();
-    await spawn(formData, "0", lordsGameCost);
+    await spawn(
+      formData,
+      "0",
+      networkConfig[network!].revenueAddress,
+      lordsGameCost
+    );
     await getBalances();
   };
 
   const handleSubmitGoldenToken = async () => {
     resetNotification();
-    await spawn(formData, usableToken, lordsGameCost);
+    await spawn(
+      formData,
+      usableToken,
+      networkConfig[network!].revenueAddress,
+      lordsGameCost
+    );
     await getBalances();
   };
 
@@ -108,8 +122,6 @@ export const Spawn = ({
       }
     }
   };
-
-  const onMainnet = process.env.NEXT_PUBLIC_NETWORK === "mainnet";
 
   useEffect(() => {
     getUsableGoldenToken(goldenTokens ?? []);
@@ -261,7 +273,7 @@ export const Spawn = ({
                     </div>
                   </Button>
                   <a
-                    href={process.env.NEXT_PUBLIC_GOLDEN_TOKEN_MINT_URL}
+                    href={networkConfig[network!].goldenTokenMintUrl}
                     target="_blank"
                   >
                     <Button type="button" className="text-black">
@@ -275,9 +287,9 @@ export const Spawn = ({
                   onClick={async () => {
                     if (onMainnet) {
                       const avnuLords = `https://app.avnu.fi/en?tokenFrom=${indexAddress(
-                        process.env.NEXT_PUBLIC_ETH_ADDRESS ?? ""
+                        networkConfig[network!].ethAddress ?? ""
                       )}&tokenTo=${indexAddress(
-                        process.env.NEXT_PUBLIC_LORDS_ADDRESS ?? ""
+                        networkConfig[network!].lordsAddress ?? ""
                       )}&amount=0.001`;
                       window.open(avnuLords, "_blank");
                     } else {

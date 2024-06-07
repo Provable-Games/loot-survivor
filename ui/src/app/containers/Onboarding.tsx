@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { SoundOffIcon, SoundOnIcon } from "@/app/components/icons/Icons";
 import { Button } from "@/app/components/buttons/Button";
-import { useAccount } from "@starknet-react/core";
-import { Contract } from "starknet";
-import { useBurner } from "@/app/lib/burner";
 import useUIStore from "@/app/hooks/useUIStore";
 import { useUiSounds, soundSelector } from "@/app/hooks/useUiSound";
 import TokenLoader from "@/app/components/animations/TokenLoader";
@@ -18,9 +15,6 @@ interface OnboardingProps {
   lordsBalance: bigint;
   costToPlay: bigint;
   mintLords: (lordsAmount: number) => Promise<void>;
-  gameContract: Contract;
-  lordsContract: Contract;
-  ethContract: Contract;
 }
 
 const Onboarding = ({
@@ -28,23 +22,11 @@ const Onboarding = ({
   lordsBalance,
   costToPlay,
   mintLords,
-  gameContract,
-  lordsContract,
-  ethContract,
 }: OnboardingProps) => {
-  const { account } = useAccount();
-
   const isMuted = useUIStore((state) => state.isMuted);
   const setIsMuted = useUIStore((state) => state.setIsMuted);
 
   const { play: clickPlay } = useUiSounds(soundSelector.click);
-
-  const { create } = useBurner({
-    walletAccount: account,
-    gameContract,
-    lordsContract,
-    ethContract,
-  });
 
   const [section, setSection] = useState<Section | undefined>();
 
@@ -97,7 +79,7 @@ const Onboarding = ({
           Welcome to Loot Survivor
         </h1>
         {!loginScreen ? (
-          <Intro create={create} />
+          <Intro />
         ) : (
           <Login
             eth={eth}
