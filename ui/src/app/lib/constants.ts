@@ -37,7 +37,7 @@ export const MIN_BALANCE = 100000000000000; // 0.00001ETH or $0.15
 export const TRANSACTION_WAIT_RETRY_INTERVAL = 6000; // 6 seconds
 export const ETH_INCREMENT = 0.001;
 export const LORDS_INCREMENT = 5;
-export const MAX_FEE_CHECK = (network: string) =>
+export const getMaxFee = (network: string) =>
   network === "mainnet" || network === "sepolia"
     ? 0.3 * 10 ** 18
     : 0.03 * 10 ** 18; // 0.003ETH on mainnet or sepolia, 0.0003ETH on goerli

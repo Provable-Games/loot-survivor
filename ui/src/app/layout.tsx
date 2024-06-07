@@ -37,8 +37,6 @@ export default function RootLayout({
     setIntroComplete(true);
   };
 
-  console.log(network);
-
   useEffect(() => {
     async function initializeSetup() {
       if (network) {
@@ -80,8 +78,6 @@ export default function RootLayout({
     networkConfig[network].tokensGQLURL!
   );
 
-  console.log(setupResult);
-
   return (
     <html lang="en">
       <body
@@ -96,7 +92,7 @@ export default function RootLayout({
         <ApolloProvider client={gameClientInstance}>
           <ApolloProvider client={goldenTokenClientInstance}>
             <ControllerProvider>
-              <StarknetProvider>
+              <StarknetProvider network={network}>
                 <DojoProvider value={setupResult}>{children}</DojoProvider>
               </StarknetProvider>
             </ControllerProvider>

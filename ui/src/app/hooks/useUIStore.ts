@@ -171,7 +171,6 @@ const useUIStore = create<State>((set) => ({
   setLoginScreen: (value) => set({ loginScreen: value }),
   network: undefined,
   setNetwork: (value) => {
-    console.log("setting network again");
     set({ network: value });
     set({ onMainnet: value === "mainnet" });
     set({ onSepolia: value === "sepolia" });

@@ -38,6 +38,7 @@ import {
   TRANSACTION_WAIT_RETRY_INTERVAL,
   VRF_FEE_LIMIT,
 } from "@/app/lib/constants";
+import { Network } from "@/app/hooks/useUIStore";
 
 export interface SyscallsProps {
   gameContract: Contract;
@@ -61,7 +62,8 @@ export interface SyscallsProps {
     isArcade: boolean,
     ethBalance: number,
     showTopUpDialog: (show: boolean) => void,
-    setTopUpAccount: (account: string) => void
+    setTopUpAccount: (account: string) => void,
+    network: Network
   ) => Promise<any>;
   startLoading: (
     type: string,
@@ -96,6 +98,7 @@ export interface SyscallsProps {
   setIsMintingLords: (value: boolean) => void;
   setEntropyReady: (value: boolean) => void;
   rpc_addr: string;
+  network: Network;
 }
 
 function handleEquip(
@@ -204,6 +207,7 @@ export function syscalls({
   setIsMintingLords,
   setEntropyReady,
   rpc_addr,
+  network,
 }: SyscallsProps) {
   const gameData = new GameData();
 
@@ -335,7 +339,8 @@ export function syscalls({
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
-        setTopUpAccount
+        setTopUpAccount,
+        network
       );
       addTransaction({
         hash: tx?.transaction_hash,
@@ -450,7 +455,8 @@ export function syscalls({
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
-        setTopUpAccount
+        setTopUpAccount,
+        network
       );
       setTxHash(tx?.transaction_hash);
       addTransaction({
@@ -677,7 +683,8 @@ export function syscalls({
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
-        setTopUpAccount
+        setTopUpAccount,
+        network
       );
       setTxHash(tx?.transaction_hash);
       addTransaction({
@@ -902,7 +909,8 @@ export function syscalls({
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
-        setTopUpAccount
+        setTopUpAccount,
+        network
       );
       setTxHash(tx?.transaction_hash);
       addTransaction({
@@ -1068,7 +1076,8 @@ export function syscalls({
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
-        setTopUpAccount
+        setTopUpAccount,
+        network
       );
       setTxHash(tx?.transaction_hash);
       addTransaction({
@@ -1194,7 +1203,8 @@ export function syscalls({
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
-        setTopUpAccount
+        setTopUpAccount,
+        network
       );
       setTxHash(tx?.transaction_hash);
       addTransaction({
@@ -1279,7 +1289,8 @@ export function syscalls({
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
-        setTopUpAccount
+        setTopUpAccount,
+        network
       );
       setTxHash(tx?.transaction_hash);
       addTransaction({
@@ -1477,7 +1488,8 @@ export function syscalls({
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
-        setTopUpAccount
+        setTopUpAccount,
+        network
       );
       const result = await provider?.waitForTransaction(tx?.transaction_hash, {
         retryInterval: TRANSACTION_WAIT_RETRY_INTERVAL,
@@ -1516,7 +1528,8 @@ export function syscalls({
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
-        setTopUpAccount
+        setTopUpAccount,
+        network
       );
       const result = await provider?.waitForTransaction(tx?.transaction_hash, {
         retryInterval: TRANSACTION_WAIT_RETRY_INTERVAL,

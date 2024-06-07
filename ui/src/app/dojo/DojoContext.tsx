@@ -39,8 +39,6 @@ export const DojoProvider = ({ children, value }: Props) => {
   const currentValue = useContext(DojoContext);
   if (currentValue) throw new Error("DojoProvider can only be used once");
 
-  console.log(value);
-
   const {
     config: { masterAddress, masterPrivateKey },
     burnerManager,
@@ -51,10 +49,6 @@ export const DojoProvider = ({ children, value }: Props) => {
     () => new Account(dojoProvider, masterAddress, masterPrivateKey, "1"),
     [masterAddress, masterPrivateKey, dojoProvider]
   );
-
-  const { isInitialized, feeTokenAddress } = burnerManager;
-
-  console.log(isInitialized, feeTokenAddress);
 
   const {
     create,
@@ -69,8 +63,6 @@ export const DojoProvider = ({ children, value }: Props) => {
   } = useBurnerManager({
     burnerManager,
   });
-
-  console.log("rerender dojo");
 
   return (
     <DojoContext.Provider

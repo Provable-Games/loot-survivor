@@ -89,7 +89,6 @@ export default function Main() {
 }
 
 function Home() {
-  console.log("test home rerender");
   const { connector } = useConnect();
   const disconnected = useUIStore((state) => state.disconnected);
   const setDisconnected = useUIStore((state) => state.setDisconnected);
@@ -233,6 +232,7 @@ function Home() {
     setIsMintingLords,
     setEntropyReady,
     rpc_addr: networkConfig[network!].rpcUrl,
+    network,
   });
 
   const playState = useMemo(
@@ -512,8 +512,6 @@ function Home() {
   }, []);
 
   useControls();
-
-  console.log(account);
 
   useEffect(() => {
     if (!onboarded) {

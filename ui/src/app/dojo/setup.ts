@@ -16,27 +16,7 @@ export async function setup({ rpcUrl }: SetupProps) {
     feeTokenAddress: "0x0",
   });
 
-  // if (burnerManager.list().length === 0) {
-  //   try {
-  //     await burnerManager.create();
-  //   } catch (e) {
-  //     console.error(e);
-  //   }
-  // }
-
   await burnerManager.init();
-
-  console.log(
-    {
-      config: {
-        masterAddress: "0x0",
-        masterPrivateKey: "0x0",
-      },
-      burnerManager,
-      dojoProvider,
-    },
-    burnerManager.isInitialized
-  );
 
   return {
     config: {
