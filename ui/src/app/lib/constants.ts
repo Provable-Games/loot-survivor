@@ -24,9 +24,6 @@ export const notificationAnimations = [
   { name: "slide", startFrame: 24, frameCount: 5 },
 ];
 
-let onMainnet = process.env.NEXT_PUBLIC_NETWORK === "mainnet";
-let onSepolia = process.env.NEXT_PUBLIC_NETWORK === "sepolia";
-
 // ---- CONTRACT PARAMS
 export const itemCharismaDiscount = 1;
 export const itemBasePrice = 4;
@@ -40,8 +37,14 @@ export const MIN_BALANCE = 100000000000000; // 0.00001ETH or $0.15
 export const TRANSACTION_WAIT_RETRY_INTERVAL = 6000; // 6 seconds
 export const ETH_INCREMENT = 0.001;
 export const LORDS_INCREMENT = 5;
-export const MAX_FEE_CHECK =
-  onMainnet || onSepolia ? 0.003 * 10 ** 18 : 0.0003 * 10 ** 18; // 0.003ETH on mainnet or sepolia, 0.0003ETH on goerli
+export const getMaxFee = (network: string) =>
+  network === "mainnet" || network === "sepolia"
+    ? 0.3 * 10 ** 18
+    : 0.03 * 10 ** 18; // 0.003ETH on mainnet or sepolia, 0.0003ETH on goerli
+export const ETH_PREFUND_AMOUNT = (network: string) =>
+  network === "mainnet" || network === "sepolia"
+    ? "0x2386F26FC10000"
+    : "0x38D7EA4C68000"; // 0.01ETH on Mainnet or Sepolia, 0.001ETH on Testnet
 
 export const deathMessages = [
   {

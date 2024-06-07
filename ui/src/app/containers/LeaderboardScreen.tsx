@@ -15,6 +15,7 @@ import LiveTable from "@/app/components/leaderboard/LiveTable";
 import { RefreshIcon } from "@/app/components/icons/Icons";
 import LootIconLoader from "@/app/components/icons/Loader";
 import { ProfileIcon, SkullIcon } from "@/app/components/icons/Icons";
+import { networkConfig } from "@/app/lib/networkConfig";
 
 interface LeaderboardScreenProps {
   slayIdles: (slayAdventurers: string[]) => Promise<void>;
@@ -39,7 +40,10 @@ export default function LeaderboardScreen({
   const { data, refetch, setData, setIsLoading, setNotLoading } =
     useQueriesStore();
 
+  const network = useUIStore((state) => state.network);
+
   const adventurersByXPdata = useCustomQuery(
+    networkConfig[network!].lsGQLURL!,
     "adventurersByXPQuery",
     getAdventurerByXP,
     undefined
@@ -57,13 +61,23 @@ export default function LeaderboardScreen({
 
   const profile = useUIStore((state) => state.profile);
 
-  useCustomQuery("leaderboardByIdQuery", getAdventurerById, {
-    id: profile ?? 0,
-  });
+  useCustomQuery(
+    networkConfig[network!].lsGQLURL!,
+    "leaderboardByIdQuery",
+    getAdventurerById,
+    {
+      id: profile ?? 0,
+    }
+  );
 
-  useCustomQuery("itemsByProfileQuery", getItemsByAdventurer, {
-    id: profile ?? 0,
-  });
+  useCustomQuery(
+    networkConfig[network!].lsGQLURL!,
+    "itemsByProfileQuery",
+    getItemsByAdventurer,
+    {
+      id: profile ?? 0,
+    }
+  );
 
   const handlefetchProfileData = async (adventurerId: number) => {
     setIsLoading();

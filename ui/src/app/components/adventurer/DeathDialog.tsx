@@ -12,6 +12,7 @@ import { useQueriesStore, AdventurersResult } from "@/app/hooks/useQueryStore";
 import GlitchEffect from "@/app/components/animations/GlitchEffect";
 import PixelatedImage from "@/app/components/animations/PixelatedImage";
 import { getDeathMessageByRank } from "@/app/lib/utils";
+import { networkConfig } from "@/app/lib/networkConfig";
 
 export const DeathDialog = () => {
   const messageRef = useRef<HTMLSpanElement>(null);
@@ -24,11 +25,17 @@ export const DeathDialog = () => {
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
   const showDeathDialog = useUIStore((state) => state.showDeathDialog);
+  const network = useUIStore((state) => state.network);
   const [imageLoading, setImageLoading] = useState(false);
 
   const { refetch, setData } = useQueriesStore();
 
-  useCustomQuery("adventurersByXPQuery", getAdventurerByXP, undefined);
+  useCustomQuery(
+    networkConfig[network!].lsGQLURL!,
+    "adventurersByXPQuery",
+    getAdventurerByXP,
+    undefined
+  );
 
   const handleSortXp = (xpData: AdventurersResult) => {
     const copiedAdventurersByXpData = xpData?.adventurers.slice();
@@ -124,7 +131,7 @@ export const DeathDialog = () => {
                 )} place on #LootSurvivor with ${
                   adventurer?.xp
                 } XP.\n\nGravestone bears the inscription:\n\n"${twitterDeathMessage}"🪦\n\nEnter here and try to survive: ${
-                  process.env.NEXT_PUBLIC_APP_URL
+                  networkConfig[network!].appUrl
                 }\n\n@lootrealms #Starknet #Play2Die #🪦`}
                 className="animate-pulse"
               />

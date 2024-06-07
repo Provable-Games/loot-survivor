@@ -7,6 +7,7 @@ import useUIStore from "@/app/hooks/useUIStore";
 import { useUiSounds } from "@/app/hooks/useUiSound";
 import { soundSelector } from "@/app/hooks/useUiSound";
 import Logo from "public/icons/logo.svg";
+import Eth from "public/icons/eth.svg";
 import Lords from "public/icons/lords.svg";
 import { Button } from "@/app/components/buttons/Button";
 import { formatNumber, displayAddress, indexAddress } from "@/app/lib/utils";
@@ -27,6 +28,7 @@ import ApibaraStatus from "@/app/components/navigation/ApibaraStatus";
 import TokenLoader from "@/app/components/animations/TokenLoader";
 import { checkArcadeConnector } from "@/app/lib/connectors";
 import { SkullIcon } from "@/app/components/icons/Icons";
+import { networkConfig } from "@/app/lib/networkConfig";
 
 export interface HeaderProps {
   multicall: (
@@ -35,6 +37,7 @@ export interface HeaderProps {
   ) => Promise<void>;
   mintLords: (lordsAmount: number) => Promise<void>;
   suicide: () => Promise<void>;
+  ethBalance: bigint;
   lordsBalance: bigint;
   gameContract: Contract;
   costToPlay: bigint;
@@ -44,6 +47,7 @@ export default function Header({
   multicall,
   mintLords,
   suicide,
+  ethBalance,
   lordsBalance,
   gameContract,
   costToPlay,
@@ -58,9 +62,6 @@ export default function Header({
   const resetData = useQueriesStore((state) => state.resetData);
 
   const setDisconnected = useUIStore((state) => state.setDisconnected);
-  const arcadeDialog = useUIStore((state) => state.arcadeDialog);
-  const showArcadeDialog = useUIStore((state) => state.showArcadeDialog);
-  const isWrongNetwork = useUIStore((state) => state.isWrongNetwork);
   const isMuted = useUIStore((state) => state.isMuted);
   const setIsMuted = useUIStore((state) => state.setIsMuted);
   const displayCart = useUIStore((state) => state.displayCart);
@@ -68,6 +69,8 @@ export default function Header({
   const displayHistory = useUIStore((state) => state.displayHistory);
   const setDisplayHistory = useUIStore((state) => state.setDisplayHistory);
   const setScreen = useUIStore((state) => state.setScreen);
+  const network = useUIStore((state) => state.network);
+  const onMainnet = useUIStore((state) => state.onMainnet);
 
   const calls = useTransactionCartStore((state) => state.calls);
   const txInCart = calls.length > 0;
@@ -92,8 +95,7 @@ export default function Header({
     handleApibaraStatus();
   }, []);
 
-  const isOnMainnet = process.env.NEXT_PUBLIC_NETWORK === "mainnet";
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const appUrl = networkConfig[network!].appUrl;
 
   return (
     <div className="flex flex-row justify-between px-1 h-10 ">
@@ -116,18 +118,24 @@ export default function Header({
           className="hidden sm:block self-center xl:px-5"
           onClick={() => window.open(appUrl, "_blank")}
         >
-          {isOnMainnet ? "Play on Testnet" : "Play on Mainnet"}
+          {onMainnet ? "Play on Testnet" : "Play on Mainnet"}
+        </Button>
+        <Button size={"xs"} variant={"outline"} className="self-center xl:px-5">
+          <span className="flex flex-row items-center justify-between w-full">
+            <Eth className="self-center sm:w-5 sm:h-5  h-3 w-3 fill-current mr-1" />
+            <p>{formatNumber(parseInt(ethBalance.toString()) / 10 ** 18)}</p>
+          </span>
         </Button>
         <Button
           size={"xs"}
           variant={"outline"}
           className="self-center xl:px-5 hover:bg-terminal-green"
           onClick={async () => {
-            if (isOnMainnet) {
+            if (onMainnet) {
               const avnuLords = `https://app.avnu.fi/en?tokenFrom=${indexAddress(
-                process.env.NEXT_PUBLIC_ETH_ADDRESS ?? ""
+                networkConfig[network!].ethAddress ?? ""
               )}&tokenTo=${indexAddress(
-                process.env.NEXT_PUBLIC_LORDS_ADDRESS ?? ""
+                networkConfig[network!].lordsAddress ?? ""
               )}&amount=0.001`;
               window.open(avnuLords, "_blank");
             } else {
@@ -149,34 +157,10 @@ export default function Header({
               </>
             ) : (
               <p className="text-black">
-                {isOnMainnet ? "Buy Lords" : "Mint Lords"}
+                {onMainnet ? "Buy Lords" : "Mint Lords"}
               </p>
             )}
           </span>
-        </Button>
-        <span className="sm:hidden w-5 h-5">
-          <Button
-            size={"fill"}
-            variant={checkArcade ? "outline" : "default"}
-            onClick={() => showArcadeDialog(!arcadeDialog)}
-            disabled={isWrongNetwork || !account}
-            className={`xl:px-5 ${checkArcade ? "" : "animate-pulse"}`}
-          >
-            <ArcadeIcon className="w-5 h-5 justify-center fill-current sm:mr-2" />
-            <span className="hidden sm:block">arcade account</span>
-          </Button>
-        </span>
-        <Button
-          size={"xs"}
-          variant={checkArcade ? "outline" : "default"}
-          onClick={() => showArcadeDialog(!arcadeDialog)}
-          disabled={isWrongNetwork || !account}
-          className={`hidden sm:flex xl:px-5 ${
-            checkArcade ? "" : "animate-pulse"
-          }`}
-        >
-          <ArcadeIcon className="w-5 h-5 justify-center fill-current mr-2" />
-          <span className="hidden sm:block">arcade account</span>
         </Button>
         <Button
           size={"xs"}
@@ -247,11 +231,6 @@ export default function Header({
             >
               {account ? displayAddress(account.address) : "Connect"}
             </Button>
-            {checkArcade && (
-              <div className="absolute top-0 right-0">
-                <ArcadeIcon className="fill-current w-2 sm:w-4" />
-              </div>
-            )}
           </div>
           <Button
             size={"fill"}

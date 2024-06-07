@@ -1,7 +1,6 @@
 import { Connector } from "@starknet-react/core";
 import { InjectedConnector } from "starknetkit/injected";
-import { ArgentMobileConnector } from "starknetkit/argentMobile";
-import { WebWalletConnector } from "starknetkit/webwallet";
+import CartridgeConnector from "@cartridge/connector";
 
 export const checkArcadeConnector = (connector?: Connector) => {
   return typeof connector?.id === "string" && connector?.id.includes("0x");
@@ -29,24 +28,44 @@ export const providerInterfaceCamel = (provider: string) => {
   }
 };
 
-export function argentWebWalletUrl() {
-  switch (process.env.NEXT_PUBLIC_NETWORK) {
-    case "goerli":
-      return "https://web.hydrogen.argent47.net";
-    case "mainnet":
-      return "https://web.argent.xyz/";
-    default:
-      return "https://web.hydrogen.argent47.net";
-  }
-}
+const cartridgeConnector = (gameAddress: string, lordsAddress: string) =>
+  new CartridgeConnector([
+    {
+      target: gameAddress,
+      method: "new_game",
+    },
+    {
+      target: gameAddress,
+      method: "explore",
+    },
+    {
+      target: gameAddress,
+      method: "attack",
+    },
+    {
+      target: gameAddress,
+      method: "flee",
+    },
+    {
+      target: gameAddress,
+      method: "equip",
+    },
+    {
+      target: gameAddress,
+      method: "drop",
+    },
+    {
+      target: gameAddress,
+      method: "upgrade",
+    },
+    {
+      target: lordsAddress,
+      method: "approve",
+    },
+  ]) as never as Connector;
 
-export const argentWebWalletConnector = new WebWalletConnector({
-  url: argentWebWalletUrl(),
-});
-
-export const connectors = [
+export const connectors = (gameAddress: string, lordsAddress: string) => [
   new InjectedConnector({ options: { id: "braavos", name: "Braavos" } }),
   new InjectedConnector({ options: { id: "argentX", name: "Argent X" } }),
-  argentWebWalletConnector,
-  new ArgentMobileConnector(),
+  cartridgeConnector(gameAddress, lordsAddress),
 ];

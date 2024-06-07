@@ -1,6 +1,4 @@
-export const getEntropy = async () => {
-  const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL!;
-  const gameAddress = process.env.NEXT_PUBLIC_GAME_ADDRESS!;
+export const getEntropy = async (rpcUrl: string, gameAddress: string) => {
   const response = await fetch(rpcUrl, {
     method: "POST",
     headers: {
