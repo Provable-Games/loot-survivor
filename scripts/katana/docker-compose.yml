@@ -6,3 +6,21 @@ services:
       - "5050:5050"
     volumes:
       - ./katana:/katana
+
+  dna:
+    image: quay.io/apibara/starknet:1.5.0
+    restart: always
+    ports:
+      - "7171:7171"
+    command:
+      - start
+      - --rpc
+      - http://katana:5050
+    depends_on:
+      - katana
+
+networks:
+  default:
+    name: lootsurvivor_network
+    driver: bridge
+
