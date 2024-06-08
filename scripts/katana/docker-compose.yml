@@ -1,0 +1,8 @@
+services:
+  katana:
+    build: .
+    container_name: katana_container
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./katana:/katana
