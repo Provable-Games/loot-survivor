@@ -900,10 +900,8 @@ mod Game {
         let mut adventurer = _load_adventurer_no_boosts(@self, adventurer_id);
         let adventurer_level = adventurer.get_level();
 
-        let chain_id = starknet::get_execution_info().unbox().tx_info.unbox().chain_id;
-
         // If the adventurer is on level 2, they are waiting on this entropy to come in for the market to be available
-        if adventurer_level == 2 && chain_id != KATANA_CHAIN_ID {
+        if adventurer_level == 2 {
             process_initial_entropy(ref self, ref adventurer, adventurer_id, adventurer_entropy);
             // we only need to save adventurer is they received Vitality as part of starting stats
             if adventurer.stats.vitality > 0 {
@@ -947,7 +945,9 @@ mod Game {
         );
 
         // emit UpgradesAvailable event
-        __event_UpgradesAvailable(ref self, adventurer_state, available_items);
+        if adventurer.get_level() == 2 {
+            __event_UpgradesAvailable(ref self, adventurer_state, available_items);
+        }
 
         // save the starting stats to adventurer metadata for cheap and easy future lookup
         _save_adventurer_metadata(ref self, adventurer_id, adventurer_meta);
@@ -1342,25 +1342,17 @@ mod Game {
             ref adventurer, adventurer_id, weapon, basic_entropy
         );
 
-        // request verifiable randomness for starting entropy
-        // get CHAIN ID
+        // if we're not running on Katana, request randomness from VRF as soon as game starts
         let chain_id = starknet::get_execution_info().unbox().tx_info.unbox().chain_id;
         if chain_id != KATANA_CHAIN_ID {
             let randomness_address = self._randomness_contract_address.read();
             request_randomness(
                 randomness_address, adventurer.xp.into(), adventurer_id, vrf_fee_limit
             );
-            // pack and save new adventurer and metadata
-            _save_adventurer_metadata(ref self, adventurer_id, adventurer_meta);
-            _save_adventurer_no_boosts(ref self, adventurer, adventurer_id);
-        } else {
-            // if contract is running on katana, we don't do full vrf, and instead use basic entropy which is
-            process_vrf_randomness(
-                ref self, starknet::get_contract_address(), adventurer_id, basic_entropy
-            );
-            process_initial_entropy(ref self, ref adventurer, adventurer_id, basic_entropy);
-            _save_adventurer(ref self, ref adventurer, adventurer_id);
         }
+
+        _save_adventurer_metadata(ref self, adventurer_id, adventurer_meta);
+        _save_adventurer_no_boosts(ref self, adventurer, adventurer_id);
 
         // increment the adventurer id counter
         self._game_counter.write(adventurer_id);
