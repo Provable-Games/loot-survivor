@@ -12,8 +12,6 @@ services:
     restart: always
     ports:
       - "7171:7171"
-    environment:
-      - RUST_LOG=debug
     command:
       - start
       - --rpc
