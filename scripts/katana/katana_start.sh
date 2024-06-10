@@ -53,5 +53,15 @@ echo "$account_address" > /katana/katana_account
 echo "$private_key" > /katana/private_key
 echo "$game_contract" > /katana/game_contract
 
+# # Write environment variables to /env-katana
+echo 'MONGO_CONNECTION_STRING="mongodb://test:test@mongo:27017"' > /katana/.env
+echo 'MONGO_DB="mongo"' >> /katana/.env
+echo 'AUTH_TOKEN="dna_jX3t04zs9zywBnHWVmUq"' >> /katana/.env
+echo 'MONGO_USERNAME="test"' >> /katana/.env
+echo 'MONGO_PASSWORD="test"' >> /katana/.env
+echo 'STREAM_URL="http://dna:7171"' >> /katana/.env
+echo 'START=0' >> /katana/.env
+echo "GAME=$game_contract" >> /katana/.env
+
 # Keep the script running
 tail -f ~/katana.log
