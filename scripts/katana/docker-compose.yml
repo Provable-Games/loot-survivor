@@ -3,7 +3,7 @@ services:
     build: .
     container_name: katana_container
     ports:
-      - "443:5050"
+      - "5050:5050"
     volumes:
       - ./katana:/katana
 
@@ -157,7 +157,7 @@ services:
       context: .
       dockerfile: Dockerfile.graph
     ports:
-      - "443:8080"
+      - "8080:8080"
     depends_on:
       - mongo
     volumes:
