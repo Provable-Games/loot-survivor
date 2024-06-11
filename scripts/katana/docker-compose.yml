@@ -157,9 +157,11 @@ services:
       context: .
       dockerfile: Dockerfile.graph
     ports:
-      - "8080:8080"
+      - "443:8080"
     depends_on:
       - mongo
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
 
 
 networks:
