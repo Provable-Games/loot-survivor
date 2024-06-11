@@ -75,7 +75,6 @@ services:
     environment:
       PERSIST_TO_ETCD: http://etcd:2379
       SINK_ID: battles
-      AUTH_TOKEN: ${AUTH_TOKEN}
 
   beasts_indexer:
     image: quay.io/apibara/sink-mongo:0.8.0
@@ -95,7 +94,6 @@ services:
     environment:
       PERSIST_TO_ETCD: http://etcd:2379
       SINK_ID: beasts
-      AUTH_TOKEN: ${AUTH_TOKEN}
 
   discoveries_indexer:
     image: quay.io/apibara/sink-mongo:0.8.0
@@ -115,7 +113,6 @@ services:
     environment:
       PERSIST_TO_ETCD: http://etcd:2379
       SINK_ID: discoveries
-      AUTH_TOKEN: ${AUTH_TOKEN}
 
   items_indexer:
     image: quay.io/apibara/sink-mongo:0.8.0
@@ -135,7 +132,6 @@ services:
     environment:
       PERSIST_TO_ETCD: http://etcd:2379
       SINK_ID: items
-      AUTH_TOKEN: ${AUTH_TOKEN}
 
   scores_indexer:
     image: quay.io/apibara/sink-mongo:0.8.0
@@ -155,7 +151,6 @@ services:
     environment:
       PERSIST_TO_ETCD: http://etcd:2379
       SINK_ID: scores
-      AUTH_TOKEN: ${AUTH_TOKEN}
 
   graph:
     build:

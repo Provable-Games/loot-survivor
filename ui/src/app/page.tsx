@@ -200,7 +200,6 @@ function Home() {
     slayIdles,
     multicall,
     mintLords,
-    suicide,
   } = syscalls({
     gameContract: gameContract!,
     lordsContract: lordsContract!,
@@ -478,8 +477,6 @@ function Home() {
     setIsWrongNetwork(isWrongNetwork);
   }, [account, accountChainId, isConnected]);
 
-  console.log(accountChainId);
-
   useEffect(() => {
     resetCalls();
     setDropItems([]);
@@ -503,19 +500,6 @@ function Home() {
     getCostToPlay();
   }, []);
 
-  const { addControl } = useController();
-
-  useEffect(() => {
-    addControl("i", () => {
-      console.log("Key i pressed");
-      setScreen("inventory");
-    });
-    addControl("i=l", () => {
-      console.log("Key l pressed");
-      setScreen("leaderboard");
-    });
-  }, []);
-
   useControls();
 
   useEffect(() => {
@@ -526,7 +510,7 @@ function Home() {
     }
   }, [onboarded]);
 
-  console.log(account);
+  console.log(adventurer);
 
   if (!isConnected && disconnected) {
     return <WalletSelect />;
@@ -567,7 +551,6 @@ function Home() {
             <Header
               multicall={multicall}
               mintLords={mintLords}
-              suicide={suicide}
               ethBalance={ethBalance}
               lordsBalance={lordsBalance}
               gameContract={gameContract!}

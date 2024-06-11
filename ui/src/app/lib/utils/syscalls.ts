@@ -34,10 +34,7 @@ import {
 import { QueryData, QueryKey } from "@/app/hooks/useQueryStore";
 import { AdventurerClass } from "@/app/lib/classes";
 import { ScreenPage } from "@/app/hooks/useUIStore";
-import {
-  TRANSACTION_WAIT_RETRY_INTERVAL,
-  VRF_FEE_LIMIT,
-} from "@/app/lib/constants";
+import { getWaitRetryInterval, VRF_FEE_LIMIT } from "@/app/lib/constants";
 import { Network } from "@/app/hooks/useUIStore";
 
 export interface SyscallsProps {
@@ -215,6 +212,8 @@ export function syscalls({
     nodeUrl: rpc_addr!,
   });
 
+  const onKatana = network === "localKatana" || network === "katana";
+
   const updateItemsXP = (adventurerState: Adventurer, itemsXP: number[]) => {
     const weapon = adventurerState.weapon;
     const weaponIndex = queryData.itemsByAdventurerQuery?.items.findIndex(
@@ -324,7 +323,9 @@ export function syscalls({
     const payWithGoldenTokenCalls = [...calls, mintAdventurerTx];
 
     const spawnCalls =
-      goldenTokenId === "0" ? payWithLordsCalls : payWithGoldenTokenCalls;
+      goldenTokenId === "0" && !onKatana
+        ? payWithLordsCalls
+        : payWithGoldenTokenCalls;
 
     startLoading(
       "Create",
@@ -348,9 +349,8 @@ export function syscalls({
           method: `Spawn ${formData.name}`,
         },
       });
-
       const receipt = await provider?.waitForTransaction(tx?.transaction_hash, {
-        retryInterval: TRANSACTION_WAIT_RETRY_INTERVAL,
+        retryInterval: getWaitRetryInterval(network!),
       });
       // Handle if the tx was reverted
       if (
@@ -426,7 +426,7 @@ export function syscalls({
       stopLoading(`You have spawned ${formData.name}!`, false, "Create");
       setAdventurer(adventurerState);
       setScreen("play");
-      getEthBalance();
+      !onKatana && getEthBalance();
     } catch (e) {
       console.log(e);
       stopLoading(e, true);
@@ -466,7 +466,7 @@ export function syscalls({
         },
       });
       const receipt = await provider?.waitForTransaction(tx?.transaction_hash, {
-        retryInterval: TRANSACTION_WAIT_RETRY_INTERVAL,
+        retryInterval: getWaitRetryInterval(network!),
       });
       // Handle if the tx was reverted
       if (
@@ -657,7 +657,7 @@ export function syscalls({
       setEquipItems([]);
       setDropItems([]);
       stopLoading(reversedDiscoveries, false, "Explore");
-      getEthBalance();
+      !onKatana && getEthBalance();
     } catch (e) {
       console.log(e);
       stopLoading(e, true);
@@ -694,7 +694,7 @@ export function syscalls({
         },
       });
       const receipt = await provider?.waitForTransaction(tx?.transaction_hash, {
-        retryInterval: TRANSACTION_WAIT_RETRY_INTERVAL,
+        retryInterval: getWaitRetryInterval(network!),
       });
       // Handle if the tx was reverted
       if (
@@ -884,7 +884,7 @@ export function syscalls({
       stopLoading(reversedBattles, false, "Attack");
       setEquipItems([]);
       setDropItems([]);
-      getEthBalance();
+      !onKatana && getEthBalance();
       setEntropyReady(false);
     } catch (e) {
       console.log(e);
@@ -920,7 +920,7 @@ export function syscalls({
         },
       });
       const receipt = await provider?.waitForTransaction(tx?.transaction_hash, {
-        retryInterval: TRANSACTION_WAIT_RETRY_INTERVAL,
+        retryInterval: getWaitRetryInterval(network!),
       });
       // Handle if the tx was reverted
       if (
@@ -1043,7 +1043,7 @@ export function syscalls({
       stopLoading(reversedBattles, false, "Flee");
       setEquipItems([]);
       setDropItems([]);
-      getEthBalance();
+      !onKatana && getEthBalance();
     } catch (e) {
       console.log(e);
       stopLoading(e, true);
@@ -1087,7 +1087,7 @@ export function syscalls({
         },
       });
       const receipt = await provider?.waitForTransaction(tx?.transaction_hash, {
-        retryInterval: TRANSACTION_WAIT_RETRY_INTERVAL,
+        retryInterval: getWaitRetryInterval(network!),
       });
       // Handle if the tx was reverted
       if (
@@ -1177,7 +1177,7 @@ export function syscalls({
       );
       setScreen("play");
 
-      getEthBalance();
+      !onKatana && getEthBalance();
       setEntropyReady(false);
     } catch (e) {
       console.log(e);
@@ -1214,7 +1214,7 @@ export function syscalls({
         },
       });
       const receipt = await provider?.waitForTransaction(tx?.transaction_hash, {
-        retryInterval: TRANSACTION_WAIT_RETRY_INTERVAL,
+        retryInterval: getWaitRetryInterval(network!),
       });
       // Handle if the tx was reverted
       if (
@@ -1257,7 +1257,7 @@ export function syscalls({
       });
 
       stopLoading(`You have slain all idle adventurers!`);
-      getEthBalance();
+      !onKatana && getEthBalance();
     } catch (e) {
       console.log(e);
       stopLoading(`You have slain all idle adventurers!`);
@@ -1300,7 +1300,7 @@ export function syscalls({
         },
       });
       const receipt = await provider?.waitForTransaction(tx?.transaction_hash, {
-        retryInterval: TRANSACTION_WAIT_RETRY_INTERVAL,
+        retryInterval: getWaitRetryInterval(network!),
       });
       // Handle if the tx was reverted
       if (
@@ -1466,7 +1466,7 @@ export function syscalls({
       });
 
       stopLoading(notification, false, "Multicall");
-      getEthBalance();
+      !onKatana && getEthBalance();
     } catch (e) {
       console.log(e);
       stopLoading(e, true);
@@ -1492,7 +1492,7 @@ export function syscalls({
         network
       );
       const result = await provider?.waitForTransaction(tx?.transaction_hash, {
-        retryInterval: TRANSACTION_WAIT_RETRY_INTERVAL,
+        retryInterval: getWaitRetryInterval(network!),
       });
 
       if (!result) {
@@ -1504,46 +1504,6 @@ export function syscalls({
     } catch (e) {
       setIsMintingLords(false);
       console.log(e);
-    }
-  };
-
-  const suicide = async () => {
-    const suicideTx: Call = {
-      contractAddress: lordsContract?.address ?? "",
-      entrypoint: "suicide",
-      calldata: [adventurer.id!],
-    };
-
-    const isArcade = checkArcadeConnector(connector!);
-    startLoading(
-      "Suicide",
-      "Committing Suicide",
-      "adventurerByIdQuery",
-      adventurer?.id
-    );
-    try {
-      const tx = await handleSubmitCalls(
-        account!,
-        [...calls, suicideTx],
-        isArcade,
-        Number(ethBalance),
-        showTopUpDialog,
-        setTopUpAccount,
-        network
-      );
-      const result = await provider?.waitForTransaction(tx?.transaction_hash, {
-        retryInterval: TRANSACTION_WAIT_RETRY_INTERVAL,
-      });
-
-      if (!result) {
-        throw new Error("Lords Mint did not complete successfully.");
-      }
-
-      stopLoading(`${adventurer.name} committed suicide!`);
-      getBalances();
-    } catch (e) {
-      console.log(e);
-      stopLoading(e, true);
     }
   };
 
@@ -1556,6 +1516,5 @@ export function syscalls({
     slayIdles,
     multicall,
     mintLords,
-    suicide,
   };
 }

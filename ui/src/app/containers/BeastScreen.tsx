@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Contract } from "starknet";
 import { BattleDisplay } from "@/app/components/beast/BattleDisplay";
 import { BeastDisplay } from "@/app/components/beast/BeastDisplay";
@@ -10,6 +10,7 @@ import { Battle, NullBeast, ButtonData, Beast } from "@/app/types";
 import { Button } from "@/app/components/buttons/Button";
 import useUIStore from "@/app/hooks/useUIStore";
 import ActionMenu from "@/app/components/menu/ActionMenu";
+import { useController } from "@/app/context/ControllerContext";
 
 interface BeastScreenProps {
   attack: (
@@ -56,13 +57,53 @@ export default function BeastScreen({
     setButtonText("Flee");
   };
 
+  const handleSingleAttack = async () => {
+    resetNotification();
+    await attack(false, beastData);
+  };
+
+  const handleAttackTillDeath = async () => {
+    resetNotification();
+    await attack(false, beastData);
+  };
+
+  const handleSingleFlee = async () => {
+    resetNotification();
+    await flee(false, beastData);
+  };
+
+  const handleFleeTillDeath = async () => {
+    resetNotification();
+    await flee(true, beastData);
+  };
+
+  const { addControl } = useController();
+
+  useEffect(() => {
+    addControl("a", () => {
+      console.log("Key a pressed");
+      handleSingleAttack();
+    });
+    addControl("s", () => {
+      console.log("Key s pressed");
+      handleAttackTillDeath();
+    });
+    addControl("f", () => {
+      console.log("Key f pressed");
+      handleSingleFlee();
+    });
+    addControl("g", () => {
+      console.log("Key g pressed");
+      handleFleeTillDeath();
+    });
+  }, []);
+
   const attackButtonsData: ButtonData[] = [
     {
       id: 1,
       label: "ONCE",
       action: async () => {
-        resetNotification();
-        await attack(false, beastData);
+        handleSingleAttack();
       },
       disabled:
         adventurer?.beastHealth == undefined ||
@@ -77,8 +118,7 @@ export default function BeastScreen({
       id: 2,
       label: "TILL DEATH",
       action: async () => {
-        resetNotification();
-        await attack(true, beastData);
+        handleAttackTillDeath();
       },
       disabled:
         adventurer?.beastHealth == undefined ||
@@ -98,8 +138,7 @@ export default function BeastScreen({
       mouseEnter: handleMouseEnter,
       mouseLeave: handleMouseLeave,
       action: async () => {
-        resetNotification();
-        await flee(false, beastData);
+        handleSingleFlee();
       },
       disabled:
         adventurer?.beastHealth == undefined ||
@@ -118,8 +157,7 @@ export default function BeastScreen({
       mouseEnter: handleMouseEnter,
       mouseLeave: handleMouseLeave,
       action: async () => {
-        resetNotification();
-        await flee(true, beastData);
+        handleFleeTillDeath();
       },
       disabled:
         adventurer?.beastHealth == undefined ||

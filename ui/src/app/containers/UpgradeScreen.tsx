@@ -85,6 +85,7 @@ export default function UpgradeScreen({
   const dropItems = useUIStore((state) => state.dropItems);
   const entropyReady = useUIStore((state) => state.entropyReady);
   const setEntropyReady = useUIStore((state) => state.setEntropyReady);
+  const onKatana = useUIStore((state) => state.onKatana);
   const pendingMessage = useLoadingStore((state) => state.pendingMessage);
   const [summary, setSummary] = useState<UpgradeSummary>({
     Stats: { ...ZeroUpgrade },
@@ -93,6 +94,7 @@ export default function UpgradeScreen({
   });
 
   useEffect(() => {
+    if (!onKatana) return;
     const fetchEntropy = async () => {
       const entropy = await gameContract!.call("get_adventurer_entropy", [
         adventurer?.id!,
@@ -464,7 +466,7 @@ export default function UpgradeScreen({
 
   return (
     <>
-      {!entropyReady && <InterludeScreen />}
+      {!entropyReady && !onKatana && <InterludeScreen />}
       {hasStatUpgrades ? (
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 h-full">
           <div className="w-1/3 hidden sm:flex h-full">

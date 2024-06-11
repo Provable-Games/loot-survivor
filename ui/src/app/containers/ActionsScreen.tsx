@@ -32,6 +32,7 @@ export default function ActionsScreen({
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const loading = useLoadingStore((state) => state.loading);
   const estimatingFee = useUIStore((state) => state.estimatingFee);
+  const onKatana = useUIStore((state) => state.onKatana);
 
   const hasBeast = useAdventurerStore((state) => state.computed.hasBeast);
   const resetNotification = useLoadingStore((state) => state.resetNotification);
@@ -99,7 +100,7 @@ export default function ActionsScreen({
             </p>
           )}
           <div className="flex flex-col items-center lg:w-1/2 my-4 w-full px-4 sm:order-1 h-1/6 sm:h-full">
-            {loading && <MazeLoader />}
+            {(loading || !onKatana) && <MazeLoader />}
             <div className="w-3/4 h-full sm:h-1/6">
               <ActionMenu
                 buttonsData={buttonsData}

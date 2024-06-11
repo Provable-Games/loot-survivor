@@ -57,6 +57,7 @@ export const Spawn = ({
   const estimatingFee = useUIStore((state) => state.estimatingFee);
   const onMainnet = useUIStore((state) => state.onMainnet);
   const network = useUIStore((state) => state.network);
+  const onKatana = useUIStore((state) => state.onKatana);
   const resetNotification = useLoadingStore((state) => state.resetNotification);
 
   useEffect(() => {
@@ -87,7 +88,9 @@ export const Spawn = ({
       networkConfig[network!].revenueAddress,
       lordsGameCost
     );
-    await getBalances();
+    if (!onKatana) {
+      await getBalances();
+    }
   };
 
   const handleSubmitGoldenToken = async () => {
@@ -210,7 +213,7 @@ export const Spawn = ({
                 </div>
               </div>
             </>
-          ) : (
+          ) : !onKatana ? (
             <>
               <div className="flex flex-col gap-2">
                 <Button
@@ -302,6 +305,23 @@ export const Spawn = ({
                 </Button>
               )}
             </>
+          ) : (
+            <Button
+              size={"xl"}
+              disabled={
+                !formFilled ||
+                !account ||
+                isWrongNetwork ||
+                loading ||
+                estimatingFee
+              }
+              onClick={() => handleSubmitLords()}
+              className="relative"
+            >
+              <div className="flex flex-row items-center gap-1 w-full h-full">
+                {formFilled ? "Play as Guest" : "Fill details"}
+              </div>
+            </Button>
           )}
         </div>
         <div className="absolute bottom-10 left-0 right-0 flex flex-col items-center gap-4 z-10 pb-8">

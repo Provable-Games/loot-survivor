@@ -23,11 +23,6 @@ export async function setup({ rpcUrl, network }: SetupProps) {
     feeTokenAddress: "0x0",
   });
 
-  console.log(networkConfig[network!].masterAccount);
-  console.log(networkConfig[network!].masterPrivateKey);
-  console.log(dojoProvider);
-  console.log(burnerManager);
-
   await burnerManager.init();
 
   if (burnerManager.list().length === 0 && network === "localKatana") {
@@ -37,8 +32,6 @@ export async function setup({ rpcUrl, network }: SetupProps) {
       console.error(e);
     }
   }
-
-  console.log("after");
 
   return {
     config: {

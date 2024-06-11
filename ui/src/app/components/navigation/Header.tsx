@@ -37,7 +37,6 @@ export interface HeaderProps {
     notification: string[]
   ) => Promise<void>;
   mintLords: (lordsAmount: number) => Promise<void>;
-  suicide: () => Promise<void>;
   ethBalance: bigint;
   lordsBalance: bigint;
   gameContract: Contract;
@@ -47,7 +46,6 @@ export interface HeaderProps {
 export default function Header({
   multicall,
   mintLords,
-  suicide,
   ethBalance,
   lordsBalance,
   gameContract,
@@ -72,6 +70,7 @@ export default function Header({
   const setScreen = useUIStore((state) => state.setScreen);
   const network = useUIStore((state) => state.network);
   const onMainnet = useUIStore((state) => state.onMainnet);
+  const onKatana = useUIStore((state) => state.onKatana);
 
   const calls = useTransactionCartStore((state) => state.calls);
   const txInCart = calls.length > 0;
@@ -104,14 +103,6 @@ export default function Header({
         <Logo className="fill-current w-24 md:w-32 xl:w-40 2xl:w-64" />
       </div>
       <div className="flex flex-row items-center self-end sm:gap-1 self-center">
-        {adventurer?.id && (
-          <Button onClick={() => suicide()} variant={"outline"}>
-            <div className="flex flex-row items-center gap-2">
-              <SkullIcon className="w-3 fill-current" />
-              <p>Suicide</p>
-            </div>
-          </Button>
-        )}
         <ApibaraStatus status={apibaraStatus} />
         <Button
           size={"xs"}
@@ -121,48 +112,60 @@ export default function Header({
         >
           {onMainnet ? "Play on Testnet" : "Play on Mainnet"}
         </Button>
-        <Button size={"xs"} variant={"outline"} className="self-center xl:px-5">
-          <span className="flex flex-row items-center justify-between w-full">
-            <Eth className="self-center sm:w-5 sm:h-5  h-3 w-3 fill-current mr-1" />
-            <p>{formatNumber(parseInt(ethBalance.toString()) / 10 ** 18)}</p>
-          </span>
-        </Button>
-        <Button
-          size={"xs"}
-          variant={"outline"}
-          className="self-center xl:px-5 hover:bg-terminal-green"
-          onClick={async () => {
-            if (onMainnet) {
-              const avnuLords = `https://app.avnu.fi/en?tokenFrom=${indexAddress(
-                networkConfig[network!].ethAddress ?? ""
-              )}&tokenTo=${indexAddress(
-                networkConfig[network!].lordsAddress ?? ""
-              )}&amount=0.001`;
-              window.open(avnuLords, "_blank");
-            } else {
-              setMintingLords(true);
-              await mintLords(lordsGameCost * 25);
-              setMintingLords(false);
-            }
-          }}
-          onMouseEnter={() => setShowLordsBuy(true)}
-          onMouseLeave={() => setShowLordsBuy(false)}
-        >
-          <span className="flex flex-row items-center justify-between w-full">
-            {!showLordsBuy ? (
-              <>
-                <Lords className="self-center sm:w-5 sm:h-5  h-3 w-3 fill-current mr-1" />
+        {!onKatana && (
+          <>
+            <Button
+              size={"xs"}
+              variant={"outline"}
+              className="self-center xl:px-5"
+            >
+              <span className="flex flex-row items-center justify-between w-full">
+                <Eth className="self-center sm:w-5 sm:h-5  h-3 w-3 fill-current mr-1" />
                 <p>
-                  {formatNumber(parseInt(lordsBalance.toString()) / 10 ** 18)}
+                  {formatNumber(parseInt(ethBalance.toString()) / 10 ** 18)}
                 </p>
-              </>
-            ) : (
-              <p className="text-black">
-                {onMainnet ? "Buy Lords" : "Mint Lords"}
-              </p>
-            )}
-          </span>
-        </Button>
+              </span>
+            </Button>
+            <Button
+              size={"xs"}
+              variant={"outline"}
+              className="self-center xl:px-5 hover:bg-terminal-green"
+              onClick={async () => {
+                if (onMainnet) {
+                  const avnuLords = `https://app.avnu.fi/en?tokenFrom=${indexAddress(
+                    networkConfig[network!].ethAddress ?? ""
+                  )}&tokenTo=${indexAddress(
+                    networkConfig[network!].lordsAddress ?? ""
+                  )}&amount=0.001`;
+                  window.open(avnuLords, "_blank");
+                } else {
+                  setMintingLords(true);
+                  await mintLords(lordsGameCost * 25);
+                  setMintingLords(false);
+                }
+              }}
+              onMouseEnter={() => setShowLordsBuy(true)}
+              onMouseLeave={() => setShowLordsBuy(false)}
+            >
+              <span className="flex flex-row items-center justify-between w-full">
+                {!showLordsBuy ? (
+                  <>
+                    <Lords className="self-center sm:w-5 sm:h-5  h-3 w-3 fill-current mr-1" />
+                    <p>
+                      {formatNumber(
+                        parseInt(lordsBalance.toString()) / 10 ** 18
+                      )}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-black">
+                    {onMainnet ? "Buy Lords" : "Mint Lords"}
+                  </p>
+                )}
+              </span>
+            </Button>
+          </>
+        )}
         <Button
           size={"xs"}
           variant={"outline"}

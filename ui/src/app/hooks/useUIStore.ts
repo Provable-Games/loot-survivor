@@ -179,7 +179,7 @@ const useUIStore = create<State>((set) => ({
     set({ network: value });
     set({ onMainnet: value === "mainnet" });
     set({ onSepolia: value === "sepolia" });
-    set({ onKatana: value === "katana" });
+    set({ onKatana: value === "katana" || value === "localKatana" });
   },
   onMainnet: false,
   onSepolia: false,
