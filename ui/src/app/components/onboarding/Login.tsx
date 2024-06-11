@@ -4,10 +4,10 @@ import { CompleteIcon } from "@/app/components/icons/Icons";
 import WalletSection from "@/app/components/onboarding/Sections/WalletSection";
 import EthSection from "@/app/components/onboarding/Sections/EthSection";
 import LordsSection from "@/app/components/onboarding/Sections/LordsSection";
-import { useAccount } from "@starknet-react/core";
 import { ScreenPage } from "@/app/hooks/useUIStore";
 import useUIStore from "@/app/hooks/useUIStore";
 import { ETH_PREFUND_AMOUNT } from "@/app/lib/constants";
+import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 
 interface LoginProps {
   eth: number;
@@ -28,7 +28,7 @@ const Login = ({
   setScreen,
   setSection,
 }: LoginProps) => {
-  const { account } = useAccount();
+  const { account } = useNetworkAccount();
   const [step, setStep] = useState(1);
 
   const { handleOnboarded, network, onMainnet } = useUIStore();

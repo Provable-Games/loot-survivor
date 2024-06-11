@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { CallData, Contract } from "starknet";
-import { useAccount, useConnect } from "@starknet-react/core";
+import { useConnect } from "@starknet-react/core";
 import Image from "next/image";
 import { TypeAnimation } from "react-type-animation";
 import { MdClose } from "react-icons/md";
@@ -19,6 +19,7 @@ import {
   formatCurrency,
 } from "@/app/lib/utils";
 import { networkConfig } from "@/app/lib/networkConfig";
+import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 
 export interface SpawnProps {
   formData: FormData;
@@ -66,7 +67,7 @@ export const Spawn = ({
     }
   }, [formData]);
 
-  const { account } = useAccount();
+  const { account } = useNetworkAccount();
   const { connectors, connect } = useConnect();
 
   const walletConnectors = getWalletConnectors(connectors);

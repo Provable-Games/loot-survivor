@@ -24,7 +24,12 @@ export type ScreenPage =
   | "onboarding"
   | "create adventurer";
 
-export type Network = "mainnet" | "katana" | "sepolia" | undefined;
+export type Network =
+  | "mainnet"
+  | "katana"
+  | "sepolia"
+  | "localKatana"
+  | undefined;
 
 type State = {
   disconnected: boolean;

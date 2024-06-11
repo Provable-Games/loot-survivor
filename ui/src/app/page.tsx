@@ -1,5 +1,5 @@
 "use client";
-import { useAccount, useConnect, useContract } from "@starknet-react/core";
+import { useConnect, useContract } from "@starknet-react/core";
 import { sepolia } from "@starknet-react/chains";
 import { constants } from "starknet";
 import { useState, useEffect, useMemo } from "react";
@@ -58,6 +58,7 @@ import TopUp from "./containers/TopUp";
 import { useController } from "@/app/context/ControllerContext";
 import useControls from "@/app/hooks/useControls";
 import { networkConfig } from "@/app/lib/networkConfig";
+import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 
 const allMenuItems: Menu[] = [
   { id: 1, label: "Start", screen: "start", disabled: false },
@@ -92,7 +93,8 @@ function Home() {
   const { connector } = useConnect();
   const disconnected = useUIStore((state) => state.disconnected);
   const setDisconnected = useUIStore((state) => state.setDisconnected);
-  const { account, address, status, isConnected } = useAccount();
+  const network = useUIStore((state) => state.network);
+  const { account, address, status, isConnected } = useNetworkAccount();
   const isMuted = useUIStore((state) => state.isMuted);
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
@@ -116,7 +118,6 @@ function Home() {
   const specialBeastDefeated = useUIStore(
     (state) => state.specialBeastDefeated
   );
-  const network = useUIStore((state) => state.network);
   const onboarded = useUIStore((state) => state.onboarded);
   const setSpecialBeastDefeated = useUIStore(
     (state) => state.setSpecialBeastDefeated
@@ -182,7 +183,9 @@ function Home() {
   };
 
   useEffect(() => {
-    getBalances();
+    if (network !== "localKatana") {
+      getBalances();
+    }
   }, [account]);
 
   const { data, refetch, resetData, setData, setIsLoading, setNotLoading } =
@@ -471,9 +474,11 @@ function Home() {
         ? constants.StarknetChainId.SN_MAIN
         : network === "sepolia"
         ? "0x" + sepolia.id.toString(16)
-        : constants.StarknetChainId.SN_GOERLI);
+        : "0x4b4154414e41"); // katana chain ID
     setIsWrongNetwork(isWrongNetwork);
   }, [account, accountChainId, isConnected]);
+
+  console.log(accountChainId);
 
   useEffect(() => {
     resetCalls();
@@ -520,6 +525,8 @@ function Home() {
       setScreen("start");
     }
   }, [onboarded]);
+
+  console.log(account);
 
   if (!isConnected && disconnected) {
     return <WalletSelect />;

@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { Contract } from "starknet";
-import { useAccount, useDisconnect, useConnect } from "@starknet-react/core";
+import { useDisconnect, useConnect } from "@starknet-react/core";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import useUIStore from "@/app/hooks/useUIStore";
@@ -29,6 +29,7 @@ import TokenLoader from "@/app/components/animations/TokenLoader";
 import { checkArcadeConnector } from "@/app/lib/connectors";
 import { SkullIcon } from "@/app/components/icons/Icons";
 import { networkConfig } from "@/app/lib/networkConfig";
+import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 
 export interface HeaderProps {
   multicall: (
@@ -53,7 +54,7 @@ export default function Header({
   costToPlay,
 }: HeaderProps) {
   const [mintingLords, setMintingLords] = useState(false);
-  const { account } = useAccount();
+  const { account } = useNetworkAccount();
   const { connector } = useConnect();
   const { disconnect } = useDisconnect();
   const [apibaraStatus, setApibaraStatus] = useState();

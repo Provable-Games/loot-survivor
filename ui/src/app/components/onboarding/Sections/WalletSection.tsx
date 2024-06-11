@@ -2,14 +2,15 @@ import { Button } from "@/app/components/buttons/Button";
 import { CompleteIcon } from "@/app/components/icons/Icons";
 import { displayAddress } from "@/app/lib/utils";
 import { getWalletConnectors } from "@/app/lib/connectors";
-import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
+import { useConnect, useDisconnect } from "@starknet-react/core";
+import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 
 interface WalletSectionProps {
   step: number;
 }
 
 const WalletSection = ({ step }: WalletSectionProps) => {
-  const { address } = useAccount();
+  const { address } = useNetworkAccount();
   const { connectors, connect } = useConnect();
   const { disconnect } = useDisconnect();
   const walletConnectors = getWalletConnectors(connectors);

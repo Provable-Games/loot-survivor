@@ -40,7 +40,10 @@ export default function RootLayout({
   useEffect(() => {
     async function initializeSetup() {
       if (network) {
-        const result = await setup({ rpcUrl: networkConfig[network].rpcUrl });
+        const result = await setup({
+          rpcUrl: networkConfig[network].rpcUrl,
+          network,
+        });
         setSetupResult(result);
       }
     }
