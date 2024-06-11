@@ -8,6 +8,8 @@ import {
   GiBattleGearIcon,
   SkullCrossedBonesIcon,
 } from "@/app/components/icons/Icons";
+import useUIStore from "@/app/hooks/useUIStore";
+import { networkConfig } from "@/app/lib/networkConfig";
 
 interface BattleDisplayProps {
   battleData: Battle;
@@ -144,6 +146,7 @@ export const NotificationBattleDisplay = ({
   battleData,
 }: NotificationBattleDisplayProps) => {
   const adventurer = useAdventurerStore((state) => state.adventurer);
+  const network = useUIStore((state) => state.network);
 
   const isArray = Array.isArray(battleData);
   const handleBeastInfo = () => {
@@ -325,7 +328,11 @@ export const NotificationBattleDisplay = ({
             <GiBattleGearIcon />
           </span>
           <TwitterShareButton
-            text={`${adventurer?.name} just slew a level ${beastLevel} ${beastName} (Tier ${tier}) on #LootSurvivor.\n\nThink you can out-survive me?\n\nEnter here and try to survive: ${process.env.NEXT_PUBLIC_APP_URL}\n\n@lootrealms #Starknet #Play2Die #🪦`}
+            text={`${
+              adventurer?.name
+            } just slew a level ${beastLevel} ${beastName} (Tier ${tier}) on #LootSurvivor.\n\nThink you can out-survive me?\n\nEnter here and try to survive: ${
+              networkConfig[network!].appUrl
+            }\n\n@lootrealms #Starknet #Play2Die #🪦`}
             className="animate-pulse"
           />
         </div>

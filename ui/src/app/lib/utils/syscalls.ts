@@ -38,11 +38,7 @@ import {
   TRANSACTION_WAIT_RETRY_INTERVAL,
   VRF_FEE_LIMIT,
 } from "@/app/lib/constants";
-
-const rpc_addr = process.env.NEXT_PUBLIC_RPC_URL;
-const provider = new Provider({
-  nodeUrl: rpc_addr!,
-});
+import { Network } from "@/app/hooks/useUIStore";
 
 export interface SyscallsProps {
   gameContract: Contract;
@@ -66,7 +62,8 @@ export interface SyscallsProps {
     isArcade: boolean,
     ethBalance: number,
     showTopUpDialog: (show: boolean) => void,
-    setTopUpAccount: (account: string) => void
+    setTopUpAccount: (account: string) => void,
+    network: Network
   ) => Promise<any>;
   startLoading: (
     type: string,
@@ -100,6 +97,8 @@ export interface SyscallsProps {
   getBalances: () => Promise<void>;
   setIsMintingLords: (value: boolean) => void;
   setEntropyReady: (value: boolean) => void;
+  rpc_addr: string;
+  network: Network;
 }
 
 function handleEquip(
@@ -207,8 +206,14 @@ export function syscalls({
   getBalances,
   setIsMintingLords,
   setEntropyReady,
+  rpc_addr,
+  network,
 }: SyscallsProps) {
   const gameData = new GameData();
+
+  const provider = new Provider({
+    nodeUrl: rpc_addr!,
+  });
 
   const updateItemsXP = (adventurerState: Adventurer, itemsXP: number[]) => {
     const weapon = adventurerState.weapon;
@@ -275,6 +280,7 @@ export function syscalls({
   const spawn = async (
     formData: FormData,
     goldenTokenId: string,
+    revenueAddress: string,
     costToPlay?: number
   ) => {
     const storage: BurnerStorage = Storage.get("burners");
@@ -297,7 +303,7 @@ export function syscalls({
       contractAddress: gameContract?.address ?? "",
       entrypoint: "new_game",
       calldata: [
-        process.env.NEXT_PUBLIC_DAO_ADDRESS ?? "",
+        revenueAddress,
         getKeyFromValue(gameData.ITEMS, formData.startingWeapon) ?? "",
         stringToFelt(formData.name).toString(),
         goldenTokenId,
@@ -333,7 +339,8 @@ export function syscalls({
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
-        setTopUpAccount
+        setTopUpAccount,
+        network
       );
       addTransaction({
         hash: tx?.transaction_hash,
@@ -448,7 +455,8 @@ export function syscalls({
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
-        setTopUpAccount
+        setTopUpAccount,
+        network
       );
       setTxHash(tx?.transaction_hash);
       addTransaction({
@@ -675,7 +683,8 @@ export function syscalls({
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
-        setTopUpAccount
+        setTopUpAccount,
+        network
       );
       setTxHash(tx?.transaction_hash);
       addTransaction({
@@ -900,7 +909,8 @@ export function syscalls({
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
-        setTopUpAccount
+        setTopUpAccount,
+        network
       );
       setTxHash(tx?.transaction_hash);
       addTransaction({
@@ -1066,7 +1076,8 @@ export function syscalls({
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
-        setTopUpAccount
+        setTopUpAccount,
+        network
       );
       setTxHash(tx?.transaction_hash);
       addTransaction({
@@ -1192,7 +1203,8 @@ export function syscalls({
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
-        setTopUpAccount
+        setTopUpAccount,
+        network
       );
       setTxHash(tx?.transaction_hash);
       addTransaction({
@@ -1277,7 +1289,8 @@ export function syscalls({
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
-        setTopUpAccount
+        setTopUpAccount,
+        network
       );
       setTxHash(tx?.transaction_hash);
       addTransaction({
@@ -1475,7 +1488,8 @@ export function syscalls({
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
-        setTopUpAccount
+        setTopUpAccount,
+        network
       );
       const result = await provider?.waitForTransaction(tx?.transaction_hash, {
         retryInterval: TRANSACTION_WAIT_RETRY_INTERVAL,
@@ -1514,7 +1528,8 @@ export function syscalls({
         isArcade,
         Number(ethBalance),
         showTopUpDialog,
-        setTopUpAccount
+        setTopUpAccount,
+        network
       );
       const result = await provider?.waitForTransaction(tx?.transaction_hash, {
         retryInterval: TRANSACTION_WAIT_RETRY_INTERVAL,
