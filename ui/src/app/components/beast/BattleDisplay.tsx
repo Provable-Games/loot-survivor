@@ -30,7 +30,6 @@ export const BattleDisplay = ({
   const AdventurerHealthExists = (battleData.adventurerHealth ?? 0) > 0;
   const NoDamageDealt = battleData.damageDealt === 0;
   const NoDamageTaken = battleData.damageTaken === 0;
-  const IdleDamagePenalty = !battleData.beast;
   const CriticalHit = battleData.criticalHit;
 
   const renderDiscoveryMessage = () => {
@@ -130,15 +129,6 @@ export const BattleDisplay = ({
         </span>
       );
     }
-
-    if (IdleDamagePenalty) {
-      return (
-        <span className="flex flex-row items-center justify-between">
-          <p>OOPS! Killed by idle death penalty!</p>
-          <SkullCrossedBonesIcon />
-        </span>
-      );
-    }
   };
 
   return (
@@ -218,8 +208,6 @@ export const NotificationBattleDisplay = ({
     battleData.some(
       (data) => data.attacker === "Beast" && (data.adventurerHealth ?? 0) === 0
     );
-  const IdleDeathPenalty =
-    isArray && battleData.length == 1 && !battleData[0].beast;
 
   const renderBattleNotification = () => {
     if (BeastFled) {
@@ -341,13 +329,6 @@ export const NotificationBattleDisplay = ({
             className="animate-pulse"
           />
         </div>
-      );
-    } else if (IdleDeathPenalty) {
-      return (
-        <span className="flex flex-row items-center justify-between w-full">
-          <p>Killed from the idle death penalty!</p>
-          <SkullCrossedBonesIcon />
-        </span>
       );
     }
   };

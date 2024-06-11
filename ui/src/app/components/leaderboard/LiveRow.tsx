@@ -12,8 +12,6 @@ interface LiveLeaderboardRowProps {
   adventurer: Adventurer;
   handleRowSelected: (id: number) => void;
   gameContract: Contract;
-  gameEntropyUpdateTime: number;
-  currentBlock: number;
   idleAdventurers?: string[];
 }
 
@@ -21,8 +19,6 @@ const LiveLeaderboardRow = ({
   adventurer,
   handleRowSelected,
   gameContract,
-  gameEntropyUpdateTime,
-  currentBlock,
   idleAdventurers,
 }: LiveLeaderboardRowProps) => {
   const { play: clickPlay } = useUiSounds(soundSelector.click);

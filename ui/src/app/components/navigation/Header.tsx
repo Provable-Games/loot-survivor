@@ -8,7 +8,6 @@ import { useUiSounds } from "@/app/hooks/useUiSound";
 import { soundSelector } from "@/app/hooks/useUiSound";
 import Logo from "public/icons/logo.svg";
 import Lords from "public/icons/lords.svg";
-import { PenaltyCountDown } from "@/app/components/CountDown";
 import { Button } from "@/app/components/buttons/Button";
 import { formatNumber, displayAddress, indexAddress } from "@/app/lib/utils";
 import {
@@ -57,7 +56,6 @@ export default function Header({
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
   const resetData = useQueriesStore((state) => state.resetData);
-  const isLoading = useQueriesStore((state) => state.isLoading);
 
   const setDisconnected = useUIStore((state) => state.setDisconnected);
   const arcadeDialog = useUIStore((state) => state.arcadeDialog);
@@ -70,12 +68,6 @@ export default function Header({
   const displayHistory = useUIStore((state) => state.displayHistory);
   const setDisplayHistory = useUIStore((state) => state.setDisplayHistory);
   const setScreen = useUIStore((state) => state.setScreen);
-  const updateDeathPenalty = useUIStore((state) => state.updateDeathPenalty);
-  const setUpdateDeathPenalty = useUIStore(
-    (state) => state.setUpdateDeathPenalty
-  );
-  const startPenalty = useUIStore((state) => state.startPenalty);
-  const setStartPenalty = useUIStore((state) => state.setStartPenalty);
 
   const calls = useTransactionCartStore((state) => state.calls);
   const txInCart = calls.length > 0;
@@ -100,12 +92,6 @@ export default function Header({
     handleApibaraStatus();
   }, []);
 
-  useEffect(() => {
-    if (startPenalty) {
-      setStartPenalty(false);
-    }
-  }, [adventurer]);
-
   const isOnMainnet = process.env.NEXT_PUBLIC_NETWORK === "mainnet";
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
@@ -124,14 +110,6 @@ export default function Header({
           </Button>
         )}
         <ApibaraStatus status={apibaraStatus} />
-        {adventurer?.id && (
-          <PenaltyCountDown
-            dataLoading={isLoading.global}
-            startCountdown={startPenalty || (adventurer?.level ?? 0) > 1}
-            updateDeathPenalty={updateDeathPenalty}
-            setUpdateDeathPenalty={setUpdateDeathPenalty}
-          />
-        )}
         <Button
           size={"xs"}
           variant={"outline"}

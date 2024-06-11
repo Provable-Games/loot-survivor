@@ -16,7 +16,6 @@ import Storage from "@/app/lib/storage";
 import { ArcadeConnector } from "@/app/lib/arcade";
 import { BurnerStorage } from "@/app/types";
 import { padAddress } from "@/app/lib/utils";
-import { TRANSACTION_WAIT_RETRY_INTERVAL } from "@/app/lib/constants";
 
 const isMainnet = process.env.NEXT_PUBLIC_NETWORK == "mainnet";
 const isSepolia = process.env.NEXT_PUBLIC_NETWORK == "sepolia";
@@ -168,9 +167,7 @@ export const useBurner = ({
 
       const { transaction_hash } = await account.execute(prefundCalls);
 
-      const result = await provider.waitForTransaction(transaction_hash, {
-        retryInterval: TRANSACTION_WAIT_RETRY_INTERVAL,
-      });
+      const result = await provider.waitForTransaction(transaction_hash);
 
       if (!result) {
         throw new Error("Transaction did not complete successfully.");
@@ -378,9 +375,7 @@ export const useBurner = ({
         ]),
       });
 
-      const result = await provider.waitForTransaction(transaction_hash, {
-        retryInterval: TRANSACTION_WAIT_RETRY_INTERVAL,
-      });
+      const result = await provider.waitForTransaction(transaction_hash);
 
       if (!result) {
         throw new Error("Transaction did not complete successfully.");
@@ -415,9 +410,7 @@ export const useBurner = ({
       };
       const { transaction_hash } = await account.execute([lordsTransferTx]);
 
-      const result = await provider.waitForTransaction(transaction_hash, {
-        retryInterval: TRANSACTION_WAIT_RETRY_INTERVAL,
-      });
+      const result = await provider.waitForTransaction(transaction_hash);
 
       if (!result) {
         throw new Error("Transaction did not complete successfully.");
@@ -500,9 +493,7 @@ export const useBurner = ({
 
       const { transaction_hash } = await account.execute(calls);
 
-      const result = await provider.waitForTransaction(transaction_hash, {
-        retryInterval: TRANSACTION_WAIT_RETRY_INTERVAL,
-      });
+      const result = await provider.waitForTransaction(transaction_hash);
 
       if (!result) {
         throw new Error("Transaction did not complete successfully.");
@@ -608,7 +599,7 @@ export const useBurner = ({
             addressSalt: publicKey,
           },
           {
-            maxFee: feeEstimateResult.suggestedMaxFee * BigInt(2),
+            maxFee: feeEstimateResult.suggestedMaxFee * BigInt(4),
           }
         );
 

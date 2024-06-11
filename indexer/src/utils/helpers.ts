@@ -4,7 +4,7 @@ import { encodeIntAsBytes, checkExistsInt } from "./encode.ts";
 export function insertAdventurer({
   id,
   owner,
-  lastAction,
+  entropy,
   health,
   xp,
   strength,
@@ -24,9 +24,8 @@ export function insertAdventurer({
   ring,
   beastHealth,
   statUpgrades,
-  actionsPerBlock,
   name,
-  startBlock,
+  startEntropy,
   revealBlock,
   createdTime,
   lastUpdatedTime,
@@ -42,7 +41,7 @@ export function insertAdventurer({
     update: {
       $set: {
         ...entity,
-        lastAction: encodeIntAsBytes(BigInt(lastAction)),
+        entropy: encodeIntAsBytes(BigInt(entropy)),
         health: encodeIntAsBytes(BigInt(health)),
         xp: encodeIntAsBytes(BigInt(xp)),
         strength: encodeIntAsBytes(BigInt(strength)),
@@ -62,9 +61,8 @@ export function insertAdventurer({
         ring: checkExistsInt(BigInt(ring)),
         beastHealth: encodeIntAsBytes(BigInt(beastHealth)),
         statUpgrades: checkExistsInt(BigInt(statUpgrades)),
-        actionsPerBlock: encodeIntAsBytes(BigInt(actionsPerBlock)),
         name: checkExistsInt(BigInt(name)),
-        startBlock: encodeIntAsBytes(BigInt(startBlock)),
+        startEntropy: encodeIntAsBytes(BigInt(startEntropy)),
         revealBlock: encodeIntAsBytes(BigInt(revealBlock)),
         createdTime: createdTime,
         lastUpdatedTime: lastUpdatedTime,
@@ -171,7 +169,7 @@ export function updateAdventurer({
     update: {
       $set: {
         ...entity,
-        lastAction: encodeIntAsBytes(BigInt(adventurer.lastActionBlock)),
+        entropy: encodeIntAsBytes(BigInt(adventurerState.adventurerEntropy)),
         health: encodeIntAsBytes(BigInt(adventurer.health)),
         xp: encodeIntAsBytes(BigInt(adventurer.xp)),
         strength: encodeIntAsBytes(BigInt(adventurer.stats.strength)),
@@ -182,17 +180,18 @@ export function updateAdventurer({
         charisma: encodeIntAsBytes(BigInt(adventurer.stats.charisma)),
         luck: encodeIntAsBytes(BigInt(adventurer.stats.luck)),
         gold: encodeIntAsBytes(BigInt(adventurer.gold)),
-        weapon: checkExistsInt(BigInt(adventurer.weapon.id)),
-        chest: checkExistsInt(BigInt(adventurer.chest.id)),
-        head: checkExistsInt(BigInt(adventurer.head.id)),
-        waist: checkExistsInt(BigInt(adventurer.waist.id)),
-        foot: checkExistsInt(BigInt(adventurer.foot.id)),
-        hand: checkExistsInt(BigInt(adventurer.hand.id)),
-        neck: checkExistsInt(BigInt(adventurer.neck.id)),
-        ring: checkExistsInt(BigInt(adventurer.ring.id)),
+        weapon: checkExistsInt(BigInt(adventurer.equipment.weapon.id)),
+        chest: checkExistsInt(BigInt(adventurer.equipment.chest.id)),
+        head: checkExistsInt(BigInt(adventurer.equipment.head.id)),
+        waist: checkExistsInt(BigInt(adventurer.equipment.waist.id)),
+        foot: checkExistsInt(BigInt(adventurer.equipment.foot.id)),
+        hand: checkExistsInt(BigInt(adventurer.equipment.hand.id)),
+        neck: checkExistsInt(BigInt(adventurer.equipment.neck.id)),
+        ring: checkExistsInt(BigInt(adventurer.equipment.ring.id)),
         beastHealth: encodeIntAsBytes(BigInt(adventurer.beastHealth)),
-        statUpgrades: encodeIntAsBytes(BigInt(adventurer.statsPointsAvailable)),
-        actionsPerBlock: encodeIntAsBytes(BigInt(adventurer.actionsPerBlock)),
+        statUpgrades: encodeIntAsBytes(
+          BigInt(adventurer.statsUpgradesAvailable)
+        ),
         lastUpdatedTime: timestamp,
         timestamp,
       },
@@ -431,58 +430,58 @@ export function updateItemsXP({
   const itemUpdates: any[] = [];
   itemUpdates.push(
     updateItemXP({
-      item: adventurer.weapon.id,
+      item: adventurer.equipment.weapon.id,
       adventurerId: adventurerState.adventurerId,
-      xp: adventurer.weapon.xp,
+      xp: adventurer.equipment.weapon.xp,
     })
   );
   itemUpdates.push(
     updateItemXP({
-      item: adventurer.chest.id,
+      item: adventurer.equipment.chest.id,
       adventurerId: adventurerState.adventurerId,
-      xp: adventurer.chest.xp,
+      xp: adventurer.equipment.chest.xp,
     })
   );
   itemUpdates.push(
     updateItemXP({
-      item: adventurer.head.id,
+      item: adventurer.equipment.head.id,
       adventurerId: adventurerState.adventurerId,
-      xp: adventurer.head.xp,
+      xp: adventurer.equipment.head.xp,
     })
   );
   itemUpdates.push(
     updateItemXP({
-      item: adventurer.waist.id,
+      item: adventurer.equipment.waist.id,
       adventurerId: adventurerState.adventurerId,
-      xp: adventurer.waist.xp,
+      xp: adventurer.equipment.waist.xp,
     })
   );
   itemUpdates.push(
     updateItemXP({
-      item: adventurer.foot.id,
+      item: adventurer.equipment.foot.id,
       adventurerId: adventurerState.adventurerId,
-      xp: adventurer.foot.xp,
+      xp: adventurer.equipment.foot.xp,
     })
   );
   itemUpdates.push(
     updateItemXP({
-      item: adventurer.hand.id,
+      item: adventurer.equipment.hand.id,
       adventurerId: adventurerState.adventurerId,
-      xp: adventurer.hand.xp,
+      xp: adventurer.equipment.hand.xp,
     })
   );
   itemUpdates.push(
     updateItemXP({
-      item: adventurer.neck.id,
+      item: adventurer.equipment.neck.id,
       adventurerId: adventurerState.adventurerId,
-      xp: adventurer.neck.xp,
+      xp: adventurer.equipment.neck.xp,
     })
   );
   itemUpdates.push(
     updateItemXP({
-      item: adventurer.ring.id,
+      item: adventurer.equipment.ring.id,
       adventurerId: adventurerState.adventurerId,
-      xp: adventurer.ring.xp,
+      xp: adventurer.equipment.ring.xp,
     })
   );
   const filteredUpdates = itemUpdates.filter((value) => value !== undefined);
