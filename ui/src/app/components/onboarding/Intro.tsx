@@ -79,7 +79,7 @@ const Intro = () => {
                 onClick={() => {
                   setScreen("start");
                   handleOnboarded();
-                  setNetwork("localKatana");
+                  setNetwork("katana");
                 }}
               >
                 Continue as Guest

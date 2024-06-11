@@ -93,6 +93,7 @@ function Home() {
   const disconnected = useUIStore((state) => state.disconnected);
   const setDisconnected = useUIStore((state) => state.setDisconnected);
   const network = useUIStore((state) => state.network);
+  const onKatana = useUIStore((state) => state.onKatana);
   const { account, address, status, isConnected } = useNetworkAccount();
   const isMuted = useUIStore((state) => state.isMuted);
   const adventurer = useAdventurerStore((state) => state.adventurer);
@@ -182,7 +183,7 @@ function Home() {
   };
 
   useEffect(() => {
-    if (network !== "localKatana") {
+    if (!onKatana) {
       getBalances();
     }
   }, [account]);

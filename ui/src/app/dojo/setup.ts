@@ -25,7 +25,10 @@ export async function setup({ rpcUrl, network }: SetupProps) {
 
   await burnerManager.init();
 
-  if (burnerManager.list().length === 0 && network === "localKatana") {
+  if (
+    burnerManager.list().length === 0 &&
+    (network === "localKatana" || network === "katana")
+  ) {
     try {
       await burnerManager.create();
     } catch (e) {
