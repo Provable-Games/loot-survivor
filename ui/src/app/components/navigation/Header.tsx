@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { Contract } from "starknet";
 import { useDisconnect, useConnect } from "@starknet-react/core";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
@@ -10,7 +10,15 @@ import Logo from "public/icons/logo.svg";
 import Eth from "public/icons/eth.svg";
 import Lords from "public/icons/lords.svg";
 import { Button } from "@/app/components/buttons/Button";
-import { formatNumber, displayAddress, indexAddress } from "@/app/lib/utils";
+import {
+  calculateVitBoostRemoved,
+  formatNumber,
+  displayAddress,
+  indexAddress,
+  processItemName,
+  getItemData,
+  getItemPrice,
+} from "@/app/lib/utils";
 import {
   ArcadeIcon,
   SoundOffIcon,
@@ -21,20 +29,28 @@ import {
 } from "@/app/components/icons/Icons";
 import TransactionCart from "@/app/components/navigation/TransactionCart";
 import TransactionHistory from "@/app/components/navigation/TransactionHistory";
-import { NullAdventurer } from "@/app/types";
+import {
+  NullAdventurer,
+  Item,
+  NullItem,
+  UpgradeStats,
+  ZeroUpgrade,
+} from "@/app/types";
 import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
 import { getApibaraStatus } from "@/app/api/api";
 import ApibaraStatus from "@/app/components/navigation/ApibaraStatus";
 import TokenLoader from "@/app/components/animations/TokenLoader";
 import { checkArcadeConnector } from "@/app/lib/connectors";
-import { SkullIcon } from "@/app/components/icons/Icons";
 import { networkConfig } from "@/app/lib/networkConfig";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
+import useLoadingStore from "@/app/hooks/useLoadingStore";
+import { useController } from "@/app/context/ControllerContext";
 
 export interface HeaderProps {
   multicall: (
     loadingMessage: string[],
-    notification: string[]
+    notification: string[],
+    upgradeTx?: any
   ) => Promise<void>;
   mintLords: (lordsAmount: number) => Promise<void>;
   ethBalance: bigint;
@@ -56,7 +72,6 @@ export default function Header({
   const { connector } = useConnect();
   const { disconnect } = useDisconnect();
   const [apibaraStatus, setApibaraStatus] = useState();
-  const adventurer = useAdventurerStore((state) => state.adventurer);
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
   const resetData = useQueriesStore((state) => state.resetData);
 
@@ -96,6 +111,236 @@ export default function Header({
   }, []);
 
   const appUrl = networkConfig[network!].appUrl;
+
+  const [notification, setNotification] = useState<any[]>([]);
+  const [loadingMessage, setLoadingMessage] = useState<string[]>([]);
+  const notificationData = useLoadingStore((state) => state.notificationData);
+  const resetNotification = useLoadingStore((state) => state.resetNotification);
+  const purchaseItems = useUIStore((state) => state.purchaseItems);
+  const adventurer = useAdventurerStore((state) => state.adventurer);
+  const data = useQueriesStore((state) => state.data);
+  const potionAmount = useUIStore((state) => state.potionAmount);
+  const upgrades = useUIStore((state) => state.upgrades);
+  const selectedVitality = upgrades["Vitality"] ?? 0;
+  const totalVitality = (adventurer?.vitality ?? 0) + selectedVitality;
+  const addToCalls = useTransactionCartStore((state) => state.addToCalls);
+  const removeEntrypointFromCalls = useTransactionCartStore(
+    (state) => state.removeEntrypointFromCalls
+  );
+  const resetCalls = useTransactionCartStore((state) => state.resetCalls);
+  const equipItems = useUIStore((state) => state.equipItems);
+  const setEquipItems = useUIStore((state) => state.setEquipItems);
+  const dropItems = useUIStore((state) => state.dropItems);
+  const setDropItems = useUIStore((state) => state.setDropItems);
+  const setPotionAmount = useUIStore((state) => state.setPotionAmount);
+  const setPurchaseItems = useUIStore((state) => state.setPurchaseItems);
+  const setUpgrades = useUIStore((state) => state.setUpgrades);
+  const setUpgradeScreen = useUIStore((state) => state.setUpgradeScreen);
+  const setSlayAdventurers = useUIStore((state) => state.setSlayAdventurers);
+  const screen = useUIStore((state) => state.screen);
+
+  const items = data.latestMarketItemsQuery
+    ? data.latestMarketItemsQuery.items
+    : [];
+
+  const handleBuyItem = useCallback(
+    (call: any) => {
+      const item = items.find(
+        (item: Item) =>
+          item.item === (Array.isArray(call.calldata) && call.calldata[0])
+      );
+      const itemName = processItemName(item ?? NullItem);
+      const { tier } = getItemData(item?.item ?? "");
+      setNotification((notifications) => [
+        ...notifications,
+        `You purchased ${item?.item && itemName} for ${getItemPrice(
+          tier,
+          adventurer?.charisma ?? 0
+        )} gold`,
+      ]);
+      setLoadingMessage((messages) => [...messages, "Purchasing"]);
+    },
+    [items]
+  );
+
+  const handleEquipItem = () => {
+    setNotification((notifications) => [
+      ...notifications,
+      `You equipped ${equipItems.length} items!`,
+    ]);
+    setLoadingMessage((messages) => [...messages, "Equipping"]);
+  };
+
+  const handleDropItems = () => {
+    setNotification((notifications) => [
+      ...notifications,
+      `You dropped ${dropItems.length} items!`,
+    ]);
+    setLoadingMessage((messages) => [...messages, "Dropping"]);
+  };
+
+  const handleUpgradeAdventurer = () => {
+    setNotification((notifications) => [
+      ...notifications,
+      {
+        Stats: upgrades,
+        Items: purchaseItems,
+        Potions: potionAmount,
+      },
+    ]);
+    setLoadingMessage((messages) => [...messages, "Upgrading"]);
+  };
+
+  const handleSlayIdleAdventurers = useCallback((call: any) => {
+    setNotification((notifications) => [
+      ...notifications,
+      `You slayed ${
+        Array.isArray(call.calldata) && call.calldata[0]
+      } Adventurers`,
+    ]);
+    setLoadingMessage((messages) => [...messages, "Slaying Adventurer"]);
+  }, []);
+
+  const handleLoadData = useCallback(() => {
+    for (let call of calls) {
+      switch (call.entrypoint) {
+        case "buy_item":
+          handleBuyItem(call);
+          break;
+        case "equip":
+          handleEquipItem();
+          break;
+        case "drop":
+          handleDropItems();
+          break;
+        case "upgrade":
+          handleUpgradeAdventurer();
+          break;
+        case "slay_idle_adventurers":
+          handleSlayIdleAdventurers(call);
+          break;
+        default:
+          break;
+      }
+    }
+  }, [
+    calls,
+    handleBuyItem,
+    handleEquipItem,
+    handleDropItems,
+    handleUpgradeAdventurer,
+    handleSlayIdleAdventurers,
+  ]);
+
+  useEffect(() => {
+    handleLoadData();
+  }, [calls]);
+
+  const handleResetCalls = () => {
+    resetCalls();
+    setEquipItems([]);
+    setDropItems([]);
+    setPotionAmount(0);
+    setPurchaseItems([]);
+    setUpgrades({ ...ZeroUpgrade });
+    setUpgradeScreen(1);
+    setSlayAdventurers([]);
+  };
+
+  const handleAddUpgradeTx = (
+    currentUpgrades?: UpgradeStats,
+    potions?: number,
+    items?: any[]
+  ) => {
+    removeEntrypointFromCalls("upgrade");
+    const upgradeTx = {
+      contractAddress: gameContract?.address ?? "",
+      entrypoint: "upgrade",
+      calldata: [
+        adventurer?.id?.toString() ?? "",
+        potions! >= 0 ? potions?.toString() : potionAmount.toString(),
+        currentUpgrades
+          ? currentUpgrades["Strength"].toString()
+          : upgrades["Strength"].toString(),
+        currentUpgrades
+          ? currentUpgrades["Dexterity"].toString()
+          : upgrades["Dexterity"].toString(),
+        currentUpgrades
+          ? currentUpgrades["Vitality"].toString()
+          : upgrades["Vitality"].toString(),
+        currentUpgrades
+          ? currentUpgrades["Intelligence"].toString()
+          : upgrades["Intelligence"].toString(),
+        currentUpgrades
+          ? currentUpgrades["Wisdom"].toString()
+          : upgrades["Wisdom"].toString(),
+        currentUpgrades
+          ? currentUpgrades["Charisma"].toString()
+          : upgrades["Charisma"].toString(),
+        "0",
+        items ? items.length.toString() : purchaseItems.length.toString(),
+        ...(items
+          ? items.flatMap(Object.values)
+          : purchaseItems.flatMap(Object.values)),
+      ],
+    };
+    addToCalls(upgradeTx);
+  };
+
+  const handleSubmitMulticall = async () => {
+    resetNotification();
+    // Handle for vitBoostRemoval
+    const vitBoostRemoved = calculateVitBoostRemoved(
+      purchaseItems,
+      adventurer!,
+      data.itemsByAdventurerQuery?.items ?? []
+    );
+    let upgradeTx: any;
+    if (potionAmount > 0) {
+      // Check whether health + pots is within vitBoostRemoved of the maxHealth
+      const maxHealth = 100 + totalVitality * 10;
+      const newMaxHealth = 100 + (totalVitality - vitBoostRemoved) * 10;
+      const currentHealth = adventurer?.health! + selectedVitality * 10;
+      const healthPlusPots = Math.min(
+        currentHealth! + potionAmount * 10,
+        maxHealth
+      );
+      const healthOverflow = healthPlusPots > newMaxHealth;
+      if (healthOverflow) {
+        const newUpgradeTx = handleAddUpgradeTx(
+          undefined,
+          Math.max(potionAmount - vitBoostRemoved, 0),
+          undefined
+        );
+        upgradeTx = newUpgradeTx;
+      }
+    }
+    setDisplayCart(false);
+    await multicall(loadingMessage, notification, upgradeTx);
+    handleResetCalls();
+  };
+
+  const { addControl } = useController();
+
+  useEffect(() => {
+    addControl(
+      "i",
+      () => {
+        console.log("Key i pressed");
+        if (calls.length > 0) {
+          handleSubmitMulticall();
+        }
+      },
+      screen === "play" ||
+        screen === "beast" ||
+        screen === "upgrade" ||
+        screen === "inventory"
+    );
+  }, [calls]);
+
+  useEffect(() => {
+    setNotification([]);
+  }, [notificationData]);
 
   return (
     <div className="flex flex-row justify-between px-1 h-10 ">
@@ -216,8 +461,9 @@ export default function Header({
         {displayCart && (
           <TransactionCart
             buttonRef={displayCartButtonRef}
-            multicall={multicall}
-            gameContract={gameContract}
+            handleSubmitMulticall={handleSubmitMulticall}
+            handleAddUpgradeTx={handleAddUpgradeTx}
+            handleResetCalls={handleResetCalls}
           />
         )}
         <span className="sm:hidden flex flex-row gap-2 items-center">

@@ -39,6 +39,7 @@ import { HealthCountDown } from "@/app/components/CountDown";
 import { calculateVitBoostRemoved } from "@/app/lib/utils";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import InterludeScreen from "@/app/containers/InterludeScreen";
+import { useController } from "@/app/context/ControllerContext";
 
 interface UpgradeScreenProps {
   upgrade: (
@@ -86,6 +87,7 @@ export default function UpgradeScreen({
   const entropyReady = useUIStore((state) => state.entropyReady);
   const setEntropyReady = useUIStore((state) => state.setEntropyReady);
   const onKatana = useUIStore((state) => state.onKatana);
+  const screen = useUIStore((state) => state.screen);
   const pendingMessage = useLoadingStore((state) => state.pendingMessage);
   const [summary, setSummary] = useState<UpgradeSummary>({
     Stats: { ...ZeroUpgrade },
@@ -411,6 +413,19 @@ export default function UpgradeScreen({
       console.log(e);
     }
   };
+
+  const { addControl } = useController();
+
+  useEffect(() => {
+    addControl(
+      "u",
+      () => {
+        console.log("Key u pressed");
+        handleSubmitUpgradeTx();
+      },
+      screen === "upgrade"
+    );
+  }, [upgrades, purchaseItems, potionAmount]);
 
   const upgradesTotal = Object.values(upgrades)
     .filter((value) => value !== 0)

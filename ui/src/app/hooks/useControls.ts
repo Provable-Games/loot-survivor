@@ -7,9 +7,10 @@ const useControls = () => {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       const { key } = event;
-      if (controls[key]) {
+      const control = controls[key];
+      if (control && control.condition) {
         event.preventDefault();
-        controls[key]();
+        control.callback();
       }
     },
     [controls]

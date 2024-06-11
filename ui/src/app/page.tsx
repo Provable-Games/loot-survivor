@@ -55,7 +55,6 @@ import { SpecialBeast } from "@/app/components/notifications/SpecialBeast";
 import Storage from "@/app/lib/storage";
 import Onboarding from "./containers/Onboarding";
 import TopUp from "./containers/TopUp";
-import { useController } from "@/app/context/ControllerContext";
 import useControls from "@/app/hooks/useControls";
 import { networkConfig } from "@/app/lib/networkConfig";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";

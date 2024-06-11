@@ -1,10 +1,15 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
-type Controller = { [key: string]: () => void };
+type Control = {
+  callback: () => void;
+  condition: boolean;
+};
+
+type Controller = { [key: string]: Control };
 
 type ControllerContextType = {
   controls: Controller;
-  addControl: (key: string, callback: () => void) => void;
+  addControl: (key: string, callback: () => void, condition: boolean) => void;
 };
 
 const ControllerContext = createContext<ControllerContextType>({
@@ -15,8 +20,15 @@ const ControllerContext = createContext<ControllerContextType>({
 export const ControllerProvider = ({ children }: { children: ReactNode }) => {
   const [controls, setControls] = useState<Controller>({});
 
-  const addControl = (key: string, callback: () => void) => {
-    setControls((prevControls) => ({ ...prevControls, [key]: callback }));
+  const addControl = (
+    key: string,
+    callback: () => void,
+    condition: boolean
+  ) => {
+    setControls((prevControls) => ({
+      ...prevControls,
+      [key]: { callback, condition },
+    }));
   };
 
   return (
