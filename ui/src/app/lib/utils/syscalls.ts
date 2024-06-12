@@ -24,8 +24,6 @@ import {
 import { getKeyFromValue, stringToFelt, indexAddress } from "@/app/lib/utils";
 import { parseEvents } from "@/app/lib/utils/parseEvents";
 import { processNotifications } from "@/app/components/notifications/NotificationHandler";
-import Storage from "@/app/lib/storage";
-import { BurnerStorage } from "@/app/types";
 import { Connector } from "@starknet-react/core";
 import {
   checkArcadeConnector,
