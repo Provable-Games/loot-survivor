@@ -1351,9 +1351,6 @@ mod Game {
             );
         }
 
-        _save_adventurer_metadata(ref self, adventurer_id, adventurer_meta);
-        _save_adventurer_no_boosts(ref self, adventurer, adventurer_id);
-
         // increment the adventurer id counter
         self._game_counter.write(adventurer_id);
 
@@ -1363,6 +1360,9 @@ mod Game {
         // emit events 
         __event_StartGame(ref self, adventurer, adventurer_id, adventurer_meta);
         __event_AmbushedByBeast(ref self, adventurer, adventurer_id, beast_battle_details);
+
+        _save_adventurer_metadata(ref self, adventurer_id, adventurer_meta);
+        _save_adventurer_no_boosts(ref self, adventurer, adventurer_id);
     }
 
     fn _starter_beast_ambush(
