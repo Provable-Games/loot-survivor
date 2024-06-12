@@ -222,7 +222,9 @@ mod Game {
             // get adventurer
             let mut adventurer = _load_adventurer_no_boosts(@self, adventurer_id);
 
-            process_vrf_randomness(ref self, requestor_address, ref adventurer, adventurer_id, adventurer_entropy);
+            process_vrf_randomness(
+                ref self, requestor_address, ref adventurer, adventurer_id, adventurer_entropy
+            );
         }
 
         /// @title New Game
@@ -908,8 +910,11 @@ mod Game {
             process_initial_entropy(ref self, ref adventurer, adventurer_id, adventurer_entropy);
 
             // we only need to save adventurer is they received Vitality as part of starting stats
-            if adventurer.stats.vitality > 0 {
-                _save_adventurer(ref self, ref adventurer, adventurer_id);
+            let chain_id = starknet::get_execution_info().unbox().tx_info.unbox().chain_id;
+            if chain_id != KATANA_CHAIN_ID {
+                if adventurer.stats.vitality > 0 {
+                    _save_adventurer(ref self, ref adventurer, adventurer_id);
+                }
             }
         } else if adventurer_level > 2 {
             let adventurer_state = AdventurerState {
