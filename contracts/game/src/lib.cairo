@@ -903,6 +903,19 @@ mod Game {
         // If the adventurer is on level 2, they are waiting on this entropy to come in for the market to be available
         if adventurer_level == 2 {
             process_initial_entropy(ref self, ref adventurer, adventurer_id, adventurer_entropy);
+            // emit upgrades available event 
+            let adventurer_state = AdventurerState {
+                owner: self._owner.read(adventurer_id),
+                adventurer_id,
+                adventurer_entropy,
+                adventurer
+            };
+            // get market items based on new adventurer entropy 
+            let available_items = _get_items_on_market(
+                @self, adventurer_entropy, adventurer.xp, adventurer.stat_upgrades_available
+            );
+            __event_UpgradesAvailable(ref self, adventurer_state, available_items);
+
             // we only need to save adventurer is they received Vitality as part of starting stats
             if adventurer.stats.vitality > 0 {
                 _save_adventurer(ref self, ref adventurer, adventurer_id);
