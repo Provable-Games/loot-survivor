@@ -218,7 +218,11 @@ mod Game {
 
             let adventurer_entropy = *random_words.at(0);
             let adventurer_id = *calldata.at(0);
-            process_vrf_randomness(ref self, requestor_address, adventurer_id, adventurer_entropy);
+
+            // get adventurer
+            let mut adventurer = _load_adventurer_no_boosts(@self, adventurer_id);
+
+            process_vrf_randomness(ref self, requestor_address, ref adventurer, adventurer_id, adventurer_entropy);
         }
 
         /// @title New Game
@@ -890,14 +894,13 @@ mod Game {
     fn process_vrf_randomness(
         ref self: ContractState,
         requestor_address: ContractAddress,
+        ref adventurer: Adventurer,
         adventurer_id: felt252,
         adventurer_entropy: felt252,
     ) {
         self._adventurer_entropy.write(adventurer_id, adventurer_entropy);
         __event_ReceivedEntropy(ref self, adventurer_id, requestor_address, adventurer_entropy);
 
-        // get adventurer
-        let mut adventurer = _load_adventurer_no_boosts(@self, adventurer_id);
         let adventurer_level = adventurer.get_level();
 
         // If the adventurer is on level 2, they are waiting on this entropy to come in for the market to be available
@@ -2379,6 +2382,7 @@ mod Game {
                 process_vrf_randomness(
                     ref self,
                     starknet::get_contract_address(),
+                    ref adventurer,
                     adventurer_id,
                     _get_basic_entropy(adventurer_id, adventurer.xp)
                 );
@@ -2424,6 +2428,7 @@ mod Game {
                     process_vrf_randomness(
                         ref self,
                         starknet::get_contract_address(),
+                        ref adventurer,
                         adventurer_id,
                         _get_basic_entropy(adventurer_id, adventurer.xp)
                     );
