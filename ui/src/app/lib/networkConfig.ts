@@ -54,13 +54,13 @@ export const networkConfig = {
     accountClassHash: "0x0",
   },
   katana: {
-    rpcUrl: "http://ls-katana.provable.games:5050",
+    rpcUrl: "https://ls-katana.provable.games:5443/",
     rpcAPIKey: "",
     lsGQLURL: "https://ls-katana.provable.games:8080/graphql",
     tokensGQLURL: "",
     ethAddress: "0x0",
     gameAddress:
-      "0x04ea8df5c4b113d7ed9041be22cdfccbbb302df33da84c1ae096be01316fd2a7",
+      "0x02fb43793febf31eeabb97b781dea0db52840d1f796b10bdc8c664299445dfb5",
     lordsAddress: "0x0",
     beastsAddress: "0x0",
     goldenTokenAddress: "0x0",
