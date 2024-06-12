@@ -218,7 +218,13 @@ mod Game {
 
             let adventurer_entropy = *random_words.at(0);
             let adventurer_id = *calldata.at(0);
-            process_vrf_randomness(ref self, requestor_address, adventurer_id, adventurer_entropy);
+
+            // get adventurer
+            let mut adventurer = _load_adventurer_no_boosts(@self, adventurer_id);
+
+            process_vrf_randomness(
+                ref self, requestor_address, ref adventurer, adventurer_id, adventurer_entropy
+            );
         }
 
         /// @title New Game
@@ -890,22 +896,25 @@ mod Game {
     fn process_vrf_randomness(
         ref self: ContractState,
         requestor_address: ContractAddress,
+        ref adventurer: Adventurer,
         adventurer_id: felt252,
         adventurer_entropy: felt252,
     ) {
         self._adventurer_entropy.write(adventurer_id, adventurer_entropy);
         __event_ReceivedEntropy(ref self, adventurer_id, requestor_address, adventurer_entropy);
 
-        // get adventurer
-        let mut adventurer = _load_adventurer_no_boosts(@self, adventurer_id);
         let adventurer_level = adventurer.get_level();
 
         // If the adventurer is on level 2, they are waiting on this entropy to come in for the market to be available
         if adventurer_level == 2 {
             process_initial_entropy(ref self, ref adventurer, adventurer_id, adventurer_entropy);
+
             // we only need to save adventurer is they received Vitality as part of starting stats
-            if adventurer.stats.vitality > 0 {
-                _save_adventurer(ref self, ref adventurer, adventurer_id);
+            let chain_id = starknet::get_execution_info().unbox().tx_info.unbox().chain_id;
+            if chain_id != KATANA_CHAIN_ID {
+                if adventurer.stats.vitality > 0 {
+                    _save_adventurer(ref self, ref adventurer, adventurer_id);
+                }
             }
         } else if adventurer_level > 2 {
             let adventurer_state = AdventurerState {
@@ -2367,14 +2376,34 @@ mod Game {
                 adventurer_entropy,
                 adventurer
             };
+
             __event_AdventurerLeveledUp(ref self, adventurer_state, previous_level, new_level);
 
-            // if we already have adventurer entropy from VRF
-            if (adventurer_entropy != 0) {
-                // process initial entropy which will reveal starting stats and emit starting market
-                process_initial_entropy(
-                    ref self, ref adventurer, adventurer_id, adventurer_entropy
+            // get chain_id
+            let chain_id = starknet::get_execution_info().unbox().tx_info.unbox().chain_id;
+            // if chain is Katana
+            if chain_id == KATANA_CHAIN_ID {
+                // emit the leveled up event
+                process_vrf_randomness(
+                    ref self,
+                    starknet::get_contract_address(),
+                    ref adventurer,
+                    adventurer_id,
+                    _get_basic_entropy(adventurer_id, adventurer.xp)
                 );
+            } else {
+                // if we already have adventurer entropy from VRF
+                if (adventurer_entropy != 0) {
+                    // process initial entropy which will reveal starting stats and emit starting market
+                    process_initial_entropy(
+                        ref self, ref adventurer, adventurer_id, adventurer_entropy
+                    );
+                } else {
+                    // emit the leveled up event
+                    __event_AdventurerLeveledUp(
+                        ref self, adventurer_state, previous_level, new_level
+                    );
+                }
             }
         } else if (new_level > previous_level) {
             // if this is any level up beyond the starter beast
@@ -2404,6 +2433,7 @@ mod Game {
                     process_vrf_randomness(
                         ref self,
                         starknet::get_contract_address(),
+                        ref adventurer,
                         adventurer_id,
                         _get_basic_entropy(adventurer_id, adventurer.xp)
                     );
