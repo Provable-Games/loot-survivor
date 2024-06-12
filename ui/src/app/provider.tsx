@@ -30,7 +30,9 @@ export function StarknetProvider({
 
   return (
     <StarknetConfig
-      autoConnect
+      autoConnect={
+        network === "mainnet" || network === "sepolia" ? true : false
+      }
       chains={[sepolia]}
       connectors={connectors(
         networkConfig[network!].gameAddress,

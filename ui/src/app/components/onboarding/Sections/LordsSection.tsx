@@ -47,7 +47,7 @@ const LordsSection = ({
           )}
         </>
       )}
-      <div className="flex flex-col items-center justify-between sm:border sm:border-terminal-green p-5 text-center gap-5 h-[500px] sm:h-[425px] 2xl:h-[500px]">
+      <div className="flex flex-col items-center justify-between sm:border sm:border-terminal-green p-5 text-center gap-5 h-[400px] sm:h-[425px] 2xl:h-[500px]">
         <h4 className="m-0 uppercase text-3xl">Get Lords</h4>
         <Lords className="sm:hidden 2xl:block fill-current h-16" />
         {onMainnet ? (

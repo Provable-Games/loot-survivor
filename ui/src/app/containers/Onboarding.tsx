@@ -75,7 +75,7 @@ const Onboarding = ({
         Continue As Guest
       </Button>
       <div className="flex flex-col items-center gap-5 py-20 sm:p-0">
-        <h1 className="m-0 uppercase text-6xl text-center">
+        <h1 className="m-0 uppercase text-4xl sm:text-6xl text-center">
           Welcome to Loot Survivor
         </h1>
         {!loginScreen ? (

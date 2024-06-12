@@ -79,10 +79,6 @@ const sectionInfo = (section: Section) => {
             You will be required to enter LORDS to play at the price calculated
             from the games demand.
           </p>
-          <p>
-            If you wish to play with signerless transactions you can prefund
-            with up to 25 games to save gas!
-          </p>
         </div>
       );
     default:

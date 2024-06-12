@@ -166,7 +166,7 @@ export default function BeastScreen({
         estimatingFee,
       loading: loading,
       className:
-        "bg-terminal-green-25 hover:bg-terminal-green hover:text-black justify-start sm:justify-center px-2 sm:px-0",
+        "bg-terminal-yellow-25 hover:bg-terminal-yellow hover:text-black justify-start sm:justify-center px-2 sm:px-0",
     },
     {
       id: 2,
@@ -185,7 +185,7 @@ export default function BeastScreen({
         estimatingFee,
       loading: loading,
       className:
-        "bg-terminal-green-50 hover:bg-terminal-green hover:text-black justify-end sm:justify-center px-2 sm:px-0",
+        "bg-terminal-yellow-50 hover:bg-terminal-yellow hover:text-black justify-end sm:justify-center px-2 sm:px-0",
     },
   ];
 

@@ -51,20 +51,16 @@ const Login = ({
 
   return (
     <>
-      <p className="hidden sm:block text-xl">
-        A fully on-chain arcade game on Starknet. Follow the steps below to get
-        setup smoothly:
-      </p>
       <div className="hidden sm:flex flex-row h-5/6 gap-5">
         <div className="flex flex-col items-center w-1/3">
           <h2 className="m-0">1</h2>
-          <div className="relative z-1">
+          <div className="relative z-1 px-2 sm:px-0">
             <WalletSection step={step} />
           </div>
         </div>
         <div className="flex flex-col items-center w-1/3">
           <h2 className="m-0">2</h2>
-          <div className="relative z-1">
+          <div className="relative z-1 px-2 sm:px-0">
             <EthSection
               step={step}
               eth={eth}
@@ -76,7 +72,7 @@ const Login = ({
         </div>
         <div className="flex flex-col items-center w-1/3">
           <h2 className="m-0">3</h2>
-          <div className="relative z-1">
+          <div className="relative z-1 px-2 sm:px-0">
             <LordsSection
               step={step}
               lords={lords}

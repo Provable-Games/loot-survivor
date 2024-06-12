@@ -25,6 +25,7 @@ export const DeathDialog = () => {
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
   const showDeathDialog = useUIStore((state) => state.showDeathDialog);
+  const setScreen = useUIStore((state) => state.setScreen);
   const network = useUIStore((state) => state.network);
   const [imageLoading, setImageLoading] = useState(false);
 
@@ -59,7 +60,10 @@ export const DeathDialog = () => {
         );
         setRank(rank + 1);
       })
-      .catch((error) => console.error("Error refetching data:", error));
+      .catch((error) => {
+        console.error("Error refetching data:", error);
+        setRank(null); // Set rank to null or a default value in case of error
+      });
   }, []);
 
   useEffect(() => {
@@ -68,7 +72,7 @@ export const DeathDialog = () => {
 
   return (
     <>
-      {rank && (
+      {rank !== null && (
         <div className="top-0 left-0 fixed text-center h-full w-full z-40">
           <PixelatedImage
             src={"/scenes/intro/skulls.png"}
@@ -135,6 +139,17 @@ export const DeathDialog = () => {
                 }\n\n@lootrealms #Starknet #Play2Die #🪦`}
                 className="animate-pulse"
               />
+              <Button
+                onClick={() => {
+                  showDeathDialog(false);
+                  setDeathMessage(null);
+                  setAdventurer(NullAdventurer);
+                  setScreen("leaderboard");
+                }}
+                className="z-10"
+              >
+                See Leaderboard
+              </Button>
               <Button
                 onClick={() => {
                   showDeathDialog(false);

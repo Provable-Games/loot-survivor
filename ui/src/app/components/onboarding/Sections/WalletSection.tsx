@@ -15,7 +15,7 @@ const WalletSection = ({ step }: WalletSectionProps) => {
   const { disconnect } = useDisconnect();
   const walletConnectors = getWalletConnectors(connectors);
   return (
-    <div className="relative z-1">
+    <>
       {step !== 1 && (
         <>
           <div className="absolute top-0 left-0 right-0 bottom-0 h-full w-full bg-black opacity-50 z-10" />
@@ -27,7 +27,7 @@ const WalletSection = ({ step }: WalletSectionProps) => {
           )}
         </>
       )}
-      <div className="flex flex-col items-center justify-between sm:border sm:border-terminal-green p-5 text-center gap-10 z-1 h-[500px] sm:h-[425px] 2xl:h-[500px]">
+      <div className="flex flex-col items-center justify-between border border-terminal-green p-5 text-center gap-10 z-1 h-[400px] sm:h-[425px] 2xl:h-[500px]">
         <h4 className="m-0 uppercase text-3xl">Connect Starknet Wallet</h4>
         <p className="sm:hidden 2xl:block text-xl">
           In order to play LOOT SURVIVOR you are required to connect a Starknet
@@ -71,7 +71,7 @@ const WalletSection = ({ step }: WalletSectionProps) => {
           ))}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

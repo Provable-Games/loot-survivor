@@ -20,7 +20,6 @@ import {
   getItemPrice,
 } from "@/app/lib/utils";
 import {
-  ArcadeIcon,
   SoundOffIcon,
   SoundOnIcon,
   CartIcon,
@@ -40,7 +39,7 @@ import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
 import { getApibaraStatus } from "@/app/api/api";
 import ApibaraStatus from "@/app/components/navigation/ApibaraStatus";
 import TokenLoader from "@/app/components/animations/TokenLoader";
-import { checkArcadeConnector } from "@/app/lib/connectors";
+import { checkCartridgeConnector } from "@/app/lib/connectors";
 import { networkConfig } from "@/app/lib/networkConfig";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 import useLoadingStore from "@/app/hooks/useLoadingStore";
@@ -84,8 +83,11 @@ export default function Header({
   const setDisplayHistory = useUIStore((state) => state.setDisplayHistory);
   const setScreen = useUIStore((state) => state.setScreen);
   const network = useUIStore((state) => state.network);
+  const setNetwork = useUIStore((state) => state.setNetwork);
   const onMainnet = useUIStore((state) => state.onMainnet);
   const onKatana = useUIStore((state) => state.onKatana);
+  const handleOffboarded = useUIStore((state) => state.handleOffboarded);
+  const setLoginScreen = useUIStore((state) => state.setLoginScreen);
 
   const calls = useTransactionCartStore((state) => state.calls);
   const txInCart = calls.length > 0;
@@ -104,13 +106,11 @@ export default function Header({
     setApibaraStatus(data.status.indicator);
   };
 
-  const checkArcade = checkArcadeConnector(connector);
+  const checkCartridge = checkCartridgeConnector(connector);
 
   useEffect(() => {
     handleApibaraStatus();
   }, []);
-
-  const appUrl = networkConfig[network!].appUrl;
 
   const [notification, setNotification] = useState<any[]>([]);
   const [loadingMessage, setLoadingMessage] = useState<string[]>([]);
@@ -345,7 +345,7 @@ export default function Header({
   return (
     <div className="flex flex-row justify-between px-1 h-10 ">
       <div className="flex flex-row items-center gap-2 sm:gap-5">
-        <Logo className="fill-current w-24 md:w-32 xl:w-40 2xl:w-64" />
+        <Logo className="fill-current w-24 md:w-32 xl:w-40 2xl:w-72 xl:mb-5" />
       </div>
       <div className="flex flex-row items-center self-end sm:gap-1 self-center">
         <ApibaraStatus status={apibaraStatus} />
@@ -353,7 +353,15 @@ export default function Header({
           size={"xs"}
           variant={"outline"}
           className="hidden sm:block self-center xl:px-5"
-          onClick={() => window.open(appUrl, "_blank")}
+          onClick={() => {
+            if (onMainnet) {
+              setNetwork("katana");
+            } else {
+              handleOffboarded();
+              setLoginScreen(true);
+              setNetwork("sepolia");
+            }
+          }}
         >
           {onMainnet ? "Play on Testnet" : "Play on Mainnet"}
         </Button>
@@ -524,9 +532,18 @@ export default function Header({
             >
               {account ? displayAddress(account.address) : "Connect"}
             </Button>
-            {checkArcade && (
+            {checkCartridge && (
               <div className="absolute top-0 right-0">
-                <ArcadeIcon className="fill-current w-4" />
+                <svg viewBox="0 0 24 24" className="w-8 h-8">
+                  <path
+                    d="M8.45902 10.4506H15.4672V8.68029H8.46078C8.46078 8.86117 8.45902 10.4673 8.45902 10.4506Z"
+                    fill="currentColor"
+                  />
+                  <path
+                    d="M20.3231 6.80379L16.0408 4.99643C15.7594 4.85895 15.4523 4.782 15.1394 4.77051H8.86057C8.54749 4.78202 8.24026 4.85897 7.95857 4.99643L3.67686 6.80379C3.46971 6.90946 3.2964 7.07143 3.17675 7.27118C3.05709 7.47094 2.99591 7.70042 3.00021 7.93338V15.164C3.00021 15.3899 3.00021 15.6158 3.22556 15.8418L4.57827 17.1973C4.80362 17.4232 4.97279 17.4232 5.25433 17.4232H8.35191C8.35191 17.6174 8.35191 19.247 8.35191 19.2294H15.6744V17.4208H8.35776V15.6158H5.02897C4.80362 15.6158 4.80362 15.3899 4.80362 15.3899V6.80379C4.80362 6.80379 4.80362 6.57787 5.02897 6.57787H18.9716C19.197 6.57787 19.197 6.80379 19.197 6.80379V15.3899C19.197 15.3899 19.197 15.6158 18.9716 15.6158H15.6762V17.4232H18.7463C19.0278 17.4232 19.197 17.4232 19.4223 17.1973L20.7744 15.8418C20.9998 15.6158 20.9998 15.3899 20.9998 15.164V7.93338C21.004 7.70043 20.9428 7.47098 20.8232 7.27124C20.7035 7.0715 20.5302 6.90951 20.3231 6.80379Z"
+                    fill="currentColor"
+                  />
+                </svg>
               </div>
             )}
           </div>

@@ -42,14 +42,14 @@ const Intro = () => {
         Continue As Guest
       </Button>
       <div className="flex flex-col items-center gap-5 py-20 sm:p-0">
-        <h1 className="m-0 uppercase text-6xl text-center">
+        <h1 className="m-0 uppercase text-4xl sm:text-6xl text-center">
           Welcome to Loot Survivor
         </h1>
-        <div className="flex flex-row mt-20 gap-10 justify-center items-center">
-          <div className="flex flex-col items-center justify-between sm:border sm:border-terminal-green p-5 text-center gap-10 z-1 h-[500px] sm:h-[425px] 2xl:h-[500px] w-1/3">
+        <div className="flex flex-col sm:flex-row sm:mt-20 gap-2 sm:gap-10 px-2 sm:p-0 justify-center items-center">
+          <div className="flex flex-col items-center justify-between border border-terminal-green p-2 sm:p-5 text-center gap-2 sm:gap-10 z-1 h-[250px] sm:h-[425px] 2xl:h-[500px] w-full sm:w-1/3">
             <h4 className="m-0 uppercase text-3xl">Login</h4>
-            <Profile className="sm:hidden 2xl:block fill-current h-32" />
-            <p className="text-xl">
+            <Profile className="sm:hidden 2xl:block fill-current h-12 sm:h-32" />
+            <p className="sm:text-xl">
               Dive into the full immersion of Loot Survivor by logging in now!
               Join the Mainnet for a chance to win real funds and exciting
               prizes.
@@ -66,10 +66,10 @@ const Intro = () => {
               </Button>
             </div>
           </div>
-          <div className="flex flex-col items-center justify-between sm:border sm:border-terminal-green p-5 text-center gap-10 z-1 h-[500px] sm:h-[425px] 2xl:h-[500px] w-1/3">
+          <div className="flex flex-col items-center justify-between border border-terminal-green p-2 sm:p-5 text-center gap-2 sm:gap-10 z-1 h-[250px] sm:h-[425px] 2xl:h-[500px] w-full sm:w-1/3">
             <h4 className="m-0 uppercase text-3xl">Play As Guest</h4>
-            <QuestionMark className="sm:hidden 2xl:block fill-current h-32" />
-            <p className="text-xl">
+            <QuestionMark className="sm:hidden 2xl:block fill-current h-12 sm:h-32" />
+            <p className="sm:text-xl">
               Looking for a hassle-free gaming experience? Play as a Guest,
               enjoying quick gameplay without any real funds or prizes involved.
             </p>
@@ -79,7 +79,7 @@ const Intro = () => {
                 onClick={() => {
                   setScreen("start");
                   handleOnboarded();
-                  setNetwork("katana");
+                  setNetwork("localKatana");
                 }}
               >
                 Continue as Guest

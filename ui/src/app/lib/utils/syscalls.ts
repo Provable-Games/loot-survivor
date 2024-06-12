@@ -282,15 +282,9 @@ export function syscalls({
     revenueAddress: string,
     costToPlay?: number
   ) => {
-    const storage: BurnerStorage = Storage.get("burners");
-    let interfaceCamel = "";
-    const isArcade = checkArcadeConnector(connector!);
-    if (isArcade) {
-      const walletProvider = storage[account?.address!].masterAccountProvider;
-      interfaceCamel = providerInterfaceCamel(walletProvider);
-    } else {
-      interfaceCamel = providerInterfaceCamel(connector!.id);
-    }
+    const interfaceCamel = onKatana
+      ? "0"
+      : providerInterfaceCamel(connector!.id);
 
     const approveLordsSpendingTx = {
       contractAddress: lordsContract?.address ?? "",
@@ -333,6 +327,8 @@ export function syscalls({
       "adventurersByOwnerQuery",
       undefined
     );
+
+    const isArcade = checkArcadeConnector(connector!);
     try {
       const tx = await handleSubmitCalls(
         account,

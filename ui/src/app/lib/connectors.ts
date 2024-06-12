@@ -19,6 +19,10 @@ export const getWalletConnectors = (connectors: Connector[]) =>
       typeof connector.id !== "string" || !connector.id.includes("0x")
   );
 
+export const checkCartridgeConnector = (connector?: Connector) => {
+  return connector?.id === "cartridge";
+};
+
 export const providerInterfaceCamel = (provider: string) => {
   // check provider, braavos interface is camel, argent is snake
   if (provider === "braavos") {
