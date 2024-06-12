@@ -1,4 +1,14 @@
 services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "5443:5443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./certs:/etc/nginx/certs
+    depends_on:
+      - katana
+
   katana:
     build: .
     container_name: katana_container
