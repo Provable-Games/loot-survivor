@@ -61,6 +61,7 @@ const Intro = () => {
                   setLoginScreen(true);
                   setNetwork("sepolia");
                 }}
+                disabled={true}
               >
                 Login to Sepolia
               </Button>

@@ -14,6 +14,7 @@ const WalletSection = ({ step }: WalletSectionProps) => {
   const { connectors, connect } = useConnect();
   const { disconnect } = useDisconnect();
   const walletConnectors = getWalletConnectors(connectors);
+  console.log(connectors);
   return (
     <>
       {step !== 1 && (
