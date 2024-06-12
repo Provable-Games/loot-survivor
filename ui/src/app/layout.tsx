@@ -14,7 +14,7 @@ import Intro from "@/app/components/intro/Intro";
 import "@/app/globals.css";
 import { BurnerManager } from "@dojoengine/create-burner";
 import { RpcProvider } from "starknet";
-import Head from "@/app/head";
+// import Head from "@/app/head";
 
 type SetupResult = {
   config: {
@@ -54,7 +54,7 @@ export default function RootLayout({
   if (!network || !setupResult) {
     return (
       <html lang="en">
-        <Head />
+        {/* <Head /> */}
         <body
           suppressHydrationWarning={false}
           className="min-h-screen overflow-hidden text-terminal-green bg-conic-to-br to-terminal-black from-terminal-black bezel-container"

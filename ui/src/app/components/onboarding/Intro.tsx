@@ -62,7 +62,7 @@ const Intro = () => {
                   setNetwork("sepolia");
                 }}
               >
-                Login to Mainnet
+                Login to Sepolia
               </Button>
             </div>
           </div>
