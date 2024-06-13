@@ -120,7 +120,7 @@ export default function UpgradeScreen({
 
   useEffect(() => {
     const fetchMarketItems = async () => {
-      if (entropyReady) {
+      if (entropyReady || onKatana) {
         const marketItems = (await gameContract!.call("get_items_on_market", [
           adventurer?.id!,
         ])) as string[];
@@ -148,7 +148,7 @@ export default function UpgradeScreen({
     };
 
     const fetchAdventurerStats = async () => {
-      if (entropyReady && adventurer?.level == 2) {
+      if ((entropyReady || onKatana) && adventurer?.level == 2) {
         const updatedAdventurer = (await gameContract!.call("get_adventurer", [
           adventurer?.id!,
         ])) as any;
