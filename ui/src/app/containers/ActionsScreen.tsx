@@ -51,7 +51,6 @@ export default function ActionsScreen({
   };
 
   const handleExploreTillBeast = async () => {
-    console.log("Exploring till beast");
     resetNotification();
     await explore(true);
   };
@@ -133,7 +132,7 @@ export default function ActionsScreen({
             </p>
           )}
           <div className="flex flex-col items-center lg:w-1/2 my-4 w-full px-4 sm:order-1 h-1/6 sm:h-full">
-            {(loading || !onKatana) && <MazeLoader />}
+            {loading && !onKatana && <MazeLoader />}
             <div className="w-3/4 h-full sm:h-1/6">
               <ActionMenu
                 buttonsData={buttonsData}

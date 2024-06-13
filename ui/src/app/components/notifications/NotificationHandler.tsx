@@ -323,7 +323,6 @@ export const processNotifications = (
           battles[0]?.special2 ?? "",
           battles[0]?.special3 ?? ""
         );
-        console.log(notificationData[i], notificationData[i] as string);
         if (
           (notificationData[i] as string).startsWith("You equipped") &&
           battles[0]?.attacker == "Beast" &&

@@ -14,7 +14,7 @@ import Intro from "@/app/components/intro/Intro";
 import "@/app/globals.css";
 import { BurnerManager } from "@dojoengine/create-burner";
 import { RpcProvider } from "starknet";
-// import Head from "@/app/head";
+import Head from "@/app/head";
 
 type SetupResult = {
   config: {
@@ -51,40 +51,9 @@ export default function RootLayout({
     initializeSetup();
   }, [network]);
 
-  if (!network || !setupResult) {
-    return (
-      <html lang="en">
-        {/* <Head /> */}
-        <body
-          suppressHydrationWarning={false}
-          className="min-h-screen overflow-hidden text-terminal-green bg-conic-to-br to-terminal-black from-terminal-black bezel-container"
-        >
-          <img
-            src="/crt_green_mask.png"
-            alt="crt green mask"
-            className="absolute w-full pointer-events-none crt-frame hidden sm:block"
-          />
-          <main
-            className={`min-h-screen container mx-auto flex flex-col sm:pt-8 sm:p-8 lg:p-10 2xl:p-20 `}
-          >
-            {introComplete ? (
-              <LoginIntro />
-            ) : (
-              <Intro onIntroComplete={handleIntroComplete} />
-            )}
-          </main>
-        </body>
-      </html>
-    );
-  }
-
-  const gameClientInstance = gameClient(networkConfig[network].lsGQLURL!);
-  const goldenTokenClientInstance = goldenTokenClient(
-    networkConfig[network].tokensGQLURL!
-  );
-
   return (
     <html lang="en">
+      <Head />
       <body
         suppressHydrationWarning={false}
         className="min-h-screen overflow-hidden text-terminal-green bg-conic-to-br to-terminal-black from-terminal-black bezel-container"
@@ -94,15 +63,29 @@ export default function RootLayout({
           alt="crt green mask"
           className="absolute w-full pointer-events-none crt-frame hidden sm:block"
         />
-        <ApolloProvider client={gameClientInstance}>
-          <ApolloProvider client={goldenTokenClientInstance}>
-            <ControllerProvider>
-              <StarknetProvider network={network}>
-                <DojoProvider value={setupResult}>{children}</DojoProvider>
-              </StarknetProvider>
-            </ControllerProvider>
+        {!network || !setupResult ? (
+          <main
+            className={`min-h-screen container mx-auto flex flex-col sm:pt-8 sm:p-8 lg:p-10 2xl:p-20 `}
+          >
+            {introComplete ? (
+              <LoginIntro />
+            ) : (
+              <Intro onIntroComplete={handleIntroComplete} />
+            )}
+          </main>
+        ) : (
+          <ApolloProvider client={gameClient(networkConfig[network].lsGQLURL!)}>
+            <ApolloProvider
+              client={goldenTokenClient(networkConfig[network].tokensGQLURL!)}
+            >
+              <ControllerProvider>
+                <StarknetProvider network={network}>
+                  <DojoProvider value={setupResult}>{children}</DojoProvider>
+                </StarknetProvider>
+              </ControllerProvider>
+            </ApolloProvider>
           </ApolloProvider>
-        </ApolloProvider>
+        )}
       </body>
     </html>
   );

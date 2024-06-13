@@ -96,7 +96,7 @@ export default function UpgradeScreen({
   });
 
   useEffect(() => {
-    if (!onKatana) return;
+    if (onKatana) return;
     const fetchEntropy = async () => {
       const entropy = await gameContract!.call("get_adventurer_entropy", [
         adventurer?.id!,

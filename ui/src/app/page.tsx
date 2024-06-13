@@ -510,8 +510,6 @@ function Home() {
     }
   }, [onboarded]);
 
-  console.log(adventurer);
-
   if (!isConnected && disconnected) {
     return <WalletSelect />;
   }

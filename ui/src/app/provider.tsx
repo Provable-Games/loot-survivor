@@ -18,10 +18,6 @@ export function StarknetProvider({
   children: React.ReactNode;
   network: Network;
 }) {
-  // const onMainnet = useUIStore((state) => state.onMainnet);
-  // const onSepolia = useUIStore((state) => state.onSepolia);
-  // const onKatana = useUIStore((state) => state.onKatana);
-  // const chains = onMainnet ? [mainnet] : onSepolia ? [sepolia] : [goerli];
   function rpc(_chain: Chain) {
     return {
       nodeUrl: networkConfig[network!].rpcUrl,
