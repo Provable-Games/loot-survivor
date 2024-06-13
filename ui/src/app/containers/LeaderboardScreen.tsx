@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Contract } from "starknet";
 import {
   getAdventurerByXP,
   getAdventurerById,
@@ -17,25 +16,13 @@ import LootIconLoader from "@/app/components/icons/Loader";
 import { ProfileIcon, SkullIcon } from "@/app/components/icons/Icons";
 import { networkConfig } from "@/app/lib/networkConfig";
 
-interface LeaderboardScreenProps {
-  slayIdles: (slayAdventurers: string[]) => Promise<void>;
-  gameContract: Contract;
-}
-
 /**
  * @container
  * @description Provides the leaderboard screen for the adventurer.
  */
-export default function LeaderboardScreen({
-  slayIdles,
-  gameContract,
-}: LeaderboardScreenProps) {
+export default function LeaderboardScreen() {
   const itemsPerPage = 10;
   const [showScores, setShowScores] = useState(false);
-  const [idleAdventurers, _setIdleAdventurers] = useState<
-    string[] | undefined
-  >();
-  const [loadingIdles, _setLoadingIdles] = useState(false);
 
   const { data, refetch, setData, setIsLoading, setNotLoading } =
     useQueriesStore();
@@ -112,28 +99,6 @@ export default function LeaderboardScreen({
     }
   }, [adventurersByXPdata]);
 
-  // const getIdleAdventurers = async (adventurers: Adventurer[]) => {
-  //   setLoadingIdles(true);
-  //   const idleAdventurers = [];
-  //   for (let adventurer of adventurers) {
-  //     const isIdleResult = await gameContract.call("is_idle", [
-  //       adventurer?.id ?? "0",
-  //     ]);
-  //     const isIdle = (isIdleResult as IsIdleResult)["0"];
-  //     if (isIdle) {
-  //       idleAdventurers.push(adventurer?.id?.toString() ?? "0");
-  //     }
-  //   }
-  //   setIdleAdventurers(idleAdventurers);
-  //   setLoadingIdles(false);
-  // };
-
-  // useEffect(() => {
-  //   if (data.adventurersByXPQuery?.adventurers) {
-  //     getIdleAdventurers(aliveAdventurers);
-  //   }
-  // }, [adventurers]);
-
   return (
     <div className="flex flex-col items-center h-full xl:overflow-y-auto 2xl:overflow-hidden mt-5 sm:mt-0">
       {!adventurersByXPdata ? (
@@ -147,18 +112,6 @@ export default function LeaderboardScreen({
               <ProfileIcon className="fill-current w-4 h-4 sm:w-8 sm:h-8" />
               <p className="sm:text-2xl">{aliveAdventurers.length}</p>
             </div>
-            <Button
-              onClick={async () => await slayIdles(idleAdventurers!)}
-              disabled={loadingIdles || idleAdventurers?.length === 0}
-            >
-              {loadingIdles ? (
-                <p className="loading-ellipsis">Loading Idles</p>
-              ) : idleAdventurers?.length === 0 ? (
-                "No Idle Adventurers"
-              ) : (
-                "Slay Idle Adventurers"
-              )}
-            </Button>
             <Button
               onClick={async () => {
                 const adventurersByXPdata = await refetch(
@@ -186,8 +139,6 @@ export default function LeaderboardScreen({
                 itemsPerPage={itemsPerPage}
                 handleFetchProfileData={handlefetchProfileData}
                 adventurers={aliveAdventurers}
-                gameContract={gameContract}
-                idleAdventurers={idleAdventurers}
               />
             </div>
             <div

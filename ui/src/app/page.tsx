@@ -191,51 +191,43 @@ function Home() {
   const { data, refetch, resetData, setData, setIsLoading, setNotLoading } =
     useQueriesStore();
 
-  const {
-    spawn,
-    explore,
-    attack,
-    flee,
-    upgrade,
-    slayIdles,
-    multicall,
-    mintLords,
-  } = syscalls({
-    gameContract: gameContract!,
-    lordsContract: lordsContract!,
-    beastsContract: beastsContract!,
-    addTransaction,
-    queryData: data,
-    resetData,
-    setData,
-    adventurer: adventurer!,
-    addToCalls,
-    calls,
-    handleSubmitCalls,
-    startLoading,
-    stopLoading,
-    setTxHash,
-    setEquipItems,
-    setDropItems,
-    setDeathMessage,
-    showDeathDialog,
-    setScreen,
-    setAdventurer,
-    setStartOption,
-    ethBalance: ethBalance,
-    showTopUpDialog,
-    setTopUpAccount,
-    account: account!,
-    setSpecialBeastDefeated,
-    setSpecialBeast,
-    connector,
-    getEthBalance,
-    getBalances,
-    setIsMintingLords,
-    setEntropyReady,
-    rpc_addr: networkConfig[network!].rpcUrl,
-    network,
-  });
+  const { spawn, explore, attack, flee, upgrade, multicall, mintLords } =
+    syscalls({
+      gameContract: gameContract!,
+      lordsContract: lordsContract!,
+      beastsContract: beastsContract!,
+      addTransaction,
+      queryData: data,
+      resetData,
+      setData,
+      adventurer: adventurer!,
+      addToCalls,
+      calls,
+      handleSubmitCalls,
+      startLoading,
+      stopLoading,
+      setTxHash,
+      setEquipItems,
+      setDropItems,
+      setDeathMessage,
+      showDeathDialog,
+      setScreen,
+      setAdventurer,
+      setStartOption,
+      ethBalance: ethBalance,
+      showTopUpDialog,
+      setTopUpAccount,
+      account: account!,
+      setSpecialBeastDefeated,
+      setSpecialBeast,
+      connector,
+      getEthBalance,
+      getBalances,
+      setIsMintingLords,
+      setEntropyReady,
+      rpc_addr: networkConfig[network!].rpcUrl,
+      network,
+    });
 
   const playState = useMemo(
     () => ({
@@ -614,12 +606,7 @@ function Home() {
                 {screen === "inventory" && (
                   <InventoryScreen gameContract={gameContract!} />
                 )}
-                {screen === "leaderboard" && (
-                  <LeaderboardScreen
-                    slayIdles={slayIdles}
-                    gameContract={gameContract!}
-                  />
-                )}
+                {screen === "leaderboard" && <LeaderboardScreen />}
                 {screen === "upgrade" && (
                   <UpgradeScreen
                     upgrade={upgrade}

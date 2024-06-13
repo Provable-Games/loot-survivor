@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Contract } from "starknet";
 import { Button } from "@/app/components/buttons/Button";
 import { Adventurer } from "@/app/types";
 import LiveRow from "@/app/components/leaderboard/LiveRow";
@@ -9,16 +8,12 @@ export interface LiveLeaderboardTableProps {
   itemsPerPage: number;
   handleFetchProfileData: (adventurerId: number) => void;
   adventurers: Adventurer[];
-  gameContract: Contract;
-  idleAdventurers?: string[];
 }
 
 const LiveLeaderboardTable = ({
   itemsPerPage,
   handleFetchProfileData,
   adventurers,
-  gameContract,
-  idleAdventurers,
 }: LiveLeaderboardTableProps) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const setScreen = useUIStore((state) => state.setScreen);
@@ -57,7 +52,6 @@ const LiveLeaderboardTable = ({
               <th className="p-1">XP</th>
               <th className="p-1">Gold</th>
               <th className="p-1">Health</th>
-              {/* <th className="p-1">Idle</th> */}
             </tr>
           </thead>
           <tbody>
@@ -67,8 +61,6 @@ const LiveLeaderboardTable = ({
                   key={index}
                   adventurer={adventurer}
                   handleRowSelected={handleRowSelected}
-                  gameContract={gameContract}
-                  idleAdventurers={idleAdventurers}
                 />
               )
             )}

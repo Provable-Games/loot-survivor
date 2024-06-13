@@ -11,6 +11,7 @@ import useUIStore from "@/app/hooks/useUIStore";
 import ActionMenu from "@/app/components/menu/ActionMenu";
 import { Beast } from "@/app/types";
 import { useController } from "@/app/context/ControllerContext";
+import { useUiSounds, soundSelector } from "@/app/hooks/useUiSound";
 
 interface ActionsScreenProps {
   explore: (till_beast: boolean) => Promise<void>;
@@ -45,6 +46,8 @@ export default function ActionsScreen({
       : []
   );
 
+  const { play: clickPlay } = useUiSounds(soundSelector.click);
+
   const handleSingleExplore = async () => {
     resetNotification();
     await explore(false);
@@ -63,6 +66,7 @@ export default function ActionsScreen({
       () => {
         console.log("Key e pressed");
         handleSingleExplore();
+        clickPlay();
       },
       screen === "play"
     );
@@ -71,6 +75,7 @@ export default function ActionsScreen({
       () => {
         console.log("Key r pressed");
         handleExploreTillBeast();
+        clickPlay();
       },
       screen === "play"
     );
@@ -118,7 +123,6 @@ export default function ActionsScreen({
           attack={attack}
           flee={flee}
           beastsContract={beastsContract}
-          gameContract={gameContract}
         />
       ) : (
         <div className="flex flex-col sm:flex-row h-full w-full sm:w-1/2 lg:w-2/3">

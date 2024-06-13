@@ -4,8 +4,7 @@ import { useDisconnect, useConnect } from "@starknet-react/core";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import useUIStore from "@/app/hooks/useUIStore";
-import { useUiSounds } from "@/app/hooks/useUiSound";
-import { soundSelector } from "@/app/hooks/useUiSound";
+import { useUiSounds, soundSelector } from "@/app/hooks/useUiSound";
 import Logo from "public/icons/logo.svg";
 import Eth from "public/icons/eth.svg";
 import Lords from "public/icons/lords.svg";
@@ -329,6 +328,7 @@ export default function Header({
         console.log("Key i pressed");
         if (calls.length > 0) {
           handleSubmitMulticall();
+          clickPlay();
         }
       },
       screen === "play" ||
@@ -534,7 +534,7 @@ export default function Header({
             </Button>
             {checkCartridge && (
               <div className="absolute top-0 right-0">
-                <svg viewBox="0 0 24 24" className="w-8 h-8">
+                <svg viewBox="0 0 24 24" className="w-6 h-6">
                   <path
                     d="M8.45902 10.4506H15.4672V8.68029H8.46078C8.46078 8.86117 8.45902 10.4673 8.45902 10.4506Z"
                     fill="currentColor"

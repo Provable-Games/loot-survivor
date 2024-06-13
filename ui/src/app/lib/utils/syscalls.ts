@@ -1179,85 +1179,6 @@ export function syscalls({
     }
   };
 
-  const slayIdles = async (slayAdventurers: string[]) => {
-    const slayIdleAdventurersTx = {
-      contractAddress: gameContract?.address ?? "",
-      entrypoint: "slay_idle_adventurers",
-      calldata: [slayAdventurers.length, ...slayAdventurers],
-      metadata: `Slaying all Adventurers`,
-    };
-    addToCalls(slayIdleAdventurersTx);
-
-    const isArcade = checkArcadeConnector(connector!);
-    startLoading("Slay All Idles", "Slaying All Idles", undefined, undefined);
-    try {
-      const tx = await handleSubmitCalls(
-        account,
-        [...calls, slayIdleAdventurersTx],
-        isArcade,
-        Number(ethBalance),
-        showTopUpDialog,
-        setTopUpAccount,
-        network
-      );
-      setTxHash(tx?.transaction_hash);
-      addTransaction({
-        hash: tx?.transaction_hash,
-        metadata: {
-          method: `Upgrade`,
-        },
-      });
-      const receipt = await provider?.waitForTransaction(tx?.transaction_hash, {
-        retryInterval: getWaitRetryInterval(network!),
-      });
-      // Handle if the tx was reverted
-      if (
-        (receipt as RevertedTransactionReceiptResponse).execution_status ===
-        "REVERTED"
-      ) {
-        throw new Error(
-          (receipt as RevertedTransactionReceiptResponse).revert_reason
-        );
-      }
-      const events = await parseEvents(
-        receipt as InvokeTransactionReceiptResponse,
-        queryData.adventurerByIdQuery?.adventurers[0] ?? NullAdventurer
-      );
-
-      // If there are any equip or drops, do them first
-      const { equippedItems, unequippedItems } = handleEquip(
-        events,
-        setData,
-        setAdventurer,
-        queryData
-      );
-      const droppedItems = handleDrop(events, setData, setAdventurer);
-
-      const filteredEquips = queryData.itemsByAdventurerQuery?.items?.filter(
-        (item: Item) =>
-          !equippedItems.some((equippedItem) => equippedItem.item == item.item)
-      );
-      const filteredUnequips = filteredEquips?.filter(
-        (item: Item) =>
-          !unequippedItems.some((droppedItem) => droppedItem.item == item.item)
-      );
-      const filteredDrops = [
-        ...(filteredUnequips ?? []),
-        ...equippedItems,
-        ...unequippedItems,
-      ]?.filter((item: Item) => !droppedItems.includes(item.item ?? ""));
-      setData("itemsByAdventurerQuery", {
-        items: [...filteredDrops],
-      });
-
-      stopLoading(`You have slain all idle adventurers!`);
-      !onKatana && getEthBalance();
-    } catch (e) {
-      console.log(e);
-      stopLoading(`You have slain all idle adventurers!`);
-    }
-  };
-
   const multicall = async (
     loadingMessage: string[],
     notification: string[],
@@ -1507,7 +1428,6 @@ export function syscalls({
     attack,
     flee,
     upgrade,
-    slayIdles,
     multicall,
     mintLords,
   };

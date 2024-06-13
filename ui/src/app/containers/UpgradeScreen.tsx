@@ -40,6 +40,7 @@ import { calculateVitBoostRemoved } from "@/app/lib/utils";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import InterludeScreen from "@/app/containers/InterludeScreen";
 import { useController } from "@/app/context/ControllerContext";
+import { useUiSounds, soundSelector } from "@/app/hooks/useUiSound";
 
 interface UpgradeScreenProps {
   upgrade: (
@@ -94,6 +95,8 @@ export default function UpgradeScreen({
     Items: [],
     Potions: 0,
   });
+
+  const { play: clickPlay } = useUiSounds(soundSelector.click);
 
   useEffect(() => {
     if (onKatana) return;
@@ -422,6 +425,8 @@ export default function UpgradeScreen({
       () => {
         console.log("Key u pressed");
         handleSubmitUpgradeTx();
+        setUpgradeScreen(1);
+        clickPlay();
       },
       screen === "upgrade"
     );

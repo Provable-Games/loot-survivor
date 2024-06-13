@@ -11,6 +11,7 @@ import { Button } from "@/app/components/buttons/Button";
 import useUIStore from "@/app/hooks/useUIStore";
 import ActionMenu from "@/app/components/menu/ActionMenu";
 import { useController } from "@/app/context/ControllerContext";
+import { useUiSounds, soundSelector } from "@/app/hooks/useUiSound";
 
 interface BeastScreenProps {
   attack: (
@@ -20,7 +21,6 @@ interface BeastScreenProps {
   ) => Promise<void>;
   flee: (tillDeath: boolean, beastData: Beast) => Promise<void>;
   beastsContract: Contract;
-  gameContract: Contract;
 }
 
 /**
@@ -31,7 +31,6 @@ export default function BeastScreen({
   attack,
   flee,
   beastsContract,
-  gameContract,
 }: BeastScreenProps) {
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const loading = useLoadingStore((state) => state.loading);
@@ -49,6 +48,8 @@ export default function BeastScreen({
   );
 
   const [buttonText, setButtonText] = useState("Flee");
+
+  const { play: clickPlay } = useUiSounds(soundSelector.click);
 
   const handleMouseEnter = () => {
     setButtonText("You Coward!");
@@ -86,32 +87,36 @@ export default function BeastScreen({
       () => {
         console.log("Key a pressed");
         handleSingleAttack();
+        clickPlay();
       },
-      screen === "beast"
+      screen === "play" && hasBeast
     );
     addControl(
       "s",
       () => {
         console.log("Key s pressed");
         handleAttackTillDeath();
+        clickPlay();
       },
-      screen === "beast"
+      screen === "play" && hasBeast
     );
     addControl(
       "f",
       () => {
         console.log("Key f pressed");
         handleSingleFlee();
+        clickPlay();
       },
-      screen === "beast"
+      screen === "play" && hasBeast
     );
     addControl(
       "g",
       () => {
         console.log("Key g pressed");
         handleFleeTillDeath();
+        clickPlay();
       },
-      screen === "beast"
+      screen === "play" && hasBeast
     );
   }, []);
 
