@@ -493,8 +493,8 @@ export default function UpgradeScreen({
           </div>
           {!checkTransacting ? (
             <div className="w-full sm:w-2/3 h-full">
-              <div className="flex flex-col gap-2 xl:gap-0 h-full">
-                <div className="flex flex-col gap-2 sm:gap-0 justify-center text-terminal-green h-1/3 sm:h-1/4">
+              <div className="flex flex-col h-full">
+                <div className="flex flex-col sm:justify-center text-terminal-green sm:h-1/4">
                   <div className="w-full flex flex-row gap-2 mx-auto border border-terminal-green justify-between">
                     <Button
                       variant={"outline"}

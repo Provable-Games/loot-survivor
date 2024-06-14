@@ -337,7 +337,7 @@ export default function Header({
   return (
     <div className="flex flex-row justify-between px-1 h-10 ">
       <div className="flex flex-row items-center gap-2 sm:gap-5">
-        <Logo className="fill-current w-24 md:w-32 xl:w-40 2xl:w-72 xl:mb-5" />
+        <Logo className="fill-current w-24 md:w-32 xl:w-40 2xl:w-72 2xl:mb-5" />
       </div>
       <div className="flex flex-row items-center self-end sm:gap-1 self-center">
         <ApibaraStatus status={apibaraStatus} />

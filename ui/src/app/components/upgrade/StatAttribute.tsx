@@ -74,7 +74,7 @@ export const StatAttribute = ({
         {maxNonBoosted ? (
           <p className="sm:text-4xl text-center">Base Stat Maxed Out</p>
         ) : (
-          <p className="sm:text-[28px] xl:text-2xl text-center h-2/3">
+          <p className="sm:text-[28px] xl:text-2xl text-center h-2/3 px-2 sm:px-0">
             {description}
           </p>
         )}
