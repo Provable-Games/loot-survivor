@@ -66,6 +66,10 @@ const cartridgeConnector = (gameAddress: string, lordsAddress: string) =>
       target: lordsAddress,
       method: "approve",
     },
+    {
+      target: lordsAddress,
+      method: "mint",
+    },
   ]) as never as Connector;
 
 export const connectors = (gameAddress: string, lordsAddress: string) => [

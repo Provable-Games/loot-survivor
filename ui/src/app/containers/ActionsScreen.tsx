@@ -36,7 +36,6 @@ export default function ActionsScreen({
   const loading = useLoadingStore((state) => state.loading);
   const estimatingFee = useUIStore((state) => state.estimatingFee);
   const onKatana = useUIStore((state) => state.onKatana);
-  const screen = useUIStore((state) => state.screen);
 
   const hasBeast = useAdventurerStore((state) => state.computed.hasBeast);
   const resetNotification = useLoadingStore((state) => state.resetNotification);
@@ -61,24 +60,16 @@ export default function ActionsScreen({
   const { addControl } = useController();
 
   useEffect(() => {
-    addControl(
-      "e",
-      () => {
-        console.log("Key e pressed");
-        handleSingleExplore();
-        clickPlay();
-      },
-      screen === "play"
-    );
-    addControl(
-      "r",
-      () => {
-        console.log("Key r pressed");
-        handleExploreTillBeast();
-        clickPlay();
-      },
-      screen === "play"
-    );
+    addControl("e", () => {
+      console.log("Key e pressed");
+      handleSingleExplore();
+      clickPlay();
+    });
+    addControl("r", () => {
+      console.log("Key r pressed");
+      handleExploreTillBeast();
+      clickPlay();
+    });
   }, []);
 
   const buttonsData = [

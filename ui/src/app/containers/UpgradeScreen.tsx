@@ -88,7 +88,6 @@ export default function UpgradeScreen({
   const entropyReady = useUIStore((state) => state.entropyReady);
   const setEntropyReady = useUIStore((state) => state.setEntropyReady);
   const onKatana = useUIStore((state) => state.onKatana);
-  const screen = useUIStore((state) => state.screen);
   const pendingMessage = useLoadingStore((state) => state.pendingMessage);
   const [summary, setSummary] = useState<UpgradeSummary>({
     Stats: { ...ZeroUpgrade },
@@ -420,16 +419,12 @@ export default function UpgradeScreen({
   const { addControl } = useController();
 
   useEffect(() => {
-    addControl(
-      "u",
-      () => {
-        console.log("Key u pressed");
-        handleSubmitUpgradeTx();
-        setUpgradeScreen(1);
-        clickPlay();
-      },
-      screen === "upgrade"
-    );
+    addControl("u", () => {
+      console.log("Key u pressed");
+      handleSubmitUpgradeTx();
+      setUpgradeScreen(1);
+      clickPlay();
+    });
   }, [upgrades, purchaseItems, potionAmount]);
 
   const upgradesTotal = Object.values(upgrades)

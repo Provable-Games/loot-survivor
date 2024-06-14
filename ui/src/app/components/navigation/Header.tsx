@@ -136,7 +136,6 @@ export default function Header({
   const setUpgrades = useUIStore((state) => state.setUpgrades);
   const setUpgradeScreen = useUIStore((state) => state.setUpgradeScreen);
   const setSlayAdventurers = useUIStore((state) => state.setSlayAdventurers);
-  const screen = useUIStore((state) => state.screen);
 
   const items = data.latestMarketItemsQuery
     ? data.latestMarketItemsQuery.items
@@ -322,20 +321,13 @@ export default function Header({
   const { addControl } = useController();
 
   useEffect(() => {
-    addControl(
-      "i",
-      () => {
-        console.log("Key i pressed");
-        if (calls.length > 0) {
-          handleSubmitMulticall();
-          clickPlay();
-        }
-      },
-      screen === "play" ||
-        screen === "beast" ||
-        screen === "upgrade" ||
-        screen === "inventory"
-    );
+    addControl("i", () => {
+      console.log("Key i pressed");
+      if (calls.length > 0) {
+        handleSubmitMulticall();
+        clickPlay();
+      }
+    });
   }, [calls]);
 
   useEffect(() => {

@@ -33,7 +33,7 @@ const Login = ({
 
   const { handleOnboarded, network, onMainnet } = useUIStore();
 
-  const checkEnoughEth = eth >= parseInt(ETH_PREFUND_AMOUNT(network!));
+  const checkEnoughEth = eth >= parseInt(ETH_PREFUND_AMOUNT(network!)) - 1;
   const checkEnoughLords = lords > lordsGameCost;
 
   useEffect(() => {

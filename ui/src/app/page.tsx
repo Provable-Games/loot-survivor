@@ -58,6 +58,7 @@ import TopUp from "./containers/TopUp";
 import useControls from "@/app/hooks/useControls";
 import { networkConfig } from "@/app/lib/networkConfig";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
+import { useController } from "@/app/context/ControllerContext";
 
 const allMenuItems: Menu[] = [
   { id: 1, label: "Start", screen: "start", disabled: false },
@@ -492,7 +493,25 @@ function Home() {
     getCostToPlay();
   }, []);
 
+  const { setCondition } = useController();
   useControls();
+
+  useEffect(() => {
+    setCondition("a", screen === "play" && hasBeast);
+    setCondition("s", screen === "play" && hasBeast);
+    setCondition("f", screen === "play" && hasBeast);
+    setCondition("g", screen === "play" && hasBeast);
+    setCondition("e", screen === "play" && !hasBeast);
+    setCondition("r", screen === "play" && !hasBeast);
+    setCondition("u", screen === "upgrade");
+    setCondition(
+      "i",
+      screen === "play" ||
+        screen === "beast" ||
+        screen === "upgrade" ||
+        screen === "inventory"
+    );
+  }, [screen, hasBeast]);
 
   useEffect(() => {
     if (!onboarded) {

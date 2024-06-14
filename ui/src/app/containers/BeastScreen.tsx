@@ -35,7 +35,6 @@ export default function BeastScreen({
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const loading = useLoadingStore((state) => state.loading);
   const estimatingFee = useUIStore((state) => state.estimatingFee);
-  const screen = useUIStore((state) => state.screen);
   const resetNotification = useLoadingStore((state) => state.resetNotification);
   const [showBattleLog, setShowBattleLog] = useState(false);
   const hasBeast = useAdventurerStore((state) => state.computed.hasBeast);
@@ -82,42 +81,26 @@ export default function BeastScreen({
   const { addControl } = useController();
 
   useEffect(() => {
-    addControl(
-      "a",
-      () => {
-        console.log("Key a pressed");
-        handleSingleAttack();
-        clickPlay();
-      },
-      screen === "play" && hasBeast
-    );
-    addControl(
-      "s",
-      () => {
-        console.log("Key s pressed");
-        handleAttackTillDeath();
-        clickPlay();
-      },
-      screen === "play" && hasBeast
-    );
-    addControl(
-      "f",
-      () => {
-        console.log("Key f pressed");
-        handleSingleFlee();
-        clickPlay();
-      },
-      screen === "play" && hasBeast
-    );
-    addControl(
-      "g",
-      () => {
-        console.log("Key g pressed");
-        handleFleeTillDeath();
-        clickPlay();
-      },
-      screen === "play" && hasBeast
-    );
+    addControl("a", () => {
+      console.log("Key a pressed");
+      handleSingleAttack();
+      clickPlay();
+    });
+    addControl("s", () => {
+      console.log("Key s pressed");
+      handleAttackTillDeath();
+      clickPlay();
+    });
+    addControl("f", () => {
+      console.log("Key f pressed");
+      handleSingleFlee();
+      clickPlay();
+    });
+    addControl("g", () => {
+      console.log("Key g pressed");
+      handleFleeTillDeath();
+      clickPlay();
+    });
   }, []);
 
   const attackButtonsData: ButtonData[] = [

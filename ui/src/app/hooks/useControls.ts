@@ -2,18 +2,18 @@ import { useEffect, useCallback } from "react";
 import { useController } from "@/app/context/ControllerContext";
 
 const useControls = () => {
-  const { controls } = useController();
+  const { controls, conditions } = useController();
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       const { key } = event;
       const control = controls[key];
-      if (control && control.condition) {
+      if (control && conditions[key]) {
         event.preventDefault();
         control.callback();
       }
     },
-    [controls]
+    [controls, conditions]
   );
 
   useEffect(() => {
