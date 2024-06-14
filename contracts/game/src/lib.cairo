@@ -1061,8 +1061,10 @@ mod Game {
             _process_level_up(ref self, ref adventurer, adventurer_id, previous_level, new_level);
         }
 
+        let chain_id = starknet::get_execution_info().unbox().tx_info.unbox().chain_id;
         // if beast beast level is above collectible threshold
-        if beast.combat_spec.level >= BEAST_SPECIAL_NAME_LEVEL_UNLOCK {
+        if beast.combat_spec.level >= BEAST_SPECIAL_NAME_LEVEL_UNLOCK
+            && chain_id != KATANA_CHAIN_ID {
             // mint beast to the players Primary Account address instead of Arcade Account
             let owner_address = self._owner.read(adventurer_id);
             let primary_address = _get_primary_account_address(
@@ -2343,6 +2345,7 @@ mod Game {
             let item_stat_boosts = adventurer.equipment.get_stat_boosts(start_entropy);
             adventurer.stats.remove_stat_boosts(item_stat_boosts);
         }
+        f
     }
     #[inline(always)]
     fn _save_adventurer_metadata(
