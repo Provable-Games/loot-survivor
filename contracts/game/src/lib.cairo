@@ -2345,7 +2345,6 @@ mod Game {
             let item_stat_boosts = adventurer.equipment.get_stat_boosts(start_entropy);
             adventurer.stats.remove_stat_boosts(item_stat_boosts);
         }
-        f
     }
     #[inline(always)]
     fn _save_adventurer_metadata(
