@@ -38,6 +38,7 @@ import { Network } from "@/app/hooks/useUIStore";
 export interface SyscallsProps {
   gameContract: Contract;
   lordsContract: Contract;
+  ethContract: Contract;
   beastsContract: Contract;
   addTransaction: ({ hash, metadata }: TransactionParams) => void;
   queryData: QueryData;
@@ -171,6 +172,7 @@ function handleDrop(
 export function syscalls({
   gameContract,
   lordsContract,
+  ethContract,
   beastsContract,
   addTransaction,
   account,
@@ -278,7 +280,8 @@ export function syscalls({
     formData: FormData,
     goldenTokenId: string,
     revenueAddress: string,
-    costToPlay?: number
+    costToPlay?: number,
+    costForRandomness?: bigint
   ) => {
     const interfaceCamel = onKatana
       ? "0"
@@ -289,6 +292,16 @@ export function syscalls({
       entrypoint: "approve",
       calldata: [gameContract?.address ?? "", costToPlay!.toString(), "0"],
     }; // Approve dynamic LORDS to be spent each time spawn is called based on the get_cost_to_play
+
+    const approveEthSpendingTx = {
+      contractAddress: ethContract?.address ?? "",
+      entrypoint: "approve",
+      calldata: [
+        gameContract?.address ?? "",
+        costForRandomness!.toString(),
+        "0",
+      ],
+    }; // Approve dynamic ETH to be spent on Pragma VRF fees
 
     const mintAdventurerTx = {
       contractAddress: gameContract?.address ?? "",
@@ -308,11 +321,16 @@ export function syscalls({
 
     const payWithLordsCalls = [
       ...calls,
+      approveEthSpendingTx,
       approveLordsSpendingTx,
       mintAdventurerTx,
     ];
 
-    const payWithGoldenTokenCalls = [...calls, mintAdventurerTx];
+    const payWithGoldenTokenCalls = [
+      ...calls,
+      approveEthSpendingTx,
+      mintAdventurerTx,
+    ];
 
     const spawnCalls =
       goldenTokenId === "0" && !onKatana

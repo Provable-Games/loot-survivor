@@ -1,7 +1,7 @@
 "use client";
 import { useConnect, useContract } from "@starknet-react/core";
 import { sepolia } from "@starknet-react/chains";
-import { constants } from "starknet";
+import { constants, CairoCustomEnum } from "starknet";
 import { useState, useEffect, useMemo } from "react";
 import ActionsScreen from "@/app/containers/ActionsScreen";
 import AdventurerScreen from "@/app/containers/AdventurerScreen";
@@ -18,7 +18,13 @@ import useUIStore from "@/app/hooks/useUIStore";
 import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
 import { NotificationDisplay } from "@/app/components/notifications/NotificationDisplay";
 import { useMusic } from "@/app/hooks/useMusic";
-import { Menu, ZeroUpgrade, BurnerStorage, Adventurer } from "@/app/types";
+import {
+  Menu,
+  ZeroUpgrade,
+  BurnerStorage,
+  Adventurer,
+  PragmaDataResult,
+} from "@/app/types";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import Profile from "@/app/containers/ProfileScreen";
 import { DeathDialog } from "@/app/components/adventurer/DeathDialog";
@@ -46,6 +52,7 @@ import Game from "@/app/abi/Game.json";
 import Lords from "@/app/abi/Lords.json";
 import EthBalanceFragment from "@/app/abi/EthBalanceFragment.json";
 import Beasts from "@/app/abi/Beasts.json";
+import Pragma from "@/app/abi/Pragma.json";
 import ScreenMenu from "@/app/components/menu/ScreenMenu";
 import { checkArcadeConnector } from "@/app/lib/connectors";
 import Header from "@/app/components/navigation/Header";
@@ -139,6 +146,10 @@ function Home() {
     address: networkConfig[network!].beastsAddress,
     abi: Beasts,
   });
+  const { contract: pragmaContract } = useContract({
+    address: networkConfig[network!].pragmaAddress,
+    abi: Pragma,
+  });
 
   const { addTransaction } = useTransactionManager();
   const addToCalls = useTransactionCartStore((state) => state.addToCalls);
@@ -166,6 +177,7 @@ function Home() {
   const [ethBalance, setEthBalance] = useState<bigint>(BigInt(0));
   const [lordsBalance, setLordsBalance] = useState<bigint>(BigInt(0));
   const [costToPlay, setCostToPlay] = useState<bigint | undefined>();
+  const [costForPragma, setCostForPragma] = useState<bigint | undefined>();
 
   const getBalances = async () => {
     const balances = await fetchBalances(
@@ -196,6 +208,7 @@ function Home() {
     syscalls({
       gameContract: gameContract!,
       lordsContract: lordsContract!,
+      ethContract: ethContract!,
       beastsContract: beastsContract!,
       addTransaction,
       queryData: data,
@@ -489,8 +502,25 @@ function Home() {
     setCostToPlay(cost as bigint);
   };
 
+  const getCostForPragma = async () => {
+    const myCairoEnum = new CairoCustomEnum({
+      SpotEntry: "ETH/USD",
+      FutureEntry: undefined,
+      GenericEntry: undefined,
+    });
+    const ethResult = await pragmaContract!.call("get_data_median", [
+      myCairoEnum,
+    ]);
+    const ethAmount =
+      (BigInt(1) * BigInt(10) ** BigInt(18)) /
+      ((ethResult as PragmaDataResult).price /
+        BigInt(10) ** (ethResult as PragmaDataResult).decimals); // since we want $1
+    setCostForPragma(ethAmount);
+  };
+
   useEffect(() => {
     getCostToPlay();
+    getCostForPragma();
   }, []);
 
   const { setCondition } = useController();
@@ -611,6 +641,7 @@ function Home() {
                     getBalances={getBalances}
                     mintLords={mintLords}
                     costToPlay={costToPlay!}
+                    costForPragma={costForPragma!}
                   />
                 )}
                 {screen === "play" && (

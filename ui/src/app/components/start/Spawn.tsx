@@ -13,6 +13,7 @@ import { FormData, GameToken } from "@/app/types";
 import { Button } from "@/app/components/buttons/Button";
 import { getArcadeConnectors, getWalletConnectors } from "@/app/lib/connectors";
 import Lords from "public/icons/lords.svg";
+import Eth from "public/icons/eth-2.svg";
 import {
   indexAddress,
   formatTimeSeconds,
@@ -27,7 +28,8 @@ export interface SpawnProps {
     formData: FormData,
     goldenTokenId: string,
     revenueAddress: string,
-    costToPlay?: number
+    costToPlay?: number,
+    costForPragma?: bigint
   ) => Promise<void>;
   handleBack: () => void;
   lordsBalance?: bigint;
@@ -36,6 +38,7 @@ export interface SpawnProps {
   getBalances: () => Promise<void>;
   mintLords: (lordsAmount: number) => Promise<void>;
   costToPlay: bigint;
+  costForPragma: bigint;
 }
 
 export const Spawn = ({
@@ -48,6 +51,7 @@ export const Spawn = ({
   getBalances,
   mintLords,
   costToPlay,
+  costForPragma,
 }: SpawnProps) => {
   const [showWalletTutorial, setShowWalletTutorial] = useState(false);
   const [formFilled, setFormFilled] = useState(false);
@@ -86,7 +90,8 @@ export const Spawn = ({
       formData,
       "0",
       networkConfig[network!].revenueAddress,
-      lordsGameCost
+      lordsGameCost,
+      costForPragma
     );
     if (!onKatana) {
       await getBalances();
@@ -99,7 +104,8 @@ export const Spawn = ({
       formData,
       usableToken,
       networkConfig[network!].revenueAddress,
-      lordsGameCost
+      lordsGameCost,
+      costForPragma
     );
     await getBalances();
   };
@@ -237,8 +243,16 @@ export const Spawn = ({
                           : "Fill details"
                         : "Not enough Lords"}
                     </p>
-                    {formatCurrency(lordsGameCost)}
-                    <Lords className="absolute self-center sm:w-5 sm:h-5  h-3 w-3 fill-current right-5" />
+                    <span className="flex flex-col">
+                      <span className="flex flex-row">
+                        {formatCurrency(Number(costForPragma))}
+                        <Eth className="absolute self-center sm:w-5 sm:h-5  h-3 w-3 fill-current right-5" />
+                      </span>
+                      <span className="flex flex-row">
+                        {formatCurrency(lordsGameCost)}
+                        <Lords className="absolute self-center sm:w-5 sm:h-5  h-3 w-3 fill-current right-5" />
+                      </span>
+                    </span>
                   </div>
                 </Button>
 
