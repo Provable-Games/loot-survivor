@@ -1058,6 +1058,134 @@ mod ItemUtils {
     fn get_blank_item() -> Loot {
         Loot { id: 0, tier: Tier::None(()), item_type: Type::None(()), slot: Slot::None(()) }
     }
+
+    #[inline(always)]
+    fn get_t5_items() -> Span<u8> {
+        array![
+            ItemId::Cap,
+            ItemId::Club,
+            ItemId::Sash,
+            ItemId::Helm,
+            ItemId::Shirt,
+            ItemId::Shoes,
+            ItemId::Gloves,
+            ItemId::RingMail,
+            ItemId::HeavyBoots,
+            ItemId::HeavyBelt,
+            ItemId::ShortSword,
+            ItemId::HeavyGloves,
+            ItemId::LeatherBelt,
+            ItemId::LeatherBoots,
+            ItemId::Book,
+            ItemId::Wand
+        ]
+            .span()
+    }
+
+    #[inline(always)]
+    fn get_t4_items() -> Span<u8> {
+        array![
+            ItemId::HardLeatherBelt,
+            ItemId::HardLeatherBoots,
+            ItemId::HardLeatherArmor,
+            ItemId::LeatherCap,
+            ItemId::HardLeatherGloves,
+            ItemId::LongSword,
+            ItemId::ChainMail,
+            ItemId::FullHelm,
+            ItemId::ChainBoots,
+            ItemId::ChainGloves,
+            ItemId::Mace
+        ]
+            .span()
+    }
+
+    #[inline(always)]
+    fn get_t3_items() -> Span<u8> {
+        array![
+            ItemId::LinenRobe,
+            ItemId::SilkHood,
+            ItemId::WoolSash,
+            ItemId::WoolShoes,
+            ItemId::WoolGloves,
+            ItemId::Scimitar,
+            ItemId::StuddedLeatherArmor,
+            ItemId::WarCap,
+            ItemId::Greaves,
+            ItemId::Gauntlets,
+            ItemId::StuddedLeatherBoots,
+            ItemId::Maul,
+            ItemId::PlateMail,
+            ItemId::GreatHelm,
+            ItemId::PlatedBelt
+        ]
+            .span()
+    }
+
+    #[inline(always)]
+    fn get_t2_items() -> Span<u8> {
+        array![
+            ItemId::Falchion,
+            ItemId::Quarterstaff,
+            ItemId::GraveWand,
+            ItemId::Chronicle,
+            ItemId::SilkRobe,
+            ItemId::DivineHood,
+            ItemId::SilkSash,
+            ItemId::SilkSlippers,
+            ItemId::SilkGloves,
+            ItemId::DragonsCrown,
+            ItemId::DragonskinBelt,
+            ItemId::DragonskinBoots,
+            ItemId::DragonskinArmor,
+            ItemId::OrnateChestplate,
+            ItemId::WarBelt,
+            ItemId::OrnateHelm,
+            ItemId::OrnateGreaves,
+            ItemId::OrnateGauntlets
+        ]
+            .span()
+    }
+
+    #[inline(always)]
+    fn get_t1_items() -> Span<u8> {
+        array![
+            ItemId::GhostWand,
+            ItemId::Grimoire,
+            ItemId::DivineRobe,
+            ItemId::Crown,
+            ItemId::BrightsilkSash,
+            ItemId::DivineSlippers,
+            ItemId::DivineGloves,
+            ItemId::Katana,
+            ItemId::DemonHusk,
+            ItemId::DemonCrown,
+            ItemId::DemonhideBelt,
+            ItemId::DemonsHands,
+            ItemId::DemonhideBoots,
+            ItemId::Warhammer,
+            ItemId::HolyChestplate,
+            ItemId::AncientHelm,
+            ItemId::HolyGreaves,
+            ItemId::HolyGauntlets
+        ]
+            .span()
+    }
+
+    #[inline(always)]
+    fn get_jewelry_items() -> Span<u8> {
+        array![
+            ItemId::Necklace,
+            ItemId::Pendant,
+            ItemId::Amulet,
+            ItemId::GoldRing,
+            ItemId::SilverRing,
+            ItemId::BronzeRing,
+            ItemId::PlatinumRing,
+            ItemId::TitaniumRing
+        ]
+            .span()
+    }
 }
 
 // ---------------------------
