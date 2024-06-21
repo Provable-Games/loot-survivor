@@ -3020,13 +3020,12 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(328654)]
+    #[available_gas(3820)]
     fn test_get_gold_discovery_gas() {
         ImplAdventurer::get_gold_discovery(1, 0);
     }
 
     #[test]
-    #[available_gas(329054)]
     fn test_get_gold_discovery() {
         let adventurer_level = 1;
         let entropy = 0;
@@ -3035,7 +3034,7 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(328854)]
+    #[available_gas(4690)]
     fn test_get_health_discovery_gas() {
         let adventurer_level = 1;
         let entropy = 12345;
@@ -3043,7 +3042,6 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(329054)]
     fn test_get_health_discovery() {
         let adventurer_level = 1;
         let entropy = 0;
@@ -3052,7 +3050,7 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(17100)]
+    #[available_gas(16210)]
     fn test_get_discovery_gas() {
         let adventurer_level = 1;
         let entropy = 12345;

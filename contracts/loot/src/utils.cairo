@@ -1062,22 +1062,25 @@ mod ItemUtils {
     #[inline(always)]
     fn get_t5_items() -> Span<u8> {
         array![
-            ItemId::Cap,
-            ItemId::Club,
+            ItemId::Book,
+            ItemId::Wand,
+            ItemId::Hood,
             ItemId::Sash,
-            ItemId::Helm,
             ItemId::Shirt,
             ItemId::Shoes,
             ItemId::Gloves,
+            ItemId::Club,
+            ItemId::Helm,
             ItemId::RingMail,
             ItemId::HeavyBoots,
             ItemId::HeavyBelt,
-            ItemId::ShortSword,
             ItemId::HeavyGloves,
+            ItemId::ShortSword,
             ItemId::LeatherBelt,
             ItemId::LeatherBoots,
-            ItemId::Book,
-            ItemId::Wand
+            ItemId::LeatherArmor,
+            ItemId::LeatherGloves,
+            ItemId::Cap,
         ]
             .span()
     }
@@ -1085,17 +1088,23 @@ mod ItemUtils {
     #[inline(always)]
     fn get_t4_items() -> Span<u8> {
         array![
+            ItemId::LongSword,
             ItemId::HardLeatherBelt,
             ItemId::HardLeatherBoots,
             ItemId::HardLeatherArmor,
             ItemId::LeatherCap,
             ItemId::HardLeatherGloves,
-            ItemId::LongSword,
+            ItemId::Mace,
             ItemId::ChainMail,
             ItemId::FullHelm,
             ItemId::ChainBoots,
             ItemId::ChainGloves,
-            ItemId::Mace
+            ItemId::MeshBelt,
+            ItemId::Robe,
+            ItemId::LinenHood,
+            ItemId::LinenSash,
+            ItemId::LinenShoes,
+            ItemId::LinenGloves,
         ]
             .span()
     }
@@ -1103,6 +1112,8 @@ mod ItemUtils {
     #[inline(always)]
     fn get_t3_items() -> Span<u8> {
         array![
+            ItemId::Tome,
+            ItemId::BoneWand,
             ItemId::LinenRobe,
             ItemId::SilkHood,
             ItemId::WoolSash,
@@ -1110,11 +1121,13 @@ mod ItemUtils {
             ItemId::WoolGloves,
             ItemId::Scimitar,
             ItemId::StuddedLeatherArmor,
+            ItemId::StuddedLeatherBoots,
+            ItemId::StuddedLeatherBelt,
+            ItemId::StuddedLeatherGloves,
             ItemId::WarCap,
+            ItemId::Maul,
             ItemId::Greaves,
             ItemId::Gauntlets,
-            ItemId::StuddedLeatherBoots,
-            ItemId::Maul,
             ItemId::PlateMail,
             ItemId::GreatHelm,
             ItemId::PlatedBelt
@@ -1125,8 +1138,6 @@ mod ItemUtils {
     #[inline(always)]
     fn get_t2_items() -> Span<u8> {
         array![
-            ItemId::Falchion,
-            ItemId::Quarterstaff,
             ItemId::GraveWand,
             ItemId::Chronicle,
             ItemId::SilkRobe,
@@ -1134,10 +1145,13 @@ mod ItemUtils {
             ItemId::SilkSash,
             ItemId::SilkSlippers,
             ItemId::SilkGloves,
+            ItemId::Falchion,
             ItemId::DragonsCrown,
             ItemId::DragonskinBelt,
             ItemId::DragonskinBoots,
             ItemId::DragonskinArmor,
+            ItemId::DragonskinGloves,
+            ItemId::Quarterstaff,
             ItemId::OrnateChestplate,
             ItemId::WarBelt,
             ItemId::OrnateHelm,
@@ -1167,7 +1181,8 @@ mod ItemUtils {
             ItemId::HolyChestplate,
             ItemId::AncientHelm,
             ItemId::HolyGreaves,
-            ItemId::HolyGauntlets
+            ItemId::HolyGauntlets,
+            ItemId::OrnateBelt,
         ]
             .span()
     }
