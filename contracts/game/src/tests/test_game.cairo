@@ -30,8 +30,7 @@ mod tests {
         game::{
             interfaces::{IGameDispatcherTrait, IGameDispatcher},
             constants::{
-                COST_TO_PLAY, BLOCKS_IN_A_WEEK, Rewards, REWARD_DISTRIBUTIONS_PHASE1_BP,
-                REWARD_DISTRIBUTIONS_PHASE2_BP, REWARD_DISTRIBUTIONS_PHASE3_BP,
+                COST_TO_PLAY, BLOCKS_IN_A_WEEK, Rewards, REWARD_DISTRIBUTIONS_BP,
                 messages::{STAT_UPGRADES_AVAILABLE}, STARTER_BEAST_ATTACK_DAMAGE,
                 MAINNET_REVEAL_DELAY_BLOCKS
             },
