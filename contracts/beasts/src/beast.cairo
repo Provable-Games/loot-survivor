@@ -138,6 +138,7 @@ impl ImplBeast of IBeast {
 
     // get_xp_reward is used to determine the xp reward for defeating a beast
     // @param beast: the beast being defeated
+    // @param adventurer_level: the level of the adventurer
     // @return: the xp reward for defeating the beast
     fn get_xp_reward(self: Beast, adventurer_level: u8) -> u16 {
         let xp_reward = self.combat_spec.get_base_reward(adventurer_level);
