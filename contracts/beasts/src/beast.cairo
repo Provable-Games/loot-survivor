@@ -16,7 +16,7 @@ use super::constants::{
         STARTER_BEAST_HEALTH, MINIMUM_HEALTH, BEAST_SPECIAL_NAME_UNLOCK_LEVEL, MINIMUM_DAMAGE,
         STRENGTH_BONUS, MINIMUM_XP_REWARD, GOLD_REWARD_BASE_MINIMUM, GOLD_BASE_REWARD_DIVISOR,
         GOLD_REWARD_BONUS_DIVISOR, GOLD_REWARD_BONUS_MAX_MULTPLIER, STARTER_BEAST_LEVEL_THRESHOLD,
-        MAXIMUM_HEALTH
+        MAXIMUM_HEALTH, CRITICAL_HIT_LEVEL_MULTIPLIER, CRITICAL_HIT_AMBUSH_MULTIPLIER
     }
 };
 
@@ -195,6 +195,24 @@ impl ImplBeast of IBeast {
             return Tier::T4(());
         } else {
             return Tier::T5(());
+        }
+    }
+
+    fn get_critical_hit_chance(adventurer_level: u8, is_ambush: bool) -> u8 {
+        let mut chance = 0;
+
+        // critical hit chance is higher on ambush
+        if is_ambush {
+            chance = adventurer_level * CRITICAL_HIT_AMBUSH_MULTIPLIER;
+        } else {
+            chance = adventurer_level * CRITICAL_HIT_LEVEL_MULTIPLIER;
+        }
+
+        // cap chance at 100%
+        if chance > 100 {
+            100
+        } else {
+            chance
         }
     }
 
