@@ -2122,6 +2122,13 @@ mod Game {
             // get and drop item
             let item_id = *items.at(i);
             if adventurer.equipment.is_equipped(item_id) {
+                let item = adventurer.equipment.get_item(item_id);
+
+                // if the item was providing a stat boosts, remove it
+                if item.get_greatness() >= SUFFIX_UNLOCK_GREATNESS {
+                    _remove_item_stat_boost(@self, ref adventurer, adventurer_id, item);
+                }
+
                 adventurer.equipment.drop(item_id);
                 adventurer.mutated = true;
             } else {

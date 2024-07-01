@@ -211,6 +211,29 @@ impl ImplAdventurer of IAdventurer {
         }
     }
 
+    #[inline(always)]
+    fn get_item(self: Equipment, item_id: u8) -> Item {
+        if item_id == self.weapon.id {
+            self.weapon
+        } else if item_id == self.chest.id {
+            self.chest
+        } else if item_id == self.head.id {
+            self.head
+        } else if item_id == self.waist.id {
+            self.waist
+        } else if item_id == self.foot.id {
+            self.foot
+        } else if item_id == self.hand.id {
+            self.hand
+        } else if item_id == self.neck.id {
+            self.neck
+        } else if item_id == self.ring.id {
+            self.ring
+        } else {
+            Item { id: 0, xp: 0 }
+        }
+    }
+
     // is_slot_free checks if an item slot is free for an adventurer
     // @param self: Equipment to check
     // @param item: Item to check
