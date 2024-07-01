@@ -199,13 +199,11 @@ impl ImplBeast of IBeast {
     }
 
     fn get_critical_hit_chance(adventurer_level: u8, is_ambush: bool) -> u8 {
-        let mut chance = 0;
+        let mut chance = adventurer_level.into() * CRITICAL_HIT_LEVEL_MULTIPLIER;
 
         // critical hit chance is higher on ambush
         if is_ambush {
             chance = adventurer_level.into() * CRITICAL_HIT_AMBUSH_MULTIPLIER;
-        } else {
-            chance = adventurer_level.into() * CRITICAL_HIT_LEVEL_MULTIPLIER;
         }
 
         // cap chance at 100%
