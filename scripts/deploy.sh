@@ -4,7 +4,7 @@ lords_cairo_string=0x6c6f726473
 initial_supply=10000000000000000
 dao_address=0x06a519DCcd7Ed4D1aACD3975691AEEae47bF7f9F5b62Ed7C2D929D2E27A9CC5E
 pg_address=0x0346ffd70958b6c8A00Fe49d69A7710b99A8Fa56Cfa574619F5587F772499354
-beasts_address=0x041b6ffc02ce30c6e941f1b34244ef8af0b3e8a70f5528476a7a68765afd6b39
+beasts_address=0x0468e7a1761b65c891207aeb7cfc044044d9a61fc22c71d46a7bf4dbb67c607a
 golden_token_address=0x06a519DCcd7Ed4D1aACD3975691AEEae47bF7f9F5b62Ed7C2D929D2E27A9CC5E
 terminal_timestamp=0
 randomness_contract=0x60c69136b39319547a4df303b6b3a26fab8b2d78de90b6bd215ce82e9cb515c
@@ -36,7 +36,14 @@ lords_class_hash=$(starkli declare --watch /workspaces/loot-survivor/target/dev/
 game_class_hash=$(starkli declare --watch /workspaces/loot-survivor/target/dev/game_Game.contract_class.json --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY 2>/dev/null)
 
 # deploy lords
-lords_contract=$(starkli deploy --watch $lords_class_hash $lords_cairo_string $lords_cairo_string $initial_supply 0 $ACCOUNT_ADDRESS --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null)
+lords_address=$1
+if [ -z "$lords_address" ]; then
+    echo "deploying new lords contract"
+    lords_contract=$(starkli deploy --watch $lords_class_hash $lords_cairo_string $lords_cairo_string $initial_supply 0 $ACCOUNT_ADDRESS --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null)
+else
+    echo "using provided lords contract $lords_address"
+    lords_contract=$lords_address
+fi
 
 # deploy game
 game_contract=$(starkli deploy --watch $game_class_hash $lords_contract $dao_address $pg_address $beasts_address $golden_token_address $terminal_timestamp $randomness_contract $randomness_rotation_interval $oracle_address $previous_first_place_address $previous_second_place_address $previous_third_place_address --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null)
@@ -60,5 +67,7 @@ starkli invoke --watch $game_contract new_game $client_reward_address $starting_
 #output contracts and export contract vars
 echo "game contract: " $game_contract
 echo "lords contract: " $lords_contract
+echo "beasts contract: " $beasts_contract
 export game_contract
 export lords_contract
+export beasts_contract
