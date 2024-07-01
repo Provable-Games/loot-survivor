@@ -211,6 +211,10 @@ impl ImplAdventurer of IAdventurer {
         }
     }
 
+    // @notice gets the item at a given item slot
+    // @param self: Equipment to check
+    // @param item_id: ID of the item to get
+    // @return Item: Item at slot, returns an empty item if the item is not found
     #[inline(always)]
     fn get_item(self: Equipment, item_id: u8) -> Item {
         if item_id == self.weapon.id {
