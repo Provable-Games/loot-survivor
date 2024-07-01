@@ -793,7 +793,7 @@ impl ImplAdventurer of IAdventurer {
     // @param entropy Randomness input for the function's calculations.
     // @return A tuple containing the combat result and jewelry armor bonus.
     fn defend(
-        self: Adventurer, beast: Beast, armor: Item, armor_specials: SpecialPowers, entropy: u128,
+        self: Adventurer, beast: Beast, armor: Item, armor_specials: SpecialPowers, entropy: u128, is_ambush: bool
     ) -> (CombatResult, u16) {
         // adventurer strength isn't used for defense
         let attacker_strength = 0;
@@ -810,6 +810,11 @@ impl ImplAdventurer of IAdventurer {
             specials: armor_specials
         };
 
+        let mut critical_hit_chance = BEAST_CRITICAL_HIT_CHANCE;
+        if is_ambush {
+            critical_hit_chance = ImplAdventurer::get_dynamic_critical_hit_chance(self.get_level());
+        }
+
         // calculate damage
         let mut combat_result = ImplCombat::calculate_damage(
             beast.combat_spec,
@@ -817,7 +822,7 @@ impl ImplAdventurer of IAdventurer {
             MINIMUM_DAMAGE_FROM_BEASTS,
             attacker_strength,
             beast_strength,
-            BEAST_CRITICAL_HIT_CHANCE,
+            critical_hit_chance,
             entropy
         );
 
