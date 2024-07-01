@@ -3267,4 +3267,92 @@ mod tests {
         assert(health_percentage == 45, 'wrong health percentage');
         assert(loot_percentage == 10, 'wrong loot percentage');
     }
+
+    #[test]
+    #[available_gas(2500)]
+    fn test_get_item_gas() {
+        let equipment = Equipment {
+            weapon: Item { id: 10, xp: 10 },
+            chest: Item { id: 20, xp: 20 },
+            head: Item { id: 30, xp: 30 },
+            waist: Item { id: 40, xp: 40 },
+            foot: Item { id: 50, xp: 50 },
+            hand: Item { id: 60, xp: 60 },
+            neck: Item { id: 70, xp: 70 },
+            ring: Item { id: 80, xp: 80 },
+        };
+
+        equipment.get_item(1);
+    }
+
+    #[test]
+    fn test_get_item() {
+        let equipment = Equipment {
+            weapon: Item { id: ItemId::Katana, xp: 15 },
+            chest: Item { id: ItemId::DivineRobe, xp: 25 },
+            head: Item { id: ItemId::Crown, xp: 35 },
+            waist: Item { id: ItemId::BrightsilkSash, xp: 45 },
+            foot: Item { id: ItemId::DivineSlippers, xp: 55 },
+            hand: Item { id: ItemId::DivineGloves, xp: 65 },
+            neck: Item { id: ItemId::Amulet, xp: 75 },
+            ring: Item { id: ItemId::GoldRing, xp: 85 },
+        };
+
+        let weapon = equipment.get_item(ItemId::Katana);
+        assert(weapon.id == ItemId::Katana, 'wrong weapon id');
+        assert(weapon.xp == 15, 'wrong weapon xp');
+        assert(ImplLoot::get_slot(weapon.id) == Slot::Weapon, 'wrong weapon slot');
+
+        let chest = equipment.get_item(ItemId::DivineRobe);
+        assert(chest.id == ItemId::DivineRobe, 'wrong chest id');
+        assert(chest.xp == 25, 'wrong chest xp');
+        assert(ImplLoot::get_slot(chest.id) == Slot::Chest, 'wrong chest slot');
+
+        let head = equipment.get_item(ItemId::Crown);
+        assert(head.id == ItemId::Crown, 'wrong head id');
+        assert(head.xp == 35, 'wrong head xp');
+        assert(ImplLoot::get_slot(head.id) == Slot::Head, 'wrong head slot');
+
+        let waist = equipment.get_item(ItemId::BrightsilkSash);
+        assert(waist.id == ItemId::BrightsilkSash, 'wrong waist id');
+        assert(waist.xp == 45, 'wrong waist xp');
+        assert(ImplLoot::get_slot(waist.id) == Slot::Waist, 'wrong waist slot');
+
+        let foot = equipment.get_item(ItemId::DivineSlippers);
+        assert(foot.id == ItemId::DivineSlippers, 'wrong foot id');
+        assert(foot.xp == 55, 'wrong foot xp');
+        assert(ImplLoot::get_slot(foot.id) == Slot::Foot, 'wrong foot slot');
+
+        let hand = equipment.get_item(ItemId::DivineGloves);
+        assert(hand.id == ItemId::DivineGloves, 'wrong hand id');
+        assert(hand.xp == 65, 'wrong hand xp');
+        assert(ImplLoot::get_slot(hand.id) == Slot::Hand, 'wrong hand slot');
+
+        let neck = equipment.get_item(ItemId::Amulet);
+        assert(neck.id == ItemId::Amulet, 'wrong neck id');
+        assert(neck.xp == 75, 'wrong neck xp');
+        assert(ImplLoot::get_slot(neck.id) == Slot::Neck, 'wrong neck slot');
+
+        let ring = equipment.get_item(ItemId::GoldRing);
+        assert(ring.id == ItemId::GoldRing, 'wrong ring id');
+        assert(ring.xp == 85, 'wrong ring xp');
+        assert(ImplLoot::get_slot(ring.id) == Slot::Ring, 'wrong ring slot');
+    }
+
+    #[test]
+    fn test_get_item_no_match() {
+        let equipment = Equipment {
+            weapon: Item { id: 10, xp: 10 },
+            chest: Item { id: 20, xp: 20 },
+            head: Item { id: 30, xp: 30 },
+            waist: Item { id: 40, xp: 40 },
+            foot: Item { id: 50, xp: 50 },
+            hand: Item { id: 60, xp: 60 },
+            neck: Item { id: 70, xp: 70 },
+            ring: Item { id: 80, xp: 80 },
+        };
+
+        assert(equipment.get_item(255).id == 0, 'should be item id 0');
+        assert(equipment.get_item(255).xp == 0, 'should be item xp 0');
+    }
 }
