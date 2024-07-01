@@ -889,9 +889,11 @@ mod Game {
             let adventurer = self._adventurer.read(adventurer_id);
             ImplAdventurer::get_dynamic_critical_hit_chance(adventurer.get_level())
         }
-        fn ambush_critical_hit_chance(self: @ContractState, adventurer_id: felt252) -> u8 {
+        fn beast_critical_hit_chance(
+            self: @ContractState, adventurer_id: felt252, is_ambush: bool
+        ) -> u8 {
             let adventurer = self._adventurer.read(adventurer_id);
-            ImplAdventurer::get_dynamic_critical_hit_chance(adventurer.get_level())
+            ImplBeast::get_critical_hit_chance(adventurer.get_level(), is_ambush)
         }
         // fn stat_upgrades_per_level(self: @ContractState) -> u8 {
         //     MAX_STAT_UPGRADES_AVAILABLE
