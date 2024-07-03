@@ -165,6 +165,9 @@ function Home() {
   const showDeathDialog = useUIStore((state) => state.showDeathDialog);
   const setStartOption = useUIStore((state) => state.setStartOption);
   const setEntropyReady = useUIStore((state) => state.setEntropyReady);
+  const setFetchUnlocksEntropy = useUIStore(
+    (state) => state.setFetchUnlocksEntropy
+  );
   const adventurerEntropy = useUIStore((state) => state.adventurerEntropy);
   const [accountChainId, setAccountChainId] = useState<
     constants.StarknetChainId | undefined
@@ -233,6 +236,7 @@ function Home() {
       getBalances,
       setIsMintingLords,
       setEntropyReady,
+      setFetchUnlocksEntropy,
       rpc_addr: networkConfig[network!].rpcUrl,
       network,
     });
@@ -554,6 +558,29 @@ function Home() {
 
     return () => clearInterval(interval); // Cleanup on component unmount
   }, [adventurer?.level]);
+
+  // useEffect(() => {
+  //   const fetchUnlocksEntropy = async () => {
+  //     if (adventurer?.id && fetchUnlocksEntropy) {
+  //       const entropy = await gameContract!.call("get_item_specials", [
+  //         adventurer?.id!,
+  //       ]);
+  //       if (entropy !== BigInt(0)) {
+  //         setAdventurerEntropy(BigInt(entropy.toString()));
+  //         setEntropyReady(true);
+  //         clearInterval(interval);
+  //       }
+  //     }
+  //   };
+
+  //   // Call the function immediately
+  //   fetchUnlocksEntropy();
+
+  //   // Set up the interval to call the function every 5 seconds
+  //   const interval = setInterval(fetchEntropy, 5000);
+
+  //   return () => clearInterval(interval); // Cleanup on component unmount
+  // }, [fetchUnlocksEntropy]);
 
   if (!isConnected && disconnected) {
     return <WalletSelect />;

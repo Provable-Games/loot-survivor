@@ -100,6 +100,8 @@ type State = {
   setAdventurerEntropy: (value: bigint) => void;
   entropyReady: boolean;
   setEntropyReady: (value: boolean) => void;
+  fetchUnlocksEntropy: boolean;
+  setFetchUnlocksEntropy: (value: boolean) => void;
   loginScreen: boolean;
   setLoginScreen: (value: boolean) => void;
   network: Network;
@@ -213,6 +215,8 @@ const useUIStore = create<State>((set) => ({
   setVitBoostRemoved: (value) => set({ vitBoostRemoved: value }),
   chaBoostRemoved: 0,
   setChaBoostRemoved: (value) => set({ chaBoostRemoved: value }),
+  fetchUnlocksEntropy: false,
+  setFetchUnlocksEntropy: (value) => set({ fetchUnlocksEntropy: value }),
 }));
 
 export default useUIStore;

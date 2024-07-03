@@ -92,6 +92,7 @@ export interface SyscallsProps {
   getBalances: () => Promise<void>;
   setIsMintingLords: (value: boolean) => void;
   setEntropyReady: (value: boolean) => void;
+  setFetchUnlocksEntropy: (value: boolean) => void;
   rpc_addr: string;
   network: Network;
 }
@@ -201,6 +202,7 @@ export function syscalls({
   getBalances,
   setIsMintingLords,
   setEntropyReady,
+  setFetchUnlocksEntropy,
   rpc_addr,
   network,
 }: SyscallsProps) {
@@ -559,6 +561,7 @@ export function syscalls({
                   "special1",
                   ownedItemIndex
                 );
+                setFetchUnlocksEntropy(true);
               }
               if (itemLeveled.prefixesUnlocked) {
                 setData(
@@ -807,6 +810,7 @@ export function syscalls({
                 "special1",
                 ownedItemIndex
               );
+              setFetchUnlocksEntropy(true);
             }
             if (itemLeveled.prefixesUnlocked) {
               setData(
