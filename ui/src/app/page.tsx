@@ -60,6 +60,7 @@ import { networkConfig } from "@/app/lib/networkConfig";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 import { useController } from "@/app/context/ControllerContext";
 import EncounterTable from "@/app/components/encounters/EncounterTable";
+import { VRF_WAIT_TIME } from "@/app/lib/constants";
 
 const allMenuItems: Menu[] = [
   { id: 1, label: "Start", screen: "start", disabled: false },
@@ -165,6 +166,7 @@ function Home() {
   const showDeathDialog = useUIStore((state) => state.showDeathDialog);
   const setStartOption = useUIStore((state) => state.setStartOption);
   const setEntropyReady = useUIStore((state) => state.setEntropyReady);
+  const fetchUnlocksEntropy = useUIStore((state) => state.fetchUnlocksEntropy);
   const setFetchUnlocksEntropy = useUIStore(
     (state) => state.setFetchUnlocksEntropy
   );
@@ -554,33 +556,61 @@ function Home() {
     fetchEntropy();
 
     // Set up the interval to call the function every 5 seconds
-    const interval = setInterval(fetchEntropy, 5000);
+    const interval = setInterval(fetchEntropy, VRF_WAIT_TIME);
 
     return () => clearInterval(interval); // Cleanup on component unmount
   }, [adventurer?.level]);
 
-  // useEffect(() => {
-  //   const fetchUnlocksEntropy = async () => {
-  //     if (adventurer?.id && fetchUnlocksEntropy) {
-  //       const entropy = await gameContract!.call("get_item_specials", [
-  //         adventurer?.id!,
-  //       ]);
-  //       if (entropy !== BigInt(0)) {
-  //         setAdventurerEntropy(BigInt(entropy.toString()));
-  //         setEntropyReady(true);
-  //         clearInterval(interval);
-  //       }
-  //     }
-  //   };
+  const fetchItemSpecials = async () => {
+    if (entropyReady || onKatana) {
+      const marketItems = (await gameContract!.call("get_items_on_market", [
+        adventurer?.id!,
+      ])) as string[];
+      const itemData = [];
+      for (let item of marketItems) {
+        itemData.unshift({
+          item: gameData.ITEMS[parseInt(item)],
+          adventurerId: adventurer?.id,
+          owner: false,
+          equipped: false,
+          ownerAddress: adventurer?.owner,
+          xp: 0,
+          special1: null,
+          special2: null,
+          special3: null,
+          isAvailable: false,
+          purchasedTime: null,
+          timestamp: new Date(),
+        });
+      }
+      setData("latestMarketItemsQuery", {
+        items: itemData,
+      });
+    }
+  };
 
-  //   // Call the function immediately
-  //   fetchUnlocksEntropy();
+  useEffect(() => {
+    const fetchEntropy = async () => {
+      if (adventurer?.id && fetchUnlocksEntropy) {
+        const entropy = await gameContract!.call("get_item_entropy", [
+          adventurer?.id!,
+        ]);
+        if (entropy !== BigInt(0)) {
+          setAdventurerEntropy(BigInt(entropy.toString()));
+          setEntropyReady(true);
+          clearInterval(interval);
+        }
+      }
+    };
 
-  //   // Set up the interval to call the function every 5 seconds
-  //   const interval = setInterval(fetchEntropy, 5000);
+    // Call the function immediately
+    fetchEntropy();
 
-  //   return () => clearInterval(interval); // Cleanup on component unmount
-  // }, [fetchUnlocksEntropy]);
+    // Set up the interval to call the function every 5 seconds
+    const interval = setInterval(fetchEntropy, VRF_WAIT_TIME);
+
+    return () => clearInterval(interval); // Cleanup on component unmount
+  }, [fetchUnlocksEntropy]);
 
   if (!isConnected && disconnected) {
     return <WalletSelect />;
