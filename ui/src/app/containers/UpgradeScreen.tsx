@@ -41,7 +41,6 @@ import {
   calculateChaBoostRemoved,
 } from "@/app/lib/utils";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
-import InterludeScreen from "@/app/containers/InterludeScreen";
 import { useController } from "@/app/context/ControllerContext";
 import { useUiSounds, soundSelector } from "@/app/hooks/useUiSound";
 import { vitalityIncrease } from "@/app/lib/constants";
@@ -484,7 +483,6 @@ export default function UpgradeScreen({
 
   return (
     <>
-      {!entropyReady && !onKatana && <InterludeScreen />}
       {hasStatUpgrades ? (
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 h-full">
           <div className="w-1/3 hidden sm:flex h-full">

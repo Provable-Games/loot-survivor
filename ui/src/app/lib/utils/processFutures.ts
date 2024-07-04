@@ -208,12 +208,12 @@ function getBeastSeed(xp: number, adventurerEntropy: bigint) {
   return d;
 }
 
-function getRandomnessWithHealth(
+function getRandomnessWithActions(
   xp: number,
-  health: number,
+  actions: number,
   adventurerEntropy: bigint
 ) {
-  let params = [BigInt(xp), BigInt(health), adventurerEntropy];
+  let params = [BigInt(xp), BigInt(actions), adventurerEntropy];
 
   let poseidon = starknet.poseidonHashMany(params);
 
@@ -807,9 +807,9 @@ export function nextAttackResult(
   beastDamageType?: string;
   location?: string;
 } {
-  let { rnd1, rnd2 } = getRandomnessWithHealth(
+  let { rnd1, rnd2 } = getRandomnessWithActions(
     adventurer.xp,
-    adventurer.health,
+    adventurer.actions,
     adventurerEntropy
   );
   let weapon = items.find((item) => item.slot === "Weapon");
@@ -910,7 +910,7 @@ export function simulateBattle(
   let events: BattleEvent[] = [];
 
   while (health > 0) {
-    let { rnd1, rnd2 } = getRandomnessWithHealth(
+    let { rnd1, rnd2 } = getRandomnessWithActions(
       adventurer.xp,
       health,
       adventurerEntropy
@@ -998,7 +998,7 @@ export function simulateFlee(
   let events: BattleEvent[] = [];
 
   while (health > 0) {
-    let { rnd1, rnd2 } = getRandomnessWithHealth(
+    let { rnd1, rnd2 } = getRandomnessWithActions(
       adventurer.xp,
       health,
       adventurerEntropy

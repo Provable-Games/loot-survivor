@@ -61,6 +61,8 @@ import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 import { useController } from "@/app/context/ControllerContext";
 import EncounterTable from "@/app/components/encounters/EncounterTable";
 import { VRF_WAIT_TIME } from "@/app/lib/constants";
+import { GameData } from "@/app/lib/data/GameData";
+import InterludeScreen from "@/app/containers/InterludeScreen";
 
 const allMenuItems: Menu[] = [
   { id: 1, label: "Start", screen: "start", disabled: false },
@@ -165,6 +167,7 @@ function Home() {
   const setDeathMessage = useLoadingStore((state) => state.setDeathMessage);
   const showDeathDialog = useUIStore((state) => state.showDeathDialog);
   const setStartOption = useUIStore((state) => state.setStartOption);
+  const entropyReady = useUIStore((state) => state.entropyReady);
   const setEntropyReady = useUIStore((state) => state.setEntropyReady);
   const fetchUnlocksEntropy = useUIStore((state) => state.fetchUnlocksEntropy);
   const setFetchUnlocksEntropy = useUIStore(
@@ -174,6 +177,8 @@ function Home() {
   const [accountChainId, setAccountChainId] = useState<
     constants.StarknetChainId | undefined
   >();
+
+  const gameData = new GameData();
 
   const [ethBalance, setEthBalance] = useState<bigint>(BigInt(0));
   const [lordsBalance, setLordsBalance] = useState<bigint>(BigInt(0));
@@ -596,8 +601,8 @@ function Home() {
           adventurer?.id!,
         ]);
         if (entropy !== BigInt(0)) {
-          setAdventurerEntropy(BigInt(entropy.toString()));
-          setEntropyReady(true);
+          setFetchUnlocksEntropy(false);
+          fetchItemSpecials();
           clearInterval(interval);
         }
       }
@@ -618,6 +623,8 @@ function Home() {
 
   return (
     <>
+      {((!entropyReady && hasStatUpgrades) || fetchUnlocksEntropy) &&
+        !onKatana && <InterludeScreen />}
       <NetworkSwitchError network={network} isWrongNetwork={isWrongNetwork} />
       {screen === "onboarding" ? (
         <Onboarding
