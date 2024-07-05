@@ -76,6 +76,16 @@ const ButtonMenu: React.FC<ButtonMenuProps> = ({
             });
           }
           break;
+        case "ArrowLeft":
+          if (!onTabs) {
+            play();
+            setSelectedIndex((prev) => {
+              // setActiveMenu && setActiveMenu(buttonsData[prev].id);
+              onEnterAction && buttonsData[prev].reverseAction();
+              return prev;
+            });
+          }
+          break;
       }
     },
     [onEnterAction, setActiveMenu, play, onSelected, buttonsData, onTabs]

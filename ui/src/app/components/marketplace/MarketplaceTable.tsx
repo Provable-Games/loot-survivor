@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import MarketplaceRow from "@/app/components/marketplace/MarketplaceRow";
 import { Item, UpgradeStats, ItemPurchase } from "@/app/types";
 import { getItemData, getKeyFromValue } from "@/app/lib/utils";
@@ -33,6 +33,7 @@ const MarketplaceTable = ({
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [showEquipQ, setShowEquipQ] = useState<number | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
 
   const gameData = new GameData();
 
@@ -101,6 +102,46 @@ const MarketplaceTable = ({
     handleSort("Tier");
   }, []);
 
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    switch (event.key) {
+      case "ArrowDown":
+        setSelectedIndex((prev) => {
+          const newIndex = Math.min(
+            prev + 1,
+            sortedMarketLatestItems.length - 1
+          );
+          return newIndex;
+        });
+        break;
+      case "ArrowUp":
+        setSelectedIndex((prev) => {
+          const newIndex = Math.max(prev - 1, 0);
+          return newIndex;
+        });
+        break;
+      case "ArrowRight":
+        if (!onTabs) {
+          play();
+          setSelectedIndex((prev) => {
+            setActiveMenu && setActiveMenu(buttonsData[prev].id);
+            onEnterAction && buttonsData[prev].action();
+            return prev;
+          });
+        }
+        break;
+      case "ArrowLeft":
+        if (!onTabs) {
+          play();
+          setSelectedIndex((prev) => {
+            // setActiveMenu && setActiveMenu(buttonsData[prev].id);
+            onEnterAction && buttonsData[prev].reverseAction();
+            return prev;
+          });
+        }
+        break;
+    }
+  }, []);
+
   return (
     <>
       {marketLatestItems.length > 0 ? (
@@ -138,6 +179,7 @@ const MarketplaceTable = ({
                   totalCharisma={totalCharisma}
                   dropItems={dropItems}
                   key={index}
+                  selectedIndex={selectedIndex}
                 />
               ))
             ) : (

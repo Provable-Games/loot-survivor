@@ -211,6 +211,7 @@ export interface ButtonData {
   mouseEnter?: () => void;
   mouseLeave?: () => void;
   action: () => void;
+  reverseAction?: () => void;
   disabled?: boolean;
   variant?: "default" | "outline";
   className?: string;

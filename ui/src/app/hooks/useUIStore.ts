@@ -65,7 +65,9 @@ type State = {
   potionAmount: number;
   setPotionAmount: (value: number) => void;
   upgrades: UpgradeStats;
-  setUpgrades: (value: UpgradeStats) => void;
+  setUpgrades: (
+    value: UpgradeStats | ((prev: UpgradeStats) => UpgradeStats)
+  ) => void;
   slayAdventurers: string[];
   setSlayAdventurers: (value: string[]) => void;
   lastAction: Date | null;
@@ -158,7 +160,10 @@ const useUIStore = create<State>((set) => ({
   potionAmount: 0,
   setPotionAmount: (value) => set({ potionAmount: value }),
   upgrades: { ...ZeroUpgrade },
-  setUpgrades: (value) => set({ upgrades: value }),
+  setUpgrades: (value) =>
+    set((state) => ({
+      upgrades: typeof value === "function" ? value(state.upgrades) : value,
+    })),
   lastAction: null,
   slayAdventurers: [],
   setSlayAdventurers: (value) => set({ slayAdventurers: value }),

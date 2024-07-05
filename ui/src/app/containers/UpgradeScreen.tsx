@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { CallData, Contract } from "starknet";
 import {
   getItemData,
@@ -79,6 +79,7 @@ export default function UpgradeScreen({
     (state) => state.computed.hasStatUpgrades
   );
   const [selected, setSelected] = useState("");
+  const [selectedSection, setSelectedSection] = useState(-1);
   const [nonBoostedStats, setNonBoostedStats] = useState<any | null>(null);
   const upgradeScreen = useUIStore((state) => state.upgradeScreen);
   const setUpgradeScreen = useUIStore((state) => state.setUpgradeScreen);
@@ -94,6 +95,7 @@ export default function UpgradeScreen({
   const onKatana = useUIStore((state) => state.onKatana);
   const setVitBoostRemoved = useUIStore((state) => state.setVitBoostRemoved);
   const setChaBoostRemoved = useUIStore((state) => state.setChaBoostRemoved);
+  const setOnTabs = useUIStore((state) => state.setOnTabs);
   const pendingMessage = useLoadingStore((state) => state.pendingMessage);
   const [summary, setSummary] = useState<UpgradeSummary>({
     Stats: { ...ZeroUpgrade },
@@ -170,6 +172,7 @@ export default function UpgradeScreen({
       buttonText: "Upgrade Strength",
       abbrev: "STR",
       nonBoostedStat: nonBoostedStats?.strength,
+      upgradeAmount: upgrades["Strength"],
     },
     {
       name: "Dexterity",
@@ -178,6 +181,7 @@ export default function UpgradeScreen({
       buttonText: "Upgrade Dexterity",
       abbrev: "DEX",
       nonBoostedStat: nonBoostedStats?.dexterity,
+      upgradeAmount: upgrades["Dexterity"],
     },
     {
       name: "Vitality",
@@ -187,6 +191,7 @@ export default function UpgradeScreen({
       buttonText: "Upgrade Vitality",
       abbrev: "VIT",
       nonBoostedStat: nonBoostedStats?.vitality,
+      upgradeAmount: upgrades["Vitality"],
     },
     {
       name: "Intelligence",
@@ -195,6 +200,7 @@ export default function UpgradeScreen({
       buttonText: "Upgrade Intelligence",
       abbrev: "INT",
       nonBoostedStat: nonBoostedStats?.intelligence,
+      upgradeAmount: upgrades["Intelligence"],
     },
     {
       name: "Wisdom",
@@ -203,6 +209,7 @@ export default function UpgradeScreen({
       buttonText: "Upgrade Wisdom",
       abbrev: "WIS",
       nonBoostedStat: nonBoostedStats?.wisdom,
+      upgradeAmount: upgrades["Wisdom"],
     },
     {
       name: "Charisma",
@@ -211,19 +218,11 @@ export default function UpgradeScreen({
       buttonText: "Upgrade Charisma",
       abbrev: "CHA",
       nonBoostedStat: nonBoostedStats?.charisma,
+      upgradeAmount: upgrades["Charisma"],
     },
   ];
 
-  function renderContent() {
-    const attribute = attributes.find((attr) => attr.name === selected);
-    return (
-      <div className="order-1 sm:order-2 flex sm:w-2/3 h-24 sm:h-full items-center justify-center p-auto">
-        {attribute && (
-          <StatAttribute upgradeHandler={handleAddUpgradeTx} {...attribute} />
-        )}
-      </div>
-    );
-  }
+  console.log("rerender");
 
   function renderButtonMenu() {
     const upgradeMenu = [
@@ -232,7 +231,8 @@ export default function UpgradeScreen({
         label: `Strength - ${adventurer?.strength}`,
         icon: <ArrowTargetIcon />,
         value: "Strength",
-        action: async () => setSelected("Strength"),
+        action: async () => upgradeStat("Strength"),
+        reverseAction: () => downgradeStat("Strength"),
         disabled: false,
       },
       {
@@ -240,7 +240,8 @@ export default function UpgradeScreen({
         label: `Dexterity - ${adventurer?.dexterity}`,
         icon: <CatIcon />,
         value: "Dexterity",
-        action: async () => setSelected("Dexterity"),
+        action: async () => upgradeStat("Dexterity"),
+        reverseAction: () => downgradeStat("Dexterity"),
         disabled: false,
       },
       {
@@ -248,7 +249,8 @@ export default function UpgradeScreen({
         label: `Vitality - ${adventurer?.vitality}`,
         icon: <HeartVitalityIcon />,
         value: "Vitality",
-        action: async () => setSelected("Vitality"),
+        action: async () => upgradeStat("Vitality"),
+        reverseAction: () => downgradeStat("Vitality"),
         disabled: false,
       },
       {
@@ -256,7 +258,8 @@ export default function UpgradeScreen({
         label: `Intelligence - ${adventurer?.intelligence}`,
         icon: <LightbulbIcon />,
         value: "Intelligence",
-        action: async () => setSelected("Intelligence"),
+        action: async () => upgradeStat("Intelligence"),
+        reverseAction: () => downgradeStat("Intelligence"),
         disabled: false,
       },
       {
@@ -264,7 +267,8 @@ export default function UpgradeScreen({
         label: `Wisdom - ${adventurer?.wisdom}`,
         icon: <ScrollIcon />,
         value: "Wisdom",
-        action: async () => setSelected("Wisdom"),
+        action: async () => upgradeStat("Wisdom"),
+        reverseAction: () => downgradeStat("Wisdom"),
         disabled: false,
       },
       {
@@ -272,17 +276,31 @@ export default function UpgradeScreen({
         label: `Charisma - ${adventurer?.charisma}`,
         icon: <CoinCharismaIcon />,
         value: "Charisma",
-        action: () => {
-          upgrades["Charisma"] = upgrades["Charisma"] + 1;
-          setUpgrades(upgrades);
-        },
+        action: () => upgradeStat("Charisma"),
+        reverseAction: () => downgradeStat("Charisma"),
         disabled: false,
       },
     ];
 
-    const upgradeStat = (name: string) => {
-      upgrades[name] = upgrades[name] + 1;
-      setUpgrades(upgrades);
+    const upgradeStat = (name: keyof UpgradeStats) => {
+      const total = Object.values(upgrades)
+        .filter((value) => value !== 0)
+        .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+      if (total < adventurer?.statUpgrades!) {
+        setUpgrades((prevUpgrades) => ({
+          ...prevUpgrades,
+          [name]: (prevUpgrades[name] || 0) + 1,
+        }));
+      }
+    };
+
+    const downgradeStat = (name: keyof UpgradeStats) => {
+      if (upgrades[name] > 0) {
+        setUpgrades((prevUpgrades) => ({
+          ...prevUpgrades,
+          [name]: (prevUpgrades[name] || 0) - 1,
+        }));
+      }
     };
 
     return (
@@ -294,6 +312,17 @@ export default function UpgradeScreen({
           className="flex-col items-center justify-center h-full"
           size="lg"
         />
+      </div>
+    );
+  }
+
+  function renderContent() {
+    const attribute = attributes.find((attr) => attr.name === selected);
+    return (
+      <div className="order-1 sm:order-2 flex sm:w-2/3 h-24 sm:h-full items-center justify-center p-auto">
+        {attribute && (
+          <StatAttribute upgradeHandler={handleAddUpgradeTx} {...attribute} />
+        )}
       </div>
     );
   }
@@ -493,6 +522,47 @@ export default function UpgradeScreen({
     }
   }, [newMaxHealth]);
 
+  useEffect(() => {
+    if (selectedSection == -1) {
+      setOnTabs(true);
+    }
+  }, [selectedSection]);
+
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (upgradeScreen == 2) {
+        switch (event.key) {
+          case "ArrowDown":
+            setSelectedSection((prev) => {
+              setOnTabs(false);
+              const newIndex = Math.min(prev + 1, 1);
+              return newIndex;
+            });
+            break;
+          case "ArrowUp":
+            setSelectedSection((prev) => {
+              const newIndex = Math.max(prev - 1, 0);
+              if (prev - 1 == -1) {
+                setOnTabs(true);
+                return -1;
+              } else {
+                return newIndex;
+              }
+            });
+            break;
+        }
+      }
+    },
+    [upgradeScreen]
+  );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [upgradeScreen, handleKeyDown]);
+
   return (
     <>
       {!entropyReady && !onKatana && <InterludeScreen />}
@@ -658,6 +728,7 @@ export default function UpgradeScreen({
                         upgradeHandler={handleAddUpgradeTx}
                         totalVitality={totalVitality}
                         vitBoostRemoved={vitBoostRemoved}
+                        selected={selectedSection === 0}
                       />
                     </div>
                   )}
@@ -672,6 +743,7 @@ export default function UpgradeScreen({
                         totalCharisma={totalCharisma}
                         adventurerItems={adventurerItems}
                         dropItems={dropItems}
+                        selected={selectedSection === 2}
                       />
                     </div>
                   )}

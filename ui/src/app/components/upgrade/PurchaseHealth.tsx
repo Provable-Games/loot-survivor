@@ -19,6 +19,7 @@ interface PurchaseHealthProps {
   ) => void;
   totalVitality: number;
   vitBoostRemoved: number;
+  selected: boolean;
 }
 
 const PurchaseHealth = ({
@@ -28,6 +29,7 @@ const PurchaseHealth = ({
   totalCharisma,
   upgradeHandler,
   vitBoostRemoved,
+  selected,
 }: PurchaseHealthProps) => {
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const prevAmountRef = useRef<number | undefined>(0);

@@ -15,6 +15,7 @@ interface StatAttributeProps {
     items?: any[]
   ) => void;
   nonBoostedStat: any;
+  upgradeAmount: number;
 }
 
 export const StatAttribute = ({
@@ -23,6 +24,7 @@ export const StatAttribute = ({
   description,
   upgradeHandler,
   nonBoostedStat,
+  upgradeAmount,
 }: StatAttributeProps) => {
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const prevAmountRef = useRef<{ [key: string]: number }>({ ...ZeroUpgrade });
@@ -33,7 +35,7 @@ export const StatAttribute = ({
     (state) => state.removeEntrypointFromCalls
   );
 
-  const amount = upgrades[name] ?? 0;
+  const amount = upgradeAmount ?? 0;
 
   const upgradesTotal = Object.values(upgrades)
     .filter((value) => value !== 0)

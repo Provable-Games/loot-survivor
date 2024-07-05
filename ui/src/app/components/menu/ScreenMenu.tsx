@@ -3,7 +3,6 @@ import { Button } from "@/app/components/buttons/Button";
 import { soundSelector, useUiSounds } from "@/app/hooks/useUiSound";
 import { Menu } from "@/app/types";
 import useUIStore from "@/app/hooks/useUIStore";
-import { on } from "events";
 
 export interface ButtonData {
   id: number;
@@ -36,7 +35,7 @@ const HorizontalKeyboardControl: React.FC<HorizontalKeyboardControlProps> = ({
   const arcadeButtonsData = buttonsData.length == 7 ? buttonsData : undefined;
   const arcadeDisabled = buttonsData.length == 7 ? disabled : undefined;
 
-  console.log(onTabs);
+  console.log(arcadeButtonsData);
 
   if (arcadeButtonsData && arcadeDisabled) {
     useEffect(() => {
@@ -78,7 +77,7 @@ const HorizontalKeyboardControl: React.FC<HorizontalKeyboardControlProps> = ({
             break;
         }
       },
-      [selectedIndex, arcadeButtonsData]
+      [selectedIndex, arcadeButtonsData, arcadeDisabled]
     );
 
     useEffect(() => {
