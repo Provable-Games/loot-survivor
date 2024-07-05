@@ -94,7 +94,8 @@ export const parseAdventurer = combineParsers({
   statsUpgradesAvailable: { index: 4, parser: parseU8 },
   stats: { index: 5, parser: parseStats },
   equipment: { index: 6, parser: parseEquipment },
-  mutated: { index: 7, parser: parseBoolean },
+  actions: { index: 7, parser: parseU16 },
+  mutated: { index: 8, parser: parseBoolean },
 });
 
 export const parseAdventurerState = combineParsers({

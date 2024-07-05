@@ -86,6 +86,7 @@ function processAdventurerState(
     charisma: data.adventurerState["adventurer"]["stats"]["charisma"],
     luck: data.adventurerState["adventurer"]["stats"]["luck"],
     gold: data.adventurerState["adventurer"]["gold"],
+    actions: data.adventurerState["adventurer"]["actions"],
     weapon:
       gameData.ITEMS[
         data.adventurerState["adventurer"]["equipment"]["weapon"]["id"]

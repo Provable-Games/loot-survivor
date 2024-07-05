@@ -116,6 +116,7 @@ export default function transform({ header, events }: Block) {
             charisma: as.adventurer.stats.charisma,
             luck: as.adventurer.stats.luck,
             gold: as.adventurer.gold,
+            actions: as.adventurer.actions,
             weapon: as.adventurer.equipment.weapon.id,
             chest: as.adventurer.equipment.chest.id,
             head: as.adventurer.equipment.head.id,
