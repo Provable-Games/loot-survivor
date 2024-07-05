@@ -48,7 +48,6 @@ struct Adventurer {
     stat_upgrades_available: u8, // 4 bits
     stats: Stats, // 30 bits
     equipment: Equipment, // 128 bits
-    // battle_action_count: u16 // 9 bits
     mutated: bool, // not packed
 }
 
