@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Button } from "@/app/components/buttons/Button";
 import { soundSelector, useUiSounds } from "@/app/hooks/useUiSound";
 import { ButtonData } from "@/app/types";
+import useUIStore from "@/app/hooks/useUIStore";
 
 interface ButtonMenuProps {
   buttonsData: ButtonData[];
@@ -25,10 +26,20 @@ const ButtonMenu: React.FC<ButtonMenuProps> = ({
   const { play } = useUiSounds(soundSelector.click);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const onTabs = useUIStore((state) => state.onTabs);
+  const setOnTabs = useUIStore((state) => state.setOnTabs);
 
   useEffect(() => {
-    onSelected(buttonsData[selectedIndex].value ?? "");
+    if (!onTabs) {
+      onSelected(buttonsData[selectedIndex].value ?? "");
+    }
   }, [selectedIndex]);
+
+  useEffect(() => {
+    if (onTabs) {
+      setSelectedIndex(-1);
+    }
+  }, [onTabs]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -36,6 +47,7 @@ const ButtonMenu: React.FC<ButtonMenuProps> = ({
         case "ArrowDown":
           play();
           setSelectedIndex((prev) => {
+            setOnTabs(false);
             const newIndex = Math.min(prev + 1, buttonsData.length - 1);
             onSelected(buttonsData[newIndex].value ?? "");
             return newIndex;
@@ -45,21 +57,28 @@ const ButtonMenu: React.FC<ButtonMenuProps> = ({
           play();
           setSelectedIndex((prev) => {
             const newIndex = Math.max(prev - 1, 0);
-            onSelected(buttonsData[newIndex].value ?? "");
-            return newIndex;
+            if (prev - 1 == -1) {
+              setOnTabs(true);
+              return -1;
+            } else {
+              onSelected(buttonsData[newIndex].value ?? "");
+              return newIndex;
+            }
           });
           break;
-        case "Enter":
-          play();
-          setSelectedIndex((prev) => {
-            setActiveMenu && setActiveMenu(buttonsData[prev].id);
-            onEnterAction && buttonsData[prev].action();
-            return prev;
-          });
+        case "ArrowRight":
+          if (!onTabs) {
+            play();
+            setSelectedIndex((prev) => {
+              setActiveMenu && setActiveMenu(buttonsData[prev].id);
+              onEnterAction && buttonsData[prev].action();
+              return prev;
+            });
+          }
           break;
       }
     },
-    [onEnterAction, setActiveMenu, play, onSelected, buttonsData]
+    [onEnterAction, setActiveMenu, play, onSelected, buttonsData, onTabs]
   );
 
   useEffect(() => {
@@ -70,14 +89,7 @@ const ButtonMenu: React.FC<ButtonMenuProps> = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isActive]);
-
-  // Clean up when selectedIndex or handleKeyDown changes
-  useEffect(() => {
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [selectedIndex, handleKeyDown]);
+  }, [isActive, handleKeyDown]);
 
   return (
     <div className={`${className} flex  w-full`}>

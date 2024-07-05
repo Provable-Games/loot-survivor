@@ -272,10 +272,19 @@ export default function UpgradeScreen({
         label: `Charisma - ${adventurer?.charisma}`,
         icon: <CoinCharismaIcon />,
         value: "Charisma",
-        action: async () => setSelected("Charisma"),
+        action: () => {
+          upgrades["Charisma"] = upgrades["Charisma"] + 1;
+          setUpgrades(upgrades);
+        },
         disabled: false,
       },
     ];
+
+    const upgradeStat = (name: string) => {
+      upgrades[name] = upgrades[name] + 1;
+      setUpgrades(upgrades);
+    };
+
     return (
       <div className="order-2 sm:order-1 sm:w-1/3 sm:border-r sm:border-terminal-green h-full">
         <ButtonMenu
@@ -471,7 +480,9 @@ export default function UpgradeScreen({
   };
 
   useEffect(() => {
-    getNoBoostedStats();
+    if (adventurer) {
+      getNoBoostedStats();
+    }
   }, []);
 
   const bankrupt = upgradeTotalCost > (adventurer?.gold ?? 0);

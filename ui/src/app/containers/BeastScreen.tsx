@@ -54,6 +54,7 @@ export default function BeastScreen({
   const showBattleDialog = useUIStore((state) => state.showBattleDialog);
   const showFleeDialog = useUIStore((state) => state.showFleeDialog);
   const resetNotification = useLoadingStore((state) => state.resetNotification);
+  const setOnTabs = useUIStore((state) => state.setOnTabs);
   const [showBattleLog, setShowBattleLog] = useState(false);
   const [showFutures, setShowFutures] = useState(false);
   const hasBeast = useAdventurerStore((state) => state.computed.hasBeast);
@@ -291,6 +292,10 @@ export default function BeastScreen({
       </div>
     </div>
   );
+
+  useEffect(() => {
+    setOnTabs(true);
+  }, []);
 
   if (showBattleLog) {
     return <BattleLog />;

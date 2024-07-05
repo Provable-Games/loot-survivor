@@ -46,7 +46,7 @@ export const AdventurersList = ({
   );
 
   const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
+    async (event: KeyboardEvent) => {
       switch (event.key) {
         case "ArrowUp":
           setSelectedIndex((prev) => Math.max(prev - 1, 0));
@@ -56,10 +56,15 @@ export const AdventurersList = ({
             Math.min(prev + 1, filteredAdventurers.length - 1)
           );
           break;
-        case "Enter":
-          setAdventurer(filteredAdventurers[selectedIndex]);
+        case "ArrowRight":
+          if (filteredAdventurers[selectedIndex].health !== 0) {
+            setAdventurer(filteredAdventurers[selectedIndex]);
+            await handleSwitchAdventurer(
+              filteredAdventurers[selectedIndex].id!
+            );
+          }
           break;
-        case "Escape":
+        case "ArrowLeft":
           onEscape();
           break;
       }
@@ -77,6 +82,14 @@ export const AdventurersList = ({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isActive, handleKeyDown]);
+
+  useEffect(() => {
+    if (isActive) {
+      setSelectedIndex(0);
+    } else {
+      setSelectedIndex(-1);
+    }
+  }, [isActive]);
 
   return (
     <div className="flex flex-col items-center h-full">

@@ -44,6 +44,8 @@ type State = {
   setIsMuted: (value: boolean) => void;
   screen: ScreenPage;
   setScreen: (value: ScreenPage) => void;
+  onTabs: boolean;
+  setOnTabs: (value: boolean) => void;
   profile: number;
   setProfile: (value: number) => void;
   deathDialog: boolean;
@@ -135,6 +137,8 @@ const useUIStore = create<State>((set) => ({
   setIsMuted: (value) => set({ isMuted: value }),
   screen: "start",
   setScreen: (value) => set({ screen: value }),
+  onTabs: false,
+  setOnTabs: (value) => set({ onTabs: value }),
   profile: 0,
   setProfile: (value) => set({ profile: value }),
   deathDialog: false,

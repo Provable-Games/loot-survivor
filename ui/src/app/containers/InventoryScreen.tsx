@@ -13,6 +13,7 @@ import { Item } from "@/app/types";
 import { GameData } from "@/app/lib/data/GameData";
 import useUIStore from "@/app/hooks/useUIStore";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
+import { soundSelector, useUiSounds } from "@/app/hooks/useUiSound";
 
 interface InventoryScreenProps {
   gameContract: Contract;
@@ -41,6 +42,9 @@ export default function InventoryScreen({
   const setEquipItems = useUIStore((state) => state.setEquipItems);
   const dropItems = useUIStore((state) => state.dropItems);
   const setDropItems = useUIStore((state) => state.setDropItems);
+  const onTabs = useUIStore((state) => state.onTabs);
+
+  const { play } = useUiSounds(soundSelector.click);
 
   const { data } = useQueriesStore();
 
@@ -98,12 +102,14 @@ export default function InventoryScreen({
     (event: KeyboardEvent) => {
       switch (event.key) {
         case "ArrowUp":
+          play();
           setInventorySelected(Math.max((inventorySelected ?? 0) - 1, 0));
           break;
         case "ArrowDown":
+          play();
           setInventorySelected(Math.min((inventorySelected ?? 0) + 1, 8 - 1));
           break;
-        case "Enter":
+        case "ArrowRight":
           setActiveMenu(inventorySelected ?? 0);
           break;
       }
@@ -122,6 +128,13 @@ export default function InventoryScreen({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [activeMenu, handleKeyDown]);
+
+  useEffect(() => {
+    if (onTabs) {
+      setInventorySelected(-1);
+      console.log("here");
+    }
+  }, [onTabs]);
 
   const groupedItems = groupBySlot(items);
 

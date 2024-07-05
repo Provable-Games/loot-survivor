@@ -39,7 +39,8 @@ export const CreateAdventurer = ({
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLInputElement> | KeyboardEvent) => {
-      if (!event.currentTarget) return;
+      const target = event.currentTarget as HTMLElement;
+      if (!target.closest) return; // Ensure target is an HTMLElement
       const form = (event.currentTarget as HTMLElement).closest("form");
       if (!form) return;
       const inputs = Array.from(form.querySelectorAll("input, select"));

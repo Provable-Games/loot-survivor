@@ -62,6 +62,10 @@ module.exports = {
       },
       animation: {
         pulseFast: 'pulse 0.5s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+      },
+      boxShadow: {
+        'none': 'none',
+        'lg': '1px 1px 1px 3px rgba(74, 246, 38, 0.75)',
       }
     },
   },

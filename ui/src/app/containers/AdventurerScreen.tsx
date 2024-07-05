@@ -69,6 +69,8 @@ export default function AdventurerScreen({
     },
   ];
 
+  console.log(activeMenu);
+
   useEffect(() => {
     if (adventurers.length == 0) {
       setStartOption("create adventurer");
