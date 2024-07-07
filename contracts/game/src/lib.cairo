@@ -353,7 +353,7 @@ mod Game {
             );
 
             // get beast and beast seed
-            let (beast, beast_seed) = adventurer.get_beast(adventurer_entropy);
+            let (beast, beast_seed) = adventurer.get_beast(adventurer_id, adventurer_entropy);
 
             // get weapon details
             let weapon = ImplLoot::get_item(adventurer.equipment.weapon.id);
@@ -401,7 +401,7 @@ mod Game {
             _assert_entropy_set(@self, adventurer_id);
 
             // get beast and beast seed
-            let (beast, beast_seed) = adventurer.get_beast(adventurer_entropy);
+            let (beast, beast_seed) = adventurer.get_beast(adventurer_id, adventurer_entropy);
 
             // attempt to flee
             _flee(
@@ -453,7 +453,7 @@ mod Game {
             // if the adventurer is equipping an item during battle, the beast will counter attack
             if (adventurer.in_battle()) {
                 // get beast and beast seed
-                let (beast, beast_seed) = adventurer.get_beast(adventurer_entropy);
+                let (beast, beast_seed) = adventurer.get_beast(adventurer_id, adventurer_entropy);
 
                 let (_, attack_location_rnd) = AdventurerUtils::get_randomness_with_health(
                     adventurer.xp, adventurer.health, adventurer_entropy
@@ -1526,7 +1526,7 @@ mod Game {
         entropy: u128
     ) {
         // get beast and beast seed
-        let (beast, beast_seed) = adventurer.get_beast(adventurer_entropy);
+        let (beast, beast_seed) = adventurer.get_beast(adventurer_id, adventurer_entropy);
 
         // init beast health (this is only info about beast that we store)
         adventurer.beast_health = beast.starting_health;
@@ -2659,7 +2659,7 @@ mod Game {
         let adventurer_entropy = _get_adventurer_entropy(self, adventurer_id);
 
         // get beast and beast seed
-        let (beast, _) = adventurer.get_beast(adventurer_entropy);
+        let (beast, _) = adventurer.get_beast(adventurer_id, adventurer_entropy);
 
         // return beast
         beast
