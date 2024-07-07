@@ -21,6 +21,7 @@ mod Game {
     const PRAGMA_LORDS_KEY: felt252 = 'LORDS/USD'; // felt252 conversion of "LORDS/USD"
     const PRAGMA_PUBLISH_DELAY: u8 = 0;
     const PRAGMA_NUM_WORDS: u8 = 1;
+    const PRAGMA_MAX_CALLBACK_FEE: u64 = 1000000000000000;
 
     use core::{
         array::{SpanTrait, ArrayTrait}, integer::u256_try_as_non_zero, traits::{TryInto, Into},
@@ -103,6 +104,7 @@ mod Game {
         _cost_to_play: u128,
         _terminal_timestamp: u64,
         _adventurer_entropy: LegacyMap::<felt252, felt252>,
+        _item_specials_entropy: LegacyMap::<felt252, felt252>,
         _randomness_contract_address: ContractAddress,
         _randomness_rotation_interval: u8,
         _oracle_address: ContractAddress,
@@ -1663,6 +1665,7 @@ mod Game {
     ) -> Array<ItemLeveledUp> {
         let mut items_leveled_up = ArrayTrait::<ItemLeveledUp>::new();
         let equipped_items = adventurer.get_equipped_items();
+        let mut requested_item_specials_entropy = 0;
         let mut item_index: u32 = 0;
         loop {
             if item_index == equipped_items.len() {
@@ -1681,10 +1684,12 @@ mod Game {
                 let updated_item = _process_item_level_up(
                     ref self,
                     ref adventurer,
+                    adventurer_id,
                     adventurer.equipment.get_item_at_slot(ImplLoot::get_slot(item.id)),
                     previous_level,
                     new_level,
-                    start_entropy
+                    start_entropy,
+                    ref requested_item_specials_entropy
                 );
 
                 // add item to list of items that leveled up to be emitted in event
@@ -1700,10 +1705,12 @@ mod Game {
     fn _process_item_level_up(
         ref self: ContractState,
         ref adventurer: Adventurer,
+        adventurer_id: felt252,
         item: Item,
         previous_level: u8,
         new_level: u8,
-        start_entropy: u64
+        start_entropy: u64,
+        ref requested_item_specials_entropy: u8,
     ) -> ItemLeveledUp {
         // init specials with no specials
         let mut specials = SpecialPowers { special1: 0, special2: 0, special3: 0 };
@@ -1727,6 +1734,14 @@ mod Game {
 
             // if item received a suffix as part of the level up
             if (suffix_unlocked) {
+                // if this is the first item to reach G15
+                if self._item_specials_entropy.read(adventurer_id) == 0
+                    && requested_item_specials_entropy != 1 {
+                    // we fetch VRF to source item specials entropy which will be used to 
+                    // determine specials for all items in the game
+                    requested_item_specials_entropy = 1;
+                    request_randomness(@self, adventurer_id.try_into().unwrap(), adventurer_id, PRAGMA_MAX_CALLBACK_FEE.into());
+                }
                 // apply the item stat boosts so that subsequent events include this information
                 adventurer.stats.apply_suffix_boost(specials.special1);
 
