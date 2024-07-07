@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Contract } from "starknet";
 import Info from "@/app/components/adventurer/Info";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
@@ -20,6 +20,21 @@ export default function Profile({ gameContract }: ProfileProps) {
     data.leaderboardByIdQuery?.adventurers[0] ?? NullAdventurer;
 
   const setScreen = useUIStore((state) => state.setScreen);
+
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    switch (event.key) {
+      case "ArrowLeft":
+        setScreen("leaderboard");
+        break;
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   return (
     <div className="flex flex-col sm:flex-row gap-2 sm:gap-5 items-center sm:items-start justify-center h-full">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/app/components/buttons/Button";
 import { Adventurer, Score } from "@/app/types";
 import ScoreRow from "@/app/components/leaderboard/ScoreRow";
@@ -19,6 +19,7 @@ const ScoreLeaderboardTable = ({
   adventurers,
 }: ScoreLeaderboardTableProps) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const setScreen = useUIStore((state) => state.setScreen);
   const setProfile = useUIStore((state) => state.setProfile);
   const network = useUIStore((state) => state.network);
@@ -26,6 +27,7 @@ const ScoreLeaderboardTable = ({
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+  const setOnTabs = useUIStore((state) => state.setOnTabs);
   const scoreIds = adventurers?.map((score) => score.id ?? 0);
 
   const scoresData = useCustomQuery(
@@ -88,6 +90,42 @@ const ScoreLeaderboardTable = ({
     }
   };
 
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      switch (event.key) {
+        case "ArrowDown":
+          setSelectedIndex((prev) => {
+            setOnTabs(false);
+            const newIndex = Math.min(prev + 1, 9);
+            return newIndex;
+          });
+          break;
+        case "ArrowUp":
+          setSelectedIndex((prev) => {
+            const newIndex = Math.max(prev - 1, 0);
+            if (prev - 1 == -1) {
+              setOnTabs(true);
+              return -1;
+            } else {
+              return newIndex;
+            }
+          });
+          break;
+        case "ArrowRight":
+          handleRowSelected(scoresWithLords[selectedIndex].id ?? 0);
+          break;
+      }
+    },
+    [scoresWithLords]
+  );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedIndex, handleKeyDown]);
+
   return (
     <div className="flex flex-col gap-5 sm:gap-0 sm:flex-row justify-between w-full">
       <div className="relative flex flex-col w-full sm:mr-4 flex-grow-2 p-2 gap-2">
@@ -113,6 +151,8 @@ const ScoreLeaderboardTable = ({
                     adventurer={adventurer}
                     rank={rankXp(adventurer, index, rankOffset)}
                     handleRowSelected={handleRowSelected}
+                    index={index}
+                    selectedIndex={selectedIndex}
                   />
                 ))}
               </tbody>

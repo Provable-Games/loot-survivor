@@ -7,17 +7,23 @@ interface ScoreLeaderboardRowProps {
   adventurer: Adventurer;
   rank: number;
   handleRowSelected: (id: number) => void;
+  index: number;
+  selectedIndex: number;
 }
 
 const ScoreRow = ({
   adventurer,
   rank,
   handleRowSelected,
+  index,
+  selectedIndex,
 }: ScoreLeaderboardRowProps) => {
   const { play: clickPlay } = useUiSounds(soundSelector.click);
   return (
     <tr
-      className="text-center border-b border-terminal-green hover:bg-terminal-green hover:text-terminal-black cursor-pointer xl:h-2 xl:text-lg 2xl:text-xl 2xl:h-10"
+      className={`text-center border-b border-terminal-green hover:bg-terminal-green hover:text-terminal-black cursor-pointer xl:h-2 xl:text-lg 2xl:text-xl 2xl:h-10 ${
+        selectedIndex === index ? "bg-terminal-green text-terminal-black" : ""
+      }`}
       onClick={() => {
         handleRowSelected(adventurer.id ?? 0);
         clickPlay();
