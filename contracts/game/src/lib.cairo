@@ -505,6 +505,7 @@ mod Game {
             _assert_ownership(@self, adventurer_id);
             _assert_not_dead(adventurer);
             assert(items.len() != 0, messages::NO_ITEMS);
+            _assert_not_starter_beast(adventurer);
 
             // drop items
             _drop(@self, ref adventurer, ref bag, adventurer_id, items.clone());
@@ -1365,7 +1366,7 @@ mod Game {
         starting_weapon: u8,
         adventurer_entropy: felt252
     ) -> BattleDetails {
-        let beast_seed = adventurer.get_beast_seed(adventurer_entropy);
+        let beast_seed = adventurer_id.try_into().unwrap();
 
         // generate starter beast which will have weak armor against the adventurers starter weapon
         let starter_beast = ImplBeast::get_starter_beast(
