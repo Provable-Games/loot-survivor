@@ -90,6 +90,24 @@ const HorizontalKeyboardControl: React.FC<HorizontalKeyboardControlProps> = ({
     }
   }, [arcadeButtonsData, onTabs, arcadeDisabled]);
 
+  useEffect(() => {
+    setSelectedIndex(
+      screen == "start"
+        ? 0
+        : screen == "play"
+        ? 1
+        : screen == "inventory"
+        ? 2
+        : screen == "upgrade"
+        ? 3
+        : screen == "leaderboard"
+        ? 4
+        : screen == "encounters"
+        ? 5
+        : 6
+    );
+  }, [onTabs]);
+
   return (
     <div className="flex justify-between sm:justify-start">
       <div className={`flex ${onTabs ? "shadow-lg" : ""}`}>

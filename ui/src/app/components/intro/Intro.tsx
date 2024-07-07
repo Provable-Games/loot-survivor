@@ -10,38 +10,23 @@ interface IntroProps {
 
 const Intro: React.FC<IntroProps> = ({ onIntroComplete }) => {
   const [screen, setScreen] = useState(0);
-  const [selectedIndex, setSelectedIndex] = useState<number>(0);
+  // const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [flash, setFlash] = useState(false);
 
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      switch (event.key) {
-        case "ArrowRight":
-          setSelectedIndex((prev) => {
-            const newIndex = Math.min(prev + 1, 1);
-            return newIndex;
-          });
-          break;
-        case "ArrowLeft":
-          setSelectedIndex((prev) => {
-            const newIndex = Math.max(prev - 1, 0);
-            return newIndex;
-          });
-          break;
-        case "Enter":
-          setScreen(selectedIndex + 1);
-          break;
-      }
-    },
-    [selectedIndex]
-  );
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    switch (event.key) {
+      case "ArrowRight":
+        onIntroComplete();
+        break;
+    }
+  }, []);
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [selectedIndex, handleKeyDown]);
+  }, [handleKeyDown]);
 
   useEffect(() => {
     if (screen === 4) {

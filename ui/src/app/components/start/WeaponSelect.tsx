@@ -1,3 +1,4 @@
+import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/app/components/buttons/Button";
 import {
@@ -22,6 +23,7 @@ export const WeaponSelect = ({
   step,
   setStep,
 }: WeaponSelectProps) => {
+  const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const weapons = [
     {
       name: "Book",
@@ -55,6 +57,34 @@ export const WeaponSelect = ({
   const handleWeaponSelectionDesktop = (weapon: string) => {
     setFormData({ ...formData, startingWeapon: weapon });
   };
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement> | KeyboardEvent) => {
+      console.log("hi");
+      switch (event.key) {
+        case "ArrowRight":
+          setSelectedIndex(Math.min(selectedIndex + 1, 3));
+          break;
+        case "ArrowLeft":
+          if (selectedIndex > 0) {
+            setSelectedIndex(selectedIndex - 1);
+          }
+          break;
+      }
+    },
+    [selectedIndex]
+  );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedIndex]);
+
+  useEffect(() => {
+    handleWeaponSelectionDesktop(weapons[selectedIndex].name);
+  }, [selectedIndex]);
 
   return (
     <div className="w-full p-4 2xl:flex 2xl:flex-col 2xl:gap-2 2xl:h-1/2">

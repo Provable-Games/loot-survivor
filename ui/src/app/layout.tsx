@@ -32,6 +32,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const network = useUIStore((state) => state.network);
+  const setScreen = useUIStore((state) => state.setScreen);
+  const handleOnboarded = useUIStore((state) => state.handleOnboarded);
+  const setNetwork = useUIStore((state) => state.setNetwork);
   const [introComplete, setIntroComplete] = useState(false);
   const [setupResult, setSetupResult] = useState<SetupResult | null>(null);
 
@@ -51,6 +54,14 @@ export default function RootLayout({
     }
     initializeSetup();
   }, [network]);
+
+  useEffect(() => {
+    if (introComplete) {
+      setScreen("start");
+      handleOnboarded();
+      setNetwork("katana");
+    }
+  }, [introComplete]);
 
   return (
     <html lang="en">

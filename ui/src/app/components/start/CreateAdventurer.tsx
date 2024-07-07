@@ -34,35 +34,17 @@ export const CreateAdventurer = ({
     homeRealmId: "",
     class: "",
   });
-  const [selectedIndex, setSelectedIndex] = useState(0);
   const [step, setStep] = useState(1);
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLInputElement> | KeyboardEvent) => {
-      const target = event.currentTarget as HTMLElement;
-      if (!target.closest) return; // Ensure target is an HTMLElement
-      const form = (event.currentTarget as HTMLElement).closest("form");
-      if (!form) return;
-      const inputs = Array.from(form.querySelectorAll("input, select"));
       switch (event.key) {
-        case "ArrowDown":
-          setSelectedIndex((prev) => {
-            const newIndex = Math.min(prev + 1, inputs.length - 1);
-            return newIndex;
-          });
-          break;
-        case "ArrowUp":
-          setSelectedIndex((prev) => {
-            const newIndex = Math.max(prev - 1, 0);
-            return newIndex;
-          });
-        case "Escape":
+        case "ArrowLeft":
           onEscape();
           break;
       }
-      (inputs[selectedIndex] as HTMLElement).focus();
     },
-    [selectedIndex, onEscape]
+    [onEscape]
   );
 
   useEffect(() => {
@@ -74,7 +56,7 @@ export const CreateAdventurer = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isActive, selectedIndex, handleKeyDown]);
+  }, [isActive, handleKeyDown]);
 
   const handleBack = () => {
     setStep((step) => Math.max(step - 1, 1));
