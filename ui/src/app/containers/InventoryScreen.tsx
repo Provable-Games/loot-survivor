@@ -34,6 +34,7 @@ export default function InventoryScreen({
   );
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const [activeMenu, setActiveMenu] = useState<number | undefined>();
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const inventorySelected = useUIStore((state) => state.inventorySelected);
   const setInventorySelected = useUIStore(
     (state) => state.setInventorySelected
@@ -43,6 +44,7 @@ export default function InventoryScreen({
   const dropItems = useUIStore((state) => state.dropItems);
   const setDropItems = useUIStore((state) => state.setDropItems);
   const onTabs = useUIStore((state) => state.onTabs);
+  const setOnTabs = useUIStore((state) => state.setOnTabs);
 
   const { play } = useUiSounds(soundSelector.click);
 
@@ -102,27 +104,44 @@ export default function InventoryScreen({
     (event: KeyboardEvent) => {
       switch (event.key) {
         case "ArrowUp":
-          play();
-          setInventorySelected(Math.max((inventorySelected ?? 0) - 1, 0));
+          if (activeMenu === undefined) {
+            play();
+            if (inventorySelected! - 1 == -1) {
+              setOnTabs(true);
+              return -1;
+            } else {
+              setInventorySelected(Math.max((inventorySelected ?? 0) - 1, 0));
+            }
+          } else {
+            setSelectedIndex(Math.max((selectedIndex ?? 0) - 1, 0));
+          }
           break;
         case "ArrowDown":
-          play();
-          setInventorySelected(Math.min((inventorySelected ?? 0) + 1, 8 - 1));
+          if (activeMenu === undefined) {
+            play();
+            setInventorySelected(Math.min((inventorySelected ?? 0) + 1, 8));
+            setOnTabs(false);
+          } else {
+            setSelectedIndex(
+              Math.min((selectedIndex ?? 0) + 1, selectedItems.length - 1)
+            );
+          }
           break;
         case "ArrowRight":
-          setActiveMenu(inventorySelected ?? 0);
+          if (activeMenu === undefined) {
+            setActiveMenu(inventorySelected ?? 0);
+          }
+          break;
+        case "ArrowLeft":
+          setActiveMenu(undefined);
           break;
       }
     },
-    [setInventorySelected, setActiveMenu, inventorySelected]
+    [setInventorySelected, setActiveMenu, inventorySelected, activeMenu]
   );
 
   useEffect(() => {
-    if (activeMenu === undefined) {
-      window.addEventListener("keydown", handleKeyDown);
-    } else {
-      window.removeEventListener("keydown", handleKeyDown);
-    }
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
@@ -132,7 +151,6 @@ export default function InventoryScreen({
   useEffect(() => {
     if (onTabs) {
       setInventorySelected(-1);
-      console.log("here");
     }
   }, [onTabs]);
 
@@ -340,6 +358,9 @@ export default function InventoryScreen({
                       handleDrop={handleDropItems}
                       gameContract={gameContract}
                       key={index}
+                      index={index}
+                      selectedIndex={selectedIndex}
+                      active={activeMenu! >= 0}
                     />
                   );
                 })

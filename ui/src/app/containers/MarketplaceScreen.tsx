@@ -1,3 +1,4 @@
+import { Dispatch, SetStateAction } from "react";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
 import LootIconLoader from "@/app/components/icons/Loader";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
@@ -16,7 +17,10 @@ export interface MarketplaceScreenProps {
   totalCharisma: number;
   adventurerItems: Item[];
   dropItems: string[];
-  selected: boolean;
+  selected?: boolean;
+  selectedMarketplaceIndex: number;
+  setSelectedMarketplaceIndex: Dispatch<SetStateAction<number>>;
+  setScreenOverride: Dispatch<SetStateAction<boolean>>;
 }
 /**
  * @container
@@ -32,6 +36,9 @@ export default function MarketplaceScreen({
   adventurerItems,
   dropItems,
   selected,
+  selectedMarketplaceIndex,
+  setSelectedMarketplaceIndex,
+  setScreenOverride,
 }: MarketplaceScreenProps) {
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const { isLoading } = useQueriesStore();
@@ -56,6 +63,10 @@ export default function MarketplaceScreen({
           calculatedNewGold={calculatedNewGold}
           adventurerItems={adventurerItems}
           dropItems={dropItems}
+          selected={selected}
+          selectedMarketplaceIndex={selectedMarketplaceIndex}
+          setSelectedMarketplaceIndex={setSelectedMarketplaceIndex}
+          setScreenOverride={setScreenOverride}
         />
       </div>
     </>

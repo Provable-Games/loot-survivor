@@ -12,6 +12,7 @@ interface ButtonMenuProps {
   setActiveMenu?: (value: number) => void;
   size?: "default" | "xs" | "sm" | "md" | "lg" | "xl";
   className?: string;
+  leftAction?: boolean;
 }
 
 const ButtonMenu: React.FC<ButtonMenuProps> = ({
@@ -22,6 +23,7 @@ const ButtonMenu: React.FC<ButtonMenuProps> = ({
   setActiveMenu,
   size,
   className,
+  leftAction,
 }) => {
   const { play } = useUiSounds(soundSelector.click);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -80,8 +82,9 @@ const ButtonMenu: React.FC<ButtonMenuProps> = ({
           if (!onTabs) {
             play();
             setSelectedIndex((prev) => {
-              // setActiveMenu && setActiveMenu(buttonsData[prev].id);
-              onEnterAction && buttonsData[prev].reverseAction();
+              if (onEnterAction && buttonsData[prev].reverseAction) {
+                buttonsData[prev].reverseAction?.();
+              }
               return prev;
             });
           }

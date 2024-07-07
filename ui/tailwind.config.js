@@ -66,6 +66,7 @@ module.exports = {
       boxShadow: {
         'none': 'none',
         'lg': '1px 1px 1px 3px rgba(74, 246, 38, 0.75)',
+        'xl': '1px 1px 1px 6px rgba(74, 246, 38, 0.75)',
       }
     },
   },

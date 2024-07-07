@@ -22,6 +22,9 @@ interface ItemDisplayProps {
   disabled?: boolean;
   handleDrop: (value: string) => void;
   gameContract: Contract;
+  index?: number;
+  selectedIndex?: number;
+  active?: boolean;
 }
 
 export const ItemDisplay = ({
@@ -33,6 +36,9 @@ export const ItemDisplay = ({
   disabled,
   handleDrop,
   gameContract,
+  index,
+  selectedIndex,
+  active,
 }: ItemDisplayProps) => {
   const [showInventoryItems, setShowInventoryItems] = useState(false);
   const itemType = item?.item;
@@ -150,6 +156,10 @@ export const ItemDisplay = ({
         <div
           className={`flex flex-row items-center text-sm sm:text-base w-full h-16 ${
             item.item ? "bg-terminal-green text-terminal-black" : ""
+          } ${
+            active && selectedIndex! >= 0 && selectedIndex === index
+              ? "animate-pulse"
+              : ""
           }`}
         >
           <div className="flex flex-col items-center justify-center border-r border-terminal-black p-1 sm:p-2 gap-2 h-full">

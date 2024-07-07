@@ -28,22 +28,22 @@ const HorizontalKeyboardControl: React.FC<HorizontalKeyboardControlProps> = ({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const screen = useUIStore((state) => state.screen);
-  const encounterTable = useUIStore((state) => state.encounterTable);
-  const showEncounterTable = useUIStore((state) => state.showEncounterTable);
+  // const encounterTable = useUIStore((state) => state.encounterTable);
+  // const showEncounterTable = useUIStore((state) => state.showEncounterTable);
   const onTabs = useUIStore((state) => state.onTabs);
 
   const arcadeButtonsData = buttonsData.length == 7 ? buttonsData : undefined;
   const arcadeDisabled = buttonsData.length == 7 ? disabled : undefined;
 
-  console.log(arcadeButtonsData);
-
-  if (arcadeButtonsData && arcadeDisabled) {
-    useEffect(() => {
+  useEffect(() => {
+    if (arcadeButtonsData) {
       onButtonClick(arcadeButtonsData[selectedIndex]?.screen);
-    }, [selectedIndex, arcadeButtonsData]);
+    }
+  }, [selectedIndex, arcadeButtonsData]);
 
-    const handleKeyDown = useCallback(
-      (event: KeyboardEvent) => {
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (arcadeButtonsData && arcadeDisabled) {
         const getNextEnabledIndex = (
           currentIndex: number,
           direction: number
@@ -76,20 +76,19 @@ const HorizontalKeyboardControl: React.FC<HorizontalKeyboardControlProps> = ({
             });
             break;
         }
-      },
-      [selectedIndex, arcadeButtonsData, arcadeDisabled]
-    );
-
-    useEffect(() => {
-      console.log(onTabs);
-      if (onTabs) {
-        window.addEventListener("keydown", handleKeyDown);
-        return () => {
-          window.removeEventListener("keydown", handleKeyDown);
-        };
       }
-    }, [arcadeButtonsData, onTabs]);
-  }
+    },
+    [selectedIndex, arcadeButtonsData, arcadeDisabled]
+  );
+
+  useEffect(() => {
+    if (onTabs) {
+      window.addEventListener("keydown", handleKeyDown);
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+  }, [arcadeButtonsData, onTabs, arcadeDisabled]);
 
   return (
     <div className="flex justify-between sm:justify-start">
@@ -109,14 +108,14 @@ const HorizontalKeyboardControl: React.FC<HorizontalKeyboardControlProps> = ({
             {buttonData.label}
           </Button>
         ))}
-        <Button
+        {/* <Button
           className="hidden sm:block px-2.5 sm:px-3"
           variant={encounterTable ? "default" : "outline"}
           onClick={() => showEncounterTable(!encounterTable)}
           disabled={hideEncounters}
         >
           Prescience
-        </Button>
+        </Button> */}
       </div>
     </div>
   );

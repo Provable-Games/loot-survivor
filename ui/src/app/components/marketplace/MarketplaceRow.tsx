@@ -24,9 +24,10 @@ interface MarketplaceRowProps {
   ) => void;
   totalCharisma: number;
   dropItems: string[];
+  selectedIndex: number;
 }
 
-const MarketplaceRow = ({
+const MarketplaceRow: React.FC<MarketplaceRowProps> = ({
   item,
   index,
   activeMenu,
@@ -38,6 +39,7 @@ const MarketplaceRow = ({
   upgradeHandler,
   totalCharisma,
   dropItems,
+  selectedIndex,
 }: MarketplaceRowProps) => {
   const [selectedButton, setSelectedButton] = useState<number>(0);
   const adventurer = useAdventurerStore((state) => state.adventurer);
@@ -64,33 +66,8 @@ const MarketplaceRow = ({
     );
   };
 
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      switch (event.key) {
-        case "ArrowDown":
-          setSelectedButton((prev) => {
-            const newIndex = Math.min(prev + 1, 1);
-            return newIndex;
-          });
-          break;
-        case "ArrowUp":
-          setSelectedButton((prev) => {
-            const newIndex = Math.max(prev - 1, 0);
-            return newIndex;
-          });
-          break;
-        case "Enter":
-          setActiveMenu(0);
-          break;
-        case "Escape":
-          setActiveMenu(0);
-          break;
-      }
-    },
-    [selectedButton, setActiveMenu]
-  );
-
   const isActive = activeMenu == index;
+  const isSelected = selectedIndex == index;
 
   const equippedItems = ownedItems.filter((obj) => obj.equipped).length;
   const baggedItems = ownedItems.filter((obj) => !obj.equipped).length;
@@ -110,20 +87,90 @@ const MarketplaceRow = ({
   const equipFull = equippedItems + purchaseEquipItems === 8;
   const bagFull = baggedItems + purchaseNoEquipItems === 15;
 
+  const purchaseDisabled =
+    itemPrice > (adventurer?.gold ?? 0) ||
+    !enoughGold ||
+    singlePurchaseExists(item.item ?? "") ||
+    item.owner ||
+    checkOwned(item.item ?? "") ||
+    checkPurchased(item.item ?? "") ||
+    (equipFull && bagFull) ||
+    (bagFull && !emptySlot);
+
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      switch (event.key) {
+        case "ArrowDown":
+          if (isActive) {
+            setSelectedButton((prev) => {
+              const newIndex = Math.min(prev + 1, 1);
+              return newIndex;
+            });
+          }
+          break;
+        case "ArrowUp":
+          if (isActive) {
+            setSelectedButton((prev) => {
+              const newIndex = Math.max(prev - 1, 0);
+              return newIndex;
+            });
+          }
+          break;
+        case "ArrowRight":
+          if (!isActive && !purchaseDisabled) {
+            setActiveMenu(index);
+          } else {
+            if (isActive) {
+              if (selectedButton == 0) {
+                const newPurchases = [
+                  ...purchaseItems,
+                  {
+                    item:
+                      getKeyFromValue(gameData.ITEMS, item?.item ?? "") ?? "0",
+                    equip: "1",
+                  },
+                ];
+                setPurchaseItems(newPurchases);
+                upgradeHandler(undefined, undefined, newPurchases);
+                setActiveMenu(null);
+              } else {
+                const newPurchases = [
+                  ...purchaseItems,
+                  {
+                    item:
+                      getKeyFromValue(gameData.ITEMS, item?.item ?? "") ?? "0",
+                    equip: "0",
+                  },
+                ];
+                setPurchaseItems(newPurchases);
+                upgradeHandler(undefined, undefined, newPurchases);
+                setActiveMenu(null);
+              }
+            }
+          }
+          break;
+        case "ArrowLeft":
+          setActiveMenu(null);
+          break;
+      }
+    },
+    [selectedButton, setActiveMenu, isSelected, isActive]
+  );
+
   useEffect(() => {
-    if (isActive) {
+    if (isSelected) {
       window.addEventListener("keydown", handleKeyDown);
       return () => {
         window.removeEventListener("keydown", handleKeyDown);
       };
     }
-  }, [isActive, handleKeyDown]);
+  }, [isSelected, handleKeyDown]);
 
   return (
     <tr
-      className={
-        "border-b border-terminal-green hover:bg-terminal-green hover:text-terminal-black w-full h-12 sm:h-full"
-      }
+      className={`border-b border-terminal-green hover:bg-terminal-green hover:text-terminal-black w-full h-12 sm:h-full ${
+        selectedIndex == index ? "bg-terminal-green text-terminal-black" : ""
+      }`}
     >
       <td className="text-center">{item.item}</td>
       <td className="text-center">{tier}</td>
@@ -157,7 +204,7 @@ const MarketplaceRow = ({
             <div className="flex flex-col">
               <Button
                 size={"xxxs"}
-                variant={"ghost"}
+                variant={selectedButton == 0 ? "subtle" : "ghost"}
                 onClick={() => {
                   const newPurchases = [
                     ...purchaseItems,
@@ -177,7 +224,7 @@ const MarketplaceRow = ({
               </Button>
               <Button
                 size={"xxxs"}
-                variant={"ghost"}
+                variant={selectedButton == 1 ? "subtle" : "ghost"}
                 onClick={() => {
                   const newPurchases = [
                     ...purchaseItems,

@@ -80,6 +80,7 @@ export default function UpgradeScreen({
   );
   const [selected, setSelected] = useState("");
   const [selectedSection, setSelectedSection] = useState(-1);
+  const [selectedMarketplaceIndex, setSelectedMarketplaceIndex] = useState(-1);
   const [nonBoostedStats, setNonBoostedStats] = useState<any | null>(null);
   const upgradeScreen = useUIStore((state) => state.upgradeScreen);
   const setUpgradeScreen = useUIStore((state) => state.setUpgradeScreen);
@@ -222,8 +223,6 @@ export default function UpgradeScreen({
     },
   ];
 
-  console.log("rerender");
-
   function renderButtonMenu() {
     const upgradeMenu = [
       {
@@ -291,6 +290,9 @@ export default function UpgradeScreen({
           ...prevUpgrades,
           [name]: (prevUpgrades[name] || 0) + 1,
         }));
+      }
+      if (upgradesTotal === adventurer?.statUpgrades!) {
+        setUpgradeScreen(2);
       }
     };
 
@@ -528,6 +530,8 @@ export default function UpgradeScreen({
     }
   }, [selectedSection]);
 
+  const [screenOverride, setScreenOverride] = useState(false);
+
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (upgradeScreen == 2) {
@@ -540,20 +544,30 @@ export default function UpgradeScreen({
             });
             break;
           case "ArrowUp":
-            setSelectedSection((prev) => {
-              const newIndex = Math.max(prev - 1, 0);
-              if (prev - 1 == -1) {
-                setOnTabs(true);
-                return -1;
-              } else {
-                return newIndex;
-              }
-            });
+            if (selectedMarketplaceIndex === -1) {
+              setSelectedSection((prev) => {
+                const newIndex = Math.max(prev - 1, 0);
+                if (prev - 1 == -1) {
+                  setOnTabs(true);
+                  return -1;
+                } else {
+                  return newIndex;
+                }
+              });
+            }
+            break;
+          case "ArrowLeft":
+            if (
+              !(selectedSection === 0 && potionAmount > 0) &&
+              !screenOverride
+            ) {
+              setUpgradeScreen(1);
+            }
             break;
         }
       }
     },
-    [upgradeScreen]
+    [selectedMarketplaceIndex, upgradeScreen, potionAmount, screenOverride]
   );
 
   useEffect(() => {
@@ -716,8 +730,10 @@ export default function UpgradeScreen({
 
                   {upgradeScreen === 2 && (
                     <div
-                      className="flex
-                     sm:flex-row items-center justify-center flex-wrap border border-terminal-green p-2 h-full sm:h-1/6"
+                      className={`flex
+                     sm:flex-row items-center justify-center flex-wrap border border-terminal-green p-2 h-full sm:h-1/6 ${
+                       selectedSection === 0 ? "shadow-xl z-10" : ""
+                     }`}
                     >
                       {/* <h4>Potions</h4> */}
                       <PurchaseHealth
@@ -734,7 +750,11 @@ export default function UpgradeScreen({
                   )}
 
                   {upgradeScreen === 2 && (
-                    <div className="hidden sm:flex items-center w-full h-5/6">
+                    <div
+                      className={`hidden sm:flex items-center w-full h-5/6 ${
+                        selectedSection === 1 ? "shadow-xl z-10" : ""
+                      }}`}
+                    >
                       <MarketplaceScreen
                         upgradeTotalCost={upgradeTotalCost}
                         purchaseItems={purchaseItems}
@@ -743,7 +763,12 @@ export default function UpgradeScreen({
                         totalCharisma={totalCharisma}
                         adventurerItems={adventurerItems}
                         dropItems={dropItems}
-                        selected={selectedSection === 2}
+                        selected={selectedSection === 1}
+                        selectedMarketplaceIndex={selectedMarketplaceIndex}
+                        setSelectedMarketplaceIndex={
+                          setSelectedMarketplaceIndex
+                        }
+                        setScreenOverride={setScreenOverride}
                       />
                     </div>
                   )}
@@ -757,6 +782,11 @@ export default function UpgradeScreen({
                         totalCharisma={totalCharisma}
                         adventurerItems={adventurerItems}
                         dropItems={dropItems}
+                        selectedMarketplaceIndex={selectedMarketplaceIndex}
+                        setSelectedMarketplaceIndex={
+                          setSelectedMarketplaceIndex
+                        }
+                        setScreenOverride={setScreenOverride}
                       />
                     </div>
                   )}

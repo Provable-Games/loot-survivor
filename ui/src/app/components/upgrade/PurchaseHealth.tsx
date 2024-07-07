@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import QuantityButtons from "@/app/components/buttons/QuantityButtons";
 import { Button } from "@/app/components/buttons/Button";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
@@ -77,8 +77,37 @@ const PurchaseHealth = ({
     }
   }, [potionAmount, buttonClicked]);
 
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (selected) {
+        switch (event.key) {
+          case "ArrowLeft":
+            if (potionAmount > 0) {
+              setPotionAmount(potionAmount - 1);
+              setButtonClicked(true);
+            }
+            break;
+          case "ArrowRight":
+            if (potionAmount < max) {
+              setPotionAmount(potionAmount + 1);
+              setButtonClicked(true);
+            }
+            break;
+        }
+      }
+    },
+    [selected, potionAmount]
+  );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selected, handleKeyDown]);
+
   return (
-    <div className="flex flex-col sm:flex-row gap-5 items-center">
+    <div className={`flex flex-col sm:flex-row gap-5 items-center`}>
       <span className="flex flex-row items-center">
         <CoinIcon className="mt-1 w-8 h-8 sm:w-5 sm:h-5 fill-current text-terminal-yellow" />
         <p className="text-xl sm:text-base text-terminal-yellow">

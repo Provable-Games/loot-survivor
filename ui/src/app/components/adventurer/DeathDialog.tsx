@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import ReactDOMServer from "react-dom/server"; // Import this to convert ReactElement to string
 import TwitterShareButton from "@/app/components/buttons/TwitterShareButtons";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
@@ -82,6 +82,24 @@ export const DeathDialog = () => {
       setTwitterDeathMessage(plainTextMessage);
     }
   }, [deathMessage]);
+
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    switch (event.key) {
+      case "ArrowRight":
+        showDeathDialog(false);
+        setDeathMessage(null);
+        setAdventurer(NullAdventurer);
+        break;
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleKeyDown]);
 
   return (
     <>

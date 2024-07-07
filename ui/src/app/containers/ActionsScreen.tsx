@@ -50,6 +50,7 @@ export default function ActionsScreen({
   const loading = useLoadingStore((state) => state.loading);
   const estimatingFee = useUIStore((state) => state.estimatingFee);
   const onKatana = useUIStore((state) => state.onKatana);
+  const setOnTabs = useUIStore((state) => state.setOnTabs);
 
   const hasBeast = useAdventurerStore((state) => state.computed.hasBeast);
   const resetNotification = useLoadingStore((state) => state.resetNotification);
@@ -152,6 +153,10 @@ export default function ActionsScreen({
         "bg-terminal-green-50 hover:bg-terminal-green hover:text-black",
     },
   ];
+
+  useEffect(() => {
+    setOnTabs(true);
+  }, []);
 
   return (
     <div className="flex flex-col sm:flex-row flex-wrap h-full w-full">
