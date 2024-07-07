@@ -505,7 +505,7 @@ mod Game {
             _assert_ownership(@self, adventurer_id);
             _assert_not_dead(adventurer);
             assert(items.len() != 0, messages::NO_ITEMS);
-            _assert_not_starter_beast(adventurer, messages::CANT_DROP_STARTER_BEAST);
+            _assert_not_starter_beast(adventurer, messages::CANT_DROP_DURING_STARTER_BEAST);
 
             // drop items
             _drop(@self, ref adventurer, ref bag, adventurer_id, items.clone());

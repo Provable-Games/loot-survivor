@@ -1752,7 +1752,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Cant drop starter beast', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Cant drop during starter beast', 'ENTRYPOINT_FAILED'))]
     fn test_no_dropping_starter_weapon_during_starter_beast() {
         let mut game = new_adventurer(1000, 1696201757);
 
