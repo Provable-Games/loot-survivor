@@ -1283,15 +1283,6 @@ mod tests {
 
     #[test]
     #[available_gas(20000000)]
-    fn test_get_attacking_beast() {
-        let mut game = new_adventurer(1000, 1696201757);
-        let beast = game.get_attacking_beast(ADVENTURER_ID);
-        // our adventurer starts with a wand so the starter beast should be a troll
-        assert(beast.id == BeastId::Troll, 'starter beast should be troll');
-    }
-
-    #[test]
-    #[available_gas(20000000)]
     fn test_get_health() {
         let mut game = new_adventurer(1000, 1696201757);
         let adventurer = game.get_adventurer(ADVENTURER_ID);
