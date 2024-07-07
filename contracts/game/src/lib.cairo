@@ -396,7 +396,7 @@ mod Game {
             _assert_ownership(@self, adventurer_id);
             _assert_not_dead(immutable_adventurer);
             _assert_in_battle(immutable_adventurer);
-            _assert_not_starter_beast(immutable_adventurer);
+            _assert_not_starter_beast(immutable_adventurer, messages::CANT_FLEE_STARTER_BEAST);
             _assert_dexterity_not_zero(immutable_adventurer);
             _assert_entropy_set(@self, adventurer_id);
 
@@ -505,7 +505,7 @@ mod Game {
             _assert_ownership(@self, adventurer_id);
             _assert_not_dead(adventurer);
             assert(items.len() != 0, messages::NO_ITEMS);
-            _assert_not_starter_beast(adventurer);
+            _assert_not_starter_beast(adventurer, messages::CANT_DROP_STARTER_BEAST);
 
             // drop items
             _drop(@self, ref adventurer, ref bag, adventurer_id, items.clone());
@@ -2545,9 +2545,10 @@ mod Game {
             messages::ITEM_DOES_NOT_EXIST
         );
     }
-    fn _assert_not_starter_beast(adventurer: Adventurer) {
-        assert(adventurer.get_level() > 1, messages::CANT_FLEE_STARTER_BEAST);
+    fn _assert_not_starter_beast(adventurer: Adventurer, message: felt252) {
+        assert(adventurer.get_level() > 1, message);
     }
+
     fn _assert_no_stat_upgrades_available(adventurer: Adventurer) {
         assert(adventurer.stat_upgrades_available == 0, messages::STAT_UPGRADES_AVAILABLE);
     }

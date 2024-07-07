@@ -1755,6 +1755,26 @@ mod tests {
         add_adventurer_to_game(ref game, golden_token_id);
     }
 
+    #[test]
+    #[should_panic(expected: ('Cant drop starter beast', 'ENTRYPOINT_FAILED'))]
+    fn test_no_dropping_starter_weapon_during_starter_beast() {
+        let mut game = new_adventurer(1000, 1696201757);
+
+        // try to drop starter weapon during starter beast battle
+        let mut drop_items = array![ItemId::Wand];
+        game.drop(ADVENTURER_ID, drop_items);
+    }
+
+    #[test]
+    fn test_drop_starter_item_after_starter_beast() {
+        let mut game = new_adventurer(1000, 1696201757);
+        game.attack(ADVENTURER_ID, true);
+
+        // try to drop starter weapon during starter beast battle
+        let mut drop_items = array![ItemId::Wand];
+        game.drop(ADVENTURER_ID, drop_items);
+    }
+
     #[starknet::contract]
     mod SnakeERC20Mock {
         use openzeppelin::token::erc20::{ERC20Component, ERC20HooksEmptyImpl};
