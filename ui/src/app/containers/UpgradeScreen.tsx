@@ -81,6 +81,7 @@ export default function UpgradeScreen({
   const [selected, setSelected] = useState("");
   const [selectedSection, setSelectedSection] = useState(-1);
   const [selectedMarketplaceIndex, setSelectedMarketplaceIndex] = useState(-1);
+  const [buttonClicked, setButtonClicked] = useState(false);
   const [nonBoostedStats, setNonBoostedStats] = useState<any | null>(null);
   const upgradeScreen = useUIStore((state) => state.upgradeScreen);
   const setUpgradeScreen = useUIStore((state) => state.setUpgradeScreen);
@@ -294,6 +295,7 @@ export default function UpgradeScreen({
       if (upgradesTotal === adventurer?.statUpgrades!) {
         setUpgradeScreen(2);
       }
+      setButtonClicked(true);
     };
 
     const downgradeStat = (name: keyof UpgradeStats) => {
@@ -303,6 +305,7 @@ export default function UpgradeScreen({
           [name]: (prevUpgrades[name] || 0) - 1,
         }));
       }
+      setButtonClicked(true);
     };
 
     return (
@@ -318,16 +321,21 @@ export default function UpgradeScreen({
     );
   }
 
-  function renderContent() {
+  const renderContent = () => {
     const attribute = attributes.find((attr) => attr.name === selected);
     return (
       <div className="order-1 sm:order-2 flex sm:w-2/3 h-24 sm:h-full items-center justify-center p-auto">
         {attribute && (
-          <StatAttribute upgradeHandler={handleAddUpgradeTx} {...attribute} />
+          <StatAttribute
+            upgradeHandler={handleAddUpgradeTx}
+            buttonClicked={buttonClicked}
+            setButtonClicked={setButtonClicked}
+            {...attribute}
+          />
         )}
       </div>
     );
-  }
+  };
 
   const selectedCharisma = upgrades["Charisma"] ?? 0;
   const selectedVitality = upgrades["Vitality"] ?? 0;
@@ -461,12 +469,11 @@ export default function UpgradeScreen({
 
   useEffect(() => {
     addControl("u", () => {
-      console.log("Key u pressed");
       handleSubmitUpgradeTx();
       setUpgradeScreen(1);
       clickPlay();
     });
-  }, [upgrades, purchaseItems, potionAmount]);
+  }, [upgrades, purchaseItems, potionAmount, buttonClicked]);
 
   const upgradesTotal = Object.values(upgrades)
     .filter((value) => value !== 0)

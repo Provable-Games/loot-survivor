@@ -55,6 +55,7 @@ export default function InventoryScreen({
     : [];
 
   const handleEquipItems = (item: string) => {
+    console.log("HIIIII");
     const newEquipItems = [
       ...equipItems,
       getKeyFromValue(gameData.ITEMS, item) ?? "",
@@ -100,54 +101,6 @@ export default function InventoryScreen({
 
   const gameData = new GameData();
 
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      switch (event.key) {
-        case "ArrowUp":
-          if (activeMenu === undefined) {
-            play();
-            if (inventorySelected! - 1 == -1) {
-              setOnTabs(true);
-              return -1;
-            } else {
-              setInventorySelected(Math.max((inventorySelected ?? 0) - 1, 0));
-            }
-          } else {
-            setSelectedIndex(Math.max((selectedIndex ?? 0) - 1, 0));
-          }
-          break;
-        case "ArrowDown":
-          if (activeMenu === undefined) {
-            play();
-            setInventorySelected(Math.min((inventorySelected ?? 0) + 1, 8));
-            setOnTabs(false);
-          } else {
-            setSelectedIndex(
-              Math.min((selectedIndex ?? 0) + 1, selectedItems.length - 1)
-            );
-          }
-          break;
-        case "ArrowRight":
-          if (activeMenu === undefined) {
-            setActiveMenu(inventorySelected ?? 0);
-          }
-          break;
-        case "ArrowLeft":
-          setActiveMenu(undefined);
-          break;
-      }
-    },
-    [setInventorySelected, setActiveMenu, inventorySelected, activeMenu]
-  );
-
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [activeMenu, handleKeyDown]);
-
   useEffect(() => {
     if (onTabs) {
       setInventorySelected(-1);
@@ -181,6 +134,60 @@ export default function InventoryScreen({
   const selectedItems = groupedItems[selected || "Weapon"] || [];
   const equippedItems = items.filter((item) => item.equipped);
   const bagItems = items.filter((item) => !item.equipped);
+
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      switch (event.key) {
+        case "ArrowUp":
+          if (activeMenu === undefined) {
+            play();
+            if (inventorySelected! - 1 == -1) {
+              setOnTabs(true);
+              return -1;
+            } else {
+              setInventorySelected(Math.max((inventorySelected ?? 0) - 1, 0));
+            }
+          } else {
+            setSelectedIndex(Math.max((selectedIndex ?? 0) - 1, 0));
+          }
+          break;
+        case "ArrowDown":
+          if (activeMenu === undefined) {
+            play();
+            setInventorySelected(Math.min((inventorySelected ?? 0) + 1, 8));
+            setOnTabs(false);
+          } else {
+            setSelectedIndex(
+              Math.min((selectedIndex ?? 0) + 1, selectedItems.length - 1)
+            );
+          }
+          break;
+        case "ArrowRight":
+          if (activeMenu === undefined && selectedItems.length > 0) {
+            setActiveMenu(inventorySelected ?? 0);
+          }
+          break;
+        case "ArrowLeft":
+          setActiveMenu(undefined);
+          break;
+      }
+    },
+    [
+      setInventorySelected,
+      setActiveMenu,
+      inventorySelected,
+      activeMenu,
+      selectedItems,
+    ]
+  );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeMenu, handleKeyDown, selectedItems]);
 
   return (
     <div className="flex flex-row sm:gap-5 h-full">

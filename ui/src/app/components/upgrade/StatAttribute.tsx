@@ -1,4 +1,4 @@
-import { ReactElement, useEffect, useState, useRef } from "react";
+import { ReactElement, useEffect, useRef } from "react";
 import QuantityButtons from "@/app/components/buttons/QuantityButtons";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
 import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
@@ -16,6 +16,8 @@ interface StatAttributeProps {
   ) => void;
   nonBoostedStat: any;
   upgradeAmount: number;
+  buttonClicked: boolean;
+  setButtonClicked: (value: boolean) => void;
 }
 
 export const StatAttribute = ({
@@ -25,12 +27,13 @@ export const StatAttribute = ({
   upgradeHandler,
   nonBoostedStat,
   upgradeAmount,
+  buttonClicked,
+  setButtonClicked,
 }: StatAttributeProps) => {
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const prevAmountRef = useRef<{ [key: string]: number }>({ ...ZeroUpgrade });
   const upgrades = useUIStore((state) => state.upgrades);
   const setUpgrades = useUIStore((state) => state.setUpgrades);
-  const [buttonClicked, setButtonClicked] = useState(false);
   const removeEntrypointFromCalls = useTransactionCartStore(
     (state) => state.removeEntrypointFromCalls
   );

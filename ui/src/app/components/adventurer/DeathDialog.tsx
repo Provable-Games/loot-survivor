@@ -85,7 +85,7 @@ export const DeathDialog = () => {
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     switch (event.key) {
-      case "ArrowRight":
+      case "Enter":
         showDeathDialog(false);
         setDeathMessage(null);
         setAdventurer(NullAdventurer);

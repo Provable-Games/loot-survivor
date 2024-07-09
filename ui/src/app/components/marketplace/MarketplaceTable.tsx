@@ -143,24 +143,6 @@ const MarketplaceTable = ({
             });
           }
           break;
-        // case "ArrowRight":
-        //   play();
-        //   setSelectedIndex((prev) => {
-        //     setActiveMenu && setActiveMenu(buttonsData[prev].id);
-        //     onEnterAction && buttonsData[prev].action();
-        //     return prev;
-        //   });
-        //   break;
-        // // case "ArrowLeft":
-        //   if (!onTabs) {
-        //     play();
-        //     setSelectedIndex((prev) => {
-        //       // setActiveMenu && setActiveMenu(buttonsData[prev].id);
-        //       onEnterAction && buttonsData[prev].reverseAction();
-        //       return prev;
-        //     });
-        //   }
-        //   break;
       }
     },
     [showEquipQ]

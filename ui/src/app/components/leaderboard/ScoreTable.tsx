@@ -111,7 +111,7 @@ const ScoreLeaderboardTable = ({
             }
           });
           break;
-        case "ArrowRight":
+        case "Enter":
           handleRowSelected(scoresWithLords[selectedIndex].id ?? 0);
           break;
       }

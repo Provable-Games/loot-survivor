@@ -111,13 +111,11 @@ export default function ActionsScreen({
   const { addControl } = useController();
 
   useEffect(() => {
-    addControl("e", () => {
-      console.log("Key e pressed");
+    addControl("Enter", () => {
       handleSingleExplore();
       clickPlay();
     });
     addControl("r", () => {
-      console.log("Key r pressed");
       handleExploreTillBeast();
       clickPlay();
     });

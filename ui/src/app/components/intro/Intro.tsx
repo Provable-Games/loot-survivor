@@ -15,7 +15,7 @@ const Intro: React.FC<IntroProps> = ({ onIntroComplete }) => {
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     switch (event.key) {
-      case "ArrowRight":
+      case "Enter":
         onIntroComplete();
         break;
     }

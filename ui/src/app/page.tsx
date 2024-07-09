@@ -512,7 +512,7 @@ function Home() {
     setCondition("s", screen === "play" && hasBeast);
     setCondition("f", screen === "play" && hasBeast);
     setCondition("g", screen === "play" && hasBeast);
-    setCondition("e", screen === "play" && !hasBeast);
+    setCondition("Enter", screen === "play" && !hasBeast);
     setCondition("r", screen === "play" && !hasBeast);
     setCondition("u", screen === "upgrade");
     setCondition(

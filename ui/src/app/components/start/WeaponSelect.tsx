@@ -60,7 +60,6 @@ export const WeaponSelect = ({
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLInputElement> | KeyboardEvent) => {
-      console.log("hi");
       switch (event.key) {
         case "ArrowRight":
           setSelectedIndex(Math.min(selectedIndex + 1, 3));

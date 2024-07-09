@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Contract } from "starknet";
 import { Item } from "@/app/types";
 import LootIcon from "@/app/components/icons/LootIcon";
@@ -40,6 +40,7 @@ export const ItemDisplay = ({
   selectedIndex,
   active,
 }: ItemDisplayProps) => {
+  const [selectedButton, setSelectedButton] = useState(-1);
   const [showInventoryItems, setShowInventoryItems] = useState(false);
   const itemType = item?.item;
 
@@ -150,6 +151,40 @@ export const ItemDisplay = ({
     }
   }, [slotEquipped, equipItems]);
 
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (selectedIndex == index && inventory) {
+        switch (event.key) {
+          case "ArrowRight":
+            setSelectedButton(selectedButton + 1);
+            break;
+          case "ArrowLeft":
+            setSelectedButton(selectedButton - 1);
+            break;
+          case "Enter":
+            if (selectedButton == 0 && !disabled) {
+              console.log("HEY");
+              equip;
+            }
+            if (selectedButton == 1 && !checkDropping(item.item ?? "")) {
+              handleDrop(item.item ?? "");
+            }
+        }
+      }
+    },
+    [selectedButton, checkDropping(item.item ?? ""), disabled]
+  );
+
+  console.log(disabled);
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedButton, handleKeyDown, checkDropping(item.item ?? ""), disabled]);
+
   return (
     <>
       {!showInventoryItems ? (
@@ -226,7 +261,9 @@ export const ItemDisplay = ({
                         <div className="hidden sm:block">
                           <Button
                             className="sm:h-6 sm:p-2"
-                            variant={"contrast"}
+                            variant={
+                              selectedButton == 0 ? "contrast" : "default"
+                            }
                             size={"xxs"}
                             onClick={equip}
                             disabled={disabled}
@@ -243,7 +280,7 @@ export const ItemDisplay = ({
                       screen == "player" ||
                       screen == "inventory") && (
                       <Button
-                        variant={"contrast"}
+                        variant={selectedButton == 1 ? "contrast" : "default"}
                         size={"xxs"}
                         className="p-1 xl:p-0 sm:h-4 sm:w-8"
                         onClick={() => handleDrop(item.item ?? "")}
