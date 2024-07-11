@@ -62,9 +62,6 @@ export const CreateAdventurer = ({
     (event: React.KeyboardEvent<HTMLInputElement> | KeyboardEvent) => {
       console.log(event);
       switch (event.key) {
-        case "ArrowLeft":
-          onEscape();
-          break;
         case "Enter":
           console.log("Enter");
           if (formData.name) {
@@ -75,8 +72,6 @@ export const CreateAdventurer = ({
     },
     [onEscape, formData, isActive]
   );
-
-  console.log(isActive);
 
   useEffect(() => {
     if (isActive) {
@@ -104,6 +99,7 @@ export const CreateAdventurer = ({
               handleBack={handleBack}
               step={step}
               setStep={setStep}
+              onEscape={onEscape}
             />
             <AdventurerName
               setFormData={setFormData}
@@ -120,6 +116,7 @@ export const CreateAdventurer = ({
               handleBack={handleBack}
               step={step}
               setStep={setStep}
+              onEscape={onEscape}
             />
           </div>
         </>

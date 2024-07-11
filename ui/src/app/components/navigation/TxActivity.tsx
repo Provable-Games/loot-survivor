@@ -50,6 +50,8 @@ export const TxActivity = () => {
     }
   }, [pendingMessage, messageIndex, pendingArray]);
 
+  console.log(pendingMessage);
+
   return (
     <>
       {loading ? (

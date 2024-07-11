@@ -14,6 +14,7 @@ export interface WeaponSelectProps {
   handleBack: () => void;
   step: number;
   setStep: (step: number) => void;
+  onEscape: () => void;
 }
 
 export const WeaponSelect = ({
@@ -22,6 +23,7 @@ export const WeaponSelect = ({
   handleBack,
   step,
   setStep,
+  onEscape,
 }: WeaponSelectProps) => {
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const weapons = [
@@ -67,11 +69,13 @@ export const WeaponSelect = ({
         case "ArrowLeft":
           if (selectedIndex > 0) {
             setSelectedIndex(selectedIndex - 1);
+          } else {
+            onEscape();
           }
           break;
       }
     },
-    [selectedIndex]
+    [selectedIndex, onEscape]
   );
 
   useEffect(() => {
@@ -79,7 +83,7 @@ export const WeaponSelect = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [selectedIndex]);
+  }, [selectedIndex, onEscape]);
 
   useEffect(() => {
     handleWeaponSelectionDesktop(weapons[selectedIndex].name);

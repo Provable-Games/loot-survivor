@@ -45,6 +45,7 @@ const useLoadingStore = create<LoadingState>((set, get) => ({
   adventurer: undefined,
   history: [],
   startLoading: (type, pendingMessage, loadingQuery, adventurer) => {
+    console.log(pendingMessage);
     set({
       loading: true,
       type: type,

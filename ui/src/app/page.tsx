@@ -154,7 +154,7 @@ function Home() {
   );
   const startLoading = useLoadingStore((state) => state.startLoading);
   const stopLoading = useLoadingStore((state) => state.stopLoading);
-  const pendingMessage = useLoadingStore((state) => state.pendingMessage);
+  // const pendingMessage = useLoadingStore((state) => state.pendingMessage);
   const setTxHash = useLoadingStore((state) => state.setTxHash);
   const setEquipItems = useUIStore((state) => state.setEquipItems);
   const setDropItems = useUIStore((state) => state.setDropItems);
@@ -490,10 +490,10 @@ function Home() {
     setUpgrades({ ...ZeroUpgrade });
   }, [adventurer]);
 
-  const spawnLoader =
-    pendingMessage &&
-    (pendingMessage === "Spawning Adventurer" ||
-      pendingMessage.includes("Spawning Adventurer"));
+  // const spawnLoader =
+  //   pendingMessage &&
+  //   (pendingMessage === "Spawning Adventurer" ||
+  //     pendingMessage.includes("Spawning Adventurer"));
 
   const getCostToPlay = async () => {
     const cost = await gameContract!.call("get_cost_to_play", []);
@@ -587,7 +587,7 @@ function Home() {
             {specialBeastDefeated && (
               <SpecialBeast beastsContract={beastsContract!} />
             )}
-            {!spawnLoader && hash && (
+            {hash && (
               <div className="sm:hidden">
                 <TxActivity />
               </div>
@@ -602,7 +602,7 @@ function Home() {
             />
           </div>
           <div className="w-full h-1 sm:h-6 sm:my-2 bg-terminal-green text-terminal-black px-4">
-            {!spawnLoader && hash && (
+            {hash && (
               <div className="hidden sm:block">
                 <TxActivity />
               </div>
