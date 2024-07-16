@@ -67,12 +67,12 @@ impl ImplLoot of ILoot {
     // @param entropy The entropy.
     // @return The naming seed.
     #[inline(always)]
-    fn generate_naming_seed(item_id: u8, entropy: u64) -> u64 {
+    fn generate_naming_seed(item_id: u8, vrf_seed: u64) -> u64 {
         let mut item_entropy = 1;
-        if (u64_overflowing_add(entropy, item_id.into()).is_ok()) {
-            item_entropy = entropy + item_id.into();
+        if (u64_overflowing_add(vrf_seed, item_id.into()).is_ok()) {
+            item_entropy = vrf_seed + item_id.into();
         } else {
-            item_entropy = entropy - item_id.into();
+            item_entropy = vrf_seed - item_id.into();
         }
 
         let rnd = item_entropy % NUM_ITEMS.into();
@@ -107,8 +107,8 @@ impl ImplLoot of ILoot {
     // @param entropy The entropy for randomness
     // @return u8 special1 for the item
     #[inline(always)]
-    fn get_suffix(item_id: u8, entropy: u64) -> u8 {
-        (ImplLoot::generate_naming_seed(item_id, entropy) % ItemSuffixLength.into() + 1)
+    fn get_suffix(item_id: u8, seed: felt252) -> u8 {
+        (ImplLoot::generate_naming_seed(item_id, seed) % ItemSuffixLength.into() + 1)
             .try_into()
             .unwrap()
     }
@@ -118,18 +118,16 @@ impl ImplLoot of ILoot {
     // @param greatness the greatness of the item
     // @param start_entropy the entropy to use for randomness
     // @return the specials of the item
-    fn get_specials(id: u8, greatness: u8, start_entropy: u64) -> SpecialPowers {
+    fn get_specials(id: u8, greatness: u8, seed: felt252) -> SpecialPowers {
         if greatness < SUFFIX_UNLOCK_GREATNESS {
             SpecialPowers { special1: 0, special2: 0, special3: 0 }
         } else if greatness < PREFIXES_UNLOCK_GREATNESS {
-            SpecialPowers {
-                special1: ImplLoot::get_suffix(id, start_entropy), special2: 0, special3: 0,
-            }
+            SpecialPowers { special1: ImplLoot::get_suffix(id, seed), special2: 0, special3: 0, }
         } else {
             SpecialPowers {
-                special1: ImplLoot::get_suffix(id, start_entropy),
-                special2: ImplLoot::get_prefix1(id, start_entropy),
-                special3: ImplLoot::get_prefix2(id, start_entropy),
+                special1: ImplLoot::get_suffix(id, seed),
+                special2: ImplLoot::get_prefix1(id, seed),
+                special3: ImplLoot::get_prefix2(id, seed),
             }
         }
     }
