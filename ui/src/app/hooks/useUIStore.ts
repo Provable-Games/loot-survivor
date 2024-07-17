@@ -98,6 +98,8 @@ type State = {
   setAverageBlockTime: (value: number) => void;
   adventurerEntropy: bigint;
   setAdventurerEntropy: (value: bigint) => void;
+  itemEntropy: bigint;
+  setItemEntropy: (value: bigint) => void;
   entropyReady: boolean;
   setEntropyReady: (value: boolean) => void;
   fetchUnlocksEntropy: boolean;
@@ -191,6 +193,8 @@ const useUIStore = create<State>((set) => ({
   setAverageBlockTime: (value) => set({ averageBlockTime: value }),
   adventurerEntropy: BigInt(0),
   setAdventurerEntropy: (value) => set({ adventurerEntropy: value }),
+  itemEntropy: BigInt(0),
+  setItemEntropy: (value) => set({ adventurerEntropy: value }),
   entropyReady: false,
   setEntropyReady: (value) => set({ entropyReady: value }),
   loginScreen: false,

@@ -131,6 +131,8 @@ function Home() {
   const setAdventurerEntropy = useUIStore(
     (state) => state.setAdventurerEntropy
   );
+  const itemEntropy = useUIStore((state) => state.itemEntropy);
+  const setItemEntropy = useUIStore((state) => state.setItemEntropy);
 
   const { contract: gameContract } = useContract({
     address: networkConfig[network!].gameAddress,
@@ -602,6 +604,7 @@ function Home() {
         ]);
         if (entropy !== BigInt(0)) {
           setFetchUnlocksEntropy(false);
+          setItemEntropy(BigInt(entropy.toString()));
           fetchItemSpecials();
           clearInterval(interval);
         }
@@ -609,7 +612,9 @@ function Home() {
     };
 
     // Call the function immediately
-    fetchEntropy();
+    if (itemEntropy === BigInt(0)) {
+      fetchEntropy();
+    }
 
     // Set up the interval to call the function every 5 seconds
     const interval = setInterval(fetchEntropy, VRF_WAIT_TIME);
