@@ -42,8 +42,14 @@ import {
   parseDiscoveredBeast,
   DISCOVERED_LOOT,
   parseDiscoveredLoot,
+  TRANSFER,
+  parseTransfer,
 } from "./utils/events.ts";
-import { insertAdventurer, updateAdventurer } from "./utils/helpers.ts";
+import {
+  insertAdventurer,
+  updateAdventurer,
+  updateAdventurerOwner,
+} from "./utils/helpers.ts";
 import { MONGO_CONNECTION_STRING } from "./utils/constants.ts";
 
 const GAME = Deno.env.get("GAME");
@@ -74,6 +80,7 @@ const filter = {
     { fromAddress: GAME, keys: [FLEE_SUCCEEDED] },
     { fromAddress: GAME, keys: [ITEMS_LEVELED_UP] },
     { fromAddress: GAME, keys: [UPGRADES_AVAILABLE] },
+    { fromAddress: GAME, keys: [ADVENTURER_UPGRADED] },
   ],
 };
 
@@ -323,6 +330,17 @@ export default function transform({ header, events }: Block) {
           updateAdventurer({
             timestamp: new Date().toISOString(),
             adventurerState: value.adventurerState,
+          }),
+        ];
+      }
+      case TRANSFER: {
+        console.log("TRANSFER", "->", "ADVENTURER UPDATES");
+        const { value } = parseTransfer(event.data, 0);
+        return [
+          updateAdventurerOwner({
+            adventurerId: value.amount,
+            newOwner: value.fromAddress,
+            timestamp: new Date().toISOString(),
           }),
         ];
       }

@@ -48,6 +48,8 @@ export const NEW_HIGH_SCORE = eventKey("NewHighScore");
 export const REWARD_DISTRIBUTION = eventKey("RewardDistribution");
 export const GAME_ENTROPY_ROTATED = eventKey("GameEntropyRotatedEvent");
 
+export const TRANSFER = eventKey("Transfer");
+
 export const parseStats = combineParsers({
   strength: { index: 0, parser: parseU8 },
   dexterity: { index: 1, parser: parseU8 },
@@ -357,4 +359,10 @@ export const parseGameEntropyRotated = combineParsers({
   newBlockTimestamp: { index: 6, parser: parseU64 },
   newNextRotationBlock: { index: 7, parser: parseU64 },
   blocksPerHour: { index: 8, parser: parseU64 },
+});
+
+export const parseTransfer = combineParsers({
+  fromAddress: { index: 0, parser: parseFelt252 },
+  toAddress: { index: 1, parser: parseFelt252 },
+  amount: { index: 2, parser: parseU256 },
 });

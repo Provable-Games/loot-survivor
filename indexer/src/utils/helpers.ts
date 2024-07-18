@@ -202,6 +202,27 @@ export function updateAdventurer({
   };
 }
 
+export function updateAdventurerOwner({
+  adventurerId,
+  newOwner,
+  timestamp,
+}: any) {
+  const entity = {
+    id: checkExistsInt(BigInt(adventurerId)),
+  };
+
+  return {
+    entity,
+    update: {
+      $set: {
+        ...entity,
+        owner: checkExistsInt(BigInt(newOwner)),
+        timestamp,
+      },
+    },
+  };
+}
+
 export function insertDiscovery({
   txHash,
   adventurerId,
@@ -528,6 +549,23 @@ export function insertHighScore({ adventurerId, timestamp, totalPayout }: any) {
         ...entity,
         timestamp,
         totalPayout: totalPayout,
+      },
+    },
+  };
+}
+
+export function updateItemsOwner({ adventurerId, timestamp, newOwner }: any) {
+  const entity = {
+    adventurerId: checkExistsInt(BigInt(adventurerId)),
+  };
+
+  return {
+    entity,
+    update: {
+      $set: {
+        ...entity,
+        ownerAddress: checkExistsInt(BigInt(newOwner)),
+        timestamp,
       },
     },
   };
