@@ -94,6 +94,8 @@ type State = {
   setSpecialBeast: (value: SpecialBeast | null) => void;
   isMintingLords: boolean;
   setIsMintingLords: (value: boolean) => void;
+  isWithdrawing: boolean;
+  setIsWithdrawing: (value: boolean) => void;
   averageBlockTime: number;
   setAverageBlockTime: (value: number) => void;
   adventurerEntropy: bigint;
@@ -121,6 +123,14 @@ type State = {
   setVitBoostRemoved: (value: number) => void;
   chaBoostRemoved: number;
   setChaBoostRemoved: (value: number) => void;
+  showProfile: boolean;
+  setShowProfile: (value: boolean) => void;
+  username: string;
+  setUsername: (value: string) => void;
+  isController: boolean;
+  setIsController: (value: boolean) => void;
+  controllerAdmin: string;
+  setControllerAdmin: (value: string) => void;
 };
 
 const useUIStore = create<State>((set) => ({
@@ -189,6 +199,8 @@ const useUIStore = create<State>((set) => ({
   setSpecialBeast: (value) => set({ specialBeast: value }),
   isMintingLords: false,
   setIsMintingLords: (value) => set({ isMintingLords: value }),
+  isWithdrawing: false,
+  setIsWithdrawing: (value) => set({ isWithdrawing: value }),
   averageBlockTime: 0,
   setAverageBlockTime: (value) => set({ averageBlockTime: value }),
   adventurerEntropy: BigInt(0),
@@ -219,6 +231,14 @@ const useUIStore = create<State>((set) => ({
   setVitBoostRemoved: (value) => set({ vitBoostRemoved: value }),
   chaBoostRemoved: 0,
   setChaBoostRemoved: (value) => set({ chaBoostRemoved: value }),
+  showProfile: false,
+  setShowProfile: (value) => set({ showProfile: value }),
+  username: "",
+  setUsername: (value) => set({ username: value }),
+  isController: false,
+  setIsController: (value) => set({ isController: value }),
+  controllerAdmin: "",
+  setControllerAdmin: (value) => set({ controllerAdmin: value }),
   fetchUnlocksEntropy: false,
   setFetchUnlocksEntropy: (value) => set({ fetchUnlocksEntropy: value }),
 }));
