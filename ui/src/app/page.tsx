@@ -656,7 +656,9 @@ function Home() {
   return (
     <>
       {((!entropyReady && hasStatUpgrades) || fetchUnlocksEntropy) &&
-        !onKatana && <InterludeScreen />}
+        !onKatana && (
+          <InterludeScreen type={fetchUnlocksEntropy ? "item" : "level"} />
+        )}
       <NetworkSwitchError network={network} isWrongNetwork={isWrongNetwork} />
       {isMintingLords && <TokenLoader isToppingUpLords={isMintingLords} />}
       {isWithdrawing && <TokenLoader isWithdrawing={isWithdrawing} />}
