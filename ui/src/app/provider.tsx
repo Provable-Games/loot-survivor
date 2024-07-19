@@ -33,7 +33,8 @@ export function StarknetProvider({
       connectors={connectors(
         networkConfig[network!].gameAddress,
         networkConfig[network!].lordsAddress,
-        network
+        network,
+        jsonRpcProvider({ rpc })
       )}
       explorer={starkscan}
       provider={jsonRpcProvider({ rpc })}

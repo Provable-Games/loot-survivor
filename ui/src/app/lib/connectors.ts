@@ -46,9 +46,10 @@ export function argentWebWalletUrl(network: Network) {
   }
 }
 
-export const argentWebWalletConnector = (network: Network) =>
+export const argentWebWalletConnector = (network: Network, provider: any) =>
   new WebWalletConnector({
     url: argentWebWalletUrl(network),
+    provider: provider,
   });
 
 const cartridgeConnector = (gameAddress: string, lordsAddress: string) =>
@@ -102,10 +103,11 @@ const cartridgeConnector = (gameAddress: string, lordsAddress: string) =>
 export const connectors = (
   gameAddress: string,
   lordsAddress: string,
-  network: Network
+  network: Network,
+  provider: any
 ) => [
   cartridgeConnector(gameAddress, lordsAddress),
-  argentWebWalletConnector(network),
+  argentWebWalletConnector(network, provider),
   new InjectedConnector({ options: { id: "braavos", name: "Braavos" } }),
   new InjectedConnector({ options: { id: "argentX", name: "Argent X" } }),
 ];
