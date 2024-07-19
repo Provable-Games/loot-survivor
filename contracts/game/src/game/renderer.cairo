@@ -100,7 +100,7 @@ fn get_suffix_boost(suffix: u8) -> ByteArray {
     }
 }
 
-fn generate_item(item: Item, entropy: u64) -> ByteArray {
+fn generate_item(item: Item, item_specials_entropy: felt252) -> ByteArray {
     if item.id == 0 {
         return "";
     }
@@ -113,14 +113,18 @@ fn generate_item(item: Item, entropy: u64) -> ByteArray {
 
     if (greatness >= 15) {
         format!("G{} {} ", greatness, _item_name)
-            + get_suffix_boost(ImplLoot::get_suffix(item.id, entropy))
+            + get_suffix_boost(ImplLoot::get_suffix(item.id, item_specials_entropy))
     } else {
         format!("G{} {} ", greatness, _item_name)
     }
 }
 
 fn create_metadata(
-    adventurer_id: felt252, adventurer: Adventurer, adventurerMetadata: AdventurerMetadata, bag: Bag
+    adventurer_id: felt252,
+    adventurer: Adventurer,
+    adventurerMetadata: AdventurerMetadata,
+    bag: Bag,
+    item_specials_seed: felt252
 ) -> ByteArray {
     let rect = create_rect();
 
@@ -150,37 +154,31 @@ fn create_metadata(
     let _luck = format!("{}", adventurer.stats.luck);
 
     // Equipped items
-    let _equiped_weapon = generate_item(
-        adventurer.equipment.weapon, adventurerMetadata.start_entropy
-    );
-    let _equiped_chest = generate_item(
-        adventurer.equipment.chest, adventurerMetadata.start_entropy
-    );
-    let _equiped_head = generate_item(adventurer.equipment.head, adventurerMetadata.start_entropy);
-    let _equiped_waist = generate_item(
-        adventurer.equipment.waist, adventurerMetadata.start_entropy
-    );
-    let _equiped_foot = generate_item(adventurer.equipment.foot, adventurerMetadata.start_entropy);
-    let _equiped_hand = generate_item(adventurer.equipment.hand, adventurerMetadata.start_entropy);
-    let _equiped_neck = generate_item(adventurer.equipment.neck, adventurerMetadata.start_entropy);
-    let _equiped_ring = generate_item(adventurer.equipment.ring, adventurerMetadata.start_entropy);
+    let _equiped_weapon = generate_item(adventurer.equipment.weapon, item_specials_seed);
+    let _equiped_chest = generate_item(adventurer.equipment.chest, item_specials_seed);
+    let _equiped_head = generate_item(adventurer.equipment.head, item_specials_seed);
+    let _equiped_waist = generate_item(adventurer.equipment.waist, item_specials_seed);
+    let _equiped_foot = generate_item(adventurer.equipment.foot, item_specials_seed);
+    let _equiped_hand = generate_item(adventurer.equipment.hand, item_specials_seed);
+    let _equiped_neck = generate_item(adventurer.equipment.neck, item_specials_seed);
+    let _equiped_ring = generate_item(adventurer.equipment.ring, item_specials_seed);
 
     // Bag items
-    let _bag_item_1 = generate_item(bag.item_1, adventurerMetadata.start_entropy);
-    let _bag_item_2 = generate_item(bag.item_2, adventurerMetadata.start_entropy);
-    let _bag_item_3 = generate_item(bag.item_3, adventurerMetadata.start_entropy);
-    let _bag_item_4 = generate_item(bag.item_4, adventurerMetadata.start_entropy);
-    let _bag_item_5 = generate_item(bag.item_5, adventurerMetadata.start_entropy);
-    let _bag_item_6 = generate_item(bag.item_6, adventurerMetadata.start_entropy);
-    let _bag_item_7 = generate_item(bag.item_7, adventurerMetadata.start_entropy);
-    let _bag_item_8 = generate_item(bag.item_8, adventurerMetadata.start_entropy);
-    let _bag_item_9 = generate_item(bag.item_9, adventurerMetadata.start_entropy);
-    let _bag_item_10 = generate_item(bag.item_10, adventurerMetadata.start_entropy);
-    let _bag_item_11 = generate_item(bag.item_11, adventurerMetadata.start_entropy);
-    let _bag_item_12 = generate_item(bag.item_12, adventurerMetadata.start_entropy);
-    let _bag_item_13 = generate_item(bag.item_13, adventurerMetadata.start_entropy);
-    let _bag_item_14 = generate_item(bag.item_14, adventurerMetadata.start_entropy);
-    let _bag_item_15 = generate_item(bag.item_15, adventurerMetadata.start_entropy);
+    let _bag_item_1 = generate_item(bag.item_1, item_specials_seed);
+    let _bag_item_2 = generate_item(bag.item_2, item_specials_seed);
+    let _bag_item_3 = generate_item(bag.item_3, item_specials_seed);
+    let _bag_item_4 = generate_item(bag.item_4, item_specials_seed);
+    let _bag_item_5 = generate_item(bag.item_5, item_specials_seed);
+    let _bag_item_6 = generate_item(bag.item_6, item_specials_seed);
+    let _bag_item_7 = generate_item(bag.item_7, item_specials_seed);
+    let _bag_item_8 = generate_item(bag.item_8, item_specials_seed);
+    let _bag_item_9 = generate_item(bag.item_9, item_specials_seed);
+    let _bag_item_10 = generate_item(bag.item_10, item_specials_seed);
+    let _bag_item_11 = generate_item(bag.item_11, item_specials_seed);
+    let _bag_item_12 = generate_item(bag.item_12, item_specials_seed);
+    let _bag_item_13 = generate_item(bag.item_13, item_specials_seed);
+    let _bag_item_14 = generate_item(bag.item_14, item_specials_seed);
+    let _bag_item_15 = generate_item(bag.item_15, item_specials_seed);
 
     // Combine all elements
     let mut elements = array![
@@ -415,7 +413,7 @@ mod tests {
 
         let bag = ImplBag::new();
 
-        let rect = create_metadata(1, adventurer, adventurer_metadata, bag);
+        let rect = create_metadata(1, adventurer, adventurer_metadata, bag, 1);
 
         println!("{}", rect);
     }
