@@ -141,6 +141,7 @@ export default function Info({
         entrypoint: "drop",
         calldata: [
           adventurer?.id?.toString() ?? "",
+          "0",
           newDropItems.length.toString(),
           ...newDropItems,
         ],

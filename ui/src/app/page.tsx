@@ -653,10 +653,6 @@ function Home() {
     return () => clearInterval(interval); // Cleanup on component unmount
   }, [fetchUnlocksEntropy]);
 
-  if (!isConnected && disconnected) {
-    return <WalletSelect />;
-  }
-
   return (
     <>
       {((!entropyReady && hasStatUpgrades) || fetchUnlocksEntropy) &&

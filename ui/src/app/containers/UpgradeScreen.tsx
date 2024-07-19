@@ -352,6 +352,7 @@ export default function UpgradeScreen({
       entrypoint: "upgrade",
       calldata: [
         adventurer?.id?.toString() ?? "",
+        "0",
         potions !== undefined ? potions.toString() : potionAmount.toString(),
         currentUpgrades
           ? currentUpgrades["Strength"].toString()
