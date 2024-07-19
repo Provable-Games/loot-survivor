@@ -2,3 +2,6 @@ mod game;
 mod constants;
 mod interfaces;
 mod games_played_snapshot;
+mod renderer;
+mod RenderContract;
+mod encoding;
