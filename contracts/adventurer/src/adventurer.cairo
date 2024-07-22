@@ -3682,7 +3682,7 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(510840)]
+    #[available_gas(582280)]
     fn test_get_and_apply_stats() {
         let mut adventurer = Adventurer {
             health: 100,

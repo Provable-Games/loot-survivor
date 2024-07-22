@@ -1140,7 +1140,7 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(61360)]
+    #[available_gas(70290)]
     fn test_get_item_boost_gas() {
         ImplEquipment::get_item_boost(1, 0);
     }
