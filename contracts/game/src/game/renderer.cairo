@@ -100,7 +100,7 @@ fn get_suffix_boost(suffix: u8) -> ByteArray {
     }
 }
 
-fn generate_item(item: Item, item_specials_entropy: felt252) -> ByteArray {
+fn generate_item(item: Item, item_specials_seed: felt252) -> ByteArray {
     if item.id == 0 {
         return "";
     }
@@ -113,7 +113,7 @@ fn generate_item(item: Item, item_specials_entropy: felt252) -> ByteArray {
 
     if (greatness >= 15) {
         format!("G{} {} ", greatness, _item_name)
-            + get_suffix_boost(ImplLoot::get_suffix(item.id, item_specials_entropy))
+            + get_suffix_boost(ImplLoot::get_suffix(item.id, item_specials_seed))
     } else {
         format!("G{} {} ", greatness, _item_name)
     }
