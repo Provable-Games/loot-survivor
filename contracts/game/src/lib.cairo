@@ -367,6 +367,9 @@ mod Game {
             _assert_no_stat_upgrades_available(immutable_adventurer);
             _assert_not_in_battle(immutable_adventurer);
             _assert_entropy_set(@self, adventurer_id);
+            _assert_not_awaiting_item_specials(
+                @self, adventurer_id, immutable_adventurer, bag.clone()
+            );
 
             // go explore 
             _explore(
@@ -609,6 +612,9 @@ mod Game {
             _assert_not_in_battle(immutable_adventurer);
             _assert_valid_stat_selection(immutable_adventurer, stat_upgrades);
             _assert_entropy_set(@self, adventurer_id);
+            _assert_not_awaiting_item_specials(
+                @self, adventurer_id, immutable_adventurer, bag.clone()
+            );
 
             // get number of stat upgrades available before we use them
             let pre_upgrade_stat_points = adventurer.stat_upgrades_available;
@@ -1768,7 +1774,6 @@ mod Game {
     ) -> Array<ItemLeveledUp> {
         let mut items_leveled_up = ArrayTrait::<ItemLeveledUp>::new();
         let equipped_items = adventurer.get_equipped_items();
-        let mut requested_item_specials_seed = 0;
         let mut item_index: u32 = 0;
         loop {
             if item_index == equipped_items.len() {
@@ -1791,7 +1796,6 @@ mod Game {
                     adventurer.equipment.get_item_at_slot(ImplLoot::get_slot(item.id)),
                     previous_level,
                     new_level,
-                    ref requested_item_specials_seed
                 );
 
                 // add item to list of items that leveled up to be emitted in event
@@ -1811,7 +1815,6 @@ mod Game {
         item: Item,
         previous_level: u8,
         new_level: u8,
-        ref requested_item_specials_seed: u8,
     ) -> ItemLeveledUp {
         // init specials with no specials
         let mut specials = SpecialPowers { special1: 0, special2: 0, special3: 0 };
@@ -1838,8 +1841,9 @@ mod Game {
                 if item_specials_seed == 0 {
                     // we need to request it but only once and it's possible multiple items are
                     // reaching g15+ at the same time so we use a flag to ensure we only request for first item
-                    if requested_item_specials_seed != 1 {
-                        requested_item_specials_seed = 1;
+                    if !adventurer.awaiting_item_specials {
+                        adventurer.awaiting_item_specials = true;
+
                         _event_RequestedItemSpecialsSeed(
                             ref self, adventurer_id, self._randomness_contract_address.read()
                         );
@@ -2743,6 +2747,20 @@ mod Game {
             self._adventurer_entropy.read(adventurer_id) != 0, messages::ADVENTURER_ENTROPY_NOT_SET
         );
     }
+
+    fn _assert_not_awaiting_item_specials(
+        self: @ContractState, adventurer_id: felt252, adventurer: Adventurer, bag: Bag
+    ) {
+        // check if any of the equipped items are greatness/level 15 or higher
+        if adventurer.equipment.has_specials() || bag.has_specials() {
+            // assert we have the item specials seed
+            assert(
+                self._item_specials_seed.read(adventurer_id) != 0,
+                messages::WAITING_FOR_ITEM_SPECIALS
+            );
+        }
+    }
+
     #[inline(always)]
     fn _get_items_on_market(
         self: @ContractState,
