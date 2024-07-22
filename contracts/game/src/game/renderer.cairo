@@ -9,14 +9,26 @@ use core::{array::{SpanTrait, ArrayTrait}, traits::Into, clone::Clone,};
 use game::game::encoding::{bytes_base64_encode, U256BytesUsedTraitImpl};
 use graffiti::json::JsonImpl;
 
+// @notice Generates the LS logo svg
+// @return The generated LS logo
 fn logo() -> ByteArray {
     "<path fill='#3DEC00' d=\"M1 2V0h8v2h1v10H7v4H3v-4H0V2zm1 4v4h2v2h2v-2h2V6H6v4H4V6z\"/>"
 }
 
+// @notice Generates a rect element
+// @return The generated rect element
 fn create_rect() -> ByteArray {
     "<rect x='0.5' y='0.5' width='599' height='899' rx='27.5' fill='black' stroke='#3DEC00'/>"
 }
 
+// @notice Generates a text element
+// @param text The text to generate a string for
+// @param x The x coordinate of the text
+// @param y The y coordinate of the text
+// @param fontsize The font size of the text
+// @param baseline The baseline of the text
+// @param text_anchor The text anchor of the text
+// @return The generated text element
 fn create_text(
     text: ByteArray,
     x: ByteArray,
@@ -40,6 +52,9 @@ fn create_text(
         + "</text>"
 }
 
+// @notice Combines elements into a single string
+// @param elements The elements to combine
+// @return The combined elements
 fn combine_elements(ref elements: Span<ByteArray>) -> ByteArray {
     let mut count: u8 = 1;
 
@@ -58,10 +73,16 @@ fn combine_elements(ref elements: Span<ByteArray>) -> ByteArray {
     combined
 }
 
+// @notice Generates an SVG string for adventurer token uri
+// @param internals The internals of the SVG
+// @return The generated SVG string
 fn create_svg(internals: ByteArray) -> ByteArray {
     "<svg xmlns='http://www.w3.org/2000/svg' width='600' height='900'>" + internals + "</svg>"
 }
 
+// @notice Generates a suffix boost string for adventurer token uri
+// @param suffix The suffix to generate a string for
+// @return The generated suffix boost string
 fn get_suffix_boost(suffix: u8) -> ByteArray {
     if (suffix == ItemSuffix::of_Power) {
         "(+3 STR)"
@@ -100,6 +121,10 @@ fn get_suffix_boost(suffix: u8) -> ByteArray {
     }
 }
 
+// @notice Generates an item string for adventurer token uri
+// @param item The item to generate a string for
+// @param item_specials_seed The seed used to generate item specials
+// @return The generated item string
 fn generate_item(item: Item, item_specials_seed: felt252) -> ByteArray {
     if item.id == 0 {
         return "";
@@ -119,6 +144,13 @@ fn generate_item(item: Item, item_specials_seed: felt252) -> ByteArray {
     }
 }
 
+// @notice Generates adventurer metadata for the adventurer token uri
+// @param adventurer_id The adventurer's ID
+// @param adventurer The adventurer
+// @param adventurerMetadata The adventurer's metadata
+// @param bag The adventurer's bag
+// @param item_specials_seed The seed used to generate item specials
+// @return The generated adventurer metadata
 fn create_metadata(
     adventurer_id: felt252,
     adventurer: Adventurer,
