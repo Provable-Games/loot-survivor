@@ -15,6 +15,60 @@ fn logo() -> ByteArray {
     "<path fill='#3DEC00' d=\"M1 2V0h8v2h1v10H7v4H3v-4H0V2zm1 4v4h2v2h2v-2h2V6H6v4H4V6z\"/>"
 }
 
+// @notice Generates the weapon icon svg
+// @return The generated weapon icon
+fn weapon() -> ByteArray {
+    "<path fill='#3DEC00' d=\"M8 15v-1H6v-1H5v-1H3v2H2v2H1v1h2v-1h2v2H4v2H3v2H2v2H1v2H0v2h2v-2h1v-2h1v-2h1v-2h1v-2h2v5h2v-2h1v-2h1v-2h1v-2H8z\"/>"
+}
+
+// @notice Generates the chest icon svg
+// @return The generated chest icon
+fn chest() -> ByteArray {
+    "<path fill='#3DEC00' d=\"M0 7.157h2v-1H0v1zm3-3v-3H2v1H1v2H0v1h4v-1H3zm2-4H4v4h1v-4zm6 0v4h1v-4h-1zm4 4v-2h-1v-1h-1v3h-1v1h4v-1h-1zm-1 3h2v-1h-2v1zm-5-1H7v-1H4v1H3v4h4v-1h2v1h4v-4h-1v-1H9v1zm1 6v1h1v2h1v-2h1v-2H9v1h1zm-3-1h2v-1H7v1zm0 1v-1H3v2h1v2h1v-2h1v-1h1zm2 0H7v1H6v2h4v-2H9v-1z\"/>"
+}
+
+// @notice Generates the head icon svg
+// @return The generated head icon
+fn head() -> ByteArray {
+    "<path fill='#3DEC00' d=\"M12 1.65h-.8V.885H9.6V.12H6.4v.765H4.8v.765H4v1.529h-.8v7.647H4v.765h.8v.764h1.6V9.297h-.8v-1.53h-.8v-.765H4V5.473h3.2v3.059h1.6V5.473H12v1.53h-.8v.764h-.8v1.53h-.8v3.058h1.6v-.764h.8v-.765h.8V3.179H12v-1.53zm-10.4 0V.885H.8V.12H0v2.294h.8v1.53h.8v.764h.8v-1.53h.8V1.65H1.6zM15.2.12v.765h-.8v.765h-1.6v1.529h.8v1.53h.8v-.765h.8v-1.53h.8V.12h-.8z\"/>"
+}
+
+// @notice Generates the waist icon svg
+// @return The generated waist icon
+fn waist() -> ByteArray {
+    "<path fill='#3DEC00' d=\"M0 13.092h2.308v-1.077H0v1.077zm0-2.154h3.462V9.861H0v1.077zm1.154-6.461H0v4.307h3.462V7.707h1.153V3.4H1.154v1.077zm0-2.154h3.461V.169H1.154v2.154zm4.615 0h1.154V1.246h1.154v1.077H9.23V.169H5.769v2.154zM13.846.169h-3.461v2.154h3.461V.169zm0 4.308V3.4h-3.461v4.307h1.154v1.077H15V4.477h-1.154zm-2.307 6.461H15V9.861h-3.461v1.077zm1.153 2.154H15v-1.077h-2.308v1.077zM5.77 8.784h1.154v1.077h1.154V8.784H9.23V3.4H5.769v5.384z\"/>"
+}
+
+// @notice Generates the foot icon svg
+// @return The generated foot icon
+fn foot() -> ByteArray {
+    "<path fill='#3DEC00' d=\"M3.79.952V.13H.42v1.647h4.21V.952H3.79zM6.315.13H4.632v.823h1.684V.13zm0 1.647H4.632v.823h1.684v-.823zm0 2.47v-.823H4.632v.824h1.684zm0 1.648V5.07H4.632v.824h1.684zm0 1.647v-.824H4.632v.824h1.684zm4.21 0v-.824H8.842v.824h1.684zm0-1.647V5.07H8.842v.824h1.684zm0-1.647v-.824H8.842v.824h1.684zm0-2.471H8.842v.823h1.684v-.823zm0-1.647H8.842v.823h1.684V.13zM8 .952V.13h-.842v1.647h1.684V.952H8zm0 5.765h.842v-.823H8V5.07h.842v-.823H8v-.824h.842v-.824H7.158v4.942H8v-.824zm-1.684 2.47v-.823H4.632v-.823h-.843v-.824h.843v-.823h-.843V5.07h.843v-.823h-.843v-.824h.843v-.824H.422v8.236h5.052V9.188h.842zm4.21 0h-.842v-.823H7.158v.824h-.842v1.647h-.842v.823h5.894v-1.647h-.842v-.823zM.421 13.306h4.21v-.823h.843v-.824H.42v1.647zm10.947 0v-.823H5.474v.823h5.894zm.842 0h3.369v-.823H12.21v.823zm2.527-3.294v-.823h-.842v-.824H12.21v.824h-.843v.823h.842v1.647h3.369v-1.647h-.842zm-3.369-1.647h-.842v.824h.842v-.824z\"/>"
+}
+
+// @notice Generates the hand icon svg
+// @return The generated hand icon
+fn hand() -> ByteArray {
+    "<path fill='#3DEC00' d=\"M9 7.157v1H8v3H4v-1h3v-9H6v7H5v-8H4v8H3v-7H2v8H1v-5H0v10h1v2h5v-1h2v-1h1v-2h1v-5H9z\"/>"
+}
+
+// @notice Generates the neck icon svg
+// @return The generated neck icon
+fn neck() -> ByteArray {
+    "<path fill='#3DEC00' d=\"M14 7.157v-2h-1v-1h-1v-1h-1v-1h-1v-1H8v-1H2v1H1v1H0v8h1v1h1v1h4v-1h1v-1H3v-1H2v-6h1v-1h4v1h2v1h1v1h1v1h1v1h1v1h-2v1h1v1h2v-1h1v-2h-1zm-6 3v1h1v-1H8zm1 0h2v-1H9v1zm4 3v-2h-1v2h1zm-6-2v2h1v-2H7zm2 4h2v-1H9v1zm-1-2v1h1v-1H8zm3 1h1v-1h-1v1zm0-3h1v-1h-1v1zm-2 2h2v-2H9v2z\"/>"
+}
+
+// @notice Generates the ring icon svg
+// @return The generated ring icon
+fn ring() -> ByteArray {
+    "<path fill='#3DEC00' d=\"M13 2.157v-1h-1v-1h-2v1h1v3h-1v2H9v1H8v1H7v1H6v1H4v1H1v-1H0v2h1v1h1v1h4v-1h2v-1h1v-1h1v-1h1v-1h1v-1h1v-2h1v-4h-1zm-10 6h1v-1h1v-1h1v-1h1v-1h1v-1h2v-2H9v-1H8v1H6v1H5v1H4v1H3v1H2v1H1v2H0v1h1v1h2v-2z\"/>"
+}
+
+// @notice Generates the ring icon svg
+// @return The generated ring icon
+fn bag() -> ByteArray {
+    "<path fill='#3DEC00' d=\"M3 0v2h1v1h2V2h1v1h3V0zm2 4v2h4V4zm5 1v2h2v1h1V6h-1V5h1V4h-2v1zM1 9v2H0v3h1v2h10v-2h1v-2h-1v-2h-1V8H9V7H8v2H7V7H3v2z\"/>"
+}
+
 // @notice Generates a rect element
 // @return The generated rect element
 fn create_rect() -> ByteArray {
@@ -161,6 +215,30 @@ fn create_metadata(
     let rect = create_rect();
 
     let logo_element = "<g transform='translate(25,25) scale(4)'>" + logo() + "</g>";
+    let weapon_element = "<g transform='translate(25,190) scale(2)'>" + weapon() + "</g>";
+    let chest_element = "<g transform='translate(24,260) scale(2)'>" + chest() + "</g>";
+    let head_element = "<g transform='translate(25,310) scale(2)'>" + head() + "</g>";
+    let waist_element = "<g transform='translate(25,355) scale(2)'>" + waist() + "</g>";
+    let foot_element = "<g transform='translate(25,405) scale(2)'>" + foot() + "</g>";
+    let hand_element = "<g transform='translate(27,450) scale(2)'>" + hand() + "</g>";
+    let neck_element = "<g transform='translate(25,500) scale(2)'>" + neck() + "</g>";
+    let ring_element = "<g transform='translate(25,545) scale(2)'>" + ring() + "</g>";
+
+    let bag_1_element = "<g transform='translate(25,600) scale(2)'>" + bag() + "</g>";
+    let bag_2_element = "<g transform='translate(25,640) scale(2)'>" + bag() + "</g>";
+    let bag_3_element = "<g transform='translate(25,680) scale(2)'>" + bag() + "</g>";
+    let bag_4_element = "<g transform='translate(25,720) scale(2)'>" + bag() + "</g>";
+    let bag_5_element = "<g transform='translate(25,760) scale(2)'>" + bag() + "</g>";
+    let bag_6_element = "<g transform='translate(25,800) scale(2)'>" + bag() + "</g>";
+    let bag_7_element = "<g transform='translate(25,840) scale(2)'>" + bag() + "</g>";
+    let bag_8_element = "<g transform='translate(300,600) scale(2)'>" + bag() + "</g>";
+    let bag_9_element = "<g transform='translate(300,640) scale(2)'>" + bag() + "</g>";
+    let bag_10_element = "<g transform='translate(300,680) scale(2)'>" + bag() + "</g>";
+    let bag_11_element = "<g transform='translate(300,720) scale(2)'>" + bag() + "</g>";
+    let bag_12_element = "<g transform='translate(300,760) scale(2)'>" + bag() + "</g>";
+    let bag_13_element = "<g transform='translate(300,800) scale(2)'>" + bag() + "</g>";
+    let bag_14_element = "<g transform='translate(300,840) scale(2)'>" + bag() + "</g>";
+    let bag_15_element = "<g transform='translate(300,880) scale(2)'>" + bag() + "</g>";
 
     let mut _name = Default::default();
     _name
@@ -237,28 +315,51 @@ fn create_metadata(
         create_text(_luck.clone() + " LUCK", "570", "338.273", "20", "right", "end"),
         create_text("Equipped", "30", "183.136", "32", "middle", "right"),
         create_text("Bag", "30", "600.136", "32", "middle", "right"),
-        create_text(_equiped_weapon.clone(), "30", "233.227", "21", "middle", "start"),
-        create_text(_equiped_chest.clone(), "30", "272.227", "21", "middle", "left"),
-        create_text(_equiped_head.clone(), "30", "311.227", "21", "middle", "left"),
-        create_text(_equiped_waist.clone(), "30", "350.227", "21", "middle", "left"),
-        create_text(_equiped_foot.clone(), "30", "389.227", "21", "middle", "left"),
-        create_text(_equiped_hand.clone(), "30", "428.227", "21", "middle", "left"),
-        create_text(_equiped_neck.clone(), "30", "467.227", "21", "middle", "left"),
-        create_text(_equiped_ring.clone(), "30", "506.227", "21", "middle", "left"),
+        weapon_element,
+        create_text(_equiped_weapon.clone(), "60", "233.227", "21", "middle", "start"),
+        chest_element,
+        create_text(_equiped_chest.clone(), "60", "272.227", "21", "middle", "left"),
+        head_element,
+        create_text(_equiped_head.clone(), "60", "311.227", "21", "middle", "left"),
+        waist_element,
+        create_text(_equiped_waist.clone(), "60", "350.227", "21", "middle", "left"),
+        foot_element,
+        create_text(_equiped_foot.clone(), "60", "389.227", "21", "middle", "left"),
+        hand_element,
+        create_text(_equiped_hand.clone(), "60", "428.227", "21", "middle", "left"),
+        neck_element,
+        create_text(_equiped_neck.clone(), "60", "467.227", "21", "middle", "left"),
+        ring_element,
+        create_text(_equiped_ring.clone(), "60", "506.227", "21", "middle", "left"),
+        bag_1_element,
         create_text(_bag_item_1.clone(), "30", "644.273", "16", "middle", "left"),
+        bag_2_element,
         create_text(_bag_item_2.clone(), "30", "678.273", "16", "middle", "left"),
+        bag_3_element,
         create_text(_bag_item_3.clone(), "30", "712.273", "16", "middle", "left"),
+        bag_4_element,
         create_text(_bag_item_4.clone(), "30", "746.273", "16", "middle", "left"),
+        bag_5_element,
         create_text(_bag_item_5.clone(), "30", "780.273", "16", "middle", "left"),
+        bag_6_element,
         create_text(_bag_item_6.clone(), "30", "814.273", "16", "middle", "left"),
+        bag_7_element,
         create_text(_bag_item_7.clone(), "30", "848.273", "16", "middle", "left"),
+        bag_8_element,
         create_text(_bag_item_8.clone(), "311", "644.273", "16", "middle", "left"),
+        bag_9_element,
         create_text(_bag_item_9.clone(), "311", "678.273", "16", "middle", "left"),
+        bag_10_element,
         create_text(_bag_item_10.clone(), "311", "712.273", "16", "middle", "left"),
+        bag_11_element,
         create_text(_bag_item_11.clone(), "311", "746.273", "16", "middle", "left"),
+        bag_12_element,
         create_text(_bag_item_12.clone(), "311", "780.273", "16", "middle", "left"),
+        bag_13_element,
         create_text(_bag_item_13.clone(), "311", "814.273", "16", "middle", "left"),
+        bag_14_element,
         create_text(_bag_item_14.clone(), "311", "848.273", "16", "middle", "left"),
+        bag_15_element,
         create_text(_bag_item_15.clone(), "311", "878.273", "16", "middle", "left"),
     ]
         .span();
