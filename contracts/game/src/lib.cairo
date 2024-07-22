@@ -1848,7 +1848,7 @@ mod Game {
                             adventurer_id.try_into().unwrap(),
                             adventurer_id,
                             PRAGMA_MAX_CALLBACK_FEE.into(),
-                            0
+                            1
                         );
                     }
                 } else {
