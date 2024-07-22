@@ -1122,7 +1122,7 @@ mod Game {
 
         eth_dispatcher.approve(randomness_address, (fee_limit + fee_limit / 5).into());
 
-        // Request the randomness@
+        // Request the randomness
         let randomness_dispatcher = IRandomnessDispatcher { contract_address: randomness_address };
 
         randomness_dispatcher
