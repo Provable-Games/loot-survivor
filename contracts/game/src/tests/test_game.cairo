@@ -1913,15 +1913,13 @@ mod tests {
         // Some weird conflict when using the game interface ?? using direct ERC721Dispatcher for now. This is not a problem in blockexplorers, I suspect issue in Scarb compiler.
         IERC721Dispatcher { contract_address: game.contract_address }
             .transfer_from(from, to, ADVENTURER_ID.into());
-
-        testing::set_contract_address(OWNER_TWO());
     }
 
     #[test]
     fn test_transfered_attack() {
         let mut game = new_adventurer(364063, 1698678554);
         transfer_ownership(game, OWNER(), OWNER_TWO());
-
+        testing::set_contract_address(OWNER_TWO());
         game.attack(ADVENTURER_ID, false);
     }
 
@@ -1931,9 +1929,6 @@ mod tests {
     fn test_original_owner_attack() {
         let mut game = new_adventurer(364063, 1698678554);
         transfer_ownership(game, OWNER(), OWNER_TWO());
-
-        testing::set_contract_address(OWNER());
-
         game.attack(ADVENTURER_ID, false);
     }
 
@@ -1943,8 +1938,6 @@ mod tests {
     fn test_original_owner_upgrade() {
         let mut game = new_adventurer_lvl2(364063, 1698678554, 0);
         transfer_ownership(game, OWNER(), OWNER_TWO());
-
-        testing::set_contract_address(OWNER());
 
         let shopping_cart = ArrayTrait::<ItemPurchase>::new();
         let stat_upgrades = Stats {
@@ -1958,6 +1951,7 @@ mod tests {
     fn test_original_owner_explore() {
         let mut game = new_adventurer_lvl2(364063, 1698678554, 0);
         transfer_ownership(game, OWNER(), OWNER_TWO());
+        testing::set_contract_address(OWNER_TWO());
 
         let shopping_cart = ArrayTrait::<ItemPurchase>::new();
         let stat_upgrades = Stats {
@@ -1975,6 +1969,7 @@ mod tests {
     fn test_original_owner_flee() {
         let mut game = new_adventurer_lvl2(364063, 1698678554, 0);
         transfer_ownership(game, OWNER(), OWNER_TWO());
+        testing::set_contract_address(OWNER_TWO());
 
         let shopping_cart = ArrayTrait::<ItemPurchase>::new();
         let stat_upgrades = Stats {
@@ -1995,6 +1990,7 @@ mod tests {
     fn test_transfered_upgrade_explore_flee() {
         let mut game = new_adventurer_lvl2(123, 1696201757, 0);
         transfer_ownership(game, OWNER(), OWNER_TWO());
+        testing::set_contract_address(OWNER_TWO());
 
         let shopping_cart = ArrayTrait::<ItemPurchase>::new();
         let stat_upgrades = Stats {
