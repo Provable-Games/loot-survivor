@@ -15,6 +15,7 @@ mod tests {
 mod Game {
     use openzeppelin::token::erc721::erc721::ERC721Component::InternalTrait;
     use core::starknet::SyscallResultTrait;
+    use core::integer::BoundedInt;
     const ARCADE_ACCOUNT_ID: felt252 = 22227699753170493970302265346292000442692;
     const TEST_ENTROPY: u64 = 12303548;
     const MAINNET_CHAIN_ID: felt252 = 0x534e5f4d41494e;
@@ -23,10 +24,13 @@ mod Game {
     const MINIMUM_SCORE_FOR_PAYOUTS: u16 = 200;
     const SECONDS_IN_DAY: u32 = 86400;
     const TARGET_PRICE_USD_CENTS: u16 = 300;
+    const VRF_COST_PER_GAME_CENTS: u8 = 100;
     const PRAGMA_LORDS_KEY: felt252 = 'LORDS/USD'; // felt252 conversion of "LORDS/USD"
+    const PRAGMA_ETH_KEY: felt252 = 'ETH/USD'; // felt252 conversion of "ETH/USD"
     const PRAGMA_PUBLISH_DELAY: u8 = 0;
     const PRAGMA_NUM_WORDS: u8 = 1;
-    const PRAGMA_MAX_CALLBACK_FEE: u64 = 1000000000000000;
+    const VRF_CALLBACK_FEE_MAINNET: u64 = 1000000000000000;
+    const VRF_CALLBACK_FEE_SEPOLIA: u64 = 1000000000000000;
 
     use core::{
         array::{SpanTrait, ArrayTrait}, integer::u256_try_as_non_zero, traits::{TryInto, Into},
@@ -138,6 +142,7 @@ mod Game {
         src5: SRC5Component::Storage,
         _default_renderer: ContractAddress,
         _custom_renderer: LegacyMap::<felt252, ContractAddress>,
+        _player_vrf_allowance: LegacyMap::<felt252, u128>,
     }
 
     #[event]
@@ -247,6 +252,11 @@ mod Game {
 
         // set the cost to play
         self._cost_to_play.write(COST_TO_PLAY);
+
+        // give VRF provider approval for all ETH in the contract since the only
+        // reason ETH will be in the contract is to cover VRF costs
+        let eth_dispatcher = IERC20Dispatcher { contract_address: eth_address };
+        eth_dispatcher.approve(randomness_contract_address, BoundedInt::max());
     }
 
     // ------------------------------------------ //
@@ -322,7 +332,6 @@ mod Game {
             weapon: u8,
             name: felt252,
             golden_token_id: u256,
-            vrf_fee_limit: u128,
             custom_renderer: ContractAddress
         ) {
             // assert game terminal time has not been reached
@@ -333,17 +342,20 @@ mod Game {
 
             // don't process payment distributions on Katana
             let chain_id = starknet::get_execution_info().unbox().tx_info.unbox().chain_id;
-            if chain_id != KATANA_CHAIN_ID {
+            if chain_id == MAINNET_CHAIN_ID || chain_id == SEPOLIA_CHAIN_ID {
                 // process payment for game and distribute rewards
                 if (golden_token_id != 0) {
                     _play_with_token(ref self, golden_token_id);
                 } else {
                     _process_payment_and_distribute_rewards(ref self, client_reward_address);
                 }
+
+                // Pay Pragma $1 in ETH for VRF services for the game
+                _pay_for_vrf(@self);
             }
 
             // start the game
-            _start_game(ref self, weapon, name, vrf_fee_limit, custom_renderer);
+            _start_game(ref self, weapon, name, custom_renderer);
         }
 
         /// @title Explore Function
@@ -697,6 +709,15 @@ mod Game {
             self._custom_renderer.write(adventurer_id, render_contract);
         }
 
+        fn increase_vrf_allowance(ref self: ContractState, adventurer_id: felt252, amount: u128) {
+            let current_allowance = self._player_vrf_allowance.read(adventurer_id);
+            // transfer the allowance amount to LS contract
+            let ls_address = starknet::get_contract_address();
+            let dispatcher = IERC20Dispatcher { contract_address: ls_address };
+            dispatcher.transfer_from(get_caller_address(), ls_address, amount.into());
+            self._player_vrf_allowance.write(adventurer_id, current_allowance + amount);
+        }
+
         // ------------------------------------------ //
         // ------------ View Functions -------------- //
         // ------------------------------------------ //
@@ -714,6 +735,9 @@ mod Game {
         }
         fn get_custom_renderer(self: @ContractState, adventurer_id: felt252) -> ContractAddress {
             self._custom_renderer.read(adventurer_id)
+        }
+        fn get_player_vrf_allowance(self: @ContractState, adventurer_id: felt252) -> u128 {
+            self._player_vrf_allowance.read(adventurer_id)
         }
         fn get_adventurer_no_boosts(self: @ContractState, adventurer_id: felt252) -> Adventurer {
             _load_adventurer_no_boosts(self, adventurer_id)
@@ -1057,7 +1081,7 @@ mod Game {
 
             // we only need to save adventurer is they received Vitality as part of starting stats
             let chain_id = starknet::get_execution_info().unbox().tx_info.unbox().chain_id;
-            if chain_id != KATANA_CHAIN_ID {
+            if chain_id == MAINNET_CHAIN_ID || chain_id == SEPOLIA_CHAIN_ID {
                 if adventurer.stats.vitality > 0 {
                     _save_adventurer(ref self, ref adventurer, adventurer_id);
                 }
@@ -1116,30 +1140,38 @@ mod Game {
     }
 
     fn request_randomness(
-        self: @ContractState, seed: u64, adventurer_id: felt252, fee_limit: u128, item_specials: u8
+        ref self: ContractState, seed: u64, adventurer_id: felt252, item_specials: u8
     ) {
-        let eth_address = self._eth_address.read();
         let randomness_address = self._randomness_contract_address.read();
 
         let calldata = array![adventurer_id, item_specials.into()];
 
-        // Approve the randomness contract to transfer the callback fee
-        let eth_dispatcher = IERC20Dispatcher { contract_address: eth_address };
-
-        eth_dispatcher.approve(randomness_address, (fee_limit + fee_limit / 5).into());
-
         // Request the randomness
         let randomness_dispatcher = IRandomnessDispatcher { contract_address: randomness_address };
+
+        // Get base vrf callback fee
+        let max_callback_fee_base = _get_vrf_max_callback_fee(@self);
+
+        // Get adventurer specific vrf callback fee
+        let player_vrf_allowance = self._player_vrf_allowance.read(adventurer_id);
+
+        // Calculate total callback fee
+        let max_callback_fee_total = max_callback_fee_base + player_vrf_allowance;
 
         randomness_dispatcher
             .request_random(
                 seed,
                 starknet::get_contract_address(),
-                fee_limit,
+                max_callback_fee_total,
                 PRAGMA_PUBLISH_DELAY.into(),
                 PRAGMA_NUM_WORDS.into(),
                 calldata
             );
+
+        // zero out player vrf allowance
+        if player_vrf_allowance != 0 {
+            self._player_vrf_allowance.write(adventurer_id, 0);
+        }
     }
 
     fn _assert_terminal_time_not_reached(self: @ContractState) {
@@ -1210,7 +1242,7 @@ mod Game {
         let chain_id = starknet::get_execution_info().unbox().tx_info.unbox().chain_id;
         // if beast beast level is above collectible threshold
         if beast.combat_spec.level >= BEAST_SPECIAL_NAME_LEVEL_UNLOCK
-            && chain_id != KATANA_CHAIN_ID {
+            && (chain_id == MAINNET_CHAIN_ID || chain_id == SEPOLIA_CHAIN_ID) {
             // mint beast to owner of the adventurer
             _mint_beast(@self, beast, _get_owner(@self, adventurer_id));
         }
@@ -1356,6 +1388,16 @@ mod Game {
         }
     }
 
+    fn _pay_for_vrf(self: @ContractState) {
+        let eth_address = self._eth_address.read();
+        let ls_address = starknet::get_contract_address();
+        let one_dollar_in_eth = _get_one_dollar_in_eth(self);
+        let eth_dispatcher = IERC20Dispatcher { contract_address: eth_address };
+
+        // transfer $1 worth of ETH to the LS contract
+        eth_dispatcher.transfer_from(get_caller_address(), ls_address, one_dollar_in_eth.into());
+    }
+
     fn _process_payment_and_distribute_rewards(
         ref self: ContractState, client_address: ContractAddress
     ) {
@@ -1422,11 +1464,7 @@ mod Game {
     }
 
     fn _start_game(
-        ref self: ContractState,
-        weapon: u8,
-        name: felt252,
-        vrf_fee_limit: u128,
-        custom_renderer: ContractAddress
+        ref self: ContractState, weapon: u8, name: felt252, custom_renderer: ContractAddress
     ) {
         // increment adventurer id (first adventurer is id 1)
         let adventurer_id = self._game_counter.read() + 1;
@@ -1447,10 +1485,8 @@ mod Game {
 
         // if we're not running on Katana, request randomness from VRF as soon as game starts
         let chain_id = starknet::get_execution_info().unbox().tx_info.unbox().chain_id;
-        if chain_id != KATANA_CHAIN_ID {
-            request_randomness(
-                @self, adventurer_id.try_into().unwrap(), adventurer_id, vrf_fee_limit, 0
-            );
+        if chain_id == MAINNET_CHAIN_ID || chain_id == SEPOLIA_CHAIN_ID {
+            request_randomness(ref self, adventurer_id.try_into().unwrap(), adventurer_id, 0);
         }
 
         // increment the adventurer id counter
@@ -1848,11 +1884,7 @@ mod Game {
                             ref self, adventurer_id, self._randomness_contract_address.read()
                         );
                         request_randomness(
-                            @self,
-                            adventurer_id.try_into().unwrap(),
-                            adventurer_id,
-                            PRAGMA_MAX_CALLBACK_FEE.into(),
-                            1
+                            ref self, adventurer_id.try_into().unwrap(), adventurer_id, 1
                         );
                     }
                 } else {
@@ -2581,9 +2613,9 @@ mod Game {
 
             // get chain_id
             let chain_id = starknet::get_execution_info().unbox().tx_info.unbox().chain_id;
-            // if chain is Katana
-            if chain_id == KATANA_CHAIN_ID {
-                // emit the leveled up event
+            // if we're running on a network other than mainnet or sepolia
+            if !(chain_id == MAINNET_CHAIN_ID || chain_id == SEPOLIA_CHAIN_ID) {
+                // generate local randomness instead of fetching from vrf
                 process_vrf_randomness(
                     ref self,
                     starknet::get_contract_address(),
@@ -2617,15 +2649,14 @@ mod Game {
                 / randomness_rotation_interval < new_level
                 / randomness_rotation_interval) {
                 let chain_id = starknet::get_execution_info().unbox().tx_info.unbox().chain_id;
-                if chain_id != KATANA_CHAIN_ID {
+                if chain_id == MAINNET_CHAIN_ID || chain_id == SEPOLIA_CHAIN_ID {
                     // zero out adventurer entropy
                     self._adventurer_entropy.write(adventurer_id, 0);
-                    let max_callback_fee = 10000000000000000;
                     let seed = adventurer.get_vrf_seed(adventurer_id, adventurer_entropy);
                     let randomness_address = self._randomness_contract_address.read();
 
                     // request new entropy
-                    request_randomness(@self, seed, adventurer_id, max_callback_fee, 0);
+                    request_randomness(ref self, seed, adventurer_id, 0);
 
                     // emit ClearedEntropy event to let clients know the contact is fetching new entropy
                     __event_ClearedEntropy(ref self, adventurer_id, randomness_address, seed);
@@ -2889,6 +2920,35 @@ mod Game {
 
         // save leaderboard
         self._leaderboard.write(leaderboard);
+    }
+
+    // @title Get One Dollar in ETH Function
+    //
+    // @return The price of one dollar in ETH
+    fn _get_one_dollar_in_eth(self: @ContractState) -> u128 {
+        let oracle_address = self._oracle_address.read();
+        let eth_price = get_asset_price_median(oracle_address, DataType::SpotEntry(PRAGMA_ETH_KEY));
+
+        // target price is the target price in cents * 10^8 because pragma uses 8 decimals for ETH price
+        let target_price = VRF_COST_PER_GAME_CENTS.into() * 100000000;
+
+        // new price is the target price (in cents) divided by the current lords price (in cents)
+        let eth_in_one_dollar = (target_price / (eth_price * 100)) * 1000000000000000000;
+        return eth_in_one_dollar;
+    }
+
+    fn _get_vrf_max_callback_fee(self: @ContractState) -> u128 {
+        // get current network ID
+        let chain_id = starknet::get_execution_info().unbox().tx_info.unbox().chain_id;
+        let one_dollar = _get_one_dollar_in_eth(self);
+        let five_cents = one_dollar / 20;
+
+        if chain_id == MAINNET_CHAIN_ID {
+            five_cents
+        } else {
+            // $3 for non-mainnet to prevent interference from gas price swings
+            one_dollar * 3
+        }
     }
 
     // ---------- EVENTS ---------- //
