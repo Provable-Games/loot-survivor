@@ -100,12 +100,6 @@ mod Game {
     };
     use beasts::beast::{Beast, IBeast, ImplBeast};
 
-    enum RequestType {
-        Level,
-        Item,
-    }
-
-
     #[abi(embed_v0)]
     impl ERC721Impl = ERC721Component::ERC721Impl<ContractState>;
     #[abi(embed_v0)]
@@ -1837,23 +1831,26 @@ mod Game {
         if (suffix_unlocked || prefixes_unlocked) {
             // if item received a suffix as part of the level up
             if (suffix_unlocked) {
+                // get item specials seed
                 let item_specials_seed = self.get_item_specials_seed(adventurer_id);
 
-                // check if it's the first item to unlock suffix specials
-                if item_specials_seed == 0 && requested_item_specials_seed != 1 {
-                    // if it is we fetch vrf from pragma which will be used to determine specials
-                    // for all items in the game
-                    requested_item_specials_seed = 1;
-                    _event_RequestedItemSpecialsSeed(
-                        ref self, adventurer_id, self._randomness_contract_address.read()
-                    );
-                    request_randomness(
-                        @self,
-                        adventurer_id.try_into().unwrap(),
-                        adventurer_id,
-                        PRAGMA_MAX_CALLBACK_FEE.into(),
-                        0
-                    );
+                // if we don't have item specials seed yet
+                if item_specials_seed == 0 {
+                    // we need to request it but only once and it's possible multiple items are
+                    // reaching g15+ at the same time so we use a flag to ensure we only request for first item
+                    if requested_item_specials_seed != 1 {
+                        requested_item_specials_seed = 1;
+                        _event_RequestedItemSpecialsSeed(
+                            ref self, adventurer_id, self._randomness_contract_address.read()
+                        );
+                        request_randomness(
+                            @self,
+                            adventurer_id.try_into().unwrap(),
+                            adventurer_id,
+                            PRAGMA_MAX_CALLBACK_FEE.into(),
+                            0
+                        );
+                    }
                 } else {
                     // apply them and record the new specials so we can include them in event
 
