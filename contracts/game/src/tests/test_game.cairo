@@ -1909,7 +1909,7 @@ mod tests {
         );
     }
 
-    fn tranfer_ownership(mut game: IGameDispatcher, from: ContractAddress, to: ContractAddress) {
+    fn transfer_ownership(mut game: IGameDispatcher, from: ContractAddress, to: ContractAddress) {
         // Some weird conflict when using the game interface ?? using direct ERC721Dispatcher for now. This is not a problem in blockexplorers, I suspect issue in Scarb compiler.
         IERC721Dispatcher { contract_address: game.contract_address }
             .transfer_from(from, to, ADVENTURER_ID.into());
@@ -1920,7 +1920,7 @@ mod tests {
     #[test]
     fn test_transfered_attack() {
         let mut game = new_adventurer(364063, 1698678554);
-        tranfer_ownership(game, OWNER(), OWNER_TWO());
+        transfer_ownership(game, OWNER(), OWNER_TWO());
 
         game.attack(ADVENTURER_ID, false);
     }
@@ -1930,7 +1930,7 @@ mod tests {
     #[should_panic(expected: ('Not authorized to act', 'ENTRYPOINT_FAILED'))]
     fn test_original_owner_attack() {
         let mut game = new_adventurer(364063, 1698678554);
-        tranfer_ownership(game, OWNER(), OWNER_TWO());
+        transfer_ownership(game, OWNER(), OWNER_TWO());
 
         testing::set_contract_address(OWNER());
 
@@ -1942,7 +1942,7 @@ mod tests {
     #[should_panic(expected: ('Not authorized to act', 'ENTRYPOINT_FAILED'))]
     fn test_original_owner_upgrade() {
         let mut game = new_adventurer_lvl2(364063, 1698678554, 0);
-        tranfer_ownership(game, OWNER(), OWNER_TWO());
+        transfer_ownership(game, OWNER(), OWNER_TWO());
 
         testing::set_contract_address(OWNER());
 
@@ -1957,7 +1957,7 @@ mod tests {
     #[should_panic(expected: ('Not authorized to act', 'ENTRYPOINT_FAILED'))]
     fn test_original_owner_explore() {
         let mut game = new_adventurer_lvl2(364063, 1698678554, 0);
-        tranfer_ownership(game, OWNER(), OWNER_TWO());
+        transfer_ownership(game, OWNER(), OWNER_TWO());
 
         let shopping_cart = ArrayTrait::<ItemPurchase>::new();
         let stat_upgrades = Stats {
@@ -1974,7 +1974,7 @@ mod tests {
     #[should_panic(expected: ('Not authorized to act', 'ENTRYPOINT_FAILED'))]
     fn test_original_owner_flee() {
         let mut game = new_adventurer_lvl2(364063, 1698678554, 0);
-        tranfer_ownership(game, OWNER(), OWNER_TWO());
+        transfer_ownership(game, OWNER(), OWNER_TWO());
 
         let shopping_cart = ArrayTrait::<ItemPurchase>::new();
         let stat_upgrades = Stats {
@@ -1993,18 +1993,25 @@ mod tests {
 
     #[test]
     fn test_transfered_upgrade_explore_flee() {
-        let mut game = new_adventurer_lvl2(364063, 1698678554, 0);
-        tranfer_ownership(game, OWNER(), OWNER_TWO());
+        let mut game = new_adventurer_lvl2(123, 1696201757, 0);
+        transfer_ownership(game, OWNER(), OWNER_TWO());
 
         let shopping_cart = ArrayTrait::<ItemPurchase>::new();
         let stat_upgrades = Stats {
-            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 1, luck: 0
+            strength: 0, dexterity: 1, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
         };
         game.upgrade(ADVENTURER_ID, 0, stat_upgrades, shopping_cart.clone());
 
         // go explore
         game.explore(ADVENTURER_ID, true);
         game.flee(ADVENTURER_ID, true);
+    }
+
+    // verify tokens transferred to transfered owner not original owner
+    #[test]
+    fn test_transfered_transfer() {
+        let mut game = new_adventurer(364063, 1698678554);
+        transfer_ownership(game, OWNER(), OWNER_TWO());
     }
 
 
