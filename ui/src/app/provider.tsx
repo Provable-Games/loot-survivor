@@ -5,7 +5,6 @@ import {
   starkscan,
   jsonRpcProvider,
 } from "@starknet-react/core";
-import { Connector } from "@starknet-react/core";
 import { mainnet, sepolia } from "@starknet-react/chains";
 import { Chain } from "@starknet-react/chains";
 import { connectors } from "@/app/lib/connectors";
@@ -36,7 +35,7 @@ export function StarknetProvider({
           networkConfig[network!].gameAddress,
           networkConfig[network!].lordsAddress,
           network
-        ) as Connector[]
+        ) as any
       }
       explorer={starkscan}
       provider={jsonRpcProvider({ rpc })}
