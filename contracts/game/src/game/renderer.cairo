@@ -131,9 +131,7 @@ fn combine_elements(ref elements: Span<ByteArray>) -> ByteArray {
 // @param internals The internals of the SVG
 // @return The generated SVG string
 fn create_svg(internals: ByteArray) -> ByteArray {
-    "<svg xmlns='http://www.w3.org/2000/svg' width='600' height='900'><style>text {
-        text-transform: uppercase;
-      }</style>" + internals + "</svg>"
+    "<svg xmlns='http://www.w3.org/2000/svg' width='600' height='900'><style>text{text-transform: uppercase;}</style>" + internals + "</svg>"
 }
 
 // @notice Generates a suffix boost string for adventurer token uri
@@ -231,7 +229,7 @@ fn create_metadata(
     let neck_element = "<g transform='translate(25,455) scale(1.5)'>" + neck() + "</g>";
     let ring_element = "<g transform='translate(25,495) scale(1.5)'>" + ring() + "</g>";
 
-    let bag_element = "<g transform='translate(90,580) scale(2)'>" + bag() + "</g>";
+    let bag_element = "<g transform='translate(100,580) scale(2)'>" + bag() + "</g>";
 
     let mut _name = Default::default();
     _name
