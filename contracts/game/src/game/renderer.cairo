@@ -95,9 +95,9 @@ fn create_text(
         + x
         + "' y='"
         + y
-        + "' font-family='Courier, monospace' font-size='"
+        + "' font-size='"
         + fontsize
-        + "' fill='#3DEC00' text-anchor='"
+        + "' text-anchor='"
         + text_anchor
         + "' dominant-baseline='"
         + baseline
@@ -131,7 +131,7 @@ fn combine_elements(ref elements: Span<ByteArray>) -> ByteArray {
 // @param internals The internals of the SVG
 // @return The generated SVG string
 fn create_svg(internals: ByteArray) -> ByteArray {
-    "<svg xmlns='http://www.w3.org/2000/svg' width='600' height='900'><style>text{text-transform: uppercase;}</style>" + internals + "</svg>"
+    "<svg xmlns='http://www.w3.org/2000/svg' width='600' height='900'><style>text{text-transform: uppercase;font-family: Courier, monospace;fill: #3DEC00;}</style>" + internals + "</svg>"
 }
 
 // @notice Generates a suffix boost string for adventurer token uri
