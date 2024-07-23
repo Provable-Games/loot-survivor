@@ -24,7 +24,7 @@ fn weapon() -> ByteArray {
 // @notice Generates the chest icon svg
 // @return The generated chest icon
 fn chest() -> ByteArray {
-    "<path fill='#3DEC00' d=\"M0 7.157h2v-1H0v1zm3-3v-3H2v1H1v2H0v1h4v-1H3zm2-4H4v4h1v-4zm6 0v4h1v-4h-1zm4 4v-2h-1v-1h-1v3h-1v1h4v-1h-1zm-1 3h2v-1h-2v1zm-5-1H7v-1H4v1H3v4h4v-1h2v1h4v-4h-1v-1H9v1zm1 6v1h1v2h1v-2h1v-2H9v1h1zm-3-1h2v-1H7v1zm0 1v-1H3v2h1v2h1v-2h1v-1h1zm2 0H7v1H6v2h4v-2H9v-1z\"/>"
+    "<path fill='#3DEC00' d=\"M0 7.657h2v-1H0v1zm3-3v-3H2v1H1v2H0v1h4v-1H3zm2-4H4v4h1v-4zm6 0v4h1v-4h-1zm4 4v-2h-1v-1h-1v3h-1v1h4v-1h-1zm-1 3h2v-1h-2v1zm-5-1H7v-1H4v1H3v4h4v-1h2v1h4v-4h-1v-1H9v1zm1 6v1h1v2h1v-2h1v-2H9v1h1zm-3-1h2v-1H7v1zm0 1v-1H3v2h1v2h1v-2h1v-1h1zm2 0H7v1H6v2h4v-2H9v-1z\"/>"
 }
 
 // @notice Generates the head icon svg
@@ -36,13 +36,13 @@ fn head() -> ByteArray {
 // @notice Generates the waist icon svg
 // @return The generated waist icon
 fn waist() -> ByteArray {
-    "<path fill='#3DEC00' d=\"M0 13.092h2.308v-1.077H0v1.077zm0-2.154h3.462V9.861H0v1.077zm1.154-6.461H0v4.307h3.462V7.707h1.153V3.4H1.154v1.077zm0-2.154h3.461V.169H1.154v2.154zm4.615 0h1.154V1.246h1.154v1.077H9.23V.169H5.769v2.154zM13.846.169h-3.461v2.154h3.461V.169zm0 4.308V3.4h-3.461v4.307h1.154v1.077H15V4.477h-1.154zm-2.307 6.461H15V9.861h-3.461v1.077zm1.153 2.154H15v-1.077h-2.308v1.077zM5.77 8.784h1.154v1.077h1.154V8.784H9.23V3.4H5.769v5.384z\"/>"
+    "<path fill='#3DEC00' d=\"M0 13h2v-1H0v1Zm0-2h3v-1H0v1Zm1-7H0v5h3V8h2V3H1v1Zm0-2h4V0H1v2Zm5 0h1V1h1v1h1V0H6v2Zm8-2h-4v2h4V0Zm0 4V3h-4v5h2v1h3V4h-1Zm-2 7h3v-1h-3v1Zm1 2h2v-1h-2v1ZM6 9h1v1h1V9h1V3H6v6Z\"/>"
 }
 
 // @notice Generates the foot icon svg
 // @return The generated foot icon
 fn foot() -> ByteArray {
-    "<path fill='#3DEC00' d=\"M3.79.952V.13H.42v1.647h4.21V.952H3.79zM6.315.13H4.632v.823h1.684V.13zm0 1.647H4.632v.823h1.684v-.823zm0 2.47v-.823H4.632v.824h1.684zm0 1.648V5.07H4.632v.824h1.684zm0 1.647v-.824H4.632v.824h1.684zm4.21 0v-.824H8.842v.824h1.684zm0-1.647V5.07H8.842v.824h1.684zm0-1.647v-.824H8.842v.824h1.684zm0-2.471H8.842v.823h1.684v-.823zm0-1.647H8.842v.823h1.684V.13zM8 .952V.13h-.842v1.647h1.684V.952H8zm0 5.765h.842v-.823H8V5.07h.842v-.823H8v-.824h.842v-.824H7.158v4.942H8v-.824zm-1.684 2.47v-.823H4.632v-.823h-.843v-.824h.843v-.823h-.843V5.07h.843v-.823h-.843v-.824h.843v-.824H.422v8.236h5.052V9.188h.842zm4.21 0h-.842v-.823H7.158v.824h-.842v1.647h-.842v.823h5.894v-1.647h-.842v-.823zM.421 13.306h4.21v-.823h.843v-.824H.42v1.647zm10.947 0v-.823H5.474v.823h5.894zm.842 0h3.369v-.823H12.21v.823zm2.527-3.294v-.823h-.842v-.824H12.21v.824h-.843v.823h.842v1.647h3.369v-1.647h-.842zm-3.369-1.647h-.842v.824h.842v-.824z\"/>"
+    "<path fill='#3DEC00' d=\"M4 1V0H0v2h5V1H4Zm2-1H5v1h1V0Zm0 2H5v1h1V2Zm0 2V3H5v1h1Zm0 2V5H5v1h1Zm0 2V7H5v1h1Zm5 0V7H9v1h2Zm0-2V5H9v1h2Zm0-2V3H9v1h2Zm0-2H9v1h2V2Zm0-2H9v1h2V0ZM8 1V0H7v2h2V1H8Zm0 6h1V6H8V5h1V4H8V3h1-2v5h1V7ZM6 9V8H4V7h1V6H4V5h1V4H4V3h1-5v8h5V9h1Zm5 0h-1V8H7v1H6v2H5v1h6V9ZM0 13h5v-1H0v1Zm11 0v-1H5v1h6Zm1 0h4v-1h-4v1Zm3-3V9h-1V8h-2v1h-1v1h1v2h4v-2h-1Zm-4-2v1-1Z\"/>"
 }
 
 // @notice Generates the hand icon svg
@@ -131,7 +131,9 @@ fn combine_elements(ref elements: Span<ByteArray>) -> ByteArray {
 // @param internals The internals of the SVG
 // @return The generated SVG string
 fn create_svg(internals: ByteArray) -> ByteArray {
-    "<svg xmlns='http://www.w3.org/2000/svg' width='600' height='900'>" + internals + "</svg>"
+    "<svg xmlns='http://www.w3.org/2000/svg' width='600' height='900'><style>text {
+        text-transform: uppercase;
+      }</style>" + internals + "</svg>"
 }
 
 // @notice Generates a suffix boost string for adventurer token uri
@@ -177,11 +179,16 @@ fn get_suffix_boost(suffix: u8) -> ByteArray {
 
 // @notice Generates an item string for adventurer token uri
 // @param item The item to generate a string for
+// @param bag Whether the item is in the bag or not
 // @param item_specials_seed The seed used to generate item specials
 // @return The generated item string
-fn generate_item(item: Item, item_specials_seed: felt252) -> ByteArray {
+fn generate_item(item: Item, bag: bool, item_specials_seed: felt252) -> ByteArray {
     if item.id == 0 {
-        return "";
+        if (bag) {
+            return "Empty";
+        } else {
+            return "None Equipped";
+        }
     }
 
     let greatness = item.get_greatness();
@@ -215,30 +222,16 @@ fn create_metadata(
     let rect = create_rect();
 
     let logo_element = "<g transform='translate(25,25) scale(4)'>" + logo() + "</g>";
-    let weapon_element = "<g transform='translate(25,190) scale(2)'>" + weapon() + "</g>";
-    let chest_element = "<g transform='translate(24,260) scale(2)'>" + chest() + "</g>";
-    let head_element = "<g transform='translate(25,310) scale(2)'>" + head() + "</g>";
-    let waist_element = "<g transform='translate(25,355) scale(2)'>" + waist() + "</g>";
-    let foot_element = "<g transform='translate(25,405) scale(2)'>" + foot() + "</g>";
-    let hand_element = "<g transform='translate(27,450) scale(2)'>" + hand() + "</g>";
-    let neck_element = "<g transform='translate(25,500) scale(2)'>" + neck() + "</g>";
-    let ring_element = "<g transform='translate(25,545) scale(2)'>" + ring() + "</g>";
+    let weapon_element = "<g transform='translate(25,200) scale(1.5)'>" + weapon() + "</g>";
+    let chest_element = "<g transform='translate(24,260) scale(1.5)'>" + chest() + "</g>";
+    let head_element = "<g transform='translate(25,300) scale(1.5)'>" + head() + "</g>";
+    let waist_element = "<g transform='translate(25,340) scale(1.5)'>" + waist() + "</g>";
+    let foot_element = "<g transform='translate(25,380) scale(1.5)'>" + foot() + "</g>";
+    let hand_element = "<g transform='translate(27,415) scale(1.5)'>" + hand() + "</g>";
+    let neck_element = "<g transform='translate(25,455) scale(1.5)'>" + neck() + "</g>";
+    let ring_element = "<g transform='translate(25,495) scale(1.5)'>" + ring() + "</g>";
 
-    let bag_1_element = "<g transform='translate(25,600) scale(2)'>" + bag() + "</g>";
-    let bag_2_element = "<g transform='translate(25,640) scale(2)'>" + bag() + "</g>";
-    let bag_3_element = "<g transform='translate(25,680) scale(2)'>" + bag() + "</g>";
-    let bag_4_element = "<g transform='translate(25,720) scale(2)'>" + bag() + "</g>";
-    let bag_5_element = "<g transform='translate(25,760) scale(2)'>" + bag() + "</g>";
-    let bag_6_element = "<g transform='translate(25,800) scale(2)'>" + bag() + "</g>";
-    let bag_7_element = "<g transform='translate(25,840) scale(2)'>" + bag() + "</g>";
-    let bag_8_element = "<g transform='translate(300,600) scale(2)'>" + bag() + "</g>";
-    let bag_9_element = "<g transform='translate(300,640) scale(2)'>" + bag() + "</g>";
-    let bag_10_element = "<g transform='translate(300,680) scale(2)'>" + bag() + "</g>";
-    let bag_11_element = "<g transform='translate(300,720) scale(2)'>" + bag() + "</g>";
-    let bag_12_element = "<g transform='translate(300,760) scale(2)'>" + bag() + "</g>";
-    let bag_13_element = "<g transform='translate(300,800) scale(2)'>" + bag() + "</g>";
-    let bag_14_element = "<g transform='translate(300,840) scale(2)'>" + bag() + "</g>";
-    let bag_15_element = "<g transform='translate(300,880) scale(2)'>" + bag() + "</g>";
+    let bag_element = "<g transform='translate(90,580) scale(2)'>" + bag() + "</g>";
 
     let mut _name = Default::default();
     _name
@@ -264,31 +257,31 @@ fn create_metadata(
     let _luck = format!("{}", adventurer.stats.luck);
 
     // Equipped items
-    let _equiped_weapon = generate_item(adventurer.equipment.weapon, item_specials_seed);
-    let _equiped_chest = generate_item(adventurer.equipment.chest, item_specials_seed);
-    let _equiped_head = generate_item(adventurer.equipment.head, item_specials_seed);
-    let _equiped_waist = generate_item(adventurer.equipment.waist, item_specials_seed);
-    let _equiped_foot = generate_item(adventurer.equipment.foot, item_specials_seed);
-    let _equiped_hand = generate_item(adventurer.equipment.hand, item_specials_seed);
-    let _equiped_neck = generate_item(adventurer.equipment.neck, item_specials_seed);
-    let _equiped_ring = generate_item(adventurer.equipment.ring, item_specials_seed);
+    let _equiped_weapon = generate_item(adventurer.equipment.weapon, false, item_specials_seed);
+    let _equiped_chest = generate_item(adventurer.equipment.chest, false, item_specials_seed);
+    let _equiped_head = generate_item(adventurer.equipment.head, false, item_specials_seed);
+    let _equiped_waist = generate_item(adventurer.equipment.waist, false, item_specials_seed);
+    let _equiped_foot = generate_item(adventurer.equipment.foot, false, item_specials_seed);
+    let _equiped_hand = generate_item(adventurer.equipment.hand, false, item_specials_seed);
+    let _equiped_neck = generate_item(adventurer.equipment.neck, false, item_specials_seed);
+    let _equiped_ring = generate_item(adventurer.equipment.ring, false, item_specials_seed);
 
     // Bag items
-    let _bag_item_1 = generate_item(bag.item_1, item_specials_seed);
-    let _bag_item_2 = generate_item(bag.item_2, item_specials_seed);
-    let _bag_item_3 = generate_item(bag.item_3, item_specials_seed);
-    let _bag_item_4 = generate_item(bag.item_4, item_specials_seed);
-    let _bag_item_5 = generate_item(bag.item_5, item_specials_seed);
-    let _bag_item_6 = generate_item(bag.item_6, item_specials_seed);
-    let _bag_item_7 = generate_item(bag.item_7, item_specials_seed);
-    let _bag_item_8 = generate_item(bag.item_8, item_specials_seed);
-    let _bag_item_9 = generate_item(bag.item_9, item_specials_seed);
-    let _bag_item_10 = generate_item(bag.item_10, item_specials_seed);
-    let _bag_item_11 = generate_item(bag.item_11, item_specials_seed);
-    let _bag_item_12 = generate_item(bag.item_12, item_specials_seed);
-    let _bag_item_13 = generate_item(bag.item_13, item_specials_seed);
-    let _bag_item_14 = generate_item(bag.item_14, item_specials_seed);
-    let _bag_item_15 = generate_item(bag.item_15, item_specials_seed);
+    let _bag_item_1 = generate_item(bag.item_1, true, item_specials_seed);
+    let _bag_item_2 = generate_item(bag.item_2, true, item_specials_seed);
+    let _bag_item_3 = generate_item(bag.item_3, true, item_specials_seed);
+    let _bag_item_4 = generate_item(bag.item_4, true, item_specials_seed);
+    let _bag_item_5 = generate_item(bag.item_5, true, item_specials_seed);
+    let _bag_item_6 = generate_item(bag.item_6, true, item_specials_seed);
+    let _bag_item_7 = generate_item(bag.item_7, true, item_specials_seed);
+    let _bag_item_8 = generate_item(bag.item_8, true, item_specials_seed);
+    let _bag_item_9 = generate_item(bag.item_9, true, item_specials_seed);
+    let _bag_item_10 = generate_item(bag.item_10, true, item_specials_seed);
+    let _bag_item_11 = generate_item(bag.item_11, true, item_specials_seed);
+    let _bag_item_12 = generate_item(bag.item_12, true, item_specials_seed);
+    let _bag_item_13 = generate_item(bag.item_13, true, item_specials_seed);
+    let _bag_item_14 = generate_item(bag.item_14, true, item_specials_seed);
+    let _bag_item_15 = generate_item(bag.item_15, true, item_specials_seed);
 
     // Combine all elements
     let mut elements = array![
@@ -331,36 +324,22 @@ fn create_metadata(
         create_text(_equiped_neck.clone(), "60", "467.227", "21", "middle", "left"),
         ring_element,
         create_text(_equiped_ring.clone(), "60", "506.227", "21", "middle", "left"),
-        bag_1_element,
-        create_text(_bag_item_1.clone(), "30", "644.273", "16", "middle", "left"),
-        bag_2_element,
-        create_text(_bag_item_2.clone(), "30", "678.273", "16", "middle", "left"),
-        bag_3_element,
-        create_text(_bag_item_3.clone(), "30", "712.273", "16", "middle", "left"),
-        bag_4_element,
-        create_text(_bag_item_4.clone(), "30", "746.273", "16", "middle", "left"),
-        bag_5_element,
-        create_text(_bag_item_5.clone(), "30", "780.273", "16", "middle", "left"),
-        bag_6_element,
-        create_text(_bag_item_6.clone(), "30", "814.273", "16", "middle", "left"),
-        bag_7_element,
-        create_text(_bag_item_7.clone(), "30", "848.273", "16", "middle", "left"),
-        bag_8_element,
-        create_text(_bag_item_8.clone(), "311", "644.273", "16", "middle", "left"),
-        bag_9_element,
-        create_text(_bag_item_9.clone(), "311", "678.273", "16", "middle", "left"),
-        bag_10_element,
-        create_text(_bag_item_10.clone(), "311", "712.273", "16", "middle", "left"),
-        bag_11_element,
-        create_text(_bag_item_11.clone(), "311", "746.273", "16", "middle", "left"),
-        bag_12_element,
-        create_text(_bag_item_12.clone(), "311", "780.273", "16", "middle", "left"),
-        bag_13_element,
-        create_text(_bag_item_13.clone(), "311", "814.273", "16", "middle", "left"),
-        bag_14_element,
-        create_text(_bag_item_14.clone(), "311", "848.273", "16", "middle", "left"),
-        bag_15_element,
-        create_text(_bag_item_15.clone(), "311", "878.273", "16", "middle", "left"),
+        bag_element,
+        create_text("1. " + _bag_item_1.clone(), "30", "644.273", "16", "middle", "left"),
+        create_text("2. " + _bag_item_2.clone(), "30", "678.273", "16", "middle", "left"),
+        create_text("3. " + _bag_item_3.clone(), "30", "712.273", "16", "middle", "left"),
+        create_text("4. " + _bag_item_4.clone(), "30", "746.273", "16", "middle", "left"),
+        create_text("5. " + _bag_item_5.clone(), "30", "780.273", "16", "middle", "left"),
+        create_text("6. " + _bag_item_6.clone(), "30", "814.273", "16", "middle", "left"),
+        create_text("7. " + _bag_item_7.clone(), "30", "848.273", "16", "middle", "left"),
+        create_text("8. " + _bag_item_8.clone(), "30", "878.273", "16", "middle", "left"),
+        create_text("9. " + _bag_item_9.clone(), "311", "644.273", "16", "middle", "left"),
+        create_text("10. " + _bag_item_10.clone(), "311", "678.273", "16", "middle", "left"),
+        create_text("11. " + _bag_item_11.clone(), "311", "712.273", "16", "middle", "left"),
+        create_text("12. " + _bag_item_12.clone(), "311", "746.273", "16", "middle", "left"),
+        create_text("13. " + _bag_item_13.clone(), "311", "780.273", "16", "middle", "left"),
+        create_text("14. " + _bag_item_14.clone(), "311", "814.273", "16", "middle", "left"),
+        create_text("15. " + _bag_item_15.clone(), "311", "848.273", "16", "middle", "left"),
     ]
         .span();
 
