@@ -2289,7 +2289,7 @@ mod Game {
                 beast,
                 beast_seed,
                 start_entropy,
-                ambush_entropy,
+                flee_entropy,
                 ambush_entropy,
                 false
             );
