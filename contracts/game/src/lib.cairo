@@ -13,6 +13,7 @@ mod tests {
 
 #[starknet::contract]
 mod Game {
+    use alexandria_math::pow;
     use openzeppelin::token::erc721::erc721::ERC721Component::InternalTrait;
     use core::starknet::SyscallResultTrait;
     use core::integer::BoundedInt;
@@ -24,7 +25,9 @@ mod Game {
     const MINIMUM_SCORE_FOR_PAYOUTS: u16 = 200;
     const SECONDS_IN_DAY: u32 = 86400;
     const TARGET_PRICE_USD_CENTS: u16 = 300;
-    const VRF_COST_PER_GAME_CENTS: u8 = 100;
+    const VRF_COST_PER_GAME: u32 = 100000000; // 1$ with 8 decimals
+    const VRF_MAX_CALLBACK_MAINNET: u32 = 5000000; // $0.05
+    const VRF_MAX_CALLBACK_TESTNET: u32 = 100000000; // 1$ with 8 decimals
     const PRAGMA_LORDS_KEY: felt252 = 'LORDS/USD'; // felt252 conversion of "LORDS/USD"
     const PRAGMA_ETH_KEY: felt252 = 'ETH/USD'; // felt252 conversion of "ETH/USD"
     const PRAGMA_PUBLISH_DELAY: u8 = 0;
@@ -891,66 +894,66 @@ mod Game {
         fn get_ring_greatness(self: @ContractState, adventurer_id: felt252) -> u8 {
             _load_adventurer_no_boosts(self, adventurer_id).equipment.ring.get_greatness()
         }
-        // fn get_base_stats(self: @ContractState, adventurer_id: felt252) -> Stats {
-        //     _load_adventurer_no_boosts(self, adventurer_id).stats
-        // }
-        // fn get_stats(self: @ContractState, adventurer_id: felt252) -> Stats {
-        //     _load_adventurer(self, adventurer_id).stats
-        // }
-        // fn get_starting_stats(self: @ContractState, adventurer_id: felt252) -> Stats {
-        //     _load_adventurer_metadata(self, adventurer_id).starting_stats
-        // }
-        // fn equipment_specials_unlocked(self: @ContractState, adventurer_id: felt252) -> bool {
-        //     let adventurer = self._adventurer.read(adventurer_id);
-        //     adventurer.equipment.has_specials()
-        // }
-        // fn equipment_stat_boosts(self: @ContractState, adventurer_id: felt252) -> Stats {
-        //     let adventurer = self._adventurer.read(adventurer_id);
-        //     let adventurer_meta = _load_adventurer_metadata(self, adventurer_id);
-        //     adventurer.equipment.get_stat_boosts(adventurer_meta.start_entropy)
-        // }
-        // fn get_base_strength(self: @ContractState, adventurer_id: felt252) -> u8 {
-        //     _load_adventurer_no_boosts(self, adventurer_id).stats.strength
-        // }
-        // fn get_strength(self: @ContractState, adventurer_id: felt252) -> u8 {
-        //     _load_adventurer(self, adventurer_id).stats.strength
-        // }
-        // fn get_base_dexterity(self: @ContractState, adventurer_id: felt252) -> u8 {
-        //     _load_adventurer_no_boosts(self, adventurer_id).stats.dexterity
-        // }
-        // fn get_dexterity(self: @ContractState, adventurer_id: felt252) -> u8 {
-        //     _load_adventurer(self, adventurer_id).stats.dexterity
-        // }
-        // fn get_base_vitality(self: @ContractState, adventurer_id: felt252) -> u8 {
-        //     _load_adventurer_no_boosts(self, adventurer_id).stats.vitality
-        // }
-        // fn get_vitality(self: @ContractState, adventurer_id: felt252) -> u8 {
-        //     _load_adventurer(self, adventurer_id).stats.vitality
-        // }
-        // fn get_base_intelligence(self: @ContractState, adventurer_id: felt252) -> u8 {
-        //     _load_adventurer_no_boosts(self, adventurer_id).stats.intelligence
-        // }
-        // fn get_intelligence(self: @ContractState, adventurer_id: felt252) -> u8 {
-        //     _load_adventurer(self, adventurer_id).stats.intelligence
-        // }
-        // fn get_base_wisdom(self: @ContractState, adventurer_id: felt252) -> u8 {
-        //     _load_adventurer_no_boosts(self, adventurer_id).stats.wisdom
-        // }
-        // fn get_wisdom(self: @ContractState, adventurer_id: felt252) -> u8 {
-        //     _load_adventurer(self, adventurer_id).stats.wisdom
-        // }
-        // fn get_base_charisma(self: @ContractState, adventurer_id: felt252) -> u8 {
-        //     _load_adventurer_no_boosts(self, adventurer_id).stats.charisma
-        // }
-        // fn get_charisma(self: @ContractState, adventurer_id: felt252) -> u8 {
-        //     _load_adventurer(self, adventurer_id).stats.charisma
-        // }
-        // fn get_beast_type(self: @ContractState, beast_id: u8) -> u8 {
-        //     ImplCombat::type_to_u8(ImplBeast::get_type(beast_id))
-        // }
-        // fn get_beast_tier(self: @ContractState, beast_id: u8) -> u8 {
-        //     ImplCombat::tier_to_u8(ImplBeast::get_tier(beast_id))
-        // }
+    // fn get_base_stats(self: @ContractState, adventurer_id: felt252) -> Stats {
+    //     _load_adventurer_no_boosts(self, adventurer_id).stats
+    // }
+    // fn get_stats(self: @ContractState, adventurer_id: felt252) -> Stats {
+    //     _load_adventurer(self, adventurer_id).stats
+    // }
+    // fn get_starting_stats(self: @ContractState, adventurer_id: felt252) -> Stats {
+    //     _load_adventurer_metadata(self, adventurer_id).starting_stats
+    // }
+    // fn equipment_specials_unlocked(self: @ContractState, adventurer_id: felt252) -> bool {
+    //     let adventurer = self._adventurer.read(adventurer_id);
+    //     adventurer.equipment.has_specials()
+    // }
+    // fn equipment_stat_boosts(self: @ContractState, adventurer_id: felt252) -> Stats {
+    //     let adventurer = self._adventurer.read(adventurer_id);
+    //     let adventurer_meta = _load_adventurer_metadata(self, adventurer_id);
+    //     adventurer.equipment.get_stat_boosts(adventurer_meta.start_entropy)
+    // }
+    // fn get_base_strength(self: @ContractState, adventurer_id: felt252) -> u8 {
+    //     _load_adventurer_no_boosts(self, adventurer_id).stats.strength
+    // }
+    // fn get_strength(self: @ContractState, adventurer_id: felt252) -> u8 {
+    //     _load_adventurer(self, adventurer_id).stats.strength
+    // }
+    // fn get_base_dexterity(self: @ContractState, adventurer_id: felt252) -> u8 {
+    //     _load_adventurer_no_boosts(self, adventurer_id).stats.dexterity
+    // }
+    // fn get_dexterity(self: @ContractState, adventurer_id: felt252) -> u8 {
+    //     _load_adventurer(self, adventurer_id).stats.dexterity
+    // }
+    // fn get_base_vitality(self: @ContractState, adventurer_id: felt252) -> u8 {
+    //     _load_adventurer_no_boosts(self, adventurer_id).stats.vitality
+    // }
+    // fn get_vitality(self: @ContractState, adventurer_id: felt252) -> u8 {
+    //     _load_adventurer(self, adventurer_id).stats.vitality
+    // }
+    // fn get_base_intelligence(self: @ContractState, adventurer_id: felt252) -> u8 {
+    //     _load_adventurer_no_boosts(self, adventurer_id).stats.intelligence
+    // }
+    // fn get_intelligence(self: @ContractState, adventurer_id: felt252) -> u8 {
+    //     _load_adventurer(self, adventurer_id).stats.intelligence
+    // }
+    // fn get_base_wisdom(self: @ContractState, adventurer_id: felt252) -> u8 {
+    //     _load_adventurer_no_boosts(self, adventurer_id).stats.wisdom
+    // }
+    // fn get_wisdom(self: @ContractState, adventurer_id: felt252) -> u8 {
+    //     _load_adventurer(self, adventurer_id).stats.wisdom
+    // }
+    // fn get_base_charisma(self: @ContractState, adventurer_id: felt252) -> u8 {
+    //     _load_adventurer_no_boosts(self, adventurer_id).stats.charisma
+    // }
+    // fn get_charisma(self: @ContractState, adventurer_id: felt252) -> u8 {
+    //     _load_adventurer(self, adventurer_id).stats.charisma
+    // }
+    // fn get_beast_type(self: @ContractState, beast_id: u8) -> u8 {
+    //     ImplCombat::type_to_u8(ImplBeast::get_type(beast_id))
+    // }
+    // fn get_beast_tier(self: @ContractState, beast_id: u8) -> u8 {
+    //     ImplCombat::tier_to_u8(ImplBeast::get_tier(beast_id))
+    // }
         fn get_dao_address(self: @ContractState) -> ContractAddress {
             self._dao.read()
         }
@@ -966,45 +969,45 @@ mod Game {
         fn get_game_count(self: @ContractState) -> felt252 {
             self._game_counter.read()
         }
-        // fn starting_gold(self: @ContractState) -> u16 {
-        //     STARTING_GOLD
-        // }
-        // fn starting_health(self: @ContractState) -> u16 {
-        //     STARTING_HEALTH
-        // }
-        // fn base_potion_price(self: @ContractState) -> u16 {
-        //     POTION_PRICE
-        // }
-        // fn potion_health_amount(self: @ContractState) -> u16 {
-        //     POTION_HEALTH_AMOUNT
-        // }
-        // fn minimum_potion_price(self: @ContractState) -> u16 {
-        //     MINIMUM_POTION_PRICE
-        // }
-        // fn charisma_potion_discount(self: @ContractState) -> u16 {
-        //     CHARISMA_POTION_DISCOUNT
-        // }
-        // fn items_per_stat_upgrade(self: @ContractState) -> u8 {
-        //     NUMBER_OF_ITEMS_PER_LEVEL
-        // }
-        // fn item_tier_price_multiplier(self: @ContractState) -> u16 {
-        //     TIER_PRICE
-        // }
-        // fn charisma_item_discount(self: @ContractState) -> u16 {
-        //     CHARISMA_ITEM_DISCOUNT
-        // }
-        // fn minimum_item_price(self: @ContractState) -> u16 {
-        //     MINIMUM_ITEM_PRICE
-        // }
-        // fn minimum_damage_to_beasts(self: @ContractState) -> u8 {
-        //     MINIMUM_DAMAGE_TO_BEASTS
-        // }
-        // fn minimum_damage_from_beasts(self: @ContractState) -> u8 {
-        //     MINIMUM_DAMAGE_FROM_BEASTS
-        // }
-        // fn minimum_damage_from_obstacles(self: @ContractState) -> u8 {
-        //     MINIMUM_DAMAGE_FROM_OBSTACLES
-        // }
+    // fn starting_gold(self: @ContractState) -> u16 {
+    //     STARTING_GOLD
+    // }
+    // fn starting_health(self: @ContractState) -> u16 {
+    //     STARTING_HEALTH
+    // }
+    // fn base_potion_price(self: @ContractState) -> u16 {
+    //     POTION_PRICE
+    // }
+    // fn potion_health_amount(self: @ContractState) -> u16 {
+    //     POTION_HEALTH_AMOUNT
+    // }
+    // fn minimum_potion_price(self: @ContractState) -> u16 {
+    //     MINIMUM_POTION_PRICE
+    // }
+    // fn charisma_potion_discount(self: @ContractState) -> u16 {
+    //     CHARISMA_POTION_DISCOUNT
+    // }
+    // fn items_per_stat_upgrade(self: @ContractState) -> u8 {
+    //     NUMBER_OF_ITEMS_PER_LEVEL
+    // }
+    // fn item_tier_price_multiplier(self: @ContractState) -> u16 {
+    //     TIER_PRICE
+    // }
+    // fn charisma_item_discount(self: @ContractState) -> u16 {
+    //     CHARISMA_ITEM_DISCOUNT
+    // }
+    // fn minimum_item_price(self: @ContractState) -> u16 {
+    //     MINIMUM_ITEM_PRICE
+    // }
+    // fn minimum_damage_to_beasts(self: @ContractState) -> u8 {
+    //     MINIMUM_DAMAGE_TO_BEASTS
+    // }
+    // fn minimum_damage_from_beasts(self: @ContractState) -> u8 {
+    //     MINIMUM_DAMAGE_FROM_BEASTS
+    // }
+    // fn minimum_damage_from_obstacles(self: @ContractState) -> u8 {
+    //     MINIMUM_DAMAGE_FROM_OBSTACLES
+    // }
         fn obstacle_critical_hit_chance(self: @ContractState, adventurer_id: felt252) -> u8 {
             let adventurer = self._adventurer.read(adventurer_id);
             ImplAdventurer::get_dynamic_critical_hit_chance(adventurer.get_level())
@@ -1015,21 +1018,21 @@ mod Game {
             let adventurer = self._adventurer.read(adventurer_id);
             ImplBeast::get_critical_hit_chance(adventurer.get_level(), is_ambush)
         }
-        // fn stat_upgrades_per_level(self: @ContractState) -> u8 {
-        //     MAX_STAT_UPGRADES_AVAILABLE
-        // }
-        // fn beast_special_name_unlock_level(self: @ContractState) -> u16 {
-        //     BEAST_SPECIAL_NAME_LEVEL_UNLOCK
-        // }
-        // fn item_xp_multiplier_beasts(self: @ContractState) -> u16 {
-        //     ITEM_XP_MULTIPLIER_BEASTS
-        // }
-        // fn item_xp_multiplier_obstacles(self: @ContractState) -> u16 {
-        //     ITEM_XP_MULTIPLIER_OBSTACLES
-        // }
-        // fn strength_bonus_damage(self: @ContractState) -> u8 {
-        //     STRENGTH_DAMAGE_BONUS
-        // }
+    // fn stat_upgrades_per_level(self: @ContractState) -> u8 {
+    //     MAX_STAT_UPGRADES_AVAILABLE
+    // }
+    // fn beast_special_name_unlock_level(self: @ContractState) -> u16 {
+    //     BEAST_SPECIAL_NAME_LEVEL_UNLOCK
+    // }
+    // fn item_xp_multiplier_beasts(self: @ContractState) -> u16 {
+    //     ITEM_XP_MULTIPLIER_BEASTS
+    // }
+    // fn item_xp_multiplier_obstacles(self: @ContractState) -> u16 {
+    //     ITEM_XP_MULTIPLIER_OBSTACLES
+    // }
+    // fn strength_bonus_damage(self: @ContractState) -> u8 {
+    //     STRENGTH_DAMAGE_BONUS
+    // }
 
         fn get_cost_to_play(self: @ContractState) -> u128 {
             _get_cost_to_play(self)
@@ -1387,13 +1390,24 @@ mod Game {
     }
 
     fn _pay_for_vrf(self: @ContractState) {
-        let eth_address = self._eth_address.read();
-        let ls_address = starknet::get_contract_address();
-        let one_dollar_in_eth = _get_one_dollar_in_eth(self);
-        let eth_dispatcher = IERC20Dispatcher { contract_address: eth_address };
+        let eth_dispatcher = IERC20Dispatcher { contract_address: self._eth_address.read() };
+        let one_dollar_wei = _dollar_to_wei(self, VRF_COST_PER_GAME.into());
 
-        // transfer $1 worth of ETH to the LS contract
-        eth_dispatcher.transfer_from(get_caller_address(), ls_address, one_dollar_in_eth.into());
+        // transfer $1 worth of ETH from user to game contract to cover VRF premiums and gas for callbacks
+        eth_dispatcher
+            .transfer_from(
+                get_caller_address(), starknet::get_contract_address(), one_dollar_wei.into()
+            );
+    }
+
+    fn _dollar_to_wei(self: @ContractState, usd: u128) -> u128 {
+        let oracle_dispatcher = IPragmaABIDispatcher {
+            contract_address: self._oracle_address.read()
+        };
+        let response = oracle_dispatcher.get_data_median(DataType::SpotEntry('ETH/USD'));
+        assert(response.price > 0, messages::FETCHING_ETH_PRICE_ERROR);
+        (usd * pow(10, response.decimals.into()) * 1000000000000000000)
+            / (response.price * 100000000)
     }
 
     fn _process_payment_and_distribute_rewards(
@@ -2790,7 +2804,6 @@ mod Game {
         }
     }
 
-    #[inline(always)]
     fn _get_items_on_market(
         self: @ContractState,
         adventurer_entropy: felt252,
@@ -2799,7 +2812,6 @@ mod Game {
     ) -> Array<u8> {
         ImplMarket::get_market_items(adventurer_entropy, adventurer_xp, adventurer_stat_points)
     }
-    #[inline(always)]
     fn _get_items_on_market_by_slot(
         self: @ContractState,
         adventurer_entropy: felt252,
@@ -2811,8 +2823,6 @@ mod Game {
             adventurer_entropy, adventurer_xp, adventurer_stat_points, slot
         )
     }
-
-    #[inline(always)]
     fn _get_items_on_market_by_tier(
         self: @ContractState,
         adventurer_entropy: felt252,
@@ -2825,7 +2835,6 @@ mod Game {
         )
     }
 
-    #[inline(always)]
     fn _get_potion_price(self: @ContractState, adventurer_id: felt252) -> u16 {
         _load_adventurer(self, adventurer_id).charisma_adjusted_potion_price()
     }
@@ -2857,7 +2866,6 @@ mod Game {
         self._adventurer_entropy.read(adventurer_id)
     }
 
-    #[inline(always)]
     fn _get_basic_entropy(adventurer_id: felt252, adventurer_xp: u16) -> felt252 {
         let mut hash_span = ArrayTrait::new();
         hash_span.append(adventurer_id);
@@ -2920,32 +2928,13 @@ mod Game {
         self._leaderboard.write(leaderboard);
     }
 
-    // @title Get One Dollar in ETH Function
-    //
-    // @return The price of one dollar in ETH
-    fn _get_one_dollar_in_eth(self: @ContractState) -> u128 {
-        let oracle_address = self._oracle_address.read();
-        let eth_price = get_asset_price_median(oracle_address, DataType::SpotEntry(PRAGMA_ETH_KEY));
-
-        // target price is the target price in cents * 10^8 because pragma uses 8 decimals for ETH price
-        let target_price = VRF_COST_PER_GAME_CENTS.into() * 100000000;
-
-        // new price is the target price (in cents) divided by the current lords price (in cents)
-        let eth_in_one_dollar = (target_price / (eth_price * 100)) * 1000000000000000000;
-        return eth_in_one_dollar;
-    }
-
     fn _get_vrf_max_callback_fee(self: @ContractState) -> u128 {
-        // get current network ID
         let chain_id = starknet::get_execution_info().unbox().tx_info.unbox().chain_id;
-        let one_dollar = _get_one_dollar_in_eth(self);
-        let five_cents = one_dollar / 20;
-
         if chain_id == MAINNET_CHAIN_ID {
-            five_cents
+            _dollar_to_wei(self, VRF_MAX_CALLBACK_MAINNET.into())
         } else {
             // $3 for non-mainnet to prevent interference from gas price swings
-            one_dollar * 3
+            _dollar_to_wei(self, VRF_MAX_CALLBACK_TESTNET.into())
         }
     }
 

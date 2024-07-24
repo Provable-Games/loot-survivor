@@ -125,7 +125,6 @@ impl ImplBag of IBag {
     // @param self The instance of the Bag
     // @param item_id The id of the item to be retrieved
     // @return The item from the bag with the specified id
-    #[inline(always)]
     fn get_item(self: Bag, item_id: u8) -> Item {
         if self.item_1.id == item_id {
             self.item_1
@@ -287,7 +286,6 @@ impl ImplBag of IBag {
     // @dev A bag is considered full if all item slots are occupied (id of the item is non-zero)
     // @param self The instance of the Bag
     // @return A boolean value indicating whether the bag is full
-    #[inline(always)]
     fn is_full(self: Bag) -> bool {
         if self.item_1.id == 0 {
             false
@@ -330,7 +328,6 @@ impl ImplBag of IBag {
     // @param self The Bag object in which to search for the item
     // @param item The id of the item to search for
     // @return A bool indicating whether the item is present in the bag
-    #[inline(always)]
     fn contains(self: Bag, item_id: u8) -> (bool, Item) {
         assert(item_id != 0, 'Item ID cannot be 0');
         if self.item_1.id == item_id {
