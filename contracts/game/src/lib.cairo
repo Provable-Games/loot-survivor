@@ -32,7 +32,7 @@ mod Game {
     const PRAGMA_ETH_KEY: felt252 = 'ETH/USD'; // felt252 conversion of "ETH/USD"
     const PRAGMA_PUBLISH_DELAY: u8 = 0;
     const PRAGMA_NUM_WORDS: u8 = 1;
-    const GAME_EXPIRY_DAYS: u8 = 14;
+    const GAME_EXPIRY_DAYS: u8 = 10;
 
     use core::{
         array::{SpanTrait, ArrayTrait}, integer::u256_try_as_non_zero, traits::{TryInto, Into},
