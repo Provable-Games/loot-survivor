@@ -105,36 +105,12 @@ impl AdventurerUtils of IAdventurerUtils {
         }
     }
 
-    // Returns the maximum health an adventurer can have.
-    // The maximum health is the sum of the starting health and the health increase due to the adventurer's vitality.
-    //
-    // @param vitality: adventurer's vitality
-    // @return The maximum health as a u16. If the total health would exceed the maximum possible health, 
-    //         then this value is capped to MAX_ADVENTURER_HEALTH.
-    fn get_max_health(vitality: u8) -> u16 {
-        // Calculate vitality boost, casting to u16 to prevent overflow during multiplication
-        let vitality_boost: u16 = (vitality.into() * HEALTH_INCREASE_PER_VITALITY.into());
-
-        // Check if health calculation would result in overflow
-        if (u16_overflowing_add(STARTING_HEALTH, vitality_boost).is_ok()) {
-            // If it does not cause overflow, check if health + vitality boost is within maximum allowed health
-            if (STARTING_HEALTH + vitality_boost <= MAX_ADVENTURER_HEALTH) {
-                // if it is, return full boost
-                return (STARTING_HEALTH + vitality_boost);
-            }
-        }
-
-        // In the case of potential overflow or exceeding max adventurer health, return max adventurer health
-        MAX_ADVENTURER_HEALTH
-    }
-
-    // @notice checks if adventurer's health is full
-    // @param health: adventurer's health
-    // @param vitality: adventurer's vitality
-    // @return bool: true if health is full, false otherwise
+    /// @notice checks if adventurer's health is full
+    /// @param self: adventurer
+    /// @return bool: true if health is full, false otherwise
     #[inline(always)]
-    fn is_health_full(health: u16, vitality: u8) -> bool {
-        health == AdventurerUtils::get_max_health(vitality)
+    fn is_health_full(self: Adventurer) -> bool {
+        self.health == self.stats.get_max_health()
     }
 
     // @notice gets randomness for adventurer
@@ -441,32 +417,20 @@ mod tests {
         let mut adventurer = ImplAdventurer::new(ItemId::Wand);
 
         // adventurers should start with full health
-        assert(
-            AdventurerUtils::is_health_full(adventurer.health, adventurer.stats.vitality) == true,
-            'should start with full health'
-        );
+        assert(adventurer.is_health_full() == true, 'should start with full health');
 
         // increase max health via vitality boost
         // health is no longer technically full
         adventurer.stats.vitality = 2;
-        assert(
-            AdventurerUtils::is_health_full(adventurer.health, adventurer.stats.vitality) == false,
-            'vitality increased max'
-        );
+        assert(adventurer.is_health_full() == false, 'vitality increased max');
 
         // fill up health
         adventurer.increase_health(100);
-        assert(
-            AdventurerUtils::is_health_full(adventurer.health, adventurer.stats.vitality) == true,
-            'health should be full'
-        );
+        assert(adventurer.is_health_full() == true, 'health should be full');
 
         // deduct 1 health
         adventurer.decrease_health(1);
-        assert(
-            AdventurerUtils::is_health_full(adventurer.health, adventurer.stats.vitality) == false,
-            'health should not be full'
-        );
+        assert(adventurer.is_health_full() == false, 'health should not be full');
     }
 
     #[test]
@@ -476,25 +440,21 @@ mod tests {
 
         // assert starting state
         assert(
-            AdventurerUtils::get_max_health(adventurer.stats.vitality) == STARTING_HEALTH,
-            'advntr should have max health'
+            adventurer.stats.get_max_health() == STARTING_HEALTH, 'advntr should have max health'
         );
 
         // base case
         adventurer.stats.vitality = 1;
         // assert max health is starting health + single vitality increase
         assert(
-            AdventurerUtils::get_max_health(adventurer.stats.vitality) == STARTING_HEALTH
+            adventurer.stats.get_max_health() == STARTING_HEALTH
                 + HEALTH_INCREASE_PER_VITALITY.into(),
             'max health shuld be 120'
         );
 
         // extreme/overflow case
         adventurer.stats.vitality = 255;
-        assert(
-            AdventurerUtils::get_max_health(adventurer.stats.vitality) == MAX_ADVENTURER_HEALTH,
-            'wrong max health'
-        );
+        assert(adventurer.stats.get_max_health() == MAX_ADVENTURER_HEALTH, 'wrong max health');
     }
 
     #[test]
