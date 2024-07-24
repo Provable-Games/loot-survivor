@@ -120,6 +120,27 @@ impl ImplBag of IBag {
         }
     }
 
+    fn custom(item_1: u8, item_2: u8, item_3: u8, item_4: u8, item_5: u8, item_6: u8, item_7: u8, item_8: u8, item_9: u8, item_10: u8, item_11: u8, item_12: u8, item_13: u8, item_14: u8, item_15: u8) -> Bag {
+        Bag {
+            item_1: Item { id: item_1, xp: 400 },
+            item_2: Item { id: item_2, xp: 400 },
+            item_3: Item { id: item_3, xp: 400 },
+            item_4: Item { id: item_4, xp: 400 },
+            item_5: Item { id: item_5, xp: 400 },
+            item_6: Item { id: item_6, xp: 400 },
+            item_7: Item { id: item_7, xp: 400 },
+            item_8: Item { id: item_8, xp: 400 },
+            item_9: Item { id: item_9, xp: 400 },
+            item_10: Item { id: item_10, xp: 400 },
+            item_11: Item { id: item_11, xp: 400 },
+            item_12: Item { id: item_12, xp: 400 },
+            item_13: Item { id: item_13, xp: 400 },
+            item_14: Item { id: item_14, xp: 400 },
+            item_15: Item { id: item_15, xp: 400 },
+            mutated: false
+        }
+    }
+
     // @notice Retrieves an item from the bag by its id
     // @dev If the item with the specified id is not in the bag, it throws an error
     // @param self The instance of the Bag

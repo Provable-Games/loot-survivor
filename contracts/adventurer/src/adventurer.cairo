@@ -135,6 +135,29 @@ impl ImplAdventurer of IAdventurer {
             awaiting_item_specials: false
         }
     }
+    
+    fn custom(weapon: u8, chest: u8, head: u8, waist: u8, foot: u8, hand: u8, neck: u8, ring: u8, health: u16, gold: u16, strength: u8, dexterity: u8, vitality: u8, intelligence: u8, wisdom: u8, charisma: u8, luck: u8, xp: u16) -> Adventurer {
+        Adventurer {
+            health: health,
+            xp: xp,
+            stats: ImplStats::custom(strength, dexterity, vitality, intelligence, wisdom, charisma, luck),
+            gold: gold,
+            equipment: Equipment {
+                weapon: Item { id: weapon, xp: 400 },
+                chest: Item { id: chest, xp: 400 },
+                head: Item { id: head, xp: 400 },
+                waist: Item { id: waist, xp: 400 },
+                foot: Item { id: foot, xp: 400 },
+                hand: Item { id: hand, xp: 400 },
+                neck: Item { id: neck, xp: 400 },
+                ring: Item { id: ring, xp: 400 }
+            },
+            beast_health: BeastSettings::STARTER_BEAST_HEALTH,
+            stat_upgrades_available: 0,
+            mutated: false,
+            awaiting_item_specials: false
+        }
+    }
 
     // @notice Calculates the charisma potion discount for the adventurer based on their charisma stat.
     // @return The charisma potion discount.
