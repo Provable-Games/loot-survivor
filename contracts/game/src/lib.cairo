@@ -1648,6 +1648,7 @@ mod Game {
         _save_adventurer_metadata(ref self, adventurer_id, adventurer_meta);
         _save_adventurer_no_boosts(ref self, adventurer, adventurer_id);
 
+        // return the adventurer id
         adventurer_id
     }
 
@@ -2767,6 +2768,32 @@ mod Game {
     #[inline(always)]
     fn _save_bag(ref self: ContractState, adventurer_id: felt252, bag: Bag) {
         self._bag.write(adventurer_id, bag);
+    }
+
+    /// @title Apply Starting Stats
+    /// @notice Applies the starting stats to the adventurer.
+    /// @dev This function is called when the starting stats are applied to the adventurer.
+    /// @param self A reference to the ContractState object.
+    /// @param adventurer A reference to the adventurer.
+    /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
+    fn _apply_starting_stats(
+        self: @ContractState, ref adventurer: Adventurer, adventurer_id: felt252
+    ) {
+        let starting_stats = _load_adventurer_metadata(self, adventurer_id).starting_stats;
+        adventurer.stats.apply_stats(starting_stats);
+    }
+
+    /// @title Remove Starting Stats
+    /// @notice Removes the starting stats from the adventurer.
+    /// @dev This function is called when the starting stats are removed from the adventurer.
+    /// @param self A reference to the ContractState object.
+    /// @param adventurer A reference to the adventurer.
+    /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
+    fn _remove_starting_stats(
+        self: @ContractState, ref adventurer: Adventurer, adventurer_id: felt252
+    ) {
+        let starting_stats = _load_adventurer_metadata(self, adventurer_id).starting_stats;
+        adventurer.stats.remove_stats(starting_stats);
     }
 
     /// @title Load Adventurer Metadata
