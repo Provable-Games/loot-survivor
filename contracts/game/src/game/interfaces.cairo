@@ -18,7 +18,7 @@ trait IGame<TContractState> {
         golden_token_id: u256,
         vrf_fee_limit: u128,
         custom_renderer: ContractAddress
-    );
+    ) -> felt252;
     fn explore(ref self: TContractState, adventurer_id: felt252, till_beast: bool);
     fn attack(ref self: TContractState, adventurer_id: felt252, to_the_death: bool);
     fn flee(ref self: TContractState, adventurer_id: felt252, to_the_death: bool);

@@ -324,7 +324,7 @@ mod Game {
             golden_token_id: u256,
             vrf_fee_limit: u128,
             custom_renderer: ContractAddress
-        ) {
+        ) -> felt252 {
             // assert game terminal time has not been reached
             _assert_terminal_time_not_reached(@self);
 
@@ -343,7 +343,7 @@ mod Game {
             }
 
             // start the game
-            _start_game(ref self, weapon, name, vrf_fee_limit, custom_renderer);
+            _start_game(ref self, weapon, name, vrf_fee_limit, custom_renderer)
         }
 
         /// @title Explore Function
@@ -1427,7 +1427,7 @@ mod Game {
         name: felt252,
         vrf_fee_limit: u128,
         custom_renderer: ContractAddress
-    ) {
+    ) -> felt252 {
         // increment adventurer id (first adventurer is id 1)
         let adventurer_id = self._game_counter.read() + 1;
 
@@ -1469,6 +1469,9 @@ mod Game {
 
         _save_adventurer_metadata(ref self, adventurer_id, adventurer_meta);
         _save_adventurer_no_boosts(ref self, adventurer, adventurer_id);
+
+        // return the adventurer id
+        adventurer_id
     }
 
     fn _starter_beast_ambush(
