@@ -984,43 +984,6 @@ impl ImplAdventurer of IAdventurer {
         base_armor * (self.get_greatness() * NECKLACE_ARMOR_BONUS).into() / 100
     }
 
-    /// @notice Apply starting stats to the adventurer.
-    /// @param self The adventurer.
-    /// @param entropy Randomness input for the stat application.
-    /// @param starting_stat_count The number of starting stats to apply.
-    fn apply_starting_stats(ref self: Adventurer, entropy: u256, starting_stat_count: u8) {
-        let mut random_stats = AdventurerUtils::u256_to_u8_array(entropy);
-
-        assert(starting_stat_count.into() < random_stats.len(), 'stat count out of bounds');
-
-        loop {
-            match random_stats.pop_front() {
-                Option::Some(random_u8) => {
-                    let random_stat_index = random_u8 % 6;
-                    if random_stat_index == 0 {
-                        self.stats.strength += 1;
-                    } else if random_stat_index == 1 {
-                        self.stats.dexterity += 1;
-                    } else if random_stat_index == 2 {
-                        self.stats.vitality += 1;
-                    } else if random_stat_index == 3 {
-                        self.stats.charisma += 1;
-                    } else if random_stat_index == 4 {
-                        self.stats.intelligence += 1;
-                    } else if random_stat_index == 5 {
-                        self.stats.wisdom += 1;
-                    } else {
-                        panic_with_felt252('stat out of range');
-                    }
-                },
-                Option::None(_) => { break; }
-            };
-        };
-
-        // credit adventurer with health from their vitality starting stats
-        self.health += self.stats.get_max_health() - STARTING_HEALTH;
-    }
-
     fn get_max_health(self: Stats) -> u16 {
         // Calculate vitality boost, casting to u16 to prevent overflow during multiplication
         let vitality_boost: u16 = (self.vitality.into() * HEALTH_INCREASE_PER_VITALITY.into());

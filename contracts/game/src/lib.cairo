@@ -361,7 +361,7 @@ mod Game {
             }
 
             // start the game
-            _start_game(ref self, weapon, name, custom_renderer, delay_reveal)
+            _start_game(ref self, weapon, name, custom_renderer, delay_reveal, golden_token_id)
         }
 
         /// @title Explore Function
@@ -1206,7 +1206,12 @@ mod Game {
         adventurer_entropy: felt252
     ) {
         // reveal and apply starting stats
-        adventurer.apply_starting_stats(adventurer_entropy.into(), NUM_STARTING_STATS);
+        adventurer.stats.apply_starting_stats(adventurer_entropy.into(), NUM_STARTING_STATS);
+
+        // credit adventurer with health from their vitality starting stats
+        adventurer.health += adventurer.stats.get_max_health() - STARTING_HEALTH;
+
+        // save adventurer
         _save_adventurer(ref self, ref adventurer, adventurer_id);
 
         // create adventurer state for UpgradesAvailable event
@@ -1603,7 +1608,8 @@ mod Game {
         weapon: u8,
         name: felt252,
         custom_renderer: ContractAddress,
-        delay_stat_reveal: bool
+        delay_stat_reveal: bool,
+        golden_token_id: u256
     ) -> felt252 {
         // increment adventurer id (first adventurer is id 1)
         let adventurer_id = self._game_count.read() + 1;
@@ -1640,7 +1646,15 @@ mod Game {
         self.erc721.mint(get_caller_address(), adventurer_id.into());
 
         // emit events 
-        __event_StartGame(ref self, adventurer, adventurer_id, adventurer_meta);
+        __event_StartGame(
+            ref self,
+            adventurer,
+            adventurer_id,
+            adventurer_meta,
+            name,
+            golden_token_id,
+            custom_renderer
+        );
         __event_AmbushedByBeast(ref self, adventurer, adventurer_id, beast_battle_details);
 
         // save adventurer details
@@ -3257,7 +3271,9 @@ mod Game {
     struct StartGame {
         adventurer_state: AdventurerState,
         adventurer_meta: AdventurerMetadata,
-        reveal_block: u64,
+        adventurer_name: felt252,
+        golden_token_id: u256,
+        custom_renderer: ContractAddress
     }
 
     #[derive(Drop, starknet::Event)]
@@ -3593,16 +3609,25 @@ mod Game {
         ref self: ContractState,
         adventurer: Adventurer,
         adventurer_id: felt252,
-        adventurer_meta: AdventurerMetadata
+        adventurer_meta: AdventurerMetadata,
+        adventurer_name: felt252,
+        golden_token_id: u256,
+        custom_renderer: ContractAddress
     ) {
         let adventurer_entropy = _get_adventurer_entropy(@self, adventurer_id);
         let adventurer_state = AdventurerState {
             owner: _get_owner(@self, adventurer_id), adventurer_id, adventurer_entropy, adventurer
         };
-
-        let reveal_block = 0; // TODO: consider removing this
-
-        self.emit(StartGame { adventurer_state, adventurer_meta, reveal_block });
+        self
+            .emit(
+                StartGame {
+                    adventurer_state,
+                    adventurer_meta,
+                    adventurer_name,
+                    golden_token_id,
+                    custom_renderer
+                }
+            );
     }
 
     fn __event_DiscoveredGold(

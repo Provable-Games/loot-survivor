@@ -1302,11 +1302,10 @@ mod tests {
 
         // verify potion price
         assert(
-            POTION_PRICE * adventurer_level.into() < adventurer.stats.charisma.into(),
-            'not underflowing potion price'
+            potion_price == (POTION_PRICE * adventurer_level.into())
+                - adventurer.stats.charisma.into(),
+            'wrong lvl2 potion price'
         );
-
-        assert(potion_price == MINIMUM_POTION_PRICE, 'potion price should be min');
     }
 
     #[test]
