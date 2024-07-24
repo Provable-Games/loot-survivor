@@ -1067,7 +1067,7 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(101000)]
+    #[available_gas(9000)]
     fn test_get_item_gas() {
         let item = Item { id: 11, xp: 0 };
 
