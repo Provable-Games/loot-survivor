@@ -9,10 +9,9 @@ type u16 = number;
 type u8 = number;
 
 type AdventurerMetadata = {
-  startEntropy: string;
-  startingStats: Stats;
-  interfaceCamel: boolean;
-  name: u128;
+  birthDate: u64;
+  deathDate: u64;
+  delayStatReveal: boolean;
 };
 
 type Stats = {
@@ -144,7 +143,9 @@ type AdventurerStateWithBag = {
 export type StartGameEvent = {
   adventurerState: AdventurerState;
   adventurerMeta: AdventurerMetadata;
-  revealBlock: u64;
+  name: number;
+  goldenTokenId: number;
+  customRenderer: ContractAddress;
 };
 
 export type DiscoveredHealthEvent = {

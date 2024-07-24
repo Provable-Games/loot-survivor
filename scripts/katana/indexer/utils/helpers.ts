@@ -14,6 +14,7 @@ export function insertAdventurer({
   wisdom,
   charisma,
   gold,
+  actions,
   weapon,
   chest,
   head,
@@ -25,8 +26,10 @@ export function insertAdventurer({
   beastHealth,
   statUpgrades,
   name,
-  startEntropy,
-  revealBlock,
+  birthDate,
+  deathDate,
+  goldenTokenId,
+  customRenderer,
   createdTime,
   lastUpdatedTime,
   timestamp,
@@ -51,6 +54,7 @@ export function insertAdventurer({
         wisdom: encodeIntAsBytes(BigInt(wisdom)),
         charisma: encodeIntAsBytes(BigInt(charisma)),
         gold: encodeIntAsBytes(BigInt(gold)),
+        actions: encodeIntAsBytes(BigInt(actions)),
         weapon: checkExistsInt(BigInt(weapon)),
         chest: checkExistsInt(BigInt(chest)),
         head: checkExistsInt(BigInt(head)),
@@ -62,8 +66,10 @@ export function insertAdventurer({
         beastHealth: encodeIntAsBytes(BigInt(beastHealth)),
         statUpgrades: checkExistsInt(BigInt(statUpgrades)),
         name: checkExistsInt(BigInt(name)),
-        startEntropy: encodeIntAsBytes(BigInt(startEntropy)),
-        revealBlock: encodeIntAsBytes(BigInt(revealBlock)),
+        birthDate: birthDate,
+        deathDate: deathDate,
+        goldenTokenId: checkExistsInt(BigInt(goldenTokenId)),
+        customRenderer: checkExistsInt(BigInt(customRenderer)),
         createdTime: createdTime,
         lastUpdatedTime: lastUpdatedTime,
         timestamp,
@@ -180,6 +186,9 @@ export function updateAdventurer({
         charisma: encodeIntAsBytes(BigInt(adventurer.stats.charisma)),
         luck: encodeIntAsBytes(BigInt(adventurer.stats.luck)),
         gold: encodeIntAsBytes(BigInt(adventurer.gold)),
+        battleActionCount: encodeIntAsBytes(
+          BigInt(adventurer.battleActionCount)
+        ),
         weapon: checkExistsInt(BigInt(adventurer.equipment.weapon.id)),
         chest: checkExistsInt(BigInt(adventurer.equipment.chest.id)),
         head: checkExistsInt(BigInt(adventurer.equipment.head.id)),
@@ -193,6 +202,27 @@ export function updateAdventurer({
           BigInt(adventurer.statsUpgradesAvailable)
         ),
         lastUpdatedTime: timestamp,
+        timestamp,
+      },
+    },
+  };
+}
+
+export function updateAdventurerOwner({
+  adventurerId,
+  newOwner,
+  timestamp,
+}: any) {
+  const entity = {
+    id: checkExistsInt(BigInt(adventurerId)),
+  };
+
+  return {
+    entity,
+    update: {
+      $set: {
+        ...entity,
+        owner: checkExistsInt(BigInt(newOwner)),
         timestamp,
       },
     },
@@ -525,6 +555,23 @@ export function insertHighScore({ adventurerId, timestamp, totalPayout }: any) {
         ...entity,
         timestamp,
         totalPayout: totalPayout,
+      },
+    },
+  };
+}
+
+export function updateItemsOwner({ adventurerId, timestamp, newOwner }: any) {
+  const entity = {
+    adventurerId: checkExistsInt(BigInt(adventurerId)),
+  };
+
+  return {
+    entity,
+    update: {
+      $set: {
+        ...entity,
+        ownerAddress: checkExistsInt(BigInt(newOwner)),
+        timestamp,
       },
     },
   };

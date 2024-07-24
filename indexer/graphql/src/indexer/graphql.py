@@ -675,9 +675,11 @@ class AdventurersFilter:
     ring: Optional[FeltValueFilter] = None
     beastHealth: Optional[FeltValueFilter] = None
     statUpgrades: Optional[FeltValueFilter] = None
-    startEntropy: Optional[FeltValueFilter] = None
-    revealBlock: Optional[FeltValueFilter] = None
-    actionsPerBlock: Optional[FeltValueFilter] = None
+    birthDate: Optional[OrderByInput] = None
+    deathDate: Optional[OrderByInput] = None
+    goldenTokenId: Optional[OrderByInput] = None
+    customRenderer: Optional[OrderByInput] = None
+    battleActionCount: Optional[OrderByInput] = None
     gold: Optional[FeltValueFilter] = None
     createdTime: Optional[OrderByInput] = None
     lastUpdatedTime: Optional[DateTimeFilter] = None
@@ -801,9 +803,11 @@ class AdventurersOrderByInput:
     ring: Optional[OrderByInput] = None
     beastHealth: Optional[OrderByInput] = None
     statUpgrades: Optional[OrderByInput] = None
-    startEntropy: Optional[OrderByInput] = None
-    revealBlock: Optional[OrderByInput] = None
-    actionsPerBlock: Optional[OrderByInput] = None
+    birthDate: Optional[OrderByInput] = None
+    deathDate: Optional[OrderByInput] = None
+    goldenTokenId: Optional[OrderByInput] = None
+    customRenderer: Optional[OrderByInput] = None
+    battleActionCount: Optional[OrderByInput] = None
     gold: Optional[OrderByInput] = None
     createdTime: Optional[OrderByInput] = None
     lastUpdatedTime: Optional[OrderByInput] = None
@@ -927,8 +931,11 @@ class Adventurer:
     ring: Optional[ItemValue]
     beastHealth: Optional[FeltValue]
     statUpgrades: Optional[FeltValue]
-    startEntropy: Optional[FeltValue]
-    revealBlock: Optional[FeltValue]
+    birthDate: Optional[str]
+    deathDate: Optional[str]
+    goldenTokenId: Optional[FeltValue]
+    customRenderer: Optional[FeltValue]
+    battleActionCount: Optional[FeltValue]
     gold: Optional[FeltValue]
     createdTime: Optional[str]
     lastUpdatedTime: Optional[str]
@@ -960,8 +967,11 @@ class Adventurer:
             ring=data["ring"],
             beastHealth=data["beastHealth"],
             statUpgrades=data["statUpgrades"],
-            startEntropy=data["startEntropy"],
-            revealBlock=data["revealBlock"],
+            birthDate=data["birthDate"],
+            deathDate=data["deathDate"],
+            goldenTokenId=data["goldenTokenId"],
+            customRenderer=data["customRenderer"],
+            battleActionCount=data["battleActionCount"],
             gold=data["gold"],
             createdTime=data["createdTime"],
             lastUpdatedTime=data["lastUpdatedTime"],
@@ -1597,19 +1607,17 @@ async def run_graphql_api(mongo=None, port="8080"):
         },
     )
 
-
-
     runner = web.AppRunner(app)
     await runner.setup()
 
     # Comment out with path to your certs if deploying with SSL support
-    #ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    #ssl_context.load_cert_chain(
-        #"/etc/letsencrypt/live/fullchain.pem",
-        #"/etc/letsencrypt/live/privkey.pem",
+    # ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    # ssl_context.load_cert_chain(
+    # "/etc/letsencrypt/live/fullchain.pem",
+    # "/etc/letsencrypt/live/privkey.pem",
     # )
-    #site = web.TCPSite(runner, "0.0.0.0", int(port), ssl_context=ssl_context)
-    
+    # site = web.TCPSite(runner, "0.0.0.0", int(port), ssl_context=ssl_context)
+
     site = web.TCPSite(runner, "0.0.0.0", int(port))
     await site.start()
 

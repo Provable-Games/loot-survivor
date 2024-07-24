@@ -281,9 +281,9 @@ export function processData(
           startGameEvent.adventurerState["adventurer"]["beastHealth"],
         statUpgrades:
           startGameEvent.adventurerState["adventurer"]["statUpgradesAvailable"],
-        name: feltToString(startGameEvent.adventurerMeta["name"]),
-        startEntropy: startGameEvent.adventurerMeta["startEntropy"],
-        revealBlock: startGameEvent.revealBlock,
+        name: feltToString(startGameEvent["name"]),
+        birthDate: startGameEvent.adventurerMeta["birthDate"],
+        deathDate: startGameEvent.adventurerMeta["deathDate"],
         createdTime: new Date(),
         lastUpdatedTime: new Date(), // Use this date for now though it is block_timestamp in indexer
         timestamp: new Date(),

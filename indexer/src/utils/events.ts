@@ -96,8 +96,9 @@ export const parseAdventurer = combineParsers({
   statsUpgradesAvailable: { index: 4, parser: parseU8 },
   stats: { index: 5, parser: parseStats },
   equipment: { index: 6, parser: parseEquipment },
-  actions: { index: 7, parser: parseU16 },
+  battleActionCount: { index: 7, parser: parseU16 },
   mutated: { index: 8, parser: parseBoolean },
+  awaitingItemSpecials: { index: 9, parser: parseBoolean },
 });
 
 export const parseAdventurerState = combineParsers({
@@ -177,16 +178,17 @@ export const parseAdventurerDied = combineParsers({
 });
 
 export const parseAdventurerMetadata = combineParsers({
-  startEntropy: { index: 0, parser: parseU128 },
-  startingStats: { index: 1, parser: parseStats },
-  interfaceCamel: { index: 2, parser: parseBoolean },
-  name: { index: 3, parser: parseU128 },
+  birthDate: { index: 0, parser: parseU64 },
+  deathDate: { index: 1, parser: parseU64 },
+  delayStatReveal: { index: 2, parser: parseBoolean },
 });
 
 export const parseStartGame = combineParsers({
   adventurerState: { index: 0, parser: parseAdventurerState },
   adventurerMeta: { index: 1, parser: parseAdventurerMetadata },
-  revealBlock: { index: 2, parser: parseU64 },
+  name: { index: 2, parser: parseFelt252 },
+  goldenTokenId: { index: 3, parser: parseU256 },
+  customRenderer: { index: 4, parser: parseFelt252 },
 });
 
 export const parseBag = combineParsers({
