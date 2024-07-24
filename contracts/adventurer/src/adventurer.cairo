@@ -163,6 +163,7 @@ impl ImplAdventurer of IAdventurer {
             },
             beast_health: BeastSettings::STARTER_BEAST_HEALTH,
             stat_upgrades_available: 0,
+            battle_action_count: 0,
             mutated: false,
             awaiting_item_specials: false
         }
