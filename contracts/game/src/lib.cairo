@@ -541,6 +541,8 @@ mod Game {
 
                 let (critical_hit_rnd, attack_location_rnd) = adventurer
                     .get_battle_randomness(adventurer_entropy);
+                let (critical_hit_rnd, attack_location_rnd) = adventurer
+                    .get_battle_randomness(adventurer_entropy);
 
                 // process beast attack
                 let beast_battle_details = _beast_attack(
@@ -2127,8 +2129,11 @@ mod Game {
         // get two random numbers using adventurer xp and health as part of entropy
         let (critical_hit_rnd, attack_location_rnd) = adventurer
             .get_battle_randomness(adventurer_entropy);
+        let (critical_hit_rnd, attack_location_rnd) = adventurer
+            .get_battle_randomness(adventurer_entropy);
 
         // attack beast and get combat result that provides damage breakdown
+        let combat_result = adventurer.attack(weapon_combat_spec, beast, critical_hit_rnd);
         let combat_result = adventurer.attack(weapon_combat_spec, beast, critical_hit_rnd);
 
         // provide critical hit as a boolean for events
@@ -2309,7 +2314,7 @@ mod Game {
                 adventurer_id,
                 beast,
                 beast_seed,
-                ambush_entropy,
+                flee_entropy,
                 ambush_entropy,
                 false
             );
