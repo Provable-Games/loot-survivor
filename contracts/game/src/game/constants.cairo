@@ -14,7 +14,8 @@ mod messages {
     const BLOCK_NUMBER_ERROR: felt252 = 'Too soon update';
     const DEAD_ADVENTURER: felt252 = 'Adventurer is dead';
     const HEALTH_FULL: felt252 = 'Health already full';
-    const ADVENTURER_NOT_IDLE: felt252 = 'Adventurer is not idle';
+    const ADVENTURER_NOT_EXPIRED: felt252 = 'Adventurer not expired';
+    const GAME_EXPIRED: felt252 = 'Game has expired';
     const ONE_EXPLORE_PER_BLOCK: felt252 = 'One explore per block';
     const INSUFFICIENT_STAT_UPGRADES: felt252 = 'insufficient stat upgrades';
     const TOO_MANY_ITEMS: felt252 = 'Too many items';
@@ -39,6 +40,7 @@ mod messages {
     const VALID_BLOCK_HASH_UNAVAILABLE: felt252 = 'valid hash not yet available';
     const ADVENTURER_ENTROPY_NOT_SET: felt252 = 'adventurer entropy not set';
     const WAITING_FOR_ITEM_SPECIALS: felt252 = 'waiting for item specials';
+    const FETCHING_ETH_PRICE_ERROR: felt252 = 'error fetching eth price';
 }
 
 // TODO: Update for mainnet

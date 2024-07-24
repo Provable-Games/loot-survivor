@@ -30,7 +30,8 @@ mod tests {
     use adventurer::{
         stats::Stats, adventurer_meta::{AdventurerMetadata},
         constants::adventurer_constants::{
-            STARTING_GOLD, POTION_HEALTH_AMOUNT, POTION_PRICE, STARTING_HEALTH, MAX_BLOCK_COUNT
+            STARTING_GOLD, POTION_HEALTH_AMOUNT, POTION_PRICE, STARTING_HEALTH, MAX_BLOCK_COUNT,
+            MINIMUM_POTION_PRICE
         },
         adventurer::{Adventurer, ImplAdventurer, IAdventurer}, item::{Item, ImplItem},
         bag::{Bag, IBag}, adventurer_utils::AdventurerUtils
@@ -259,12 +260,7 @@ mod tests {
     ) {
         game
             .new_game(
-                INTERFACE_ID(),
-                starting_weapon,
-                'loothero',
-                golden_token_id,
-                4000000000000000,
-                ZERO_ADDRESS()
+                INTERFACE_ID(), starting_weapon, 'loothero', golden_token_id, false, ZERO_ADDRESS()
             );
 
         let original_adventurer = game.get_adventurer(ADVENTURER_ID);
@@ -289,17 +285,19 @@ mod tests {
                 starting_weapon,
                 name,
                 DEFAULT_NO_GOLDEN_TOKEN.into(),
-                4000000000000000,
+                false,
                 ZERO_ADDRESS()
             );
 
         // get adventurer state
         let adventurer = game.get_adventurer(ADVENTURER_ID);
+        let adventurer_name = game.get_adventurer_name(ADVENTURER_ID);
         let adventurer_meta_data = game.get_adventurer_meta(ADVENTURER_ID);
 
         // verify starting weapon
         assert(adventurer.equipment.weapon.id == starting_weapon, 'wrong starting weapon');
-        assert(adventurer_meta_data.name == name, 'wrong player name');
+        assert(adventurer_name == name, 'wrong player name');
+        assert(adventurer_meta_data.birth_date == starting_time, 'wrong birth date');
         assert(adventurer.xp == 0, 'should start with 0 xp');
         assert(
             adventurer.beast_health == BeastSettings::STARTER_BEAST_HEALTH,
@@ -612,17 +610,19 @@ mod tests {
                 starting_weapon,
                 name,
                 DEFAULT_NO_GOLDEN_TOKEN.into(),
-                4000000000000000,
+                false,
                 ZERO_ADDRESS()
             );
 
         // get adventurer state
         let adventurer = game.get_adventurer(ADVENTURER_ID);
+        let adventurer_name = game.get_adventurer_name(ADVENTURER_ID);
         let adventurer_meta_data = game.get_adventurer_meta(ADVENTURER_ID);
 
         // verify starting weapon
         assert(adventurer.equipment.weapon.id == starting_weapon, 'wrong starting weapon');
-        assert(adventurer_meta_data.name == name, 'wrong player name');
+        assert(adventurer_name == name, 'wrong player name');
+        assert(adventurer_meta_data.birth_date == starting_timestamp, 'wrong birth date');
         assert(adventurer.xp == 0, 'should start with 0 xp');
         assert(
             adventurer.beast_health == BeastSettings::STARTER_BEAST_HEALTH,
@@ -1233,7 +1233,7 @@ mod tests {
 
         // get number of potions required to reach full health
         let potions_to_full_health: u8 = (POTION_HEALTH_AMOUNT
-            / (AdventurerUtils::get_max_health(adventurer.stats.vitality) - adventurer.health))
+            / (adventurer.stats.get_max_health() - adventurer.health))
             .try_into()
             .unwrap();
 
@@ -1286,22 +1286,26 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(100000000)]
-    fn test_get_potion_price() {
+    fn test_get_potion_price_underflow() {
         let mut game = new_adventurer(1000, 1696201757);
         let potion_price = game.get_potion_price(ADVENTURER_ID);
         let adventurer_level = game.get_adventurer(ADVENTURER_ID).get_level();
         assert(potion_price == POTION_PRICE * adventurer_level.into(), 'wrong lvl1 potion price');
 
         // defeat starter beast and advance to level 2
-        game.attack(ADVENTURER_ID, false);
+        game.attack(ADVENTURER_ID, true);
 
         // get level 2 potion price
         let potion_price = game.get_potion_price(ADVENTURER_ID);
-        let adventurer_level = game.get_adventurer(ADVENTURER_ID).get_level();
+        let mut adventurer = game.get_adventurer(ADVENTURER_ID);
+        let adventurer_level = adventurer.get_level();
 
         // verify potion price
-        assert(potion_price == POTION_PRICE * adventurer_level.into(), 'wrong lvl2 potion price');
+        assert(
+            potion_price == (POTION_PRICE * adventurer_level.into())
+                - adventurer.stats.charisma.into(),
+            'wrong lvl2 potion price'
+        );
     }
 
     #[test]
@@ -1594,11 +1598,11 @@ mod tests {
         let mut items_to_purchase = ArrayTrait::<ItemPurchase>::new();
 
         if chests_armor_on_market.len() > 0 {
-            chests_armor_id = *chests_armor_on_market.at(0);
+            chests_armor_id = *chests_armor_on_market.at(1);
             items_to_purchase.append(ItemPurchase { item_id: chests_armor_id, equip: true });
         }
         if head_armor_on_market.len() > 0 {
-            head_armor_id = *head_armor_on_market.at(0);
+            head_armor_id = *head_armor_on_market.at(1);
             items_to_purchase.append(ItemPurchase { item_id: head_armor_id, equip: false });
         }
 
@@ -1632,45 +1636,46 @@ mod tests {
         (bp * price.into()) / 1000
     }
 
-    #[test]
-    #[available_gas(90000000)]
-    fn test_bp_distribution() {
-        let (_, lords) = new_adventurer_with_lords(1000);
+    // TODO: re-enable this test once we move to Foundry
+    // #[test]
+    // #[available_gas(90000000)]
+    // fn test_bp_distribution() {
+    //     let (_, lords) = new_adventurer_with_lords(1000);
 
-        // stage 0
-        assert(lords.balance_of(DAO()) == COST_TO_PLAY.into(), 'wrong stage 1 balance');
+    //     // stage 0
+    //     assert(lords.balance_of(DAO()) == COST_TO_PLAY.into(), 'wrong stage 1 balance');
 
-        // stage 1
-        testing::set_block_number(1001 + BLOCKS_IN_A_WEEK * 2);
+    //     // stage 1
+    //     testing::set_block_number(1001 + BLOCKS_IN_A_WEEK * 2);
 
-        // spawn new
+    //     // spawn new
 
-        // DAO doesn't get anything more until stage 2
-        assert(lords.balance_of(DAO()) == COST_TO_PLAY.into(), 'wrong stage 1 balance');
+    //     // DAO doesn't get anything more until stage 2
+    //     assert(lords.balance_of(DAO()) == COST_TO_PLAY.into(), 'wrong stage 1 balance');
 
-        let mut _rewards = Rewards {
-            BIBLIO: _calculate_payout(REWARD_DISTRIBUTIONS_BP::CREATOR, COST_TO_PLAY),
-            PG: _calculate_payout(REWARD_DISTRIBUTIONS_BP::CREATOR, COST_TO_PLAY),
-            CLIENT_PROVIDER: _calculate_payout(
-                REWARD_DISTRIBUTIONS_BP::CLIENT_PROVIDER, COST_TO_PLAY
-            ),
-            FIRST_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::FIRST_PLACE, COST_TO_PLAY),
-            SECOND_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::SECOND_PLACE, COST_TO_PLAY),
-            THIRD_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::THIRD_PLACE, COST_TO_PLAY)
-        };
-    // week.FIRST_PLACE.print();
+    //     let mut _rewards = Rewards {
+    //         BIBLIO: _calculate_payout(REWARD_DISTRIBUTIONS_BP::CREATOR, COST_TO_PLAY),
+    //         PG: _calculate_payout(REWARD_DISTRIBUTIONS_BP::CREATOR, COST_TO_PLAY),
+    //         CLIENT_PROVIDER: _calculate_payout(
+    //             REWARD_DISTRIBUTIONS_BP::CLIENT_PROVIDER, COST_TO_PLAY
+    //         ),
+    //         FIRST_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::FIRST_PLACE, COST_TO_PLAY),
+    //         SECOND_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::SECOND_PLACE, COST_TO_PLAY),
+    //         THIRD_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::THIRD_PLACE, COST_TO_PLAY)
+    //     };
+    // // week.FIRST_PLACE.print();
 
-    // assert(lords.balance_of(DAO()) == COST_TO_PLAY, 'wrong DAO payout');
-    // assert(week.INTERFACE == 0, 'no payout in stage 1');
-    // assert(week.FIRST_PLACE == _calculate_payout(
-    //         REWARD_DISTRIBUTIONS_PHASE1_BP::FIRST_PLACE, cost_to_play
-    //     ), 'wrong FIRST_PLACE payout 1');
-    // assert(week.SECOND_PLACE == 0x6f05b59d3b200000, 'wrong SECOND_PLACE payout 1');
-    // assert(week.THIRD_PLACE == 0x6f05b59d3b20000, 'wrong THIRD_PLACE payout 1');
+    // // assert(lords.balance_of(DAO()) == COST_TO_PLAY, 'wrong DAO payout');
+    // // assert(week.INTERFACE == 0, 'no payout in stage 1');
+    // // assert(week.FIRST_PLACE == _calculate_payout(
+    // //         REWARD_DISTRIBUTIONS_PHASE1_BP::FIRST_PLACE, cost_to_play
+    // //     ), 'wrong FIRST_PLACE payout 1');
+    // // assert(week.SECOND_PLACE == 0x6f05b59d3b200000, 'wrong SECOND_PLACE payout 1');
+    // // assert(week.THIRD_PLACE == 0x6f05b59d3b20000, 'wrong THIRD_PLACE payout 1');
 
-    // (COST_TO_PLAY * 11 / 10).print();
-    // (COST_TO_PLAY * 9 / 10).print();
-    }
+    // // (COST_TO_PLAY * 11 / 10).print();
+    // // (COST_TO_PLAY * 9 / 10).print();
+    // }
 
     #[test]
     #[available_gas(9000000000)]
@@ -1727,52 +1732,55 @@ mod tests {
         add_adventurer_to_game(ref game, 1, ItemId::Wand);
     }
 
-    #[test]
-    #[available_gas(9000000000)]
-    fn test_golden_token_can_play() {
-        let golden_token_id = 1;
-        let starting_block = 364063;
-        let starting_timestamp = 1698678554;
-        let terminal_timestamp = 0;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
-        assert(game.can_play(1), 'should be able to play');
-        add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
-        assert(!game.can_play(1), 'should not be able to play');
-        testing::set_block_timestamp(starting_timestamp + DAY);
-        assert(game.can_play(1), 'should be able to play again');
-    }
+    // TODO: re-enable this test once we move to Foundry
+    // #[test]
+    // #[available_gas(9000000000)]
+    // fn test_golden_token_can_play() {
+    //     let golden_token_id = 1;
+    //     let starting_block = 364063;
+    //     let starting_timestamp = 1698678554;
+    //     let terminal_timestamp = 0;
+    //     let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
+    //     assert(game.can_play(1), 'should be able to play');
+    //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
+    //     assert(!game.can_play(1), 'should not be able to play');
+    //     testing::set_block_timestamp(starting_timestamp + DAY);
+    //     assert(game.can_play(1), 'should be able to play again');
+    // }
 
-    #[test]
-    #[available_gas(9000000000)]
-    #[should_panic(
-        expected: ('ERC721: invalid token ID', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED')
-    )]
-    fn test_golden_token_unminted_token() {
-        let golden_token_id = 500;
-        let starting_block = 364063;
-        let starting_timestamp = 1698678554;
-        let terminal_timestamp = 0;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
-        add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
-    }
+    // TODO: re-enable this test once we move to Foundry
+    // #[test]
+    // #[available_gas(9000000000)]
+    // #[should_panic(
+    //     expected: ('ERC721: invalid token ID', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED')
+    // )]
+    // fn test_golden_token_unminted_token() {
+    //     let golden_token_id = 500;
+    //     let starting_block = 364063;
+    //     let starting_timestamp = 1698678554;
+    //     let terminal_timestamp = 0;
+    //     let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
+    //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
+    // }
 
-    #[test]
-    #[available_gas(9000000000)]
-    #[should_panic(expected: ('Token already used today', 'ENTRYPOINT_FAILED'))]
-    fn test_golden_token_double_play() {
-        let golden_token_id = 1;
-        let starting_block = 364063;
-        let starting_timestamp = 1698678554;
-        let terminal_timestamp = 0;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
-        add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
+    // TODO: re-enable this test once we move to Foundry
+    // #[test]
+    // #[available_gas(9000000000)]
+    // #[should_panic(expected: ('Token already used today', 'ENTRYPOINT_FAILED'))]
+    // fn test_golden_token_double_play() {
+    //     let golden_token_id = 1;
+    //     let starting_block = 364063;
+    //     let starting_timestamp = 1698678554;
+    //     let terminal_timestamp = 0;
+    //     let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
+    //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
 
-        // roll blockchain forward 1 second less than a day
-        testing::set_block_timestamp(starting_timestamp + (DAY - 1));
+    //     // roll blockchain forward 1 second less than a day
+    //     testing::set_block_timestamp(starting_timestamp + (DAY - 1));
 
-        // try to play again with golden token which should cause panic
-        add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
-    }
+    //     // try to play again with golden token which should cause panic
+    //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
+    // }
 
     #[test]
     #[should_panic(expected: ('Cant drop during starter beast', 'ENTRYPOINT_FAILED'))]

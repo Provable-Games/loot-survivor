@@ -1,10 +1,7 @@
 use core::{
     array::{ArrayTrait, SpanTrait},
-    integer::{
-        u8_overflowing_add, u16_overflowing_add, u16_overflowing_sub, U128IntoU256,
-        u256_try_as_non_zero
-    },
-    option::OptionTrait, poseidon::poseidon_hash_span, result::ResultTrait, traits::{TryInto, Into}
+    integer::{u8_overflowing_add, u16_overflowing_add, u256_try_as_non_zero}, option::OptionTrait,
+    poseidon::poseidon_hash_span, result::ResultTrait, traits::{TryInto, Into}
 };
 use super::{
     constants::{
@@ -66,9 +63,9 @@ impl AdventurerUtils of IAdventurerUtils {
         }
     }
 
-    // TODO: Need to refactor this and apply_suffix_boost to ensure they
-    // stay insync. I think the design used for AdventurerClass in adventurer_meta
-    // is good. 
+    // @notice gets vitality item boost
+    // @param suffix: suffix of item
+    // @return u8: vitality item boost
     #[inline(always)]
     fn get_vitality_item_boost(suffix: u8) -> u8 {
         if (suffix == of_Power) {
@@ -108,32 +105,12 @@ impl AdventurerUtils of IAdventurerUtils {
         }
     }
 
-    // Returns the maximum health an adventurer can have.
-    // The maximum health is the sum of the starting health and the health increase due to the adventurer's vitality.
-    //
-    // @return The maximum health as a u16. If the total health would exceed the maximum possible health, 
-    //         then this value is capped to MAX_ADVENTURER_HEALTH.
+    /// @notice checks if adventurer's health is full
+    /// @param self: adventurer
+    /// @return bool: true if health is full, false otherwise
     #[inline(always)]
-    fn get_max_health(vitality: u8) -> u16 {
-        // Calculate vitality boost, casting to u16 to prevent overflow during multiplication
-        let vitality_boost: u16 = (vitality.into() * HEALTH_INCREASE_PER_VITALITY.into());
-
-        // Check if health calculation would result in overflow
-        if (u16_overflowing_add(STARTING_HEALTH, vitality_boost).is_ok()) {
-            // If it does not cause overflow, check if health + vitality boost is within maximum allowed health
-            if (STARTING_HEALTH + vitality_boost <= MAX_ADVENTURER_HEALTH) {
-                // if it is, return full boost
-                return (STARTING_HEALTH + vitality_boost);
-            }
-        }
-
-        // In the case of potential overflow or exceeding max adventurer health, return max adventurer health
-        MAX_ADVENTURER_HEALTH
-    }
-
-    #[inline(always)]
-    fn is_health_full(health: u16, vitality: u8) -> bool {
-        health == AdventurerUtils::get_max_health(vitality)
+    fn is_health_full(self: Adventurer) -> bool {
+        self.health == self.stats.get_max_health()
     }
 
     // @notice gets randomness for adventurer
@@ -148,18 +125,25 @@ impl AdventurerUtils of IAdventurerUtils {
         AdventurerUtils::split_hash(poseidon)
     }
 
-    // @notice gets randomness for adventurer with health included in entropy
-    // @param adventurer_xp: adventurer xp
-    // @param adventurer_entropy: adventurer entropy
-    // @param adventurer_health: adventurer health
-    // @return (u128, u128): tuple of randomness
-    fn get_randomness_with_health(
-        adventurer_xp: u16, adventurer_health: u16, adventurer_entropy: felt252,
-    ) -> (u128, u128) {
+    /// @title get_battle_randomness
+    /// @notice gets randomness for adventurer for use during battles
+    /// @dev this function increments battle action count so each battle action has unique randomness
+    /// @param adventurer_entropy: adventurer entropy
+    /// @return (u128, u128): tuple of randomness
+    fn get_battle_randomness(ref self: Adventurer, adventurer_entropy: felt252) -> (u128, u128) {
         let mut hash_span = ArrayTrait::<felt252>::new();
-        hash_span.append(adventurer_xp.into());
-        hash_span.append(adventurer_health.into());
+        hash_span.append(self.xp.into());
+        hash_span.append(self.battle_action_count.into());
         hash_span.append(adventurer_entropy);
+
+        // increment battle action count so each battle action has unique randomness
+        if (u8_overflowing_add(self.battle_action_count, 1).is_ok()) {
+            self.battle_action_count += 1;
+        } else {
+            // @dev if we overflow, reset battle action count back to 0
+            self.battle_action_count = 0;
+        }
+
         let poseidon = poseidon_hash_span(hash_span.span());
         AdventurerUtils::split_hash(poseidon)
     }
@@ -172,72 +156,6 @@ impl AdventurerUtils of IAdventurerUtils {
             felt_to_split.into(), u256_try_as_non_zero(U128_MAX.into()).unwrap()
         );
         (r.try_into().unwrap(), d.try_into().unwrap())
-    }
-
-    fn generate_starting_stats(entropy: u256, starting_stat_count: u8) -> Stats {
-        let mut starting_stats = Stats {
-            strength: 0,
-            dexterity: 0,
-            vitality: 0,
-            charisma: 0,
-            intelligence: 0,
-            wisdom: 0,
-            luck: 0,
-        };
-
-        let random_outcomes = AdventurerUtils::u256_to_u8_array(entropy);
-
-        // TODO: Use conditional compilation to only run this check in debug mode as not to waste gas in production
-        assert(starting_stat_count.into() < random_outcomes.len(), 'stat count out of bounds');
-
-        let mut i = 0;
-        loop {
-            if i == starting_stat_count.into() {
-                break;
-            }
-            let random_u8 = *random_outcomes.at(i);
-            let random_stat_index = random_u8 % 6;
-            if random_stat_index == 0 {
-                starting_stats.strength += 1;
-            } else if random_stat_index == 1 {
-                starting_stats.dexterity += 1;
-            } else if random_stat_index == 2 {
-                starting_stats.vitality += 1;
-            } else if random_stat_index == 3 {
-                starting_stats.charisma += 1;
-            } else if random_stat_index == 4 {
-                starting_stats.intelligence += 1;
-            } else if random_stat_index == 5 {
-                starting_stats.wisdom += 1;
-            } else {
-                panic_with_felt252('stat out of range');
-            }
-
-            i += 1;
-        };
-
-        starting_stats
-    }
-
-    fn u256_to_u8_array(value: u256) -> Array<u8> {
-        let mut result = ArrayTrait::<u8>::new();
-        result.append((value & MASK_8).try_into().unwrap());
-        result.append(((value / TWO_POW_8) & MASK_8).try_into().unwrap());
-        result.append(((value / TWO_POW_16) & MASK_8).try_into().unwrap());
-        result.append(((value / TWO_POW_24) & MASK_8).try_into().unwrap());
-        result.append(((value / TWO_POW_32) & MASK_8).try_into().unwrap());
-        result.append(((value / TWO_POW_40) & MASK_8).try_into().unwrap());
-        result.append(((value / TWO_POW_48) & MASK_8).try_into().unwrap());
-        result.append(((value / TWO_POW_56) & MASK_8).try_into().unwrap());
-        result.append(((value / TWO_POW_64) & MASK_8).try_into().unwrap());
-        result.append(((value / TWO_POW_72) & MASK_8).try_into().unwrap());
-        result.append(((value / TWO_POW_80) & MASK_8).try_into().unwrap());
-        result.append(((value / TWO_POW_88) & MASK_8).try_into().unwrap());
-        result.append(((value / TWO_POW_96) & MASK_8).try_into().unwrap());
-        result.append(((value / TWO_POW_104) & MASK_8).try_into().unwrap());
-        result.append(((value / TWO_POW_112) & MASK_8).try_into().unwrap());
-        result.append(((value / TWO_POW_120) & MASK_8).try_into().unwrap());
-        result
     }
 }
 const MASK_8: u256 = 0xFF;
@@ -278,180 +196,25 @@ mod tests {
     use loot::{constants::{ItemId}};
 
     #[test]
-    #[available_gas(286398)]
-    fn test_generate_starting_stats_gas() {
-        AdventurerUtils::generate_starting_stats(0, 1);
-    }
-
-    #[test]
-    #[available_gas(244018)]
-    #[should_panic(expected: ('stat count out of bounds',))]
-    fn test_generate_starting_stats_fail_out_of_bounds() {
-        AdventurerUtils::generate_starting_stats(0, 20);
-    }
-
-    #[test]
-    #[available_gas(2020662)]
-    fn test_generate_starting_stats() {
-        let starting_stat_count = 9;
-
-        // zero case
-        let entropy = 0;
-        let stats = AdventurerUtils::generate_starting_stats(entropy, starting_stat_count);
-        let stat_count = stats.strength
-            + stats.dexterity
-            + stats.vitality
-            + stats.intelligence
-            + stats.wisdom
-            + stats.charisma;
-        assert(stat_count == starting_stat_count, 'wrong stat total');
-        assert(stats.strength == 9, 'strength should be 9');
-        assert(stats.dexterity == 0, 'dexterity should be 0');
-        assert(stats.vitality == 0, 'vitality should be 0');
-        assert(stats.intelligence == 0, 'intelligence should be 0');
-        assert(stats.wisdom == 0, 'wisdom should be 0');
-        assert(stats.charisma == 0, 'charisma should be 0');
-
-        // max u128 case
-        let entropy = 0xffffffffffffffffffffffffffffffff;
-        let stats = AdventurerUtils::generate_starting_stats(entropy, starting_stat_count);
-        let stat_count = stats.strength
-            + stats.dexterity
-            + stats.vitality
-            + stats.intelligence
-            + stats.wisdom
-            + stats.charisma;
-        assert(stat_count == starting_stat_count, 'wrong stat total');
-        assert(stats.strength == 0, 'strength should be 0');
-        assert(stats.dexterity == 0, 'dexterity should be 0');
-        assert(stats.vitality == 0, 'vitality should be 0');
-        assert(stats.intelligence == 0, 'intelligence should be 0');
-        assert(stats.wisdom == 0, 'wisdom should be 0');
-        assert(stats.charisma == 9, 'charisma should be 9');
-
-        let mut hash_span = ArrayTrait::new();
-        hash_span.append(241);
-        hash_span.append(14212);
-        let poseidon = poseidon_hash_span(hash_span.span());
-        let stats = AdventurerUtils::generate_starting_stats(poseidon.into(), starting_stat_count);
-        let stat_count = stats.strength
-            + stats.dexterity
-            + stats.vitality
-            + stats.intelligence
-            + stats.wisdom
-            + stats.charisma;
-        assert(stat_count == starting_stat_count, 'wrong stat total');
-        assert(stats.strength == 2, 'strength should be 2');
-        assert(stats.dexterity == 3, 'dexterity should be 3');
-        assert(stats.vitality == 1, 'vitality should be 1');
-        assert(stats.intelligence == 0, 'intelligence should be 0');
-        assert(stats.wisdom == 1, 'wisdom should be 1');
-        assert(stats.charisma == 2, 'charisma should be 2');
-
-        let stats = AdventurerUtils::generate_starting_stats(
-            poseidon.into(), starting_stat_count + 5
-        );
-        let stat_count = stats.strength
-            + stats.dexterity
-            + stats.vitality
-            + stats.intelligence
-            + stats.wisdom
-            + stats.charisma;
-        assert(stat_count == starting_stat_count + 5, 'wrong stat total');
-        assert(stats.strength == 2, 'strength should be 2');
-        assert(stats.dexterity == 3, 'dexterity should be 3');
-        assert(stats.vitality == 2, 'vitality should be 2');
-        assert(stats.intelligence == 2, 'intelligence should be 2');
-        assert(stats.wisdom == 2, 'wisdom should be 2');
-        assert(stats.charisma == 3, 'charisma should be 3');
-    }
-
-    #[test]
-    #[available_gas(1448412)]
-    fn test_u128_to_u8_array() {
-        // zero case
-        let value = 0;
-        let values = AdventurerUtils::u256_to_u8_array(value);
-        let mut i = 0;
-        loop {
-            if i == values.len() {
-                break;
-            }
-
-            let value = *values.at(i);
-            assert(value == 0, 'all values should be 0');
-            i += 1;
-        };
-
-        // max u128 case
-        let value = 0xffffffffffffffffffffffffffffffff;
-        let values = AdventurerUtils::u256_to_u8_array(value);
-        let mut i = 0;
-        loop {
-            if i == values.len() {
-                break;
-            }
-
-            let value = *values.at(i);
-            assert(value == 255, 'all values should be 1');
-            i += 1;
-        };
-
-        // random case
-        let value =
-            0b00000110110100110000110010010111000001000110111100110010001111010010000001111110000110100111101100010101000000001111111101100101;
-
-        let values = AdventurerUtils::u256_to_u8_array(value);
-        assert(*values.at(15) == 6, 'rand15 should be 6');
-        assert(*values.at(14) == 211, 'rand14 should be 211');
-        assert(*values.at(13) == 12, 'rand13 should be 12');
-        assert(*values.at(12) == 151, 'rand12 should be 151');
-        assert(*values.at(11) == 4, 'rand11 should be 4');
-        assert(*values.at(10) == 111, 'rand10 should be 111');
-        assert(*values.at(9) == 50, 'rand9 should be 50');
-        assert(*values.at(8) == 61, 'rand8 should be 61');
-        assert(*values.at(7) == 32, 'rand7 should be 32');
-        assert(*values.at(6) == 126, 'rand6 should be 126');
-        assert(*values.at(5) == 26, 'rand5 should be 26');
-        assert(*values.at(4) == 123, 'rand4 should be 123');
-        assert(*values.at(3) == 21, 'rand3 should be 21');
-        assert(*values.at(2) == 0, 'rand2 should be 0');
-        assert(*values.at(1) == 255, 'rand1 should be 255');
-        assert(*values.at(0) == 101, 'rand0 should be 101');
-    }
-
-    #[test]
     #[available_gas(259644)]
     fn test_is_health_full() {
         let mut adventurer = ImplAdventurer::new(ItemId::Wand);
 
         // adventurers should start with full health
-        assert(
-            AdventurerUtils::is_health_full(adventurer.health, adventurer.stats.vitality) == true,
-            'should start with full health'
-        );
+        assert(adventurer.is_health_full() == true, 'should start with full health');
 
         // increase max health via vitality boost
         // health is no longer technically full
         adventurer.stats.vitality = 2;
-        assert(
-            AdventurerUtils::is_health_full(adventurer.health, adventurer.stats.vitality) == false,
-            'vitality increased max'
-        );
+        assert(adventurer.is_health_full() == false, 'vitality increased max');
 
         // fill up health
         adventurer.increase_health(100);
-        assert(
-            AdventurerUtils::is_health_full(adventurer.health, adventurer.stats.vitality) == true,
-            'health should be full'
-        );
+        assert(adventurer.is_health_full() == true, 'health should be full');
 
         // deduct 1 health
         adventurer.decrease_health(1);
-        assert(
-            AdventurerUtils::is_health_full(adventurer.health, adventurer.stats.vitality) == false,
-            'health should not be full'
-        );
+        assert(adventurer.is_health_full() == false, 'health should not be full');
     }
 
     #[test]
@@ -461,25 +224,21 @@ mod tests {
 
         // assert starting state
         assert(
-            AdventurerUtils::get_max_health(adventurer.stats.vitality) == STARTING_HEALTH,
-            'advntr should have max health'
+            adventurer.stats.get_max_health() == STARTING_HEALTH, 'advntr should have max health'
         );
 
         // base case
         adventurer.stats.vitality = 1;
         // assert max health is starting health + single vitality increase
         assert(
-            AdventurerUtils::get_max_health(adventurer.stats.vitality) == STARTING_HEALTH
+            adventurer.stats.get_max_health() == STARTING_HEALTH
                 + HEALTH_INCREASE_PER_VITALITY.into(),
             'max health shuld be 120'
         );
 
         // extreme/overflow case
         adventurer.stats.vitality = 255;
-        assert(
-            AdventurerUtils::get_max_health(adventurer.stats.vitality) == MAX_ADVENTURER_HEALTH,
-            'wrong max health'
-        );
+        assert(adventurer.stats.get_max_health() == MAX_ADVENTURER_HEALTH, 'wrong max health');
     }
 
     #[test]
@@ -532,5 +291,47 @@ mod tests {
         entropy = 5;
         armor = AdventurerUtils::get_random_attack_location(entropy);
         assert(armor == Slot::Chest(()), 'should be chest');
+    }
+
+    #[test]
+    fn test_get_battle_randomness() {
+        // Test case 1: Basic functionality
+        let entropy = 1;
+        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
+        assert(adventurer.battle_action_count == 0, 'Battle action should start at 0');
+        let (rand1, rand2) = AdventurerUtils::get_battle_randomness(ref adventurer, entropy);
+        assert(adventurer.battle_action_count == 1, 'Battle action should increment');
+        assert(rand1 != 0 && rand2 != 0, 'Randomness should not be zero');
+
+        // Test case 2: Different entropy produces different results
+        let entropy2 = 2;
+        let (rand3, rand4) = AdventurerUtils::get_battle_randomness(ref adventurer, entropy2);
+        assert(rand1 != rand3 || rand2 != rand4, 'entropy should affect rnd');
+
+        // Test case 3: XP affects randomness
+        adventurer.xp = 0;
+        adventurer.battle_action_count = 0;
+        let (rand7, rand8) = AdventurerUtils::get_battle_randomness(ref adventurer, entropy);
+        adventurer.xp = 1;
+        adventurer.battle_action_count = 0;
+        let (rand9, rand10) = AdventurerUtils::get_battle_randomness(ref adventurer, entropy);
+        assert(rand7 != rand9 || rand8 != rand10, 'XP should affect rnd');
+
+        // Test case 4: Battle action count affects randomness
+        adventurer.battle_action_count = 0;
+        let (rand11, rand12) = AdventurerUtils::get_battle_randomness(ref adventurer, entropy);
+        adventurer.battle_action_count = 1;
+        let (rand13, rand14) = AdventurerUtils::get_battle_randomness(ref adventurer, entropy);
+        assert(rand11 != rand13 || rand12 != rand14, 'battle count should affect rnd');
+
+        // Test case 5: Consecutive calls produce different results
+        let (rand15, rand16) = AdventurerUtils::get_battle_randomness(ref adventurer, entropy);
+        let (rand17, rand18) = AdventurerUtils::get_battle_randomness(ref adventurer, entropy);
+        assert(rand15 != rand17 || rand16 != rand18, 'rnd should change each call');
+
+        // Test case 6: Battle action count overflow
+        adventurer.battle_action_count = 255;
+        AdventurerUtils::get_battle_randomness(ref adventurer, entropy);
+        assert(adventurer.battle_action_count == 0, 'battle count should overflow');
     }
 }

@@ -205,13 +205,16 @@ fn generate_item(item: Item, bag: bool, item_specials_seed: felt252) -> ByteArra
 // @notice Generates adventurer metadata for the adventurer token uri
 // @param adventurer_id The adventurer's ID
 // @param adventurer The adventurer
+// @param adventurer_name The adventurer's name
 // @param adventurerMetadata The adventurer's metadata
 // @param bag The adventurer's bag
 // @param item_specials_seed The seed used to generate item specials
 // @return The generated adventurer metadata
+// TODO: include adventurer birth_date and death_date in svg
 fn create_metadata(
     adventurer_id: felt252,
     adventurer: Adventurer,
+    adventurer_name: felt252,
     adventurerMetadata: AdventurerMetadata,
     bag: Bag,
     item_specials_seed: felt252
@@ -223,8 +226,7 @@ fn create_metadata(
     let mut _name = Default::default();
     _name
         .append_word(
-            adventurerMetadata.name,
-            U256BytesUsedTraitImpl::bytes_used(adventurerMetadata.name.into()).into()
+            adventurer_name, U256BytesUsedTraitImpl::bytes_used(adventurer_name.into()).into()
         );
 
     let _adventurer_id = format!("{}", adventurer_id);
@@ -233,7 +235,7 @@ fn create_metadata(
 
     let _health = format!("{}", adventurer.health);
 
-    let _max_health = format!("{}", AdventurerUtils::get_max_health(adventurer.stats.vitality));
+    let _max_health = format!("{}", adventurer.stats.get_max_health());
 
     let _gold = format!("{}", adventurer.gold);
     let _str = if adventurer.get_level() == 1 { "?" } else { format!("{}", adventurer.stats.strength) };
@@ -436,11 +438,24 @@ mod tests {
         // let adventurer = ImplAdventurer::custom(42, 49, 53, 59, 64, 69, 1, 7, 1023, 1023, 50, 50, 50, 50, 50, 50, 100, 10000);
         let adventurer = ImplAdventurer::new(42);
 
+<<<<<<< HEAD
         let adventurer_metadata = ImplAdventurerMetadata::new('areallyreallyreallyreallongname');
+=======
+        let birth_date = 1721807737;
+        let delay_stat_reveal = false;
+
+        let adventurer_metadata = ImplAdventurerMetadata::new(birth_date, delay_stat_reveal);
+
+        let adventurer_name = 'player1';
+>>>>>>> main
 
         let bag = ImplBag::custom(8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8);
 
+<<<<<<< HEAD
         let rect = create_metadata(1000000, adventurer, adventurer_metadata, bag, 10);
+=======
+        let rect = create_metadata(1, adventurer, adventurer_name, adventurer_metadata, bag, 1);
+>>>>>>> main
 
         println!("{}", rect);
 
