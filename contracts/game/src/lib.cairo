@@ -1576,7 +1576,7 @@ mod Game {
     /// @param custom_renderer A ContractAddress representing the address of the custom renderer.
     fn _start_game(
         ref self: ContractState, weapon: u8, name: felt252, custom_renderer: ContractAddress
-    ) {
+    ) -> felt252 {
         // increment adventurer id (first adventurer is id 1)
         let adventurer_id = self._game_counter.read() + 1;
 
