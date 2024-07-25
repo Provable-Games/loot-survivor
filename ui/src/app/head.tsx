@@ -46,7 +46,7 @@ export default function Head() {
       />
       <meta
         name="twitter:player"
-        content="https://lootsurvivor.io/twitter-card.html"
+        content="https://loot-survivor-git-fix-iframe-provable-games.vercel.app/twitter-card.html"
       />
       <meta name="twitter:player:width" content="375" />
       <meta name="twitter:player:height" content="667" />
