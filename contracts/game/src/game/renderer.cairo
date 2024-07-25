@@ -444,14 +444,14 @@ mod tests {
 
     #[test]
     fn test_metadata() {
-        let adventurer = ImplAdventurer::custom(42, 49, 53, 59, 64, 69, 1, 7, 1023, 1023, 50, 50, 50, 50, 50, 50, 100, 10000);
+        let adventurer = ImplAdventurer::custom(42, 49, 53, 59, 64, 69, 1, 7, 1023, 1023, 50, 50, 50, 50, 50, 50, 100, 10000, 400);
 
         let birth_date = 1421807737;
         let delay_stat_reveal = false;
 
         let adventurer_metadata = ImplAdventurerMetadata::new(birth_date, delay_stat_reveal);
 
-        let bag = ImplBag::custom(8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8);
+        let bag = ImplBag::custom(8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 400);
 
         starknet::testing::set_block_timestamp(1721860860);
 
