@@ -188,6 +188,7 @@ export const ProfileDialog = ({
                 setAdventurer(NullAdventurer);
                 setNetwork(undefined);
                 handleOffboarded();
+                setShowProfile(false);
               }}
             >
               Logout
