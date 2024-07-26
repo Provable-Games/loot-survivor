@@ -71,12 +71,6 @@ impl ImplStats of IStat {
         }
     }
 
-    fn custom(strength: u8, dexterity: u8, vitality: u8, intelligence: u8, wisdom: u8, charisma: u8, luck: u8) -> Stats {
-        Stats {
-            strength, dexterity, vitality, intelligence, wisdom, charisma, luck
-        }
-    }
-
     // @notice applies stat boosts to adventurer
     // @param self The Adventurer to apply stat boosts to.
     // @param stats The stat boosts to apply to the adventurer.
