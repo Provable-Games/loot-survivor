@@ -58,7 +58,7 @@ const Onboarding = ({
           setIsMuted(!isMuted);
           clickPlay();
         }}
-        className="fixed top-1 left-1 sm:top-20 sm:left-20 xl:px-5"
+        className="absolute top-1 left-1 sm:top-20 sm:left-20 xl:px-5"
       >
         {isMuted ? (
           <SoundOffIcon className="w-10 h-10 justify-center fill-current" />
