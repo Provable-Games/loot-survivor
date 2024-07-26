@@ -729,7 +729,7 @@ mod tests {
         // verify item array contains numbers 1 through 101
         let mut item_count: u32 = 0;
         loop {
-            if item_count == items.len() {
+            if item_count == NUM_ITEMS.into() {
                 break;
             }
             let item_id = *items.at(item_count);
