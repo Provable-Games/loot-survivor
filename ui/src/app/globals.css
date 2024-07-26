@@ -8,6 +8,12 @@ body {
   height: var(--vh, 100vh);
 }
 
+@media (max-width: 768px) {
+  body {
+    overflow: auto;
+  }
+}
+
 body,
 input[type="text"] {
   font-family  : "VT323", monospace;
