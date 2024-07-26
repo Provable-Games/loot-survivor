@@ -65,52 +65,31 @@ impl StatsPacking of StorePacking<Stats, felt252> {
 
 #[generate_trait]
 impl ImplStats of IStat {
+
+    /// @notice Creates a new Stats instance with all stats set to 0.
+    /// @return A new Stats instance with all stats set to 0.
     fn new() -> Stats {
         Stats {
             strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
         }
     }
 
-    // @notice applies stat boosts to adventurer
-    // @param self The Adventurer to apply stat boosts to.
-    // @param stats The stat boosts to apply to the adventurer.
-    // @dev overflow protection is handled further up the stack
-    #[inline(always)]
-    fn apply_stats_new(ref self: Stats, stats: Stats) {
-        if stats.strength > 0 {
-            self.increase_strength(stats.strength);
-        }
-        if stats.dexterity > 0 {
-            self.increase_dexterity(stats.dexterity);
-        }
-        if stats.vitality > 0 {
-            self.increase_vitality(stats.vitality);
-        }
-        if stats.intelligence > 0 {
-            self.increase_intelligence(stats.intelligence);
-        }
-        if stats.wisdom > 0 {
-            self.increase_wisdom(stats.wisdom);
-        }
-        if stats.charisma > 0 {
-            self.increase_charisma(stats.charisma);
-        }
-    }
-
+    /// @notice applies stat boosts to adventurer
+    /// @param self The Adventurer to apply stat boosts to.
+    /// @param stats The stat boosts to apply to the adventurer.
     #[inline(always)]
     fn apply_stats(ref self: Stats, stats: Stats) {
         self.increase_strength(stats.strength);
         self.increase_dexterity(stats.dexterity);
         self.increase_vitality(stats.vitality);
+        self.increase_charisma(stats.charisma);
         self.increase_intelligence(stats.intelligence);
         self.increase_wisdom(stats.wisdom);
-        self.increase_charisma(stats.charisma);
     }
 
     // @notice removes stat boosts from adventurer
     // @param self The Stats to remove stat boosts from.
     // @param stats The stat boosts to remove from the adventurer.
-    // @dev underflow protection is handled further up the stack
     #[inline(always)]
     fn remove_stats(ref self: Stats, stats: Stats) {
         self.decrease_strength(stats.strength);

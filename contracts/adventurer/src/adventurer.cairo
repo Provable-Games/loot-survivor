@@ -965,12 +965,12 @@ impl ImplAdventurer of IAdventurer {
 
     fn get_max_health(self: Stats) -> u16 {
         let vitality_health_boost = self.vitality.into() * HEALTH_INCREASE_PER_VITALITY;
-        let current_max_health = STARTING_HEALTH + vitality_health_boost;
+        let new_max_health = STARTING_HEALTH + vitality_health_boost;
 
-        if (current_max_health <= MAX_ADVENTURER_HEALTH) {
-            current_max_health
-        } else {
+        if (new_max_health > MAX_ADVENTURER_HEALTH) {
             MAX_ADVENTURER_HEALTH
+        } else {
+            new_max_health
         }
     }
 
