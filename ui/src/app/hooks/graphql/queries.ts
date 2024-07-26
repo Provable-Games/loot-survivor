@@ -306,10 +306,29 @@ const getAdventurerByXP = gql`
   }
 `;
 
-const getAdventurersByXPPaginated = gql`
+const getDeadAdventurersByXPPaginated = gql`
   ${ADVENTURERS_FRAGMENT}
-  query get_adventurer_by_xp_paginated($skip: Int) {
-    adventurers(limit: 10, skip: $skip, orderBy: { xp: { desc: true } }) {
+  query get_dead_adventurers_by_xp_paginated($skip: Int) {
+    adventurers(
+      where: { health: { eq: 0 } }
+      limit: 10
+      skip: $skip
+      orderBy: { xp: { desc: true } }
+    ) {
+      ...AdventurerFields
+    }
+  }
+`;
+
+const getAliveAdventurersByXPPaginated = gql`
+  ${ADVENTURERS_FRAGMENT}
+  query get_alive_adventurers_by_xp_paginated($skip: Int) {
+    adventurers(
+      where: { health: { notIn: [0] } }
+      limit: 10
+      skip: $skip
+      orderBy: { xp: { desc: true } }
+    ) {
       ...AdventurerFields
     }
   }
@@ -523,7 +542,8 @@ export {
   getItemsByOwner,
   getItemsByAdventurer,
   getAdventurerByXP,
-  getAdventurersByXPPaginated,
+  getDeadAdventurersByXPPaginated,
+  getAliveAdventurersByXPPaginated,
   getTopScores,
   getScoresInList,
   getGoldenTokensByOwner,

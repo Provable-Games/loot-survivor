@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
-  getAdventurerByXP,
   getAdventurerById,
   getItemsByAdventurer,
   getKilledBeasts,
@@ -32,13 +31,6 @@ export default function LeaderboardScreen() {
     useQueriesStore();
 
   const network = useUIStore((state) => state.network);
-
-  const adventurersByXPdata = useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
-    "adventurersByXPQuery",
-    getAdventurerByXP,
-    undefined
-  );
 
   const killedBeastsData = useCustomQuery(
     networkConfig[network!].lsGQLURL!,
@@ -119,88 +111,87 @@ export default function LeaderboardScreen() {
   };
 
   useEffect(() => {
-    if (adventurersByXPdata) {
+    if (data.adventurersByXPQuery) {
       setIsLoading();
-      const sortedAdventurersByXP = handleSortXp(adventurersByXPdata);
+      const sortedAdventurersByXP = handleSortXp(data.adventurersByXPQuery);
       setData("adventurersByXPQuery", sortedAdventurersByXP);
       setNotLoading();
     }
-  }, [adventurersByXPdata]);
+  }, [data.adventurersByXPQuery]);
 
   return (
     <div className="flex flex-col items-center h-full xl:overflow-y-auto 2xl:overflow-hidden mt-5 sm:mt-0">
-      {!adventurersByXPdata ? (
+      {/* {!data.adventurersByXPQuery ? (
         <div className="flex justify-center items-center h-full">
           <LootIconLoader className="m-auto" size="w-10" />
         </div>
-      ) : (
-        <>
-          <div className="flex flex-row gap-5 items-center">
-            <div className="flex flex-row border border-terminal-green items-center justify-between w-16 h-8 sm:w-24 sm:h-12 px-2">
-              <ProfileIcon className="fill-current w-4 h-4 sm:w-8 sm:h-8" />
-              <p className="sm:text-2xl">{aliveAdventurers.length}</p>
-            </div>
-            <Button
-              onClick={async () => {
-                const adventurersByXPdata = await refetch(
-                  "adventurersByXPQuery",
-                  undefined
-                );
-                const sortedAdventurersByXP = handleSortXp(adventurersByXPdata);
-                setData("adventurersByXPQuery", sortedAdventurersByXP);
-              }}
-            >
-              <RefreshIcon className="w-4 sm:w-8" />
-            </Button>
-            <div className="flex flex-row border border-terminal-green items-center justify-between w-16 h-8 sm:w-24 sm:h-12 px-2">
-              <SkullIcon className="fill-current w-4 h-4 sm:w-8 sm:h-8" />
-              <p className="sm:text-2xl">{scores.length}</p>
-            </div>
-            <Button onClick={() => setShowKilledBeasts(!showKilledBeasts)}>
-              {showKilledBeasts ? "Scores" : "Pragma Beast Leaderboard"}
-            </Button>
+      ) : ( */}
+      <>
+        <div className="flex flex-row gap-5 items-center">
+          <div className="flex flex-row border border-terminal-green items-center justify-between w-16 h-8 sm:w-24 sm:h-12 px-2">
+            <ProfileIcon className="fill-current w-4 h-4 sm:w-8 sm:h-8" />
+            <p className="sm:text-2xl">{aliveAdventurers.length}</p>
           </div>
-          {showKilledBeasts ? (
-            <BeastTable
-              itemsPerPage={itemsPerPage}
-              beasts={sortedKilledBeastsArray}
-            />
-          ) : (
-            <div className="flex flex-row w-full">
-              <div
-                className={`${
-                  showScores ? "hidden " : ""
-                }sm:block w-full sm:w-1/2`}
-              >
-                <LiveTable
-                  itemsPerPage={itemsPerPage}
-                  handleFetchProfileData={handlefetchProfileData}
-                  adventurers={aliveAdventurers}
-                />
-              </div>
-              <div
-                className={`${
-                  showScores ? "" : "hidden "
-                }sm:block w-full sm:w-1/2`}
-              >
-                <ScoreTable
-                  itemsPerPage={itemsPerPage}
-                  handleFetchProfileData={handlefetchProfileData}
-                  adventurers={scores}
-                />
-              </div>
-            </div>
-          )}
           <Button
-            onClick={() =>
-              showScores ? setShowScores(false) : setShowScores(true)
-            }
-            className="sm:hidden"
+            onClick={async () => {
+              const adventurersByXPdata = await refetch(
+                "adventurersByXPQuery",
+                undefined
+              );
+              const sortedAdventurersByXP = handleSortXp(adventurersByXPdata);
+              setData("adventurersByXPQuery", sortedAdventurersByXP);
+            }}
           >
-            {showScores ? "Show Live Leaderboard" : "Show Scores"}
+            <RefreshIcon className="w-4 sm:w-8" />
           </Button>
-        </>
-      )}
+          <div className="flex flex-row border border-terminal-green items-center justify-between w-16 h-8 sm:w-24 sm:h-12 px-2">
+            <SkullIcon className="fill-current w-4 h-4 sm:w-8 sm:h-8" />
+            <p className="sm:text-2xl">{scores.length}</p>
+          </div>
+          <Button onClick={() => setShowKilledBeasts(!showKilledBeasts)}>
+            {showKilledBeasts ? "Scores" : "Pragma Beast Leaderboard"}
+          </Button>
+        </div>
+        {showKilledBeasts ? (
+          <BeastTable
+            itemsPerPage={itemsPerPage}
+            beasts={sortedKilledBeastsArray}
+          />
+        ) : (
+          <div className="flex flex-row w-full">
+            <div
+              className={`${
+                showScores ? "hidden " : ""
+              }sm:block w-full sm:w-1/2`}
+            >
+              <LiveTable
+                itemsPerPage={itemsPerPage}
+                handleFetchProfileData={handlefetchProfileData}
+                adventurers={aliveAdventurers}
+              />
+            </div>
+            <div
+              className={`${
+                showScores ? "" : "hidden "
+              }sm:block w-full sm:w-1/2`}
+            >
+              <ScoreTable
+                itemsPerPage={itemsPerPage}
+                handleFetchProfileData={handlefetchProfileData}
+              />
+            </div>
+          </div>
+        )}
+        <Button
+          onClick={() =>
+            showScores ? setShowScores(false) : setShowScores(true)
+          }
+          className="sm:hidden"
+        >
+          {showScores ? "Show Live Leaderboard" : "Show Scores"}
+        </Button>
+      </>
+      {/* )} */}
     </div>
   );
 }

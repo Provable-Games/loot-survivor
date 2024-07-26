@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/app/components/buttons/Button";
+import { getDeadAdventurersByXPPaginated } from "@/app/hooks/graphql/queries";
 import { Adventurer, Score } from "@/app/types";
 import ScoreRow from "@/app/components/leaderboard/ScoreRow";
 import useUIStore from "@/app/hooks/useUIStore";
@@ -10,22 +11,31 @@ import { networkConfig } from "@/app/lib/networkConfig";
 export interface ScoreLeaderboardTableProps {
   itemsPerPage: number;
   handleFetchProfileData: (adventurerId: number) => void;
-  adventurers: Adventurer[];
 }
 
 const ScoreLeaderboardTable = ({
   itemsPerPage,
   handleFetchProfileData,
-  adventurers,
 }: ScoreLeaderboardTableProps) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const setScreen = useUIStore((state) => state.setScreen);
   const setProfile = useUIStore((state) => state.setProfile);
   const network = useUIStore((state) => state.network);
-  const displayScores = adventurers?.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+  const skip = (currentPage - 1) * itemsPerPage;
+  const leaderboardVariables = useMemo(() => {
+    return {
+      skip: skip,
+    };
+  }, [skip]);
+
+  const adventurersByXPdata = useCustomQuery(
+    networkConfig[network!].lsGQLURL!,
+    "adventurersByXPQuery",
+    getDeadAdventurersByXPPaginated,
+    leaderboardVariables
   );
+  const adventurers: Adventurer[] = adventurersByXPdata?.adventurers ?? [];
+
   const scoreIds = adventurers?.map((score) => score.id ?? 0);
 
   const scoresData = useCustomQuery(
@@ -37,7 +47,7 @@ const ScoreLeaderboardTable = ({
     }
   );
 
-  const mergedScores = displayScores.map((item1) => {
+  const mergedScores = adventurers.map((item1) => {
     const matchingItem2 = scoresData?.scores.find(
       (item2: Score) => item2.adventurerId === item1.id
     );

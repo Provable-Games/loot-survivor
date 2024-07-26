@@ -1,28 +1,43 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { getAliveAdventurersByXPPaginated } from "@/app/hooks/graphql/queries";
 import { Button } from "@/app/components/buttons/Button";
 import { Adventurer } from "@/app/types";
 import LiveRow from "@/app/components/leaderboard/LiveRow";
 import useUIStore from "@/app/hooks/useUIStore";
+import useCustomQuery from "@/app/hooks/useCustomQuery";
+import { networkConfig } from "@/app/lib/networkConfig";
 
 export interface LiveLeaderboardTableProps {
   itemsPerPage: number;
   handleFetchProfileData: (adventurerId: number) => void;
-  adventurers: Adventurer[];
 }
 
 const LiveLeaderboardTable = ({
   itemsPerPage,
   handleFetchProfileData,
-  adventurers,
 }: LiveLeaderboardTableProps) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const setScreen = useUIStore((state) => state.setScreen);
   const setProfile = useUIStore((state) => state.setProfile);
-  const displayAdventurers = adventurers?.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+  const network = useUIStore((state) => state.network);
+  const skip = (currentPage - 1) * itemsPerPage;
+
+  const aliveAdventurersVariables = useMemo(() => {
+    return {
+      skip: skip,
+    };
+  }, [skip]);
+
+  const adventurersByXPdata = useCustomQuery(
+    networkConfig[network!].lsGQLURL!,
+    "adventurersByXPQuery",
+    getAliveAdventurersByXPPaginated,
+    aliveAdventurersVariables
   );
-  const totalPages = Math.ceil(adventurers.length / itemsPerPage);
+
+  const adventurers: Adventurer[] = adventurersByXPdata?.adventurers ?? [];
+
+  // console.log(adventurersByXPdata);
 
   const handleRowSelected = async (adventurerId: number) => {
     try {
@@ -55,7 +70,7 @@ const LiveLeaderboardTable = ({
             </tr>
           </thead>
           <tbody>
-            {displayAdventurers?.map(
+            {adventurersByXPdata?.adventurers?.map(
               (adventurer: Adventurer, index: number) => (
                 <LiveRow
                   key={index}
@@ -66,7 +81,7 @@ const LiveLeaderboardTable = ({
             )}
           </tbody>
         </table>
-        {adventurers?.length > 10 && (
+        {adventurersByXPdata?.adventurers.length > 10 && (
           <div className="flex justify-center sm:mt-8 xl:mt-2">
             <Button
               variant={"outline"}
