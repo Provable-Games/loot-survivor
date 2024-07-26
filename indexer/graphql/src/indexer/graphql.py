@@ -2336,6 +2336,63 @@ async def get_items(
     return result
 
 
+async def count_adventurers_with_zero_health(info) -> int:
+    redis = info.context["redis"]
+    cache_key = "count_adventurers_with_zero_health"
+
+    # Check if the result is in the cache
+    cached_count = await redis.get(cache_key)
+    if cached_count is not None:
+        return int(cached_count)
+
+    # If not in cache, query the database
+    db = info.context["db"]
+    count = db["adventurers"].count_documents({"health": 0})
+
+    # Store the result in the cache
+    await redis.set(cache_key, count, ex=60)  # Set an expiration time of 60 seconds
+
+    return count
+
+
+async def count_adventurers_with_positive_health(info) -> int:
+    redis = info.context["redis"]
+    cache_key = "count_adventurers_with_positive_health"
+
+    # Check if the result is in the cache
+    cached_count = await redis.get(cache_key)
+    if cached_count is not None:
+        return int(cached_count)
+
+    # If not in cache, query the database
+    db = info.context["db"]
+    count = db["adventurers"].count_documents({"health": {"$gt": 0}})
+
+    # Store the result in the cache
+    await redis.set(cache_key, count, ex=60)  # Set an expiration time of 60 seconds
+
+    return count
+
+
+async def count_total_adventurers(info) -> int:
+    redis = info.context["redis"]
+    cache_key = "count_total_adventurers"
+
+    # Check if the result is in the cache
+    cached_count = await redis.get(cache_key)
+    if cached_count is not None:
+        return int(cached_count)
+
+    # If not in cache, query the database
+    db = info.context["db"]
+    count = db["adventurers"].count_documents({})
+
+    # Store the result in the cache
+    await redis.set(cache_key, count, expire=60)  # Set an expiration time of 60 seconds
+
+    return count
+
+
 @strawberry.type
 class Query:
     adventurers: List[Adventurer] = strawberry.field(resolver=get_adventurers)
@@ -2344,27 +2401,31 @@ class Query:
     beasts: List[Beast] = strawberry.field(resolver=get_beasts)
     battles: List[Battle] = strawberry.field(resolver=get_battles)
     items: List[Item] = strawberry.field(resolver=get_items)
+    countDeadAdventurers: int = strawberry.field(
+        resolver=count_adventurers_with_zero_health
+    )
+    countAliveAdventurers: int = strawberry.field(
+        resolver=count_adventurers_with_positive_health
+    )
+    countTotalAdventurers: int = strawberry.field(resolver=count_total_adventurers)
 
 
 class IndexerGraphQLView(GraphQLView):
-    def __init__(self, db, redis, **kwargs):
+    def __init__(self, db, **kwargs):
         super().__init__(**kwargs)
         self._db = db
-        self._redis = redis
 
     async def get_context(self, _request, _response):
-        return {"db": self._db, "redis": self._redis}
+        return {"db": self._db}
 
 
-async def run_graphql_api(mongo=None, redis_url="redis://redis", port="8080"):
+async def run_graphql_api(mongo=None, port="8080"):
     mongo = MongoClient(mongo)
     db_name = "mongo".replace("-", "_")
     db = mongo[db_name]
 
-    redis = await aioredis.from_url(redis_url)
-
     schema = strawberry.Schema(query=Query)
-    view = IndexerGraphQLView(db, redis, schema=schema)
+    view = IndexerGraphQLView(db, schema=schema)
 
     app = web.Application()
 
