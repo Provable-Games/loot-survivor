@@ -74,7 +74,7 @@ export default function RootLayout({
       <Head />
       <body
         suppressHydrationWarning={false}
-        className="overflow-hidden text-terminal-green bg-conic-to-br to-terminal-black from-terminal-black bezel-container"
+        className="text-terminal-green bg-conic-to-br to-terminal-black from-terminal-black bezel-container"
       >
         <Analytics />
         <img

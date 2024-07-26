@@ -5,7 +5,8 @@
 @tailwind utilities;
 
 body {
-  height: var(--vh, 100vh);
+  height  : calc(var(--vh, 1vh) * 100);
+  overflow: hidden;
 }
 
 @media (max-width: 768px) {
