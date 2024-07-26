@@ -24,7 +24,7 @@ const WalletSelect = ({}: WalletSelectProps) => {
   const storage: BurnerStorage = Storage.get("burners");
 
   return (
-    <div className="min-h-screen container flex justify-center items-center m-auto p-4 pt-8 sm:w-1/2 sm:p-8 lg:p-10 2xl:p-20">
+    <div className="container flex justify-center items-center m-auto p-4 pt-8 sm:w-1/2 sm:p-8 lg:p-10 2xl:p-20">
       <div className="flex flex-col justify-center h-full">
         {screen === "wallet" ? (
           <>

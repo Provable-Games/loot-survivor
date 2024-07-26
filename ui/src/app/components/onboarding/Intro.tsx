@@ -19,7 +19,7 @@ const Intro = () => {
 
   const network = process.env.NEXT_PUBLIC_NETWORK;
   return (
-    <div className="min-h-screen container flex flex-col items-center">
+    <div className="container flex flex-col items-center">
       <Button
         variant={"outline"}
         onClick={() => {

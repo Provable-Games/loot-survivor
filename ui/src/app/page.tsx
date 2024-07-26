@@ -85,7 +85,7 @@ const mobileMenuItems: Menu[] = [
 export default function Main() {
   return (
     <main
-      className={`min-h-screen container mx-auto flex flex-col sm:pt-8 sm:p-8 lg:p-10 2xl:p-20 `}
+      className={`container mx-auto flex flex-col sm:pt-8 sm:p-8 lg:p-10 2xl:p-20 `}
     >
       <Home />
     </main>

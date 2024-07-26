@@ -43,7 +43,7 @@ const Onboarding = ({
   const { loginScreen } = useUIStore();
 
   return (
-    <div className="min-h-screen container flex flex-col items-center">
+    <div className="container flex flex-col items-center">
       {mintingLords && <TokenLoader isToppingUpLords={mintingLords} />}
       {section && (
         <InfoBox

@@ -60,7 +60,7 @@ export default function RootLayout({
       <Head />
       <body
         suppressHydrationWarning={false}
-        className="min-h-screen overflow-hidden text-terminal-green bg-conic-to-br to-terminal-black from-terminal-black bezel-container"
+        className="h-screen overflow-hidden text-terminal-green bg-conic-to-br to-terminal-black from-terminal-black bezel-container"
       >
         <Analytics />
         <img
@@ -70,7 +70,7 @@ export default function RootLayout({
         />
         {!network || !setupResult ? (
           <main
-            className={`min-h-screen container mx-auto flex flex-col sm:pt-8 sm:p-8 lg:p-10 2xl:p-20 `}
+            className={`container mx-auto flex flex-col sm:pt-8 sm:p-8 lg:p-10 2xl:p-20 `}
           >
             {introComplete ? (
               <>
