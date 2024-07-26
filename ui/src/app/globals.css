@@ -4,6 +4,10 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  height: var(--vh, 100vh);
+}
+
 body,
 input[type="text"] {
   font-family  : "VT323", monospace;

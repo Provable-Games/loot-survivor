@@ -55,12 +55,26 @@ export default function RootLayout({
     initializeSetup();
   }, [network]);
 
+  useEffect(() => {
+    const setVh = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty("--vh", `${vh}px`);
+    };
+
+    setVh();
+    window.addEventListener("resize", setVh);
+
+    return () => {
+      window.removeEventListener("resize", setVh);
+    };
+  }, []);
+
   return (
     <html lang="en">
       <Head />
       <body
         suppressHydrationWarning={false}
-        className="h-screen overflow-hidden text-terminal-green bg-conic-to-br to-terminal-black from-terminal-black bezel-container"
+        className="overflow-hidden text-terminal-green bg-conic-to-br to-terminal-black from-terminal-black bezel-container"
       >
         <Analytics />
         <img
