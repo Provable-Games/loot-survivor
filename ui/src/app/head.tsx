@@ -4,7 +4,10 @@ export default function Head() {
       <title>Loot Survivor</title>
 
       <meta charSet="utf-8" />
-      <meta content="width=device-width, initial-scale=1" name="viewport" />
+      <meta
+        content="width=device-width, initial-scale=1,  maximum-scale=1.0, user-scalable=no"
+        name="viewport"
+      />
       <link
         rel="icon"
         type="image/png"
