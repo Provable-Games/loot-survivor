@@ -1,22 +1,20 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import {
   getAdventurerById,
   getItemsByAdventurer,
-  getKilledBeasts,
+  getAdventurerCounts,
 } from "@/app/hooks/graphql/queries";
 import { Button } from "@/app/components/buttons/Button";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import useUIStore from "@/app/hooks/useUIStore";
 import useCustomQuery from "@/app/hooks/useCustomQuery";
-import { Adventurer, Beast } from "@/app/types";
+import { Adventurer } from "@/app/types";
 import BeastTable from "@/app/components/leaderboard/BeastTable";
 import ScoreTable from "@/app/components/leaderboard/ScoreTable";
 import LiveTable from "@/app/components/leaderboard/LiveTable";
 import { RefreshIcon } from "@/app/components/icons/Icons";
-import LootIconLoader from "@/app/components/icons/Loader";
 import { ProfileIcon, SkullIcon } from "@/app/components/icons/Icons";
 import { networkConfig } from "@/app/lib/networkConfig";
-import { getBeastData } from "@/app/lib/utils";
 
 /**
  * @container
@@ -31,40 +29,6 @@ export default function LeaderboardScreen() {
     useQueriesStore();
 
   const network = useUIStore((state) => state.network);
-
-  const killedBeastsData = useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
-    "killedBeastsQuery",
-    getKilledBeasts,
-    undefined
-  );
-
-  const copiedKilledBeasts = killedBeastsData?.beasts.slice();
-
-  const filteredKilledBeasts = copiedKilledBeasts?.filter((beast: Beast) => {
-    const { tier } = getBeastData(beast?.beast!);
-    return tier === 1;
-  });
-
-  const sortedKilledBeastsArray = filteredKilledBeasts?.sort(
-    (a: Beast, b: Beast) => {
-      const { tier: aTier } = getBeastData(a.beast!);
-      const aDifficulty = a.level! * (6 - aTier);
-      const { tier: bTier } = getBeastData(b.beast!);
-      const bDifficulty = b.level! * (6 - bTier);
-      return bDifficulty - aDifficulty;
-    }
-  );
-
-  const adventurers = data.adventurersByXPQuery?.adventurers
-    ? data.adventurersByXPQuery?.adventurers
-    : [];
-
-  const aliveAdventurers = adventurers.filter(
-    (adventurer) => (adventurer.health ?? 0) > 0
-  );
-
-  const scores = adventurers.filter((adventurer) => adventurer.health === 0);
 
   const profile = useUIStore((state) => state.profile);
 
@@ -84,6 +48,13 @@ export default function LeaderboardScreen() {
     {
       id: profile ?? 0,
     }
+  );
+
+  const adventurerCountsData = useCustomQuery(
+    networkConfig[network!].lsGQLURL!,
+    "adventurerCountsQuery",
+    getAdventurerCounts,
+    undefined
   );
 
   const handlefetchProfileData = async (adventurerId: number) => {
@@ -121,77 +92,67 @@ export default function LeaderboardScreen() {
 
   return (
     <div className="flex flex-col items-center h-full xl:overflow-y-auto 2xl:overflow-hidden mt-5 sm:mt-0">
-      {/* {!data.adventurersByXPQuery ? (
-        <div className="flex justify-center items-center h-full">
-          <LootIconLoader className="m-auto" size="w-10" />
+      <div className="flex flex-row gap-5 items-center">
+        <div className="flex flex-row border border-terminal-green items-center justify-between w-16 h-8 sm:w-24 sm:h-12 px-2">
+          <ProfileIcon className="fill-current w-4 h-4 sm:w-8 sm:h-8" />
+          <p className="sm:text-2xl">
+            {adventurerCountsData?.countAliveAdventurers}
+          </p>
         </div>
-      ) : ( */}
-      <>
-        <div className="flex flex-row gap-5 items-center">
-          <div className="flex flex-row border border-terminal-green items-center justify-between w-16 h-8 sm:w-24 sm:h-12 px-2">
-            <ProfileIcon className="fill-current w-4 h-4 sm:w-8 sm:h-8" />
-            <p className="sm:text-2xl">{aliveAdventurers.length}</p>
-          </div>
-          <Button
-            onClick={async () => {
-              const adventurersByXPdata = await refetch(
-                "adventurersByXPQuery",
-                undefined
-              );
-              const sortedAdventurersByXP = handleSortXp(adventurersByXPdata);
-              setData("adventurersByXPQuery", sortedAdventurersByXP);
-            }}
-          >
-            <RefreshIcon className="w-4 sm:w-8" />
-          </Button>
-          <div className="flex flex-row border border-terminal-green items-center justify-between w-16 h-8 sm:w-24 sm:h-12 px-2">
-            <SkullIcon className="fill-current w-4 h-4 sm:w-8 sm:h-8" />
-            <p className="sm:text-2xl">{scores.length}</p>
-          </div>
-          <Button onClick={() => setShowKilledBeasts(!showKilledBeasts)}>
-            {showKilledBeasts ? "Scores" : "Pragma Beast Leaderboard"}
-          </Button>
-        </div>
-        {showKilledBeasts ? (
-          <BeastTable
-            itemsPerPage={itemsPerPage}
-            beasts={sortedKilledBeastsArray}
-          />
-        ) : (
-          <div className="flex flex-row w-full">
-            <div
-              className={`${
-                showScores ? "hidden " : ""
-              }sm:block w-full sm:w-1/2`}
-            >
-              <LiveTable
-                itemsPerPage={itemsPerPage}
-                handleFetchProfileData={handlefetchProfileData}
-                adventurers={aliveAdventurers}
-              />
-            </div>
-            <div
-              className={`${
-                showScores ? "" : "hidden "
-              }sm:block w-full sm:w-1/2`}
-            >
-              <ScoreTable
-                itemsPerPage={itemsPerPage}
-                handleFetchProfileData={handlefetchProfileData}
-              />
-            </div>
-          </div>
-        )}
         <Button
-          onClick={() =>
-            showScores ? setShowScores(false) : setShowScores(true)
-          }
-          className="sm:hidden"
+          onClick={async () => {
+            const adventurersByXPdata = await refetch(
+              "adventurersByXPQuery",
+              undefined
+            );
+            const sortedAdventurersByXP = handleSortXp(adventurersByXPdata);
+            setData("adventurersByXPQuery", sortedAdventurersByXP);
+          }}
         >
-          {showScores ? "Show Live Leaderboard" : "Show Scores"}
+          <RefreshIcon className="w-4 sm:w-8" />
         </Button>
-      </>
-      {/* )} */}
+        <div className="flex flex-row border border-terminal-green items-center justify-between w-16 h-8 sm:w-24 sm:h-12 px-2">
+          <SkullIcon className="fill-current w-4 h-4 sm:w-8 sm:h-8" />
+          <p className="sm:text-2xl">
+            {adventurerCountsData?.countDeadAdventurers}
+          </p>
+        </div>
+        <Button onClick={() => setShowKilledBeasts(!showKilledBeasts)}>
+          {showKilledBeasts ? "Scores" : "Pragma Beast Leaderboard"}
+        </Button>
+      </div>
+      {showKilledBeasts ? (
+        <BeastTable />
+      ) : (
+        <div className="flex flex-row w-full">
+          <div
+            className={`${showScores ? "hidden " : ""}sm:block w-full sm:w-1/2`}
+          >
+            <LiveTable
+              itemsPerPage={itemsPerPage}
+              handleFetchProfileData={handlefetchProfileData}
+              adventurerCount={adventurerCountsData?.countAliveAdventurers}
+            />
+          </div>
+          <div
+            className={`${showScores ? "" : "hidden "}sm:block w-full sm:w-1/2`}
+          >
+            <ScoreTable
+              itemsPerPage={itemsPerPage}
+              handleFetchProfileData={handlefetchProfileData}
+              adventurerCount={adventurerCountsData?.countDeadAdventurers}
+            />
+          </div>
+        </div>
+      )}
+      <Button
+        onClick={() =>
+          showScores ? setShowScores(false) : setShowScores(true)
+        }
+        className="sm:hidden"
+      >
+        {showScores ? "Show Live Leaderboard" : "Show Scores"}
+      </Button>
     </div>
   );
 }

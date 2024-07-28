@@ -3,18 +3,13 @@ import BeastRow from "@/app/components/leaderboard/BeastRow";
 import { getBeastData } from "@/app/lib/utils";
 import useCustomQuery from "@/app/hooks/useCustomQuery";
 import { networkConfig } from "@/app/lib/networkConfig";
-import { getAdventurersInList } from "@/app/hooks/graphql/queries";
+import {
+  getKilledBeasts,
+  getAdventurersInList,
+} from "@/app/hooks/graphql/queries";
 import useUIStore from "@/app/hooks/useUIStore";
 
-export interface KilledBeastsTableProps {
-  itemsPerPage: number;
-  beasts: Beast[];
-}
-
-const KilledBeastsTable = ({
-  itemsPerPage,
-  beasts,
-}: KilledBeastsTableProps) => {
+const KilledBeastsTable = ({}) => {
   const network = useUIStore((state) => state.network);
 
   let previousDifficulty = -1;
@@ -28,6 +23,7 @@ const KilledBeastsTable = ({
   ) => {
     const { tier } = getBeastData(beast?.beast!);
     const difficulty = (6 - tier) * beast?.level!;
+
     if (difficulty !== previousDifficulty) {
       currentRank = index + 1;
       rankOffset = 0;
@@ -37,6 +33,15 @@ const KilledBeastsTable = ({
     previousDifficulty = difficulty;
     return currentRank;
   };
+
+  const killedBeastsData = useCustomQuery(
+    networkConfig[network!].lsGQLURL!,
+    "killedBeastsQuery",
+    getKilledBeasts,
+    undefined
+  );
+
+  const beasts: Beast[] = killedBeastsData?.beasts ?? [];
 
   const adventurersInListData = useCustomQuery(
     networkConfig[network!].lsGQLURL!,

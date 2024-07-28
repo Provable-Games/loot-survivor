@@ -356,7 +356,11 @@ const getBeast = gql`
 const getKilledBeasts = gql`
   ${BEASTS_FRAGMENT}
   query get_killed_beasts {
-    beasts(where: { health: { eq: 0 } }, limit: 10000000) {
+    beasts(
+      where: { health: { eq: 0 }, tier: { eq: 1 } }
+      limit: 10
+      orderBy: { level: { desc: true } }
+    ) {
       ...BeastFields
     }
   }
@@ -516,6 +520,14 @@ const getGoldenTokensByOwner = gql`
   }
 `;
 
+const getAdventurerCounts = gql`
+  query getAdventurerCounts {
+    countAliveAdventurers
+    countDeadAdventurers
+    countTotalAdventurers
+  }
+`;
+
 export {
   getAdventurer,
   getDiscoveries,
@@ -547,4 +559,5 @@ export {
   getTopScores,
   getScoresInList,
   getGoldenTokensByOwner,
+  getAdventurerCounts,
 };
