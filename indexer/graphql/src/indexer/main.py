@@ -26,12 +26,15 @@ def cli():
 @cli.command()
 @click.option("--mongo", default=None, help="Mongo url.")
 @click.option("--port", default=None, help="Port number.")
+@click.option(
+    "--allowed-origin", default="http://localhost:3000", help="Allowed origin for CORS."
+)
 @async_command
-async def graphql(mongo, port):
+async def graphql(mongo, port, allowed_origin):
     """Start the GraphQL server."""
     if port is None:
         port = "8080"
     if mongo is None:
         mongo = "mongodb://mongo:mongo@localhost:27017"
 
-    await run_graphql_api(mongo=mongo, port=port)
+    await run_graphql_api(mongo=mongo, port=port, allowed_origin=allowed_origin)

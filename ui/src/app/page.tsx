@@ -2,7 +2,7 @@
 import { useConnect, useContract } from "@starknet-react/core";
 import { sepolia } from "@starknet-react/chains";
 import { constants } from "starknet";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import ActionsScreen from "@/app/containers/ActionsScreen";
 import AdventurerScreen from "@/app/containers/AdventurerScreen";
 import InventoryScreen from "@/app/containers/InventoryScreen";
@@ -197,24 +197,23 @@ function Home() {
     }
   }, [connector]);
 
-  const [ethBalance, setEthBalance] = useState<bigint>(BigInt(0));
-  const [lordsBalance, setLordsBalance] = useState<bigint>(BigInt(0));
-  const [costToPlay, setCostToPlay] = useState<bigint | undefined>();
+  const ethBalanceRef = useRef(BigInt(0));
+  const lordsBalanceRef = useRef(BigInt(0));
 
-  const getBalances = async () => {
+  const getBalances = useCallback(async () => {
     const balances = await fetchBalances(
       address ?? "0x0",
       ethContract,
       lordsContract,
       gameContract
     );
-    setEthBalance(balances[0]);
-    setLordsBalance(balances[1]);
-  };
+    ethBalanceRef.current = balances[0];
+    lordsBalanceRef.current = balances[1];
+  }, [address, ethContract, lordsContract, gameContract]);
 
   const getEthBalance = async () => {
     const ethBalance = await fetchEthBalance(address ?? "0x0", ethContract);
-    setEthBalance(ethBalance);
+    ethBalanceRef.current = ethBalance;
   };
 
   useEffect(() => {
@@ -258,7 +257,7 @@ function Home() {
     setScreen,
     setAdventurer,
     setStartOption,
-    ethBalance: ethBalance,
+    ethBalance: ethBalanceRef.current,
     showTopUpDialog,
     setTopUpAccount,
     account: account!,
@@ -398,46 +397,45 @@ function Home() {
     variables: goldenTokenVariables,
   });
 
-  const handleSwitchAdventurer = async (adventurerId: number) => {
-    setIsLoading();
-    const newAdventurerData = await refetch("adventurerByIdQuery", {
-      id: adventurerId,
-    });
-    const newAdventurersData = await refetch("adventurersByOwnerQuery", {
-      owner: indexAddress(owner),
-    });
-    const newLatestDiscoveriesData = await refetch("latestDiscoveriesQuery", {
-      id: adventurerId,
-    });
-    const newAdventurerItemsData = await refetch("itemsByAdventurerQuery", {
-      id: adventurerId,
-    });
-    const newMarketItemsData = await refetch("latestMarketItemsQuery", {
-      id: adventurerId,
-    });
-    const newLastBeastData = await refetch("lastBeastQuery", {
-      id: adventurerId,
-    });
-    const newBeastData = await refetch("beastQuery", {
-      adventurerId: adventurerId,
-      beast: newLastBeastData.discoveries[0]?.entity,
-      seed: newLastBeastData.discoveries[0]?.seed,
-    });
-    const newBattlesByBeastData = await refetch("battlesByBeastQuery", {
-      adventurerId: adventurerId,
-      beast: newLastBeastData.discoveries[0]?.entity,
-      seed: newLastBeastData.discoveries[0]?.seed,
-    });
-    setData("adventurerByIdQuery", newAdventurerData);
-    setData("adventurersByOwnerQuery", newAdventurersData);
-    setData("latestDiscoveriesQuery", newLatestDiscoveriesData);
-    setData("itemsByAdventurerQuery", newAdventurerItemsData);
-    setData("latestMarketItemsQuery", newMarketItemsData);
-    setData("lastBeastQuery", newLastBeastData);
-    setData("beastQuery", newBeastData);
-    setData("battlesByBeastQuery", newBattlesByBeastData);
-    setNotLoading();
-  };
+  const handleSwitchAdventurer = useCallback(
+    async (adventurerId: number) => {
+      setIsLoading();
+      const newAdventurerData = await refetch("adventurerByIdQuery", {
+        id: adventurerId,
+      });
+      const newLatestDiscoveriesData = await refetch("latestDiscoveriesQuery", {
+        id: adventurerId,
+      });
+      const newAdventurerItemsData = await refetch("itemsByAdventurerQuery", {
+        id: adventurerId,
+      });
+      const newMarketItemsData = await refetch("latestMarketItemsQuery", {
+        id: adventurerId,
+      });
+      const newLastBeastData = await refetch("lastBeastQuery", {
+        id: adventurerId,
+      });
+      const newBeastData = await refetch("beastQuery", {
+        adventurerId: adventurerId,
+        beast: newLastBeastData.discoveries[0]?.entity,
+        seed: newLastBeastData.discoveries[0]?.seed,
+      });
+      const newBattlesByBeastData = await refetch("battlesByBeastQuery", {
+        adventurerId: adventurerId,
+        beast: newLastBeastData.discoveries[0]?.entity,
+        seed: newLastBeastData.discoveries[0]?.seed,
+      });
+      setData("adventurerByIdQuery", newAdventurerData);
+      setData("latestDiscoveriesQuery", newLatestDiscoveriesData);
+      setData("itemsByAdventurerQuery", newAdventurerItemsData);
+      setData("latestMarketItemsQuery", newMarketItemsData);
+      setData("lastBeastQuery", newLastBeastData);
+      setData("beastQuery", newBeastData);
+      setData("battlesByBeastQuery", newBattlesByBeastData);
+      setNotLoading();
+    },
+    [owner, adventurer?.id]
+  );
 
   useEffect(() => {
     return () => {
@@ -445,31 +443,23 @@ function Home() {
     };
   }, [play, stop]);
 
-  // Initialize adventurers from owner
-  useEffect(() => {
-    if (adventurersData) {
-      setData("adventurersByOwnerQuery", adventurersData);
-    }
-  }, [adventurersData]);
+  const mobileMenuDisabled = useMemo(
+    () => [false, hasStatUpgrades, false, !hasStatUpgrades, false, false],
+    [hasStatUpgrades]
+  );
 
-  const mobileMenuDisabled = [
-    false,
-    hasStatUpgrades,
-    false,
-    !hasStatUpgrades,
-    false,
-    false,
-  ];
-
-  const allMenuDisabled = [
-    false,
-    hasStatUpgrades,
-    false,
-    !hasStatUpgrades,
-    false,
-    false,
-    false,
-  ];
+  const allMenuDisabled = useMemo(
+    () => [
+      false,
+      hasStatUpgrades,
+      false,
+      !hasStatUpgrades,
+      false,
+      false,
+      false,
+    ],
+    [hasStatUpgrades]
+  );
 
   const adventurers = adventurersData?.adventurers;
 
@@ -526,14 +516,17 @@ function Home() {
     (pendingMessage === "Spawning Adventurer" ||
       pendingMessage.includes("Spawning Adventurer"));
 
-  const getCostToPlay = async () => {
-    const cost = await gameContract!.call("get_cost_to_play", []);
-    setCostToPlay(cost as bigint);
-  };
+  const [costToPlay, setCostToPlay] = useState<bigint>(BigInt(0));
 
   useEffect(() => {
+    const getCostToPlay = async () => {
+      if (gameContract) {
+        const result = await gameContract.call("get_cost_to_play", []);
+        setCostToPlay(result as bigint);
+      }
+    };
     getCostToPlay();
-  }, []);
+  }, [gameContract]);
 
   const { setCondition } = useController();
   useControls();
@@ -593,9 +586,9 @@ function Home() {
       {isWithdrawing && <TokenLoader isWithdrawing={isWithdrawing} />}
       {screen === "onboarding" ? (
         <Onboarding
-          ethBalance={ethBalance}
-          lordsBalance={lordsBalance}
-          costToPlay={costToPlay!}
+          ethBalance={ethBalanceRef.current}
+          lordsBalance={lordsBalanceRef.current}
+          costToPlay={costToPlay}
           mintLords={mintLords}
           getBalances={getBalances}
         />
@@ -613,10 +606,10 @@ function Home() {
             <Header
               multicall={multicall}
               mintLords={mintLords}
-              ethBalance={ethBalance}
-              lordsBalance={lordsBalance}
+              ethBalance={ethBalanceRef.current}
+              lordsBalance={lordsBalanceRef.current}
               gameContract={gameContract!}
-              costToPlay={costToPlay!}
+              costToPlay={costToPlay}
             />
           </div>
           <div className="w-full h-1 sm:h-6 sm:my-2 bg-terminal-green text-terminal-black px-4">
@@ -661,12 +654,12 @@ function Home() {
                   <AdventurerScreen
                     spawn={spawn}
                     handleSwitchAdventurer={handleSwitchAdventurer}
-                    lordsBalance={lordsBalance}
+                    lordsBalance={lordsBalanceRef.current}
                     gameContract={gameContract!}
                     goldenTokenData={goldenTokenData}
                     getBalances={getBalances}
                     mintLords={mintLords}
-                    costToPlay={costToPlay!}
+                    costToPlay={costToPlay}
                   />
                 )}
                 {screen === "play" && (
@@ -708,8 +701,8 @@ function Home() {
                     <span className="w-full h-full bg-black/50" />
                     <ProfileDialog
                       withdraw={withdraw}
-                      ethBalance={ethBalance}
-                      lordsBalance={lordsBalance}
+                      ethBalance={ethBalanceRef.current}
+                      lordsBalance={lordsBalanceRef.current}
                       ethContractAddress={ethContract!.address}
                       lordsContractAddress={lordsContract!.address}
                     />

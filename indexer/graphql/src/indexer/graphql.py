@@ -1,8 +1,9 @@
 import asyncio
-from typing import List, NewType, Optional, Dict
+from typing import List, NewType, Optional, Dict, Union, Any
 import base64
 import ssl
 import json
+from collections import defaultdict
 
 import strawberry
 import aiohttp_cors
@@ -12,8 +13,13 @@ from pymongo import MongoClient
 from strawberry.aiohttp.views import GraphQLView
 from indexer.utils import felt_to_str, str_to_felt, get_key_by_value
 from indexer.config import Config
+from strawberry.types import Info
+from aiolimiter import AsyncLimiter
 
 config = Config()
+
+# Define a maximum limit constant
+MAX_DOCUMENT_LIMIT = 101
 
 
 def parse_u256(value):
@@ -62,7 +68,7 @@ def serialize_string(value):
 
 
 def parse_class(value):
-    return str(get_key_by_value(str(value), config.CLASSES))
+    return get_key_by_value(str(value), config.CLASSES)
 
 
 def serialize_class(value):
@@ -70,7 +76,7 @@ def serialize_class(value):
 
 
 def parse_beast(value):
-    return str(get_key_by_value(str(value), config.BEASTS))
+    return get_key_by_value(str(value), config.BEASTS)
 
 
 def serialize_beast(value):
@@ -78,7 +84,7 @@ def serialize_beast(value):
 
 
 def parse_adventurer_status(value):
-    return str(get_key_by_value(str(value), config.ADVENTURER_STATUS))
+    return get_key_by_value(str(value), config.ADVENTURER_STATUS)
 
 
 def serialize_adventurer_status(value):
@@ -86,7 +92,7 @@ def serialize_adventurer_status(value):
 
 
 def parse_discovery(value):
-    return str(get_key_by_value(str(value), config.DISCOVERY_TYPES))
+    return get_key_by_value(str(value), config.DISCOVERY_TYPES)
 
 
 def serialize_discovery(value):
@@ -94,7 +100,7 @@ def serialize_discovery(value):
 
 
 def parse_sub_discovery(value):
-    return str(get_key_by_value(str(value), config.SUB_DISCOVERY_TYPES))
+    return get_key_by_value(str(value), config.SUB_DISCOVERY_TYPES)
 
 
 def serialize_sub_discovery(value):
@@ -102,7 +108,7 @@ def serialize_sub_discovery(value):
 
 
 def parse_obstacle(value):
-    return str(get_key_by_value(value, config.OBSTACLES))
+    return get_key_by_value(value, config.OBSTACLES)
 
 
 def serialize_obstacle(value):
@@ -110,7 +116,7 @@ def serialize_obstacle(value):
 
 
 def parse_attacker(value):
-    return str(get_key_by_value(str(value), config.ATTACKERS))
+    return get_key_by_value(str(value), config.ATTACKERS)
 
 
 def serialize_attacker(value):
@@ -118,7 +124,7 @@ def serialize_attacker(value):
 
 
 def parse_item(value):
-    return str(get_key_by_value(str(value), config.ITEMS))
+    return get_key_by_value(str(value), config.ITEMS)
 
 
 def serialize_item(value):
@@ -126,7 +132,7 @@ def serialize_item(value):
 
 
 def parse_material(value):
-    return str(get_key_by_value(str(value), config.MATERIALS))
+    return get_key_by_value(str(value), config.MATERIALS)
 
 
 def serialize_material(value):
@@ -134,7 +140,7 @@ def serialize_material(value):
 
 
 def parse_item_type(value):
-    return str(get_key_by_value(str(value), config.ITEM_TYPES))
+    return get_key_by_value(str(value), config.ITEM_TYPES)
 
 
 def serialize_item_type(value):
@@ -142,7 +148,7 @@ def serialize_item_type(value):
 
 
 def parse_special_2(value):
-    return str(get_key_by_value(str(value), config.ITEM_NAME_PREFIXES))
+    return get_key_by_value(str(value), config.ITEM_NAME_PREFIXES)
 
 
 def serialize_special_2(value):
@@ -150,7 +156,7 @@ def serialize_special_2(value):
 
 
 def parse_special_3(value):
-    return str(get_key_by_value(str(value), config.ITEM_NAME_SUFFIXES))
+    return get_key_by_value(str(value), config.ITEM_NAME_SUFFIXES)
 
 
 def serialize_special_3(value):
@@ -158,7 +164,7 @@ def serialize_special_3(value):
 
 
 def parse_special_1(value):
-    return str(get_key_by_value(str(value), config.ITEM_SUFFIXES))
+    return get_key_by_value(str(value), config.ITEM_SUFFIXES)
 
 
 def serialize_special_1(value):
@@ -166,7 +172,7 @@ def serialize_special_1(value):
 
 
 def parse_item_status(value):
-    return str(get_key_by_value(str(value), config.ITEM_STATUS))
+    return get_key_by_value(str(value), config.ITEM_STATUS)
 
 
 def serialize_item_status(value):
@@ -174,7 +180,7 @@ def serialize_item_status(value):
 
 
 def parse_slot(value):
-    return str(get_key_by_value(str(value), config.SLOTS))
+    return get_key_by_value(str(value), config.SLOTS)
 
 
 def serialize_slot(value):
@@ -182,7 +188,7 @@ def serialize_slot(value):
 
 
 def parse_adventurer(value):
-    return str(get_key_by_value(str(value), config.ATTACKERS))
+    return get_key_by_value(str(value), config.ATTACKERS)
 
 
 def serialize_adventurer(value):
@@ -190,7 +196,7 @@ def serialize_adventurer(value):
 
 
 def parse_item_tier(value):
-    return str(get_key_by_value(str(value), config.ITEM_TIERS))
+    return get_key_by_value(str(value), config.ITEM_TIERS)
 
 
 def serialize_item_tier(value):
@@ -1811,6 +1817,28 @@ class Battle:
 
 
 @strawberry.type
+class DiscoveryOrBattle:
+    type: str
+    timestamp: str
+    data: Union[Discovery, Battle]
+
+    @classmethod
+    def from_discovery(cls, discovery: Discovery):
+        return cls(type="Discovery", timestamp=discovery.timestamp, data=discovery)
+
+    @classmethod
+    def from_battle(cls, battle: Battle):
+        return cls(type="Battle", timestamp=battle.timestamp, data=battle)
+
+
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj: Any) -> Any:
+        if isinstance(obj, (Discovery, Battle, DiscoveryOrBattle)):
+            return obj.__dict__
+        return super().default(obj)
+
+
+@strawberry.type
 class Item:
     item: Optional[ItemValue]
     adventurerId: Optional[FeltValue]
@@ -1851,6 +1879,14 @@ class Item:
         )
 
 
+@strawberry.type
+class AdventurerRank:
+    adventurer_id: str
+    xp: int
+    rank: int
+    total_adventurers: int
+
+
 def get_str_filters(where: StringFilter) -> List[Dict]:
     filter = {}
     if where.eq is not None:
@@ -1859,13 +1895,13 @@ def get_str_filters(where: StringFilter) -> List[Dict]:
         filter["$in"] = where._in
     if where.notIn:
         filter["$nin"] = where.notIn
-    if where.lt:
+    if where.lt is not None:
         filter["$lt"] = where.lt
-    if where.lte:
+    if where.lte is not None:
         filter["$lte"] = where.lte
-    if where.gt:
+    if where.gt is not None:
         filter["$gt"] = where.gt
-    if where.gte:
+    if where.gte is not None:
         filter["$gte"] = where.gte
     if where.contains:
         filter["$regex"] = where.contains
@@ -1885,13 +1921,13 @@ def get_felt_filters(where: FeltValueFilter) -> List[Dict]:
         filter["$in"] = where._in
     if where.notIn:
         filter["$nin"] = where.notIn
-    if where.lt:
+    if where.lt is not None:
         filter["$lt"] = where.lt
-    if where.lte:
+    if where.lte is not None:
         filter["$lte"] = where.lte
-    if where.gt:
+    if where.gt is not None:
         filter["$gt"] = where.gt
-    if where.gte:
+    if where.gte is not None:
         filter["$gte"] = where.gte
 
     return filter
@@ -1905,13 +1941,13 @@ def get_hex_filters(where: HexValueFilter) -> List[Dict]:
         filter["$in"] = where._in
     if where.notIn:
         filter["$nin"] = where.notIn
-    if where.lt:
+    if where.lt is not None:
         filter["$lt"] = where.lt
-    if where.lte:
+    if where.lte is not None:
         filter["$lte"] = where.lte
-    if where.gt:
+    if where.gt is not None:
         filter["$gt"] = where.gt
-    if where.gte:
+    if where.gte is not None:
         filter["$gte"] = where.gte
 
     return filter
@@ -1925,13 +1961,13 @@ def get_date_filters(where: DateTimeFilter) -> List[Dict]:
         filter["$in"] = where._in
     if where.notIn:
         filter["$nin"] = where.notIn
-    if where.lt:
+    if where.lt is not None:
         filter["$lt"] = where.lt
-    if where.lte:
+    if where.lte is not None:
         filter["$lte"] = where.lte
-    if where.gt:
+    if where.gt is not None:
         filter["$gt"] = where.gt
-    if where.gte:
+    if where.gte is not None:
         filter["$gte"] = where.gte
 
     return filter
@@ -1954,12 +1990,16 @@ def process_filters(obj, prefix=None):
 
 
 async def get_adventurers(
-    info,
+    info: Info,
     where: Optional[AdventurersFilter] = {},
     limit: Optional[int] = 10,
     skip: Optional[int] = 0,
     orderBy: Optional[AdventurersOrderByInput] = {},
 ) -> List[Adventurer]:
+    # Enforce the maximum limit
+    if limit is None or limit > MAX_DOCUMENT_LIMIT:
+        limit = MAX_DOCUMENT_LIMIT
+
     db = info.context["db"]
     redis = info.context["redis"]
 
@@ -2359,6 +2399,104 @@ async def get_items(
     return result
 
 
+async def get_discoveries_and_battles(
+    info,
+    where: Optional[ItemsFilter] = {},
+    limit: int = 10,
+    skip: int = 0,
+) -> List[DiscoveryOrBattle]:
+    db = info.context["db"]
+    redis = info.context["redis"]
+
+    # Convert custom filter objects to dictionaries
+    where_dict = where.to_dict() if where else {}
+
+    # Create a unique cache key based on the query parameters
+    cache_key = f"discoveries_and_battles:{json.dumps(where_dict)}:{limit}:{skip}"
+    cached_result = await redis.get(cache_key)
+
+    if cached_result:
+        cached_result = cached_result.decode("utf-8")  # Decode the byte string
+        deserialized = json.loads(cached_result)
+        return [
+            DiscoveryOrBattle(
+                type=item["type"],
+                timestamp=item["timestamp"],
+                data=(
+                    Discovery.from_mongo(item["data"])
+                    if item["type"] == "Discovery"
+                    else Battle.from_mongo(item["data"])
+                ),
+            )
+            for item in deserialized
+        ]
+
+    filter = {"_cursor.to": None}
+
+    if where:
+        processed_filters = process_filters(where)
+        for key, value in processed_filters.items():
+            if isinstance(value, StringFilter):
+                filter[key] = get_str_filters(value)
+            elif isinstance(value, HexValueFilter):
+                filter[key] = get_hex_filters(value)
+            elif isinstance(value, DateTimeFilter):
+                filter[key] = get_date_filters(value)
+            elif isinstance(value, FeltValueFilter):
+                filter[key] = get_felt_filters(value)
+            elif isinstance(value, BooleanFilter):
+                filter[key] = get_bool_filters(value)
+
+    # Pipeline for discoveries
+    discoveries_pipeline = [
+        {"$match": filter},
+        {"$addFields": {"type": "Discovery"}},
+        {"$project": {"_id": 0, "type": 1, "timestamp": 1, "data": "$$ROOT"}},
+        {"$sort": {"timestamp": -1}},
+    ]
+
+    # Pipeline for battles
+    battles_pipeline = [
+        {"$match": filter},
+        {"$addFields": {"type": "Battle"}},
+        {"$project": {"_id": 0, "type": 1, "timestamp": 1, "data": "$$ROOT"}},
+        {"$sort": {"timestamp": -1}},
+    ]
+
+    # Run aggregations
+    discoveries = list(db["discoveries"].aggregate(discoveries_pipeline))
+    battles = list(db["battles"].aggregate(battles_pipeline))
+
+    # Combine and sort results
+    combined = sorted(discoveries + battles, key=lambda x: x["timestamp"], reverse=True)
+
+    # Apply skip and limit
+    paginated = combined[skip : skip + limit]
+
+    # Convert the result to DiscoveryOrBattle objects
+    converted_result = [
+        DiscoveryOrBattle(
+            type=item["type"],
+            timestamp=item["timestamp"],
+            data=(
+                Discovery.from_mongo(item["data"])
+                if item["type"] == "Discovery"
+                else Battle.from_mongo(item["data"])
+            ),
+        )
+        for item in paginated
+    ]
+
+    # Cache the result
+    await redis.set(
+        cache_key,
+        json.dumps(converted_result, cls=CustomJSONEncoder),
+        ex=60,
+    )
+
+    return converted_result
+
+
 async def count_adventurers_with_zero_health(info) -> int:
     redis = info.context["redis"]
     cache_key = "count_adventurers_with_zero_health"
@@ -2379,9 +2517,18 @@ async def count_adventurers_with_zero_health(info) -> int:
     return count
 
 
-async def count_adventurers_with_positive_health(info) -> int:
+async def count_adventurers_with_positive_health(
+    info, owner: Optional[HexValue] = None
+) -> int:
     redis = info.context["redis"]
-    cache_key = "count_adventurers_with_positive_health"
+
+    filter = {"_cursor.to": None}
+
+    # Add adventurerId to the filter if provided
+    if owner:
+        filter["owner"] = {"$eq": owner}
+
+    cache_key = f"count_adventurers_with_positive_health:{json.dumps(filter)}"
 
     # Check if the result is in the cache
     cached_count = await redis.get(cache_key)
@@ -2390,7 +2537,6 @@ async def count_adventurers_with_positive_health(info) -> int:
 
     # If not in cache, query the database
     db = info.context["db"]
-    filter = {"_cursor.to": None}
     count = db["adventurers"].count_documents({**filter, "health": {"$gt": 0}})
 
     # Store the result in the cache
@@ -2399,9 +2545,16 @@ async def count_adventurers_with_positive_health(info) -> int:
     return count
 
 
-async def count_total_adventurers(info) -> int:
+async def count_total_adventurers(info, owner: Optional[HexValue] = None) -> int:
     redis = info.context["redis"]
-    cache_key = "count_total_adventurers"
+
+    filter = {"_cursor.to": None}
+
+    # Add adventurerId to the filter if provided
+    if owner:
+        filter["owner"] = {"$eq": owner}
+
+    cache_key = f"count_total_adventurers:{json.dumps(filter)}"
 
     # Check if the result is in the cache
     cached_count = await redis.get(cache_key)
@@ -2410,7 +2563,6 @@ async def count_total_adventurers(info) -> int:
 
     # If not in cache, query the database
     db = info.context["db"]
-    filter = {"_cursor.to": None}
     count = db["adventurers"].count_documents({**filter})
 
     # Store the result in the cache
@@ -2419,13 +2571,108 @@ async def count_total_adventurers(info) -> int:
     return count
 
 
+async def count_total_discoveries_and_battles(
+    info, adventurerId: Optional[int] = None
+) -> int:
+    redis = info.context["redis"]
+    # If not in cache, query the database
+    db = info.context["db"]
+    filter = {"_cursor.to": None}
+
+    # Add adventurerId to the filter if provided
+    if adventurerId:
+        filter["adventurerId"] = {"$eq": adventurerId}
+
+    cache_key = f"count_total_discoveries_and_battles:{json.dumps(filter)}"
+
+    # Check if the result is in the cache
+    cached_count = await redis.get(cache_key)
+    if cached_count is not None:
+        return int(cached_count)
+
+    discoveries_count = db["discoveries"].count_documents({**filter})
+    battles_count = db["battles"].count_documents({**filter})
+
+    total_count = discoveries_count + battles_count
+
+    # Store the result in the cache
+    await redis.set(
+        cache_key, total_count, ex=60
+    )  # Set an expiration time of 60 seconds
+
+    return total_count
+
+
+async def get_adventurer_rank(
+    info, adventurer_id: int, adventurer_xp: int
+) -> Optional[AdventurerRank]:
+    db = info.context["db"]
+    redis = info.context["redis"]
+
+    # Try to get the rank from cache
+    cache_key = f"adventurer_rank:{adventurer_id}"
+    cached_rank = await redis.get(cache_key)
+    if cached_rank:
+        return AdventurerRank(**json.loads(cached_rank))
+
+    # If not in cache, calculate the rank
+    pipeline = [
+        {
+            "$match": {
+                "_cursor.to": None,  # Only consider current adventurers
+                "health": 0,  # Filter adventurers with health equal 0
+            }
+        },
+        {
+            "$group": {
+                "_id": None,
+                "total": {"$sum": 1},
+                "rank": {"$sum": {"$cond": [{"$gt": ["$xp", adventurer_xp]}, 1, 0]}},
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "adventurer_id": {"$literal": adventurer_id},
+                "xp": {"$literal": adventurer_xp},
+                "rank": {"$add": ["$rank", 1]},  # Add 1 because rank is 1-indexed
+                "total_adventurers": "$total",
+            }
+        },
+    ]
+
+    result = list(db["adventurers"].aggregate(pipeline))
+
+    if not result:
+        # If no result, it means there are no adventurers with 0 health
+        # In this case, we'll return a rank of 1 out of 1
+        rank_data = {
+            "adventurer_id": adventurer_id,
+            "xp": adventurer_xp,
+            "rank": 1,
+            "total_adventurers": 1,
+        }
+    else:
+        rank_data = result[0]
+
+    adventurer_rank = AdventurerRank(**rank_data)
+
+    # Cache the result
+    await redis.set(cache_key, json.dumps(rank_data), ex=300)  # Cache for 5 minutes
+
+    return adventurer_rank
+
+
 @strawberry.type
 class Query:
     adventurers: List[Adventurer] = strawberry.field(resolver=get_adventurers)
     scores: List[Score] = strawberry.field(resolver=get_scores)
-    discoveries: List[Discovery] = strawberry.field(resolver=get_discoveries)
     beasts: List[Beast] = strawberry.field(resolver=get_beasts)
+    discoveries: List[Discovery] = strawberry.field(resolver=get_discoveries)
     battles: List[Battle] = strawberry.field(resolver=get_battles)
+    discoveriesAndBattles: List[DiscoveryOrBattle] = strawberry.field(
+        resolver=get_discoveries_and_battles
+    )
     items: List[Item] = strawberry.field(resolver=get_items)
     countDeadAdventurers: int = strawberry.field(
         resolver=count_adventurers_with_zero_health
@@ -2434,6 +2681,12 @@ class Query:
         resolver=count_adventurers_with_positive_health
     )
     countTotalAdventurers: int = strawberry.field(resolver=count_total_adventurers)
+    countDiscoveriesAndBattles: int = strawberry.field(
+        resolver=count_total_discoveries_and_battles
+    )
+    adventurerRank: Optional[AdventurerRank] = strawberry.field(
+        resolver=get_adventurer_rank
+    )
 
 
 class IndexerGraphQLView(GraphQLView):
@@ -2443,10 +2696,32 @@ class IndexerGraphQLView(GraphQLView):
         self._redis = redis
 
     async def get_context(self, _request, _response):
-        return {"db": self._db, "redis": self._redis}
+        return {"db": self._db, "redis": self._redis, "max_limit": MAX_DOCUMENT_LIMIT}
 
 
-async def run_graphql_api(mongo=None, redis_url="redis://redis", port="8080"):
+# # Create a dictionary to store rate limiters for each IP
+# ip_limiters = defaultdict(
+#     lambda: AsyncLimiter(100, 60)
+# )  # 100 requests per 60 seconds per IP
+
+
+# @web.middleware
+# async def rate_limit_middleware(request, handler):
+#     ip = request.remote  # Get the IP address of the client
+#     limiter = ip_limiters[ip]
+#     try:
+#         async with limiter:
+#             return await handler(request)
+#     except asyncio.TimeoutError:
+#         return web.json_response({"error": "Rate limit exceeded"}, status=429)
+
+
+async def run_graphql_api(
+    mongo=None,
+    redis_url="redis://redis",
+    port="8080",
+    allowed_origin="http://localhost:3000",
+):
     mongo = MongoClient(mongo)
     db_name = "mongo".replace("-", "_")
     db = mongo[db_name]
@@ -2458,25 +2733,25 @@ async def run_graphql_api(mongo=None, redis_url="redis://redis", port="8080"):
 
     app = web.Application()
 
-    cors = aiohttp_cors.setup(app)
-    resource = cors.add(app.router.add_resource("/graphql"))
+    # Add the rate limiting middleware
+    # app.middlewares.append(rate_limit_middleware)
 
-    cors.add(
-        resource.add_route("POST", view),
-        {
-            "*": aiohttp_cors.ResourceOptions(
-                expose_headers="*", allow_headers="*", allow_methods="*"
-            ),
+    # Setup CORS with the specific origin
+    cors = aiohttp_cors.setup(
+        app,
+        defaults={
+            allowed_origin: aiohttp_cors.ResourceOptions(
+                allow_credentials=True,
+                expose_headers="*",
+                allow_headers="*",
+                allow_methods=["POST", "GET"],
+            )
         },
     )
-    cors.add(
-        resource.add_route("GET", view),
-        {
-            "*": aiohttp_cors.ResourceOptions(
-                expose_headers="*", allow_headers="*", allow_methods="*"
-            ),
-        },
-    )
+
+    resource = cors.add(app.router.add_resource("/graphql"))
+    cors.add(resource.add_route("POST", view))
+    cors.add(resource.add_route("GET", view))
 
     runner = web.AppRunner(app)
     await runner.setup()
