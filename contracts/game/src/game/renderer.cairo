@@ -15,6 +15,12 @@ fn logo() -> ByteArray {
     "<path d=\"M1 2V0h8v2h1v10H7v4H3v-4H0V2zm1 4v4h2v2h2v-2h2V6H6v4H4V6z\"/>"
 }
 
+// @notice Generates the crown icon used for top scores
+// @return The generated crown icon
+fn crown() -> ByteArray {
+    "<path d=\"M0 0v9h15V0h-1v1h-1v1h-1v1h-2V2H9V1H8V0H7v1H6v1H5v1H3V2H2V1H1V0H0Z\"/>"
+}
+
 // @notice Generates the weapon icon svg
 // @return The generated weapon icon
 fn weapon() -> ByteArray {
@@ -446,21 +452,21 @@ mod tests {
     #[test]
     fn test_metadata() {
         let adventurer = Adventurer {
-            health: 1023,
-            xp: 10000,
+            health: 100,
+            xp: 400,
             stats: Stats {
-                strength: 50, dexterity: 50, vitality: 50, intelligence: 50, wisdom: 50, charisma: 50, luck: 100
+                strength: 10, dexterity: 2, vitality: 0, intelligence: 5, wisdom: 5, charisma: 5, luck: 10
             },
-            gold: 1023,
+            gold: 25,
             equipment: Equipment {
                 weapon: Item { id: 42, xp: 400 },
-                chest: Item { id: 49, xp: 400 },
-                head: Item { id: 53, xp: 400 },
-                waist: Item { id: 59, xp: 400 },
-                foot: Item { id: 64, xp: 400 },
+                chest: Item { id: 49, xp: 360 },
+                head: Item { id: 53, xp: 200 },
+                waist: Item { id: 59, xp: 200 },
+                foot: Item { id: 64, xp: 300 },
                 hand: Item { id: 69, xp: 400 },
-                neck: Item { id: 1, xp: 400 },
-                ring: Item { id: 7, xp: 400 }
+                neck: Item { id: 1, xp: 360 },
+                ring: Item { id: 7, xp: 200 }
             },
             beast_health: BeastSettings::STARTER_BEAST_HEALTH,
             stat_upgrades_available: 0,
@@ -470,21 +476,21 @@ mod tests {
         };
 
         let bag = Bag {
-            item_1: Item { id: 8, xp: 400 },
-            item_2: Item { id: 8, xp: 400 },
-            item_3: Item { id: 8, xp: 400 },
-            item_4: Item { id: 8, xp: 400 },
-            item_5: Item { id: 8, xp: 400 },
-            item_6: Item { id: 8, xp: 400 },
-            item_7: Item { id: 8, xp: 400 },
-            item_8: Item { id: 8, xp: 400 },
-            item_9: Item { id: 8, xp: 400 },
-            item_10: Item { id: 8, xp: 400 },
-            item_11: Item { id: 8, xp: 400 },
-            item_12: Item { id: 8, xp: 400 },
-            item_13: Item { id: 8, xp: 400 },
-            item_14: Item { id: 8, xp: 400 },
-            item_15: Item { id: 8, xp: 400 },
+            item_1: Item { id: 8, xp: 4 },
+            item_2: Item { id: 40, xp: 30 },
+            item_3: Item { id: 57, xp: 50 },
+            item_4: Item { id: 83, xp: 0 },
+            item_5: Item { id: 12, xp: 75 },
+            item_6: Item { id: 77, xp: 40 },
+            item_7: Item { id: 68, xp: 2 },
+            item_8: Item { id: 100, xp: 30 },
+            item_9: Item { id: 94, xp: 89 },
+            item_10: Item { id: 54, xp: 43 },
+            item_11: Item { id: 87, xp: 20 },
+            item_12: Item { id: 81, xp: 1 },
+            item_13: Item { id: 30, xp: 60 },
+            item_14: Item { id: 11, xp: 30 },
+            item_15: Item { id: 29, xp: 44 },
             mutated: false
         };
 
@@ -495,7 +501,7 @@ mod tests {
 
         starknet::testing::set_block_timestamp(1721860860);
 
-        let rect = create_metadata(1000000, adventurer, 'areallyreallyreallyreallongname', adventurer_metadata, bag, 10);
+        let rect = create_metadata(1000000, adventurer, 'tokenizooor', adventurer_metadata, bag, 10);
 
         println!("{}", rect);
 
