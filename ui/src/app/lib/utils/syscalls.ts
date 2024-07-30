@@ -4,7 +4,7 @@ import {
   Contract,
   AccountInterface,
   RevertedTransactionReceiptResponse,
-  Provider,
+  ProviderInterface,
 } from "starknet";
 import { GameData } from "@/app/lib/data/GameData";
 import {
@@ -94,7 +94,7 @@ export interface SyscallsProps {
   setIsMintingLords: (value: boolean) => void;
   setIsWithdrawing: (value: boolean) => void;
   setEntropyReady: (value: boolean) => void;
-  rpc_addr: string;
+  provider: ProviderInterface;
   network: Network;
 }
 
@@ -205,14 +205,10 @@ export function createSyscalls({
   setIsMintingLords,
   setIsWithdrawing,
   setEntropyReady,
-  rpc_addr,
+  provider,
   network,
 }: SyscallsProps) {
   const gameData = new GameData();
-
-  const provider = new Provider({
-    nodeUrl: rpc_addr!,
-  });
 
   const onKatana = network === "localKatana" || network === "katana";
 

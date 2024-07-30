@@ -82,7 +82,7 @@ export default function RootLayout({
             )}
           </main>
         ) : (
-          <ApolloProvider client={gameClient(networkConfig[network].lsGQLURL!)}>
+          <ApolloProvider client={gameClient()}>
             <ApolloProvider
               client={goldenTokenClient(networkConfig[network].tokensGQLURL!)}
             >

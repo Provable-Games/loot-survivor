@@ -1,5 +1,5 @@
 "use client";
-import { useConnect, useContract } from "@starknet-react/core";
+import { useConnect, useContract, useProvider } from "@starknet-react/core";
 import { sepolia } from "@starknet-react/chains";
 import { constants } from "starknet";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
@@ -97,6 +97,7 @@ function Home() {
   const network = useUIStore((state) => state.network);
   const onKatana = useUIStore((state) => state.onKatana);
   const { account, address, isConnected } = useNetworkAccount();
+  const { provider } = useProvider();
   const isMuted = useUIStore((state) => state.isMuted);
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
@@ -269,7 +270,7 @@ function Home() {
     setIsMintingLords,
     setIsWithdrawing,
     setEntropyReady,
-    rpc_addr: networkConfig[network!].rpcUrl,
+    provider,
     network,
   });
 

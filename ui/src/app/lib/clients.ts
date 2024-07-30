@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { ApolloClient, InMemoryCache, createHttpLink } from "@apollo/client";
 
 export const goldenTokenClient = (GQLURL: string) => {
   return new ApolloClient({
@@ -25,74 +25,30 @@ export const goldenTokenClient = (GQLURL: string) => {
   });
 };
 
-export const gameClient = (GQLURL: string) => {
+export const gameClient = () => {
+  const httpLink = createHttpLink({
+    uri: "/api/graphql-proxy",
+    fetchOptions: {
+      next: { revalidate: 0 }, // Disable caching for this route
+    },
+  });
+
   return new ApolloClient({
-    uri: GQLURL,
-    cache: new InMemoryCache({
-      typePolicies: {
-        Query: {
-          fields: {
-            adventurers: {
-              merge(existing = [], incoming) {
-                const incomingTxHashes = new Set(
-                  incoming.map((i: any) => i.id)
-                );
-                const filteredExisting = existing.filter(
-                  (e: any) => !incomingTxHashes.has(e.id)
-                );
-                return [...filteredExisting, ...incoming];
-              },
-            },
-            discoveries: {
-              merge(existing = [], incoming) {
-                const incomingTxHashes = new Set(
-                  incoming.map((i: any) => i.txHash)
-                );
-                const filteredExisting = existing.filter(
-                  (e: any) => !incomingTxHashes.has(e.txHash)
-                );
-                return [...filteredExisting, ...incoming];
-              },
-            },
-            battles: {
-              merge(existing = [], incoming) {
-                const incomingTxHashes = new Set(
-                  incoming.map((i: any) => i.txHash)
-                );
-                const filteredExisting = existing.filter(
-                  (e: any) => !incomingTxHashes.has(e.txHash)
-                );
-                return [...filteredExisting, ...incoming];
-              },
-            },
-            beasts: {
-              merge(existing = [], incoming) {
-                const incomingKeys = new Set(
-                  incoming.map((i: any) => `${i.adventurerId}-${i.seed}`)
-                );
-                const filteredExisting = existing.filter(
-                  (e: any) => !incomingKeys.has(`${e.adventurerId}-${e.seed}`)
-                );
-                return [...filteredExisting, ...incoming];
-              },
-            },
-            items: {
-              merge(existing = [], incoming) {
-                const incomingKeys = new Set(
-                  incoming.map(
-                    (i: any) => `${i.adventurerId}-${i.item}-${i.owner}`
-                  )
-                );
-                const filteredExisting = existing.filter(
-                  (e: any) =>
-                    !incomingKeys.has(`${e.adventurerId}-${e.item}-${e.owner}`)
-                );
-                return [...filteredExisting, ...incoming];
-              },
-            },
-          },
-        },
+    link: httpLink,
+    defaultOptions: {
+      watchQuery: {
+        fetchPolicy: "no-cache",
+        nextFetchPolicy: "no-cache",
       },
+      query: {
+        fetchPolicy: "no-cache",
+      },
+      mutate: {
+        fetchPolicy: "no-cache",
+      },
+    },
+    cache: new InMemoryCache({
+      addTypename: false,
     }),
   });
 };
