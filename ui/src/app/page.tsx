@@ -41,7 +41,7 @@ import {
   getGoldenTokensByOwner,
 } from "@/app/hooks/graphql/queries";
 import NetworkSwitchError from "@/app/components/navigation/NetworkSwitchError";
-import { syscalls } from "@/app/lib/utils/syscalls";
+import { useSyscalls } from "@/app/lib/utils/syscalls";
 import Game from "@/app/abi/Game.json";
 import Lords from "@/app/abi/Lords.json";
 import EthBalanceFragment from "@/app/abi/EthBalanceFragment.json";
@@ -234,7 +234,7 @@ function Home() {
     multicall,
     mintLords,
     withdraw,
-  } = syscalls({
+  } = useSyscalls({
     gameContract: gameContract!,
     ethContract: ethContract!,
     lordsContract: lordsContract!,

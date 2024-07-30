@@ -1,9 +1,7 @@
 import asyncio
 from typing import List, NewType, Optional, Dict, Union, Any
-import base64
 import ssl
 import json
-from collections import defaultdict
 
 import strawberry
 import aiohttp_cors
@@ -11,10 +9,9 @@ from aiohttp import web
 import aioredis
 from pymongo import MongoClient
 from strawberry.aiohttp.views import GraphQLView
-from indexer.utils import felt_to_str, str_to_felt, get_key_by_value
+from indexer.utils import get_key_by_value
 from indexer.config import Config
 from strawberry.types import Info
-from aiolimiter import AsyncLimiter
 
 config = Config()
 
@@ -2699,28 +2696,11 @@ class IndexerGraphQLView(GraphQLView):
         return {"db": self._db, "redis": self._redis, "max_limit": MAX_DOCUMENT_LIMIT}
 
 
-# # Create a dictionary to store rate limiters for each IP
-# ip_limiters = defaultdict(
-#     lambda: AsyncLimiter(100, 60)
-# )  # 100 requests per 60 seconds per IP
-
-
-# @web.middleware
-# async def rate_limit_middleware(request, handler):
-#     ip = request.remote  # Get the IP address of the client
-#     limiter = ip_limiters[ip]
-#     try:
-#         async with limiter:
-#             return await handler(request)
-#     except asyncio.TimeoutError:
-#         return web.json_response({"error": "Rate limit exceeded"}, status=429)
-
-
 async def run_graphql_api(
     mongo=None,
     redis_url="redis://redis",
     port="8080",
-    allowed_origin="http://localhost:3000",
+    allowed_origins=["http://localhost:3000"],
 ):
     mongo = MongoClient(mongo)
     db_name = "mongo".replace("-", "_")
@@ -2733,19 +2713,17 @@ async def run_graphql_api(
 
     app = web.Application()
 
-    # Add the rate limiting middleware
-    # app.middlewares.append(rate_limit_middleware)
-
     # Setup CORS with the specific origin
     cors = aiohttp_cors.setup(
         app,
         defaults={
-            allowed_origin: aiohttp_cors.ResourceOptions(
+            origin: aiohttp_cors.ResourceOptions(
                 allow_credentials=True,
                 expose_headers="*",
                 allow_headers="*",
                 allow_methods=["POST", "GET"],
             )
+            for origin in allowed_origins
         },
     )
 

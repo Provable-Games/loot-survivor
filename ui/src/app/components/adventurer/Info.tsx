@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Contract } from "starknet";
 import { Adventurer, NullAdventurer, NullItem } from "@/app/types";
 import {
