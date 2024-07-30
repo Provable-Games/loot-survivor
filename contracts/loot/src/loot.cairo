@@ -1023,21 +1023,25 @@ mod tests {
     };
 
     #[test]
+    #[available_gas(51540)]
     fn test_get_prefix1_gas() {
         ImplLoot::get_prefix1(ItemId::Warhammer, 0);
     }
 
     #[test]
+    #[available_gas(51540)]
     fn test_get_prefix2_gas() {
         ImplLoot::get_prefix2(ItemId::Warhammer, 0);
     }
 
     #[test]
+    #[available_gas(51540)]
     fn test_get_suffix_gas() {
         ImplLoot::get_suffix(ItemId::Warhammer, 0);
     }
 
     #[test]
+    #[available_gas(48090)]
     fn test_get_specials_seed_gas() {
         ImplLoot::get_specials_seed(ItemId::Warhammer, 0);
     }
