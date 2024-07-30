@@ -2,7 +2,6 @@ import { Adventurer, Beast } from "@/app/types";
 import BeastRow from "@/app/components/leaderboard/BeastRow";
 import { getBeastData } from "@/app/lib/utils";
 import useCustomQuery from "@/app/hooks/useCustomQuery";
-import { networkConfig } from "@/app/lib/networkConfig";
 import {
   getKilledBeasts,
   getAdventurersInList,
@@ -35,7 +34,7 @@ const KilledBeastsTable = ({}) => {
   };
 
   const killedBeastsData = useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "killedBeastsQuery",
     getKilledBeasts,
     undefined
@@ -44,7 +43,7 @@ const KilledBeastsTable = ({}) => {
   const beasts: Beast[] = killedBeastsData?.beasts ?? [];
 
   const adventurersInListData = useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "adventurersInListQuery",
     getAdventurersInList,
     {

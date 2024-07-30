@@ -295,7 +295,7 @@ function Home() {
   }, [owner]);
 
   const adventurersData = useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "adventurersByOwnerQuery",
     getAdventurersByOwner,
     ownerVariables,
@@ -309,35 +309,35 @@ function Home() {
   }, [adventurer?.id ?? 0]);
 
   useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "adventurerByIdQuery",
     getAdventurerById,
     adventurerVariables
   );
 
   useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "latestDiscoveriesQuery",
     getLatestDiscoveries,
     adventurerVariables
   );
 
   useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "itemsByAdventurerQuery",
     getItemsByAdventurer,
     adventurerVariables
   );
 
   useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "latestMarketItemsQuery",
     getLatestMarketItems,
     adventurerVariables
   );
 
   const lastBeastData = useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "lastBeastQuery",
     getLastBeastDiscovery,
     adventurerVariables
@@ -355,15 +355,10 @@ function Home() {
     lastBeastData?.discoveries[0]?.seed,
   ]);
 
-  useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
-    "beastQuery",
-    getBeast,
-    beastVariables
-  );
+  useCustomQuery(network, "beastQuery", getBeast, beastVariables);
 
   useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "battlesByBeastQuery",
     getBattlesByBeast,
     beastVariables
@@ -388,10 +383,7 @@ function Home() {
     }
   }, [address]);
 
-  const goldenTokenClientInstance = useMemo(
-    () => goldenTokenClient(networkConfig[network!].tokensGQLURL),
-    [network]
-  );
+  const goldenTokenClientInstance = useMemo(() => goldenTokenClient(), []);
 
   const { data: goldenTokenData } = useQuery(getGoldenTokensByOwner, {
     client: goldenTokenClientInstance,

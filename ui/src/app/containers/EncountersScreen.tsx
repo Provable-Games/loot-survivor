@@ -11,7 +11,6 @@ import {
   getDiscoveryBattleCount,
 } from "@/app/hooks/graphql/queries";
 import useCustomQuery from "@/app/hooks/useCustomQuery";
-import { networkConfig } from "@/app/lib/networkConfig";
 import useUIStore from "@/app/hooks/useUIStore";
 
 export interface EncountersProps {
@@ -32,7 +31,7 @@ export default function EncountersScreen({ profile }: EncountersProps) {
   const skip = (currentPage - 1) * encountersPerPage;
 
   const discoveryBattleCountData = useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "discoveryBattleCountsQuery",
     getDiscoveryBattleCount,
     {
@@ -44,7 +43,7 @@ export default function EncountersScreen({ profile }: EncountersProps) {
     discoveryBattleCountData?.countDiscoveriesAndBattles;
 
   const discoveriesAndBattlesData = useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "discoveriesAndBattlesByAdventurerQuery",
     getDiscoveriesAndBattlesByAdventurerPaginated,
     {

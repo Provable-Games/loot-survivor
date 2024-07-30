@@ -5,7 +5,6 @@ import { Adventurer } from "@/app/types";
 import LiveRow from "@/app/components/leaderboard/LiveRow";
 import useUIStore from "@/app/hooks/useUIStore";
 import useCustomQuery from "@/app/hooks/useCustomQuery";
-import { networkConfig } from "@/app/lib/networkConfig";
 import LootIconLoader from "@/app/components/icons/Loader";
 
 export interface LiveLeaderboardTableProps {
@@ -33,7 +32,7 @@ const LiveLeaderboardTable = ({
   }, [skip]);
 
   const adventurersByXPdata = useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "adventurersByXPQuery",
     getAliveAdventurersByXPPaginated,
     aliveAdventurersVariables

@@ -8,7 +8,6 @@ import useAdventurerStore from "@/app/hooks/useAdventurerStore";
 import { NullAdventurer, FormData } from "@/app/types";
 import useUIStore from "@/app/hooks/useUIStore";
 import useCustomQuery from "@/app/hooks/useCustomQuery";
-import { networkConfig } from "@/app/lib/networkConfig";
 import {
   getAdventurersByOwnerCount,
   getAliveAdventurersCount,
@@ -55,7 +54,7 @@ export default function AdventurerScreen({
   const owner = account?.address ? padAddress(account.address) : "";
 
   const adventurersByOwnerCountData = useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "adventurersByOwnerCountQuery",
     getAdventurersByOwnerCount,
     {
@@ -65,7 +64,7 @@ export default function AdventurerScreen({
   );
 
   const aliveAdventurersByOwnerCountData = useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "aliveAdventurersByOwnerCountQuery",
     getAliveAdventurersCount,
     {

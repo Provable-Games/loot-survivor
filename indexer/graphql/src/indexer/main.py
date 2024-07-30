@@ -31,12 +31,15 @@ def cli():
     multiple=True,
     help="Allowed origin for CORS. Can be specified multiple times.",
 )
+@click.option("--api-key", default=None, help="API key.")
 @async_command
-async def graphql(mongo, port, allowed_origin):
+async def graphql(mongo, port, allowed_origin, api_key):
     """Start the GraphQL server."""
     if port is None:
         port = "8080"
     if mongo is None:
         mongo = "mongodb://mongo:mongo@localhost:27017"
 
-    await run_graphql_api(mongo=mongo, port=port, allowed_origins=list(allowed_origin))
+    await run_graphql_api(
+        mongo=mongo, port=port, allowed_origins=list(allowed_origin), api_key=api_key
+    )

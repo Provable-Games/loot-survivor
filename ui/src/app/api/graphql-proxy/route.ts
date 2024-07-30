@@ -4,11 +4,22 @@ export async function POST(request: NextRequest) {
   // Clone the request body before reading it
   const clonedRequest = request.clone();
 
-  const apiKey = process.env.GRAPHQL_API_KEY;
-  const apiUrl = process.env.GRAPHQL_API_URL;
+  // Get the API selection from query parameters
+  const { searchParams } = new URL(request.url);
+  const apiSelection = searchParams.get("api") || "katana";
+
+  // Choose the appropriate API key and URL based on the selection
+  let apiKey, apiUrl;
+
+  if (apiSelection === "katana") {
+    apiKey = process.env.KATANA_GRAPHQL_API_KEY;
+    apiUrl = process.env.KATANA_GRAPHQL_API_URL;
+  } else {
+    apiKey = process.env.GRAPHQL_API_KEY;
+    apiUrl = process.env.GRAPHQL_API_URL;
+  }
+
   const isDevelopment = process.env.NEXT_PUBLIC_NETWORK === "development";
-  console.log(apiUrl);
-  console.log(apiKey);
 
   if (!apiUrl) {
     return NextResponse.json(

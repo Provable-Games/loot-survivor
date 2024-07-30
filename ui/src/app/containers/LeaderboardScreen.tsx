@@ -14,7 +14,6 @@ import ScoreTable from "@/app/components/leaderboard/ScoreTable";
 import LiveTable from "@/app/components/leaderboard/LiveTable";
 import { RefreshIcon } from "@/app/components/icons/Icons";
 import { ProfileIcon, SkullIcon } from "@/app/components/icons/Icons";
-import { networkConfig } from "@/app/lib/networkConfig";
 
 /**
  * @container
@@ -32,26 +31,16 @@ export default function LeaderboardScreen() {
 
   const profile = useUIStore((state) => state.profile);
 
-  useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
-    "leaderboardByIdQuery",
-    getAdventurerById,
-    {
-      id: profile ?? 0,
-    }
-  );
+  useCustomQuery(network, "leaderboardByIdQuery", getAdventurerById, {
+    id: profile ?? 0,
+  });
 
-  useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
-    "itemsByProfileQuery",
-    getItemsByAdventurer,
-    {
-      id: profile ?? 0,
-    }
-  );
+  useCustomQuery(network, "itemsByProfileQuery", getItemsByAdventurer, {
+    id: profile ?? 0,
+  });
 
   const adventurerCountsData = useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "adventurerCountsQuery",
     getAdventurerCounts,
     undefined

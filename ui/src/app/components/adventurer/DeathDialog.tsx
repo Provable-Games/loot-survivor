@@ -34,7 +34,7 @@ export const DeathDialog = () => {
   );
 
   const adventurerRankData = useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "adventurerRankQuery",
     getAdventurerRank,
     rankVariables

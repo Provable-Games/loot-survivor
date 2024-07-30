@@ -9,7 +9,6 @@ import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import LootIconLoader from "@/app/components/icons/Loader";
 import useCustomQuery from "@/app/hooks/useCustomQuery";
 import { getAdventurersByOwner } from "@/app/hooks/graphql/queries";
-import { networkConfig } from "@/app/lib/networkConfig";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 import { indexAddress, padAddress } from "@/app/lib/utils";
 import { Adventurer } from "@/app/types";
@@ -54,7 +53,7 @@ export const AdventurersList = ({
   }, [owner, skip, showZeroHealth]);
 
   const adventurersData = useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "adventurersByOwnerQuery",
     getAdventurersByOwner,
     adventurersVariables,

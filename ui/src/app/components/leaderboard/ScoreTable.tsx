@@ -6,7 +6,6 @@ import ScoreRow from "@/app/components/leaderboard/ScoreRow";
 import useUIStore from "@/app/hooks/useUIStore";
 import { getScoresInList } from "@/app/hooks/graphql/queries";
 import useCustomQuery from "@/app/hooks/useCustomQuery";
-import { networkConfig } from "@/app/lib/networkConfig";
 import LootIconLoader from "@/app/components/icons/Loader";
 
 export interface ScoreLeaderboardTableProps {
@@ -33,7 +32,7 @@ const ScoreLeaderboardTable = ({
   }, [skip]);
 
   const adventurersByXPdata = useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "adventurersByXPQuery",
     getDeadAdventurersByXPPaginated,
     leaderboardVariables
@@ -43,7 +42,7 @@ const ScoreLeaderboardTable = ({
   const scoreIds = adventurers?.map((score) => score.id ?? 0);
 
   const scoresData = useCustomQuery(
-    networkConfig[network!].lsGQLURL!,
+    network,
     "topScoresQuery",
     getScoresInList,
     {

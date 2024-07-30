@@ -5,7 +5,6 @@ import { ApolloProvider } from "@apollo/client";
 import { ControllerProvider } from "@/app/context/ControllerContext";
 import { gameClient, goldenTokenClient } from "@/app/lib/clients";
 import useUIStore from "@/app/hooks/useUIStore";
-import { networkConfig } from "@/app/lib/networkConfig";
 import { StarknetProvider } from "@/app/provider";
 import { DojoProvider } from "@/app/dojo/DojoContext";
 import { setup } from "@/app/dojo/setup";
@@ -17,6 +16,7 @@ import { RpcProvider } from "starknet";
 import Head from "@/app/head";
 import { Analytics } from "@vercel/analytics/react";
 import BurnerLoader from "@/app/components/animations/BurnerLoader";
+import { networkConfig } from "./lib/networkConfig";
 
 type SetupResult = {
   config: {
@@ -45,7 +45,7 @@ export default function RootLayout({
     async function initializeSetup() {
       if (network) {
         const result = await setup({
-          rpcUrl: networkConfig[network].rpcUrl,
+          rpcUrl: networkConfig["katana"].lsGQLUrl!,
           network,
           setCreateBurner,
         });
@@ -54,6 +54,8 @@ export default function RootLayout({
     }
     initializeSetup();
   }, [network]);
+
+  console.log(network, setupResult);
 
   return (
     <html lang="en">
@@ -82,10 +84,8 @@ export default function RootLayout({
             )}
           </main>
         ) : (
-          <ApolloProvider client={gameClient()}>
-            <ApolloProvider
-              client={goldenTokenClient(networkConfig[network].tokensGQLURL!)}
-            >
+          <ApolloProvider client={gameClient(network)}>
+            <ApolloProvider client={goldenTokenClient()}>
               <ControllerProvider>
                 <StarknetProvider network={network}>
                   <DojoProvider value={setupResult}>{children}</DojoProvider>
