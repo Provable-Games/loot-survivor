@@ -18,7 +18,13 @@ import useUIStore from "@/app/hooks/useUIStore";
 import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
 import { NotificationDisplay } from "@/app/components/notifications/NotificationDisplay";
 import { useMusic } from "@/app/hooks/useMusic";
-import { Menu, ZeroUpgrade, BurnerStorage, Adventurer } from "@/app/types";
+import {
+  Menu,
+  ZeroUpgrade,
+  BurnerStorage,
+  Adventurer,
+  PragmaPrice,
+} from "@/app/types";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import Profile from "@/app/containers/ProfileScreen";
 import { DeathDialog } from "@/app/components/adventurer/DeathDialog";
@@ -568,6 +574,9 @@ function Home() {
           DataType.SpotEntry("19514442401534788"),
         ]);
         console.log(result);
+        const dollarPrice =
+          ((result as PragmaPrice).price / 10n ** 8n) * 10n ** 18n;
+        console.log(dollarPrice);
       }
     };
     getEthPrice();

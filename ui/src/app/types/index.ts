@@ -507,3 +507,11 @@ export type IsIdleResult = {
   0: boolean;
   1: bigint;
 };
+
+export type PragmaPrice = {
+  decimals: bigint;
+  expiration_timestamp: any;
+  last_updated_timestamp: bigint;
+  num_sources_aggregated: bigint;
+  price: bigint;
+};
