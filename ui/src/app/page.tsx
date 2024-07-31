@@ -383,7 +383,10 @@ function Home() {
     }
   }, [address]);
 
-  const goldenTokenClientInstance = useMemo(() => goldenTokenClient(), []);
+  const goldenTokenClientInstance = useMemo(
+    () => goldenTokenClient(networkConfig[network!].tokensGQLURL),
+    [network]
+  );
 
   const { data: goldenTokenData } = useQuery(getGoldenTokensByOwner, {
     client: goldenTokenClientInstance,

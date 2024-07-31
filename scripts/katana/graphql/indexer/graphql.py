@@ -2,6 +2,7 @@ import asyncio
 from typing import List, NewType, Optional, Dict, Union, Any
 import ssl
 import json
+import logging
 
 import strawberry
 import aiohttp_cors
@@ -14,6 +15,10 @@ from indexer.config import Config
 from strawberry.types import Info
 
 config = Config()
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Define a maximum limit constant
 MAX_DOCUMENT_LIMIT = 101
@@ -2687,12 +2692,17 @@ class Query:
 
 
 class IndexerGraphQLView(GraphQLView):
-    def __init__(self, db, redis, **kwargs):
+    def __init__(self, db, redis, api_key, **kwargs):
         super().__init__(**kwargs)
         self._db = db
         self._redis = redis
+        self._api_key = api_key
 
-    async def get_context(self, _request, _response):
+    async def get_context(self, request, _response):
+        # api_key = request.headers.get("X-API-Key")
+        # if api_key != self._api_key:
+        #     raise web.HTTPUnauthorized(reason="Invalid API Key")
+
         return {"db": self._db, "redis": self._redis, "max_limit": MAX_DOCUMENT_LIMIT}
 
 
@@ -2701,6 +2711,7 @@ async def run_graphql_api(
     redis_url="redis://redis",
     port="8080",
     allowed_origins=["http://localhost:3000"],
+    api_key=None,
 ):
     mongo = MongoClient(mongo)
     db_name = "mongo".replace("-", "_")
@@ -2709,7 +2720,7 @@ async def run_graphql_api(
     redis = await aioredis.from_url(redis_url)
 
     schema = strawberry.Schema(query=Query)
-    view = IndexerGraphQLView(db, redis, schema=schema)
+    view = IndexerGraphQLView(db, redis, api_key, schema=schema)
 
     app = web.Application()
 

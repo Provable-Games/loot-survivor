@@ -37,20 +37,29 @@ export async function POST(request: NextRequest) {
   // Only add the API key if it exists and we're not in development mode
   if (apiKey && !isDevelopment) {
     headers["X-API-Key"] = apiKey;
+    // Add a cache-busting parameter to the body
+    body.variables = {
+      ...body.variables,
+      _cacheBuster: Date.now(),
+    };
   }
 
-  console.log(isDevelopment);
-  console.log(headers);
+  // console.log({
+  //   ...headers,
+  //   "Cache-Control": "no-cache, no-store, must-revalidate",
+  // });
 
   const response = await fetch(apiUrl, {
     method: "POST",
-    headers,
+    headers: {
+      ...headers,
+    },
     body: JSON.stringify(body),
   });
 
-  console.log(response);
-
   const data = await response.json();
+
+  console.log(JSON.stringify(data, null, 2));
 
   return NextResponse.json(data);
 }

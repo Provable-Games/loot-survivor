@@ -1,6 +1,8 @@
 export const networkConfig = {
   sepolia: {
-    lsGQLUrl: "",
+    rpcUrl:
+      "https://starknet-sepolia.blastapi.io/5ef61753-e7c1-4593-bc62-97fdf96f8de5",
+    lsGQLURL: "http://localhost:8080/graphql",
     tokensGQLURL: "https://testnet.realms.world/api/graphql",
     ethAddress:
       "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
@@ -24,7 +26,9 @@ export const networkConfig = {
     accountClassHash: "0x0",
   },
   mainnet: {
-    lsGQLUrl: "",
+    rpcUrl:
+      "https://starknet-mainnet.blastapi.io/5ef61753-e7c1-4593-bc62-97fdf96f8de5",
+    lsGQLURL: "https://ls-indexer-mainnet.provable.games/graphql",
     tokensGQLURL: "https://realms.world/api/graphql",
     ethAddress:
       "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
@@ -48,7 +52,8 @@ export const networkConfig = {
     accountClassHash: "0x0",
   },
   katana: {
-    lsGQLUrl: "https://ls-katana.provable.games:5443/",
+    rpcUrl: "https://ls-katana.provable.games:5443/",
+    lsGQLURL: "https://ls-katana.provable.games:8080/graphql",
     tokensGQLURL: "",
     ethAddress: "0x0",
     gameAddress:
@@ -70,7 +75,9 @@ export const networkConfig = {
       "0x5400e90f7e0ae78bd02c77cd75527280470e2fe19c54970dd79dc37a9d3645c",
   },
   localKatana: {
-    lsGQLUrl: "",
+    rpcUrl: "http://localhost:5050",
+    rpcAPIKey: "",
+    lsGQLURL: "http://localhost:8080/graphql",
     tokensGQLURL: "",
     ethAddress: "0x0",
     gameAddress:

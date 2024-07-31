@@ -45,7 +45,7 @@ export default function RootLayout({
     async function initializeSetup() {
       if (network) {
         const result = await setup({
-          rpcUrl: networkConfig["katana"].lsGQLUrl!,
+          rpcUrl: networkConfig[network].rpcUrl!,
           network,
           setCreateBurner,
         });
@@ -54,8 +54,6 @@ export default function RootLayout({
     }
     initializeSetup();
   }, [network]);
-
-  console.log(network, setupResult);
 
   return (
     <html lang="en">
@@ -84,8 +82,10 @@ export default function RootLayout({
             )}
           </main>
         ) : (
-          <ApolloProvider client={gameClient(network)}>
-            <ApolloProvider client={goldenTokenClient()}>
+          <ApolloProvider client={gameClient(networkConfig[network].lsGQLURL!)}>
+            <ApolloProvider
+              client={goldenTokenClient(networkConfig[network].tokensGQLURL)}
+            >
               <ControllerProvider>
                 <StarknetProvider network={network}>
                   <DojoProvider value={setupResult}>{children}</DojoProvider>

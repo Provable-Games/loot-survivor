@@ -20,7 +20,7 @@ export function StarknetProvider({
 }) {
   function rpc(_chain: Chain) {
     return {
-      nodeUrl: "/api/rpc-proxy",
+      nodeUrl: networkConfig[network!].rpcUrl!,
     };
   }
 

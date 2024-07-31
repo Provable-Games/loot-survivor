@@ -3,6 +3,7 @@ import { useQuery } from "@apollo/client";
 import { useQueriesStore, QueryKey } from "@/app/hooks/useQueryStore";
 import { gameClient } from "@/app/lib/clients";
 import { Network } from "@/app/hooks/useUIStore";
+import { networkConfig } from "@/app/lib/networkConfig";
 
 type Variables = Record<
   string,
@@ -22,7 +23,7 @@ const useCustomQuery = (
 
   // Memoize the Apollo Client instance based on clientType
   const client = useMemo(() => {
-    return gameClient(network);
+    return gameClient(networkConfig[network!].lsGQLURL);
   }, [network]);
 
   const { data, refetch } = useQuery(query, {

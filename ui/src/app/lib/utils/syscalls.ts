@@ -268,7 +268,6 @@ export function createSyscalls({
     revenueAddress: string,
     costToPlay?: number
   ) => {
-    console.log("rerender spawn");
     const interfaceCamel = onKatana
       ? "0"
       : providerInterfaceCamel(connector!.id);
