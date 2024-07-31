@@ -185,7 +185,7 @@ fn get_suffix_boost(suffix: u8) -> ByteArray {
 // @param bag Whether the item is in the bag or not
 // @param item_specials_seed The seed used to generate item specials
 // @return The generated item string
-fn generate_item(item: Item, bag: bool, item_specials_seed: felt252) -> ByteArray {
+fn generate_item(item: Item, bag: bool, item_specials_seed: u16) -> ByteArray {
     if item.id == 0 {
         if (bag) {
             return "Empty";
@@ -208,6 +208,34 @@ fn generate_item(item: Item, bag: bool, item_specials_seed: felt252) -> ByteArra
     }
 }
 
+fn generate_logo(rank_at_death: u8, current_rank: u8) -> ByteArray {
+    if (rank_at_death == 0 || current_rank > 0) {
+        "<g transform='translate(25,25) scale(4)'>" + logo() + "</g>"
+    } else {
+        if (rank_at_death == 1) {
+            "<g transform='translate(25,25) scale(4)' style='fill: #FFD700;'>" + logo() + "</g>"
+        } else if (rank_at_death == 2) {
+            "<g transform='translate(25,25) scale(4)' style='fill: #C0C0C0;'>" + logo() + "</g>"
+        } else {
+            "<g transform='translate(25,25) scale(4)' style='fill: #CD7F32;'>" + logo() + "</g>"
+        }
+    }
+}
+
+fn generate_crown(current_rank: u8) -> ByteArray {
+    if (current_rank == 0) {
+        ""
+    } else {
+        if (current_rank == 1) {
+            "<g transform='translate(25,10) scale(2.68)' style='fill: #FFD700;'>" + crown() + "</g>"
+        } else if (current_rank == 2) {
+            "<g transform='translate(25,10) scale(2.68)' style='fill: #C0C0C0;'>" + crown() + "</g>"
+        } else {
+            "<g transform='translate(25,10) scale(2.68)' style='fill: #CD7F32;'>" + crown() + "</g>"
+        }
+    }
+}
+
 // @notice Generates adventurer metadata for the adventurer token uri
 // @param adventurer_id The adventurer's ID
 // @param adventurer The adventurer
@@ -216,18 +244,20 @@ fn generate_item(item: Item, bag: bool, item_specials_seed: felt252) -> ByteArra
 // @param bag The adventurer's bag
 // @param item_specials_seed The seed used to generate item specials
 // @return The generated adventurer metadata
-// TODO: include adventurer birth_date and death_date in svg
 fn create_metadata(
     adventurer_id: felt252,
     adventurer: Adventurer,
     adventurer_name: felt252,
     adventurerMetadata: AdventurerMetadata,
     bag: Bag,
-    item_specials_seed: u16
+    item_specials_seed: u16,
+    rank_at_death: u8,
+    current_rank: u8,
 ) -> ByteArray {
     let rect = create_rect();
 
-    let logo_element = "<g transform='translate(25,25) scale(4)'>" + logo() + "</g>";
+    let logo_element = generate_logo(rank_at_death, current_rank);
+    let crown_element = generate_crown(current_rank);
 
     let mut _name = Default::default();
     _name
@@ -290,6 +320,7 @@ fn create_metadata(
     let mut elements = array![
         rect,
         logo_element,
+        crown_element,
         create_text(_name.clone(), "30", "117", "20", "middle", "left"),
         create_text("#" + _adventurer_id.clone(), "123", "61", "24", "middle", "left"),
         create_text("XP: " + _xp.clone(), "30", "150", "20", "middle", "left"),
@@ -451,23 +482,23 @@ mod tests {
     #[test]
     fn test_metadata() {
         let adventurer = Adventurer {
-            health: 100,
-            xp: 400,
+            health: 1023,
+            xp: 10000,
             stats: Stats {
-                strength: 10, dexterity: 2, vitality: 0, intelligence: 5, wisdom: 5, charisma: 5, luck: 10
+                strength: 10, dexterity: 50, vitality: 50, intelligence: 50, wisdom: 50, charisma: 50, luck: 100
             },
-            gold: 25,
+            gold: 1023,
             equipment: Equipment {
                 weapon: Item { id: 42, xp: 400 },
-                chest: Item { id: 49, xp: 360 },
-                head: Item { id: 53, xp: 200 },
-                waist: Item { id: 59, xp: 200 },
-                foot: Item { id: 64, xp: 300 },
+                chest: Item { id: 49, xp: 400 },
+                head: Item { id: 53, xp: 400 },
+                waist: Item { id: 59, xp: 400 },
+                foot: Item { id: 64, xp: 400 },
                 hand: Item { id: 69, xp: 400 },
-                neck: Item { id: 1, xp: 360 },
-                ring: Item { id: 7, xp: 200 }
+                neck: Item { id: 1, xp: 400 },
+                ring: Item { id: 7, xp: 400 }
             },
-            beast_health: BeastSettings::STARTER_BEAST_HEALTH,
+            beast_health: BeastSettings::STARTER_BEAST_HEALTH.into(),
             stat_upgrades_available: 0,
             battle_action_count: 0,
             mutated: false,
@@ -475,21 +506,21 @@ mod tests {
         };
 
         let bag = Bag {
-            item_1: Item { id: 8, xp: 4 },
-            item_2: Item { id: 40, xp: 30 },
-            item_3: Item { id: 57, xp: 50 },
-            item_4: Item { id: 83, xp: 0 },
-            item_5: Item { id: 12, xp: 75 },
-            item_6: Item { id: 77, xp: 40 },
-            item_7: Item { id: 68, xp: 2 },
-            item_8: Item { id: 100, xp: 30 },
-            item_9: Item { id: 94, xp: 89 },
-            item_10: Item { id: 54, xp: 43 },
-            item_11: Item { id: 87, xp: 20 },
-            item_12: Item { id: 81, xp: 1 },
-            item_13: Item { id: 30, xp: 60 },
-            item_14: Item { id: 11, xp: 30 },
-            item_15: Item { id: 29, xp: 44 },
+            item_1: Item { id: 8, xp: 400 },
+            item_2: Item { id: 40, xp: 400 },
+            item_3: Item { id: 57, xp: 400 },
+            item_4: Item { id: 83, xp: 400 },
+            item_5: Item { id: 12, xp: 400 },
+            item_6: Item { id: 77, xp: 400 },
+            item_7: Item { id: 68, xp: 400 },
+            item_8: Item { id: 100, xp: 400 },
+            item_9: Item { id: 94, xp: 400 },
+            item_10: Item { id: 54, xp: 400 },
+            item_11: Item { id: 87, xp: 400 },
+            item_12: Item { id: 81, xp: 400 },
+            item_13: Item { id: 30, xp: 400 },
+            item_14: Item { id: 11, xp: 400 },
+            item_15: Item { id: 29, xp: 400 },
             mutated: false
         };
 
@@ -500,7 +531,7 @@ mod tests {
 
         starknet::testing::set_block_timestamp(1721860860);
 
-        let rect = create_metadata(1000000, adventurer, 'tokenizooor', adventurer_metadata, bag, 10);
+        let rect = create_metadata(1000000, adventurer, 'tokenizooor', adventurer_metadata, bag, 10, 1, 1);
 
         println!("{}", rect);
 
