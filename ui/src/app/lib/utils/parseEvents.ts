@@ -275,7 +275,10 @@ export async function parseEvents(
           adventurerMeta: {
             birthDate: parseInt(raw.data[34]),
             deathDate: parseInt(raw.data[35]),
-            delayStatReveal: convertToBoolean(parseInt(raw.data[36])),
+            adventurerEntropy: parseInt(raw.data[36]),
+            itemSpecialsSeed: parseInt(raw.data[37]),
+            rankAtDeath: parseInt(raw.data[38]),
+            delayStatReveal: convertToBoolean(parseInt(raw.data[39])),
           },
           name: parseInt(raw.data[36]),
           goldenTokenId: parseInt(raw.data[37]),

@@ -11,6 +11,9 @@ type u8 = number;
 type AdventurerMetadata = {
   birthDate: u64;
   deathDate: u64;
+  adventurerEntropy: u64;
+  itemSpecialsSeed: u16;
+  rankAtDeath: u8;
   delayStatReveal: boolean;
 };
 

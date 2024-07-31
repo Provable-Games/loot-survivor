@@ -46,6 +46,7 @@ import Game from "@/app/abi/Game.json";
 import Lords from "@/app/abi/Lords.json";
 import EthBalanceFragment from "@/app/abi/EthBalanceFragment.json";
 import Beasts from "@/app/abi/Beasts.json";
+import Pragma from "@/app/abi/Pragma.json";
 import ScreenMenu from "@/app/components/menu/ScreenMenu";
 import { checkArcadeConnector } from "@/app/lib/connectors";
 import Header from "@/app/components/navigation/Header";
@@ -154,6 +155,10 @@ function Home() {
     address: networkConfig[network!].beastsAddress,
     abi: Beasts,
   });
+  const { contract: pragmaContract } = useContract({
+    address: networkConfig[network!].pragmaAddress,
+    abi: Pragma,
+  });
 
   const { addTransaction } = useTransactionManager();
   const addToCalls = useTransactionCartStore((state) => state.addToCalls);
@@ -252,6 +257,7 @@ function Home() {
     ethContract: ethContract!,
     lordsContract: lordsContract!,
     beastsContract: beastsContract!,
+    pragmaContract: pragmaContract!,
     addTransaction,
     queryData: data,
     resetData,
@@ -536,6 +542,36 @@ function Home() {
     };
     getCostToPlay();
   }, [gameContract]);
+
+  useEffect(() => {
+    const getEthPrice = async () => {
+      if (pragmaContract) {
+        const variables = [0, 19514442401534788]; // ETH/USD pair datatype
+        const DataType = {
+          SpotEntry: (pairId: string) => ({
+            variant: "SpotEntry",
+            activeVariant: () => "SpotEntry",
+            unwrap: () => pairId,
+          }),
+          FutureEntry: (pairId: string, expirationTimestamp: string) => ({
+            variant: "FutureEntry",
+            activeVariant: () => "FutureEntry",
+            unwrap: () => [pairId, expirationTimestamp],
+          }),
+          GenericEntry: (key: string) => ({
+            variant: "GenericEntry",
+            activeVariant: () => "GenericEntry",
+            unwrap: () => key,
+          }),
+        };
+        const result = await pragmaContract.call("get_data_median", [
+          DataType.SpotEntry("19514442401534788"),
+        ]);
+        console.log(result);
+      }
+    };
+    getEthPrice();
+  }, [pragmaContract]);
 
   const { setCondition } = useController();
   useControls();

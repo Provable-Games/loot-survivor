@@ -16,6 +16,8 @@ export const networkConfig = {
       "0x07626660faba349aad9ad2aaa0ff8645c079fa8e043a168d640d92472806eeac",
     revenueAddress:
       "0x0314924118945405ac0bcd6181457712795c0effc29d8dd3be86d3f3ec62adc1",
+    pragmaAddress:
+      "0x036031daa264c24520b11d93af622c848b2499b66b41d611bac95e13cfca131a",
     appUrl: "https://sepolia.lootsurvivor.io",
     beastsViewer: "https://testnet.realms.world/collection/beasts",
     goldenTokenMintUrl: "https://testnet.realms.world/collection/goldenToken",
@@ -42,6 +44,8 @@ export const networkConfig = {
       "0x07626660faba349aad9ad2aaa0ff8645c079fa8e043a168d640d92472806eeac",
     revenueAddress:
       "0x0314924118945405ac0bcd6181457712795c0effc29d8dd3be86d3f3ec62adc1",
+    pragmaAddress:
+      "0x036031daa264c24520b11d93af622c848b2499b66b41d611bac95e13cfca131a",
     appUrl: "https://lootsurvivor.io/",
     beastsViewer: "https://realms.world/collection/beasts",
     goldenTokenMintUrl: "https://realms.world/collection/goldenToken",
@@ -62,6 +66,7 @@ export const networkConfig = {
     beastsAddress: "0x0",
     goldenTokenAddress: "0x0",
     revenueAddress: "0x0",
+    pragmaAddress: "0x0",
     appUrl: "https://lootsurvivor.io/",
     beastsViewer: "",
     goldenTokenMintUrl: "",
@@ -86,6 +91,7 @@ export const networkConfig = {
     beastsAddress: "0x0",
     goldenTokenAddress: "0x0",
     revenueAddress: "0x0",
+    pragmaAddress: "0x0",
     appUrl: "http://localhost:3000/",
     beastsViewer: "",
     goldenTokenMintUrl: "",

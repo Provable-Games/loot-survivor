@@ -56,7 +56,7 @@ export function insertAdventurer({
         wisdom: parseInt(wisdom),
         charisma: parseInt(charisma),
         gold: parseInt(gold),
-        actions: parseInt(actions),
+        battleActionCount: parseInt(actions),
         weapon: checkExistsInt(parseInt(weapon)),
         chest: checkExistsInt(parseInt(chest)),
         head: checkExistsInt(parseInt(head)),
@@ -70,8 +70,8 @@ export function insertAdventurer({
         name: checkExistsInt(parseInt(name)),
         birthDate: birthDate,
         deathDate: deathDate,
-        goldenTokenId: checkExistsInt(BigInt(goldenTokenId)),
-        customRenderer: checkExistsInt(BigInt(customRenderer)),
+        goldenTokenId: checkExistsInt(parseInt(goldenTokenId)),
+        customRenderer: checkExistsInt(parseInt(customRenderer)),
         createdTime: createdTime,
         lastUpdatedTime: lastUpdatedTime,
         timestamp,
@@ -179,7 +179,7 @@ export function updateAdventurer({
     update: {
       $set: {
         ...entity,
-        entropy: BigInt(adventurerState.adventurerEntropy).toString(16),
+        entropy: BigInt(adventurerState.entropy).toString(16),
         health: adventurer.health,
         xp: adventurer.xp,
         level: getLevelFromXp(adventurer.xp),
@@ -191,9 +191,7 @@ export function updateAdventurer({
         charisma: adventurer.stats.charisma,
         luck: adventurer.stats.luck,
         gold: adventurer.gold,
-        battleActionCount: encodeIntAsBytes(
-          BigInt(adventurer.battleActionCount)
-        ),
+        battleActionCount: adventurer.battleActionCount,
         weapon: checkExistsInt(adventurer.equipment.weapon.id),
         chest: checkExistsInt(adventurer.equipment.chest.id),
         head: checkExistsInt(adventurer.equipment.head.id),

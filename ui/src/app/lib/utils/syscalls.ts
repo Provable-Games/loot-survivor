@@ -40,6 +40,7 @@ export interface SyscallsProps {
   ethContract: Contract;
   lordsContract: Contract;
   beastsContract: Contract;
+  pragmaContract: Contract;
   addTransaction: ({ hash, metadata }: TransactionParams) => void;
   queryData: QueryData;
   resetData: (queryKey?: QueryKey) => void;
@@ -176,6 +177,7 @@ export function createSyscalls({
   ethContract,
   lordsContract,
   beastsContract,
+  pragmaContract,
   addTransaction,
   account,
   queryData,
@@ -274,6 +276,21 @@ export function createSyscalls({
       ? "0"
       : providerInterfaceCamel(connector!.id);
 
+    const variables = [0, 19514442401534788]; // ETH/USD pair datatype
+
+    const priceData: any = await gameContract!.call(
+      "get_data_median",
+      variables
+    );
+
+    const dollar_in_eth = (priceData[0].value / 100000000) * 10 ** 18; // Divide result by 1 dollar by 8 decimals
+
+    const approvePragmaEthSpendingTx = {
+      contractAddress: ethContract?.address ?? "",
+      entrypoint: "approve",
+      calldata: [gameContract?.address ?? "", dollar_in_eth!.toString(), "0"],
+    }; // Approve dynamic LORDS to be spent each time spawn is called based on the get_cost_to_play
+
     const approveLordsSpendingTx = {
       contractAddress: lordsContract?.address ?? "",
       entrypoint: "approve",
@@ -298,6 +315,7 @@ export function createSyscalls({
 
     const payWithLordsCalls = [
       ...calls,
+      approvePragmaEthSpendingTx,
       approveLordsSpendingTx,
       mintAdventurerTx,
     ];
