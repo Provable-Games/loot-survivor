@@ -1,5 +1,6 @@
+use loot::constants::{ItemId, SUFFIX_UNLOCK_GREATNESS};
 use starknet::{StorePacking};
-use loot::constants::ItemId;
+
 use super::{adventurer::{Adventurer, ImplAdventurer}, item::{Item, ImplItem, ItemPacking}};
 
 // Bag is used for storing gear not equipped to the adventurer
@@ -124,7 +125,6 @@ impl ImplBag of IBag {
     // @param self The instance of the Bag
     // @param item_id The id of the item to be retrieved
     // @return The item from the bag with the specified id
-    #[inline(always)]
     fn get_item(self: Bag, item_id: u8) -> Item {
         if self.item_1.id == item_id {
             self.item_1
@@ -286,7 +286,6 @@ impl ImplBag of IBag {
     // @dev A bag is considered full if all item slots are occupied (id of the item is non-zero)
     // @param self The instance of the Bag
     // @return A boolean value indicating whether the bag is full
-    #[inline(always)]
     fn is_full(self: Bag) -> bool {
         if self.item_1.id == 0 {
             false
@@ -329,7 +328,6 @@ impl ImplBag of IBag {
     // @param self The Bag object in which to search for the item
     // @param item The id of the item to search for
     // @return A bool indicating whether the item is present in the bag
-    #[inline(always)]
     fn contains(self: Bag, item_id: u8) -> (bool, Item) {
         assert(item_id != 0, 'Item ID cannot be 0');
         if self.item_1.id == item_id {
@@ -437,6 +435,45 @@ impl ImplBag of IBag {
         };
         total_greatness
     }
+
+    // @notice checks if the bag has any items with specials.
+    // @param self The Bag to check for specials.
+    // @return Returns true if bag has specials, false otherwise.
+    fn has_specials(self: Bag) -> bool {
+        if (self.item_1.get_greatness() >= SUFFIX_UNLOCK_GREATNESS) {
+            true
+        } else if (self.item_2.get_greatness() >= SUFFIX_UNLOCK_GREATNESS) {
+            true
+        } else if (self.item_3.get_greatness() >= SUFFIX_UNLOCK_GREATNESS) {
+            true
+        } else if (self.item_4.get_greatness() >= SUFFIX_UNLOCK_GREATNESS) {
+            true
+        } else if (self.item_5.get_greatness() >= SUFFIX_UNLOCK_GREATNESS) {
+            true
+        } else if (self.item_6.get_greatness() >= SUFFIX_UNLOCK_GREATNESS) {
+            true
+        } else if (self.item_7.get_greatness() >= SUFFIX_UNLOCK_GREATNESS) {
+            true
+        } else if (self.item_8.get_greatness() >= SUFFIX_UNLOCK_GREATNESS) {
+            true
+        } else if (self.item_9.get_greatness() >= SUFFIX_UNLOCK_GREATNESS) {
+            true
+        } else if (self.item_10.get_greatness() >= SUFFIX_UNLOCK_GREATNESS) {
+            true
+        } else if (self.item_11.get_greatness() >= SUFFIX_UNLOCK_GREATNESS) {
+            true
+        } else if (self.item_12.get_greatness() >= SUFFIX_UNLOCK_GREATNESS) {
+            true
+        } else if (self.item_13.get_greatness() >= SUFFIX_UNLOCK_GREATNESS) {
+            true
+        } else if (self.item_14.get_greatness() >= SUFFIX_UNLOCK_GREATNESS) {
+            true
+        } else if (self.item_15.get_greatness() >= SUFFIX_UNLOCK_GREATNESS) {
+            true
+        } else {
+            false
+        }
+    }
 }
 const TWO_POW_21: u256 = 0x200000;
 const TWO_POW_16: u256 = 0x10000;
@@ -461,7 +498,7 @@ const TWO_POW_240: u256 = 0x1000000000000000000000000000000000000000000000000000
 #[cfg(test)]
 mod tests {
     use adventurer::{bag::{Bag, ImplBag, IBag, BagPacking}, item::{Item}};
-    use loot::{constants::ItemId};
+    use loot::constants::{ItemId, SUFFIX_UNLOCK_GREATNESS};
 
     #[test]
     #[available_gas(97530)]
@@ -500,7 +537,7 @@ mod tests {
         assert(jewelry_greatness == 9, 'bagged jewlwery greatness is 9');
     }
     #[test]
-    #[available_gas(107010)]
+    #[available_gas(43900)]
     fn test_get_jewelry_gas() {
         let katana = Item { id: ItemId::Katana, xp: 1 };
         let demon_crown = Item { id: ItemId::DemonCrown, xp: 2 };
@@ -536,7 +573,6 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(47910)]
     fn test_get_jewelry() {
         let katana = Item { id: ItemId::Katana, xp: 1 };
         let demon_crown = Item { id: ItemId::DemonCrown, xp: 2 };
@@ -577,7 +613,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected: ('Item ID cannot be 0',))]
-    #[available_gas(6900)]
+    #[available_gas(7500)]
     fn test_contains_invalid_zero() {
         let katana = Item { id: ItemId::Katana, xp: 1 };
         let demon_crown = Item { id: ItemId::DemonCrown, xp: 2 };
@@ -610,7 +646,7 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(73500)]
+    #[available_gas(84500)]
     fn test_contains() {
         let katana = Item { id: ItemId::Katana, xp: 1 };
         let demon_crown = Item { id: ItemId::DemonCrown, xp: 2 };
@@ -911,7 +947,7 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(59500)]
+    #[available_gas(70600)]
     fn test_is_full_gas() {
         // start with full bag
         let mut bag = Bag {
@@ -991,7 +1027,6 @@ mod tests {
 
     #[test]
     #[should_panic(expected: ('Item not in bag',))]
-    #[available_gas(7820)]
     fn test_get_item_not_in_bag() {
         let item_1 = Item { id: 11, xp: 0 };
         let item_2 = Item { id: 12, xp: 0 };
@@ -1032,7 +1067,33 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(101000)]
+    #[available_gas(9000)]
+    fn test_get_item_gas() {
+        let item = Item { id: 11, xp: 0 };
+
+        let bag = Bag {
+            item_1: item,
+            item_2: item,
+            item_3: item,
+            item_4: item,
+            item_5: item,
+            item_6: item,
+            item_7: item,
+            item_8: item,
+            item_9: item,
+            item_10: item,
+            item_11: item,
+            item_12: item,
+            item_13: item,
+            item_14: item,
+            item_15: item,
+            mutated: false,
+        };
+
+        bag.get_item(11);
+    }
+
+    #[test]
     fn test_get_item() {
         let item_1 = Item { id: 11, xp: 0 };
         let item_2 = Item { id: 12, xp: 0 };
@@ -1116,7 +1177,7 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(12440)]
+    #[available_gas(14940)]
     fn test_remove_item_gas() {
         let mut bag = Bag {
             item_1: Item { id: 1, xp: 0 },
@@ -1196,5 +1257,77 @@ mod tests {
         // this should panic with 'item not in bag'
         // which this test is annotated to expect
         bag.remove_item(255);
+    }
+
+    #[test]
+    fn test_has_specials() {
+        let suffix_unlock_xp = (SUFFIX_UNLOCK_GREATNESS * SUFFIX_UNLOCK_GREATNESS).into();
+        let special_item = Item { id: 1, xp: suffix_unlock_xp };
+        let normal_item = Item { id: 2, xp: suffix_unlock_xp - 1 };
+
+        let bag_with_specials = Bag {
+            item_1: special_item,
+            item_2: normal_item,
+            item_3: normal_item,
+            item_4: normal_item,
+            item_5: normal_item,
+            item_6: normal_item,
+            item_7: normal_item,
+            item_8: normal_item,
+            item_9: normal_item,
+            item_10: normal_item,
+            item_11: normal_item,
+            item_12: normal_item,
+            item_13: normal_item,
+            item_14: normal_item,
+            item_15: normal_item,
+            mutated: false,
+        };
+
+        let bag_without_specials = Bag {
+            item_1: normal_item,
+            item_2: normal_item,
+            item_3: normal_item,
+            item_4: normal_item,
+            item_5: normal_item,
+            item_6: normal_item,
+            item_7: normal_item,
+            item_8: normal_item,
+            item_9: normal_item,
+            item_10: normal_item,
+            item_11: normal_item,
+            item_12: normal_item,
+            item_13: normal_item,
+            item_14: normal_item,
+            item_15: normal_item,
+            mutated: false,
+        };
+
+        assert(bag_with_specials.has_specials(), 'Bag should have specials');
+        assert(!bag_without_specials.has_specials(), 'Bag should not have specials');
+    }
+
+    #[test]
+    fn test_has_specials_empty_bag() {
+        let empty_bag = Bag {
+            item_1: Item { id: 0, xp: 0 },
+            item_2: Item { id: 0, xp: 0 },
+            item_3: Item { id: 0, xp: 0 },
+            item_4: Item { id: 0, xp: 0 },
+            item_5: Item { id: 0, xp: 0 },
+            item_6: Item { id: 0, xp: 0 },
+            item_7: Item { id: 0, xp: 0 },
+            item_8: Item { id: 0, xp: 0 },
+            item_9: Item { id: 0, xp: 0 },
+            item_10: Item { id: 0, xp: 0 },
+            item_11: Item { id: 0, xp: 0 },
+            item_12: Item { id: 0, xp: 0 },
+            item_13: Item { id: 0, xp: 0 },
+            item_14: Item { id: 0, xp: 0 },
+            item_15: Item { id: 0, xp: 0 },
+            mutated: false,
+        };
+
+        assert!(!empty_bag.has_specials(), "Empty bag should not have specials");
     }
 }

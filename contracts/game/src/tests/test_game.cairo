@@ -16,9 +16,8 @@ mod tests {
         game::{
             interfaces::{IGameDispatcherTrait, IGameDispatcher},
             constants::{
-                COST_TO_PLAY, BLOCKS_IN_A_WEEK, Rewards, REWARD_DISTRIBUTIONS_BP,
-                messages::{STAT_UPGRADES_AVAILABLE}, STARTER_BEAST_ATTACK_DAMAGE,
-                MAINNET_REVEAL_DELAY_BLOCKS
+                COST_TO_PLAY, Rewards, REWARD_DISTRIBUTIONS_BP, messages::{STAT_UPGRADES_AVAILABLE},
+                STARTER_BEAST_ATTACK_DAMAGE,
             },
         }
     };
@@ -30,10 +29,11 @@ mod tests {
     use adventurer::{
         stats::Stats, adventurer_meta::{AdventurerMetadata},
         constants::adventurer_constants::{
-            STARTING_GOLD, POTION_HEALTH_AMOUNT, POTION_PRICE, STARTING_HEALTH, MAX_BLOCK_COUNT
+            STARTING_GOLD, POTION_HEALTH_AMOUNT, BASE_POTION_PRICE, STARTING_HEALTH
         },
+        constants::discovery_constants::DiscoveryEnums::ExploreResult,
         adventurer::{Adventurer, ImplAdventurer, IAdventurer}, item::{Item, ImplItem},
-        bag::{Bag, IBag}, adventurer_utils::AdventurerUtils
+        bag::{Bag, IBag}
     };
     use beasts::constants::{BeastSettings, BeastId};
 
@@ -49,10 +49,11 @@ mod tests {
     use openzeppelin::utils::serde::SerializedAppend;
     use openzeppelin::token::erc721::dual721::{DualCaseERC721, DualCaseERC721Trait};
     use openzeppelin::token::erc721::interface::IERC721_ID;
+
     use openzeppelin::token::erc721::interface::{
+        IERC721, IERC721Dispatcher, IERC721DispatcherTrait, IERC721LibraryDispatcher,
         IERC721CamelOnlyDispatcher, IERC721CamelOnlyDispatcherTrait
     };
-    use openzeppelin::token::erc721::interface::{IERC721Dispatcher, IERC721DispatcherTrait};
 
     use starknet::testing::set_caller_address;
     use starknet::testing::set_contract_address;
@@ -75,18 +76,6 @@ mod tests {
         contract_address_const::<1>()
     }
 
-    fn PREV_FIRST_PLACE() -> ContractAddress {
-        contract_address_const::<1>()
-    }
-
-    fn PREV_SECOND_PLACE() -> ContractAddress {
-        contract_address_const::<1>()
-    }
-
-    fn PREV_THIRD_PLACE() -> ContractAddress {
-        contract_address_const::<1>()
-    }
-
     fn COLLECTIBLE_BEASTS() -> ContractAddress {
         contract_address_const::<1>()
     }
@@ -101,6 +90,10 @@ mod tests {
 
     fn ZERO_ADDRESS() -> ContractAddress {
         contract_address_const::<0>()
+    }
+
+    fn OWNER_TWO() -> ContractAddress {
+        contract_address_const::<2>()
     }
 
     const PUBLIC_KEY: felt252 = 0x333333;
@@ -198,9 +191,6 @@ mod tests {
         calldata.append(randomness.into());
         calldata.append(vrf_level_interval);
         calldata.append(ORACLE_ADDRESS().into());
-        calldata.append(PREV_FIRST_PLACE().into());
-        calldata.append(PREV_SECOND_PLACE().into());
-        calldata.append(PREV_THIRD_PLACE().into());
         calldata.append(RENDER_CONTRACT().into());
 
         IGameDispatcher { contract_address: utils::deploy(Game::TEST_CLASS_HASH, calldata) }
@@ -251,24 +241,39 @@ mod tests {
 
     fn add_adventurer_to_game(
         ref game: IGameDispatcher, golden_token_id: u256, starting_weapon: u8
-    ) {
-        game
+    ) -> felt252 {
+        let adventurer_id = game
             .new_game(
-                INTERFACE_ID(),
-                starting_weapon,
-                'loothero',
-                golden_token_id,
-                4000000000000000,
-                ZERO_ADDRESS()
+                INTERFACE_ID(), starting_weapon, 'loothero', golden_token_id, false, ZERO_ADDRESS()
             );
 
-        let original_adventurer = game.get_adventurer(ADVENTURER_ID);
-        assert(original_adventurer.xp == 0, 'wrong starting xp');
-        assert(original_adventurer.equipment.weapon.id == ItemId::Wand, 'wrong starting weapon');
+        let new_adventurer = game.get_adventurer(adventurer_id);
+        assert(new_adventurer.xp == 0, 'wrong starting xp');
+        assert(new_adventurer.equipment.weapon.id == starting_weapon, 'wrong starting weapon');
         assert(
-            original_adventurer.beast_health == BeastSettings::STARTER_BEAST_HEALTH,
+            new_adventurer.beast_health == BeastSettings::STARTER_BEAST_HEALTH.into(),
             'wrong starter beast health '
         );
+        adventurer_id
+    }
+
+    fn add_level_2_adventurer_to_game(
+        ref game: IGameDispatcher, golden_token_id: u256, starting_weapon: u8
+    ) -> felt252 {
+        let adventurer_id = game
+            .new_game(
+                INTERFACE_ID(), starting_weapon, 'loothero', golden_token_id, false, ZERO_ADDRESS()
+            );
+
+        let new_adventurer = game.get_adventurer(adventurer_id);
+        assert(new_adventurer.xp == 0, 'wrong starting xp');
+        assert(new_adventurer.equipment.weapon.id == ItemId::Wand, 'wrong starting weapon');
+        assert(
+            new_adventurer.beast_health == BeastSettings::STARTER_BEAST_HEALTH.into(),
+            'wrong starter beast health '
+        );
+        game.attack(adventurer_id, false);
+        adventurer_id
     }
 
     fn new_adventurer(starting_block: u64, starting_time: u64) -> IGameDispatcher {
@@ -284,20 +289,22 @@ mod tests {
                 starting_weapon,
                 name,
                 DEFAULT_NO_GOLDEN_TOKEN.into(),
-                4000000000000000,
+                false,
                 ZERO_ADDRESS()
             );
 
         // get adventurer state
         let adventurer = game.get_adventurer(ADVENTURER_ID);
+        let adventurer_name = game.get_adventurer_name(ADVENTURER_ID);
         let adventurer_meta_data = game.get_adventurer_meta(ADVENTURER_ID);
 
         // verify starting weapon
         assert(adventurer.equipment.weapon.id == starting_weapon, 'wrong starting weapon');
-        assert(adventurer_meta_data.name == name, 'wrong player name');
+        assert(adventurer_name == name, 'wrong player name');
+        assert(adventurer_meta_data.birth_date == starting_time, 'wrong birth date');
         assert(adventurer.xp == 0, 'should start with 0 xp');
         assert(
-            adventurer.beast_health == BeastSettings::STARTER_BEAST_HEALTH,
+            adventurer.beast_health == BeastSettings::STARTER_BEAST_HEALTH.into(),
             'wrong starter beast health '
         );
 
@@ -410,17 +417,17 @@ mod tests {
     //     let mut game = new_adventurer_lvl5(stat);
 
     //     let weapon_inventory = @game
-    //         .get_items_on_market_by_slot(ADVENTURER_ID, ImplCombat::slot_to_u8(Slot::Weapon(())));
+    //         .get_market_by_slot(ADVENTURER_ID, ImplCombat::slot_to_u8(Slot::Weapon(())));
     //     let chest_inventory = @game
-    //         .get_items_on_market_by_slot(ADVENTURER_ID, ImplCombat::slot_to_u8(Slot::Chest(())));
+    //         .get_market_by_slot(ADVENTURER_ID, ImplCombat::slot_to_u8(Slot::Chest(())));
     //     let head_inventory = @game
-    //         .get_items_on_market_by_slot(ADVENTURER_ID, ImplCombat::slot_to_u8(Slot::Head(())));
+    //         .get_market_by_slot(ADVENTURER_ID, ImplCombat::slot_to_u8(Slot::Head(())));
     //     let waist_inventory = @game
-    //         .get_items_on_market_by_slot(ADVENTURER_ID, ImplCombat::slot_to_u8(Slot::Waist(())));
+    //         .get_market_by_slot(ADVENTURER_ID, ImplCombat::slot_to_u8(Slot::Waist(())));
     //     let foot_inventory = @game
-    //         .get_items_on_market_by_slot(ADVENTURER_ID, ImplCombat::slot_to_u8(Slot::Foot(())));
+    //         .get_market_by_slot(ADVENTURER_ID, ImplCombat::slot_to_u8(Slot::Foot(())));
     //     let hand_inventory = @game
-    //         .get_items_on_market_by_slot(ADVENTURER_ID, ImplCombat::slot_to_u8(Slot::Hand(())));
+    //         .get_market_by_slot(ADVENTURER_ID, ImplCombat::slot_to_u8(Slot::Hand(())));
 
     //     let purchase_weapon_id = *weapon_inventory.at(0);
     //     let purchase_chest_id = *chest_inventory.at(2);
@@ -607,20 +614,22 @@ mod tests {
                 starting_weapon,
                 name,
                 DEFAULT_NO_GOLDEN_TOKEN.into(),
-                4000000000000000,
+                false,
                 ZERO_ADDRESS()
             );
 
         // get adventurer state
         let adventurer = game.get_adventurer(ADVENTURER_ID);
+        let adventurer_name = game.get_adventurer_name(ADVENTURER_ID);
         let adventurer_meta_data = game.get_adventurer_meta(ADVENTURER_ID);
 
         // verify starting weapon
         assert(adventurer.equipment.weapon.id == starting_weapon, 'wrong starting weapon');
-        assert(adventurer_meta_data.name == name, 'wrong player name');
+        assert(adventurer_name == name, 'wrong player name');
+        assert(adventurer_meta_data.birth_date == starting_timestamp, 'wrong birth date');
         assert(adventurer.xp == 0, 'should start with 0 xp');
         assert(
-            adventurer.beast_health == BeastSettings::STARTER_BEAST_HEALTH,
+            adventurer.beast_health == BeastSettings::STARTER_BEAST_HEALTH.into(),
             'wrong starter beast health '
         );
 
@@ -667,7 +676,7 @@ mod tests {
         assert(adventurer_start.health == 100, 'advtr should start with 100hp');
         assert(adventurer_start.xp == 0, 'advtr should start with 0xp');
         assert(
-            adventurer_start.beast_health == BeastSettings::STARTER_BEAST_HEALTH,
+            adventurer_start.beast_health == BeastSettings::STARTER_BEAST_HEALTH.into(),
             'wrong beast starting health'
         );
 
@@ -742,6 +751,80 @@ mod tests {
     }
 
     #[test]
+    #[available_gas(247617069000)]
+    fn test_explore_distributions() {
+        let number_of_games: u16 = 100;
+        let mut game = new_adventurer_lvl2(1003, 1696201757, 0);
+        let mut game_ids = ArrayTrait::<felt252>::new();
+        game_ids.append(1);
+
+        // create 255 new games
+        let mut i: u16 = 1;
+        loop {
+            if (i == number_of_games) {
+                break;
+            }
+            game_ids.append(add_level_2_adventurer_to_game(ref game, 0, ItemId::Wand));
+            i += 1;
+        };
+
+        // upgrade players in all games
+        let shopping_cart = ArrayTrait::<ItemPurchase>::new();
+        let stat_upgrades = Stats {
+            strength: 0, dexterity: 1, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
+        };
+        let potions = 0;
+        let mut i: u16 = 1;
+        loop {
+            if (i == number_of_games) {
+                break;
+            }
+            game.upgrade(i.into(), potions, stat_upgrades, shopping_cart.clone());
+            i += 1;
+        };
+
+        // explore all players in all games
+        let mut beasts = 0;
+        let mut obstacles = 0;
+        let mut discoveries = 0;
+        let mut i: u16 = 1;
+        loop {
+            if (i == number_of_games) {
+                break;
+            }
+            let mut result = game.explore(i.into(), false);
+            loop {
+                match result.pop_front() {
+                    Option::Some(outcome) => {
+                        match outcome {
+                            ExploreResult::Beast(()) => beasts += 1,
+                            ExploreResult::Obstacle(()) => obstacles += 1,
+                            ExploreResult::Discovery(()) => discoveries += 1,
+                        }
+                    },
+                    Option::None(_) => { break; }
+                };
+            };
+            i += 1;
+        };
+
+        // output results
+        // println!("beasts: {}", beasts);
+        // println!("obstacles: {}", obstacles);
+        // println!("discoveries: {}", discoveries);
+
+        // assert distribution is reasonably close to 33% for each outcome
+        let lower_bound = number_of_games / 3 - 10;
+        let upper_bound = number_of_games / 3 + 10;
+        assert(beasts > lower_bound && beasts < upper_bound, 'beasts distribution is sus');
+        assert(obstacles > lower_bound && obstacles < upper_bound, 'obstacles distribution is sus');
+        assert(
+            discoveries > lower_bound && discoveries < upper_bound,
+            'discoveries distribution is sus'
+        );
+    }
+
+    #[test]
     #[available_gas(13000000000)]
     fn test_flee() {
         // start game on level 2
@@ -791,14 +874,13 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Market is closed', 'ENTRYPOINT_FAILED'))]
-    #[available_gas(100000000)]
+    #[should_panic(expected: ('level seed not set', 'ENTRYPOINT_FAILED'))]
     fn test_buy_items_during_battle() {
         // mint new adventurer (will start in battle with starter beast)
         let mut game = new_adventurer(1000, 1696201757);
 
         // get valid item from market
-        let market_items = @game.get_items_on_market(ADVENTURER_ID);
+        let market_items = @game.get_market(ADVENTURER_ID);
         let item_id = *market_items.at(0);
 
         let mut shopping_cart = ArrayTrait::<ItemPurchase>::new();
@@ -820,7 +902,7 @@ mod tests {
         let mut game = new_adventurer_lvl2(1000, 1696201757, 0);
 
         // get valid item from market
-        let market_items = @game.get_items_on_market(ADVENTURER_ID);
+        let market_items = @game.get_market(ADVENTURER_ID);
         let item_id = *market_items.at(0);
         let mut shoppping_cart = ArrayTrait::<ItemPurchase>::new();
 
@@ -840,16 +922,15 @@ mod tests {
 
     #[test]
     #[should_panic(expected: ('Item already owned', 'ENTRYPOINT_FAILED'))]
-    #[available_gas(62000000)]
     fn test_buy_duplicate_item_equipped() {
         // start new game on level 2 so we have access to the market
         let mut game = new_adventurer_lvl2(1000, 1696201757, 0);
 
         // get items from market
-        let market_items = @game.get_items_on_market_by_tier(ADVENTURER_ID, 5);
+        let market_items = @game.get_market(ADVENTURER_ID);
 
         // get first item on the market
-        let item_id = *market_items.at(0);
+        let item_id = *market_items.at(3);
         let mut shopping_cart = ArrayTrait::<ItemPurchase>::new();
         shopping_cart.append(ItemPurchase { item_id: item_id, equip: true });
         shopping_cart.append(ItemPurchase { item_id: item_id, equip: true });
@@ -870,7 +951,7 @@ mod tests {
         let mut game = new_adventurer_lvl2(1000, 1696201757, 0);
 
         // get items from market
-        let market_items = @game.get_items_on_market(ADVENTURER_ID);
+        let market_items = @game.get_market(ADVENTURER_ID);
 
         // try to buy same item but equip one and put one in bag
         let item_id = *market_items.at(0);
@@ -902,7 +983,7 @@ mod tests {
     #[available_gas(65000000)]
     fn test_buy_and_bag_item() {
         let mut game = new_adventurer_lvl2(1000, 1696201757, 0);
-        let market_items = @game.get_items_on_market(ADVENTURER_ID);
+        let market_items = @game.get_market(ADVENTURER_ID);
         let item_id = *market_items.at(0);
         let mut shopping_cart = ArrayTrait::<ItemPurchase>::new();
         shopping_cart.append(ItemPurchase { item_id: item_id, equip: false });
@@ -921,7 +1002,7 @@ mod tests {
         let mut game = new_adventurer_lvl2(1000, 1696201757, 0);
 
         // get items from market
-        let market_items = @game.get_items_on_market(ADVENTURER_ID);
+        let market_items = @game.get_market(ADVENTURER_ID);
 
         let mut purchased_weapon: u8 = 0;
         let mut purchased_chest: u8 = 0;
@@ -1061,13 +1142,12 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(92000000)]
     fn test_equip() {
         // start game on level 2 so we have access to the market
         let mut game = new_adventurer_lvl2(1002, 1696201757, 0);
 
         // get items from market
-        let market_items = @game.get_items_on_market_by_tier(ADVENTURER_ID, 5);
+        let market_items = @game.get_market(ADVENTURER_ID);
 
         let mut purchased_weapon: u8 = 0;
         let mut purchased_chest: u8 = 0;
@@ -1092,27 +1172,40 @@ mod tests {
             // if the item is a weapon and we haven't purchased a weapon yet
             // and the item is a tier 4 or 5 item
             // repeat this for everything
-            if (item_slot == Slot::Weapon(()) && purchased_weapon == 0 && item_id != 12) {
+            if (item_slot == Slot::Weapon(())
+                && item_tier == Tier::T5(())
+                && purchased_weapon == 0
+                && item_id != 12) {
                 purchased_items.append(item_id);
                 shopping_cart.append(ItemPurchase { item_id: item_id, equip: false });
                 purchased_weapon = item_id;
-            } else if (item_slot == Slot::Chest(()) && purchased_chest == 0) {
+            } else if (item_slot == Slot::Chest(())
+                && item_tier == Tier::T5(())
+                && purchased_chest == 0) {
                 purchased_items.append(item_id);
                 shopping_cart.append(ItemPurchase { item_id: item_id, equip: false });
                 purchased_chest = item_id;
-            } else if (item_slot == Slot::Head(()) && purchased_head == 0) {
+            } else if (item_slot == Slot::Head(())
+                && item_tier == Tier::T5(())
+                && purchased_head == 0) {
                 purchased_items.append(item_id);
                 shopping_cart.append(ItemPurchase { item_id: item_id, equip: false });
                 purchased_head = item_id;
-            } else if (item_slot == Slot::Waist(()) && purchased_waist == 0) {
+            } else if (item_slot == Slot::Waist(())
+                && item_tier == Tier::T5(())
+                && purchased_waist == 0) {
                 purchased_items.append(item_id);
                 shopping_cart.append(ItemPurchase { item_id: item_id, equip: false });
                 purchased_waist = item_id;
-            } else if (item_slot == Slot::Foot(()) && purchased_foot == 0) {
+            } else if (item_slot == Slot::Foot(())
+                && item_tier == Tier::T5(())
+                && purchased_foot == 0) {
                 purchased_items.append(item_id);
                 shopping_cart.append(ItemPurchase { item_id: item_id, equip: false });
                 purchased_foot = item_id;
-            } else if (item_slot == Slot::Hand(()) && purchased_hand == 0) {
+            } else if (item_slot == Slot::Hand(())
+                && item_tier == Tier::T5(())
+                && purchased_hand == 0) {
                 purchased_items.append(item_id);
                 shopping_cart.append(ItemPurchase { item_id: item_id, equip: false });
                 purchased_hand = item_id;
@@ -1209,7 +1302,7 @@ mod tests {
         // verify potion increased health by POTION_HEALTH_AMOUNT or adventurer health is full
         assert(
             adventurer.health == adventurer_health_pre_potion
-                + (POTION_HEALTH_AMOUNT * number_of_potions.into()),
+                + (POTION_HEALTH_AMOUNT.into() * number_of_potions.into()),
             'potion did not give health'
         );
 
@@ -1227,8 +1320,8 @@ mod tests {
         let adventurer = game.get_adventurer(ADVENTURER_ID);
 
         // get number of potions required to reach full health
-        let potions_to_full_health: u8 = (POTION_HEALTH_AMOUNT
-            / (AdventurerUtils::get_max_health(adventurer.stats.vitality) - adventurer.health))
+        let potions_to_full_health: u8 = (POTION_HEALTH_AMOUNT.into()
+            / (adventurer.stats.get_max_health() - adventurer.health))
             .try_into()
             .unwrap();
 
@@ -1281,153 +1374,30 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(100000000)]
-    fn test_get_potion_price() {
+    fn test_get_potion_price_underflow() {
         let mut game = new_adventurer(1000, 1696201757);
         let potion_price = game.get_potion_price(ADVENTURER_ID);
         let adventurer_level = game.get_adventurer(ADVENTURER_ID).get_level();
-        assert(potion_price == POTION_PRICE * adventurer_level.into(), 'wrong lvl1 potion price');
+        assert(
+            potion_price == BASE_POTION_PRICE.into() * adventurer_level.into(),
+            'wrong lvl1 potion price'
+        );
 
         // defeat starter beast and advance to level 2
-        game.attack(ADVENTURER_ID, false);
+        game.attack(ADVENTURER_ID, true);
 
         // get level 2 potion price
         let potion_price = game.get_potion_price(ADVENTURER_ID);
-        let adventurer_level = game.get_adventurer(ADVENTURER_ID).get_level();
+        let mut adventurer = game.get_adventurer(ADVENTURER_ID);
+        let adventurer_level = adventurer.get_level();
 
         // verify potion price
-        assert(potion_price == POTION_PRICE * adventurer_level.into(), 'wrong lvl2 potion price');
-    }
-
-    #[test]
-    #[available_gas(20000000)]
-    fn test_get_health() {
-        let mut game = new_adventurer(1000, 1696201757);
-        let adventurer = game.get_adventurer(ADVENTURER_ID);
-        assert(adventurer.health == game.get_health(ADVENTURER_ID), 'wrong adventurer health');
-    }
-
-    #[test]
-    #[available_gas(90000000)]
-    fn test_get_xp() {
-        let mut game = new_adventurer(1000, 1696201757);
-        let adventurer = game.get_adventurer(ADVENTURER_ID);
-        assert(adventurer.xp == game.get_xp(ADVENTURER_ID), 'wrong adventurer xp');
-    }
-    #[test]
-    #[available_gas(20000000)]
-    fn test_get_level() {
-        let mut game = new_adventurer(1000, 1696201757);
-        let adventurer = game.get_adventurer(ADVENTURER_ID);
-        assert(adventurer.get_level() == game.get_level(ADVENTURER_ID), 'wrong adventurer level');
-    }
-    #[test]
-    #[available_gas(20000000)]
-    fn test_get_gold() {
-        let mut game = new_adventurer(1000, 1696201757);
-        let adventurer = game.get_adventurer(ADVENTURER_ID);
-        assert(adventurer.gold == game.get_gold(ADVENTURER_ID), 'wrong gold bal');
-    }
-    #[test]
-    #[available_gas(20000000)]
-    fn test_get_beast_health() {
-        let mut game = new_adventurer(1000, 1696201757);
-        let adventurer = game.get_adventurer(ADVENTURER_ID);
         assert(
-            adventurer.beast_health == game.get_beast_health(ADVENTURER_ID), 'wrong beast health'
+            potion_price == (BASE_POTION_PRICE.into() * adventurer_level.into())
+                - adventurer.stats.charisma.into(),
+            'wrong lvl2 potion price'
         );
     }
-    #[test]
-    #[available_gas(20000000)]
-    fn test_get_stat_upgrades_available() {
-        let mut game = new_adventurer(1000, 1696201757);
-        let adventurer = game.get_adventurer(ADVENTURER_ID);
-        assert(
-            adventurer.stat_upgrades_available == game.get_stat_upgrades_available(ADVENTURER_ID),
-            'wrong stat points avail'
-        );
-    }
-    #[test]
-    #[available_gas(20000000)]
-    fn test_get_weapon_greatness() {
-        let mut game = new_adventurer(1000, 1696201757);
-        let adventurer = game.get_adventurer(ADVENTURER_ID);
-        assert(
-            adventurer.equipment.weapon.get_greatness() == game.get_weapon_greatness(ADVENTURER_ID),
-            'wrong weapon greatness'
-        );
-    }
-    #[test]
-    #[available_gas(20000000)]
-    fn test_get_chest_greatness() {
-        let mut game = new_adventurer(1000, 1696201757);
-        let adventurer = game.get_adventurer(ADVENTURER_ID);
-        assert(
-            adventurer.equipment.chest.get_greatness() == game.get_chest_greatness(ADVENTURER_ID),
-            'wrong chest greatness'
-        );
-    }
-    #[test]
-    #[available_gas(20000000)]
-    fn test_get_head_greatness() {
-        let mut game = new_adventurer(1000, 1696201757);
-        let adventurer = game.get_adventurer(ADVENTURER_ID);
-        assert(
-            adventurer.equipment.head.get_greatness() == game.get_head_greatness(ADVENTURER_ID),
-            'wrong head greatness'
-        );
-    }
-    #[test]
-    #[available_gas(20000000)]
-    fn test_get_waist_greatness() {
-        let mut game = new_adventurer(1000, 1696201757);
-        let adventurer = game.get_adventurer(ADVENTURER_ID);
-        assert(
-            adventurer.equipment.waist.get_greatness() == game.get_waist_greatness(ADVENTURER_ID),
-            'wrong waist greatness'
-        );
-    }
-    #[test]
-    #[available_gas(20000000)]
-    fn test_get_foot_greatness() {
-        let mut game = new_adventurer(1000, 1696201757);
-        let adventurer = game.get_adventurer(ADVENTURER_ID);
-        assert(
-            adventurer.equipment.foot.get_greatness() == game.get_foot_greatness(ADVENTURER_ID),
-            'wrong foot greatness'
-        );
-    }
-    #[test]
-    #[available_gas(20000000)]
-    fn test_get_hand_greatness() {
-        let mut game = new_adventurer(1000, 1696201757);
-        let adventurer = game.get_adventurer(ADVENTURER_ID);
-        assert(
-            adventurer.equipment.hand.get_greatness() == game.get_hand_greatness(ADVENTURER_ID),
-            'wrong hand greatness'
-        );
-    }
-    #[test]
-    #[available_gas(20000000)]
-    fn test_get_necklace_greatness() {
-        let mut game = new_adventurer(1000, 1696201757);
-        let adventurer = game.get_adventurer(ADVENTURER_ID);
-        assert(
-            adventurer.equipment.neck.get_greatness() == game.get_necklace_greatness(ADVENTURER_ID),
-            'wrong neck greatness'
-        );
-    }
-    #[test]
-    #[available_gas(20000000)]
-    fn test_get_ring_greatness() {
-        let mut game = new_adventurer(1000, 1696201757);
-        let adventurer = game.get_adventurer(ADVENTURER_ID);
-        assert(
-            adventurer.equipment.ring.get_greatness() == game.get_ring_greatness(ADVENTURER_ID),
-            'wrong ring greatness'
-        );
-    }
-
     fn already_owned(item_id: u8, adventurer: Adventurer, bag: Bag) -> bool {
         item_id == adventurer.equipment.weapon.id
             || item_id == adventurer.equipment.chest.id
@@ -1461,7 +1431,7 @@ mod tests {
         let mut game = new_adventurer_lvl2(1000, 1696201757, 0);
 
         // get items from market
-        let market_items = @game.get_items_on_market(ADVENTURER_ID);
+        let market_items = @game.get_market(ADVENTURER_ID);
 
         // get first item on the market
         let purchased_item_id = *market_items.at(0);
@@ -1581,21 +1551,15 @@ mod tests {
         // buy a potion
         let potions = 1;
 
-        // item purchases
-        let chests_armor_on_market = @game.get_items_on_market_by_slot(ADVENTURER_ID, 2);
-        let mut chests_armor_id = 0;
-        let head_armor_on_market = @game.get_items_on_market_by_slot(ADVENTURER_ID, 3);
-        let mut head_armor_id = 0;
+        // buy two items
+        let market_inventory = @game.get_market(ADVENTURER_ID);
         let mut items_to_purchase = ArrayTrait::<ItemPurchase>::new();
-
-        if chests_armor_on_market.len() > 0 {
-            chests_armor_id = *chests_armor_on_market.at(0);
-            items_to_purchase.append(ItemPurchase { item_id: chests_armor_id, equip: true });
-        }
-        if head_armor_on_market.len() > 0 {
-            head_armor_id = *head_armor_on_market.at(0);
-            items_to_purchase.append(ItemPurchase { item_id: head_armor_id, equip: false });
-        }
+        let purchase_and_equip = ItemPurchase { item_id: *market_inventory.at(4), equip: true };
+        let purchase_and_not_equip = ItemPurchase {
+            item_id: *market_inventory.at(3), equip: false
+        };
+        items_to_purchase.append(purchase_and_equip);
+        items_to_purchase.append(purchase_and_not_equip);
 
         // stat upgrades
         let stat_upgrades = Stats {
@@ -1609,63 +1573,69 @@ mod tests {
         let adventurer = game.get_adventurer(ADVENTURER_ID);
 
         // assert health was increased by one potion
-        assert(adventurer.health == original_health + POTION_HEALTH_AMOUNT, 'health not increased');
+        assert(
+            adventurer.health == original_health + POTION_HEALTH_AMOUNT.into(),
+            'health not increased'
+        );
         // assert charisma was increased
         assert(adventurer.stats.charisma == original_charisma + 1, 'charisma not increased');
         // assert stat point was used
         assert(adventurer.stat_upgrades_available == 0, 'should have used stat point');
         // assert adventurer has the purchased items
-        if chests_armor_id > 0 {
-            assert(adventurer.equipment.is_equipped(chests_armor_id), 'chest should be equipped');
-        }
-        if head_armor_id > 0 {
-            assert(!adventurer.equipment.is_equipped(head_armor_id), 'head should not be equipped');
-        }
+        assert(
+            adventurer.equipment.is_equipped(purchase_and_equip.item_id),
+            'purchase should be equipped'
+        );
+        assert(
+            !adventurer.equipment.is_equipped(purchase_and_not_equip.item_id),
+            'purchase should not be equipped'
+        );
     }
 
     fn _calculate_payout(bp: u256, price: u128) -> u256 {
         (bp * price.into()) / 1000
     }
 
-    #[test]
-    #[available_gas(90000000)]
-    fn test_bp_distribution() {
-        let (_, lords) = new_adventurer_with_lords(1000);
+    // TODO: re-enable this test once we move to Foundry
+    // #[test]
+    // #[available_gas(90000000)]
+    // fn test_bp_distribution() {
+    //     let (_, lords) = new_adventurer_with_lords(1000);
 
-        // stage 0
-        assert(lords.balance_of(DAO()) == COST_TO_PLAY.into(), 'wrong stage 1 balance');
+    //     // stage 0
+    //     assert(lords.balance_of(DAO()) == COST_TO_PLAY.into(), 'wrong stage 1 balance');
 
-        // stage 1
-        testing::set_block_number(1001 + BLOCKS_IN_A_WEEK * 2);
+    //     // stage 1
+    //     testing::set_block_number(1001 + BLOCKS_IN_A_WEEK * 2);
 
-        // spawn new
+    //     // spawn new
 
-        // DAO doesn't get anything more until stage 2
-        assert(lords.balance_of(DAO()) == COST_TO_PLAY.into(), 'wrong stage 1 balance');
+    //     // DAO doesn't get anything more until stage 2
+    //     assert(lords.balance_of(DAO()) == COST_TO_PLAY.into(), 'wrong stage 1 balance');
 
-        let mut _rewards = Rewards {
-            BIBLIO: _calculate_payout(REWARD_DISTRIBUTIONS_BP::CREATOR, COST_TO_PLAY),
-            PG: _calculate_payout(REWARD_DISTRIBUTIONS_BP::CREATOR, COST_TO_PLAY),
-            CLIENT_PROVIDER: _calculate_payout(
-                REWARD_DISTRIBUTIONS_BP::CLIENT_PROVIDER, COST_TO_PLAY
-            ),
-            FIRST_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::FIRST_PLACE, COST_TO_PLAY),
-            SECOND_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::SECOND_PLACE, COST_TO_PLAY),
-            THIRD_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::THIRD_PLACE, COST_TO_PLAY)
-        };
-    // week.FIRST_PLACE.print();
+    //     let mut _rewards = Rewards {
+    //         BIBLIO: _calculate_payout(REWARD_DISTRIBUTIONS_BP::CREATOR, COST_TO_PLAY),
+    //         PG: _calculate_payout(REWARD_DISTRIBUTIONS_BP::CREATOR, COST_TO_PLAY),
+    //         CLIENT_PROVIDER: _calculate_payout(
+    //             REWARD_DISTRIBUTIONS_BP::CLIENT_PROVIDER, COST_TO_PLAY
+    //         ),
+    //         FIRST_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::FIRST_PLACE, COST_TO_PLAY),
+    //         SECOND_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::SECOND_PLACE, COST_TO_PLAY),
+    //         THIRD_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::THIRD_PLACE, COST_TO_PLAY)
+    //     };
+    // // week.FIRST_PLACE.print();
 
-    // assert(lords.balance_of(DAO()) == COST_TO_PLAY, 'wrong DAO payout');
-    // assert(week.INTERFACE == 0, 'no payout in stage 1');
-    // assert(week.FIRST_PLACE == _calculate_payout(
-    //         REWARD_DISTRIBUTIONS_PHASE1_BP::FIRST_PLACE, cost_to_play
-    //     ), 'wrong FIRST_PLACE payout 1');
-    // assert(week.SECOND_PLACE == 0x6f05b59d3b200000, 'wrong SECOND_PLACE payout 1');
-    // assert(week.THIRD_PLACE == 0x6f05b59d3b20000, 'wrong THIRD_PLACE payout 1');
+    // // assert(lords.balance_of(DAO()) == COST_TO_PLAY, 'wrong DAO payout');
+    // // assert(week.INTERFACE == 0, 'no payout in stage 1');
+    // // assert(week.FIRST_PLACE == _calculate_payout(
+    // //         REWARD_DISTRIBUTIONS_PHASE1_BP::FIRST_PLACE, cost_to_play
+    // //     ), 'wrong FIRST_PLACE payout 1');
+    // // assert(week.SECOND_PLACE == 0x6f05b59d3b200000, 'wrong SECOND_PLACE payout 1');
+    // // assert(week.THIRD_PLACE == 0x6f05b59d3b20000, 'wrong THIRD_PLACE payout 1');
 
-    // (COST_TO_PLAY * 11 / 10).print();
-    // (COST_TO_PLAY * 9 / 10).print();
-    }
+    // // (COST_TO_PLAY * 11 / 10).print();
+    // // (COST_TO_PLAY * 9 / 10).print();
+    // }
 
     #[test]
     #[available_gas(9000000000)]
@@ -1722,52 +1692,55 @@ mod tests {
         add_adventurer_to_game(ref game, 1, ItemId::Wand);
     }
 
-    #[test]
-    #[available_gas(9000000000)]
-    fn test_golden_token_can_play() {
-        let golden_token_id = 1;
-        let starting_block = 364063;
-        let starting_timestamp = 1698678554;
-        let terminal_timestamp = 0;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
-        assert(game.can_play(1), 'should be able to play');
-        add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
-        assert(!game.can_play(1), 'should not be able to play');
-        testing::set_block_timestamp(starting_timestamp + DAY);
-        assert(game.can_play(1), 'should be able to play again');
-    }
+    // TODO: re-enable this test once we move to Foundry
+    // #[test]
+    // #[available_gas(9000000000)]
+    // fn test_golden_token_can_play() {
+    //     let golden_token_id = 1;
+    //     let starting_block = 364063;
+    //     let starting_timestamp = 1698678554;
+    //     let terminal_timestamp = 0;
+    //     let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
+    //     assert(game.can_play(1), 'should be able to play');
+    //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
+    //     assert(!game.can_play(1), 'should not be able to play');
+    //     testing::set_block_timestamp(starting_timestamp + DAY);
+    //     assert(game.can_play(1), 'should be able to play again');
+    // }
 
-    #[test]
-    #[available_gas(9000000000)]
-    #[should_panic(
-        expected: ('ERC721: invalid token ID', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED')
-    )]
-    fn test_golden_token_unminted_token() {
-        let golden_token_id = 500;
-        let starting_block = 364063;
-        let starting_timestamp = 1698678554;
-        let terminal_timestamp = 0;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
-        add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
-    }
+    // TODO: re-enable this test once we move to Foundry
+    // #[test]
+    // #[available_gas(9000000000)]
+    // #[should_panic(
+    //     expected: ('ERC721: invalid token ID', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED')
+    // )]
+    // fn test_golden_token_unminted_token() {
+    //     let golden_token_id = 500;
+    //     let starting_block = 364063;
+    //     let starting_timestamp = 1698678554;
+    //     let terminal_timestamp = 0;
+    //     let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
+    //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
+    // }
 
-    #[test]
-    #[available_gas(9000000000)]
-    #[should_panic(expected: ('Token already used today', 'ENTRYPOINT_FAILED'))]
-    fn test_golden_token_double_play() {
-        let golden_token_id = 1;
-        let starting_block = 364063;
-        let starting_timestamp = 1698678554;
-        let terminal_timestamp = 0;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
-        add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
+    // TODO: re-enable this test once we move to Foundry
+    // #[test]
+    // #[available_gas(9000000000)]
+    // #[should_panic(expected: ('Token already used today', 'ENTRYPOINT_FAILED'))]
+    // fn test_golden_token_double_play() {
+    //     let golden_token_id = 1;
+    //     let starting_block = 364063;
+    //     let starting_timestamp = 1698678554;
+    //     let terminal_timestamp = 0;
+    //     let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
+    //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
 
-        // roll blockchain forward 1 second less than a day
-        testing::set_block_timestamp(starting_timestamp + (DAY - 1));
+    //     // roll blockchain forward 1 second less than a day
+    //     testing::set_block_timestamp(starting_timestamp + (DAY - 1));
 
-        // try to play again with golden token which should cause panic
-        add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
-    }
+    //     // try to play again with golden token which should cause panic
+    //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
+    // }
 
     #[test]
     #[should_panic(expected: ('Cant drop during starter beast', 'ENTRYPOINT_FAILED'))]
@@ -1797,35 +1770,23 @@ mod tests {
         let mut game_count = game.get_game_count();
         assert(game_count == 0, 'game count should be 0');
 
-        add_adventurer_to_game(ref game, 0, ItemId::Wand);
-        game_count = game.get_game_count();
-        let starter_beast_game_one = game.get_attacking_beast(game_count).id;
-        assert(game_count == 1, 'game count should be 1');
+        let player1 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
+        let starter_beast_game_one = game.get_attacking_beast(player1).id;
 
-        add_adventurer_to_game(ref game, 0, ItemId::Wand);
-        game_count = game.get_game_count();
-        let starter_beast_game_two = game.get_attacking_beast(game_count).id;
-        assert(game_count == 2, 'game count should be 2');
+        let player2 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
+        let starter_beast_game_two = game.get_attacking_beast(player2).id;
 
-        add_adventurer_to_game(ref game, 0, ItemId::Wand);
-        game_count = game.get_game_count();
-        let starter_beast_game_three = game.get_attacking_beast(game_count).id;
-        assert(game_count == 3, 'game count should be 3');
+        let player3 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
+        let starter_beast_game_three = game.get_attacking_beast(player3).id;
 
-        add_adventurer_to_game(ref game, 0, ItemId::Wand);
-        game_count = game.get_game_count();
-        let starter_beast_game_four = game.get_attacking_beast(game_count).id;
-        assert(game_count == 4, 'game count should be 4');
+        let player4 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
+        let starter_beast_game_four = game.get_attacking_beast(player4).id;
 
-        add_adventurer_to_game(ref game, 0, ItemId::Wand);
-        game_count = game.get_game_count();
-        let starter_beast_game_five = game.get_attacking_beast(game_count).id;
-        assert(game_count == 5, 'game count should be 5');
+        let player5 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
+        let starter_beast_game_five = game.get_attacking_beast(player5).id;
 
-        add_adventurer_to_game(ref game, 0, ItemId::Wand);
-        game_count = game.get_game_count();
-        let starter_beast_game_six = game.get_attacking_beast(game_count).id;
-        assert(game_count == 6, 'game count should be 6');
+        let player6 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
+        let starter_beast_game_six = game.get_attacking_beast(player6).id;
 
         // assert all games starting with a Wand get a T5 Brute for starter beast
         assert(
@@ -1903,6 +1864,108 @@ mod tests {
             'wrong starter beast for sword'
         );
     }
+
+    fn transfer_ownership(mut game: IGameDispatcher, from: ContractAddress, to: ContractAddress) {
+        // Some weird conflict when using the game interface ?? using direct ERC721Dispatcher for now. This is not a problem in blockexplorers, I suspect issue in Scarb compiler.
+        IERC721Dispatcher { contract_address: game.contract_address }
+            .transfer_from(from, to, ADVENTURER_ID.into());
+    }
+
+    #[test]
+    fn test_transfered_attack() {
+        let mut game = new_adventurer(364063, 1698678554);
+        transfer_ownership(game, OWNER(), OWNER_TWO());
+        testing::set_contract_address(OWNER_TWO());
+        game.attack(ADVENTURER_ID, false);
+    }
+
+
+    #[test]
+    #[should_panic(expected: ('Not authorized to act', 'ENTRYPOINT_FAILED'))]
+    fn test_original_owner_attack() {
+        let mut game = new_adventurer(364063, 1698678554);
+        transfer_ownership(game, OWNER(), OWNER_TWO());
+        game.attack(ADVENTURER_ID, false);
+    }
+
+
+    #[test]
+    #[should_panic(expected: ('Not authorized to act', 'ENTRYPOINT_FAILED'))]
+    fn test_original_owner_upgrade() {
+        let mut game = new_adventurer_lvl2(364063, 1698678554, 0);
+        transfer_ownership(game, OWNER(), OWNER_TWO());
+
+        let shopping_cart = ArrayTrait::<ItemPurchase>::new();
+        let stat_upgrades = Stats {
+            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 1, luck: 0
+        };
+        game.upgrade(ADVENTURER_ID, 0, stat_upgrades, shopping_cart.clone());
+    }
+
+    #[test]
+    #[should_panic(expected: ('Not authorized to act', 'ENTRYPOINT_FAILED'))]
+    fn test_original_owner_explore() {
+        let mut game = new_adventurer_lvl2(364063, 1698678554, 0);
+        transfer_ownership(game, OWNER(), OWNER_TWO());
+        testing::set_contract_address(OWNER_TWO());
+
+        let shopping_cart = ArrayTrait::<ItemPurchase>::new();
+        let stat_upgrades = Stats {
+            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 1, luck: 0
+        };
+        game.upgrade(ADVENTURER_ID, 0, stat_upgrades, shopping_cart.clone());
+
+        testing::set_contract_address(OWNER());
+
+        game.explore(ADVENTURER_ID, true);
+    }
+
+    #[test]
+    #[should_panic(expected: ('Not authorized to act', 'ENTRYPOINT_FAILED'))]
+    fn test_original_owner_flee() {
+        let mut game = new_adventurer_lvl2(364063, 1698678554, 0);
+        transfer_ownership(game, OWNER(), OWNER_TWO());
+        testing::set_contract_address(OWNER_TWO());
+
+        let shopping_cart = ArrayTrait::<ItemPurchase>::new();
+        let stat_upgrades = Stats {
+            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 1, luck: 0
+        };
+        game.upgrade(ADVENTURER_ID, 0, stat_upgrades, shopping_cart.clone());
+
+        // go explore
+        game.explore(ADVENTURER_ID, true);
+
+        testing::set_contract_address(OWNER());
+
+        game.flee(ADVENTURER_ID, true);
+    }
+
+
+    #[test]
+    fn test_transfered_upgrade_explore_flee() {
+        let mut game = new_adventurer_lvl2(123, 1696201757, 0);
+        transfer_ownership(game, OWNER(), OWNER_TWO());
+        testing::set_contract_address(OWNER_TWO());
+
+        let shopping_cart = ArrayTrait::<ItemPurchase>::new();
+        let stat_upgrades = Stats {
+            strength: 0, dexterity: 1, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
+        };
+        game.upgrade(ADVENTURER_ID, 0, stat_upgrades, shopping_cart.clone());
+
+        // go explore
+        game.explore(ADVENTURER_ID, true);
+        game.flee(ADVENTURER_ID, true);
+    }
+
+    // verify tokens transferred to transfered owner not original owner
+    #[test]
+    fn test_transfered_transfer() {
+        let mut game = new_adventurer(364063, 1698678554);
+        transfer_ownership(game, OWNER(), OWNER_TWO());
+    }
+
 
     #[starknet::contract]
     mod SnakeERC20Mock {
@@ -1993,5 +2056,307 @@ mod tests {
             self.erc721.initializer(name, symbol, base_uri);
             self.erc721.mint(recipient, token_id);
         }
+    }
+
+    #[test]
+    fn test_set_adventurer_obituary() {
+        // Setup
+        let starting_block = 1000;
+        let starting_time = 1696201757;
+        let (mut game, _, _, _, _) = setup(starting_block, starting_time, 0);
+
+        // Create a new adventurer
+        let adventurer_id = 1;
+        add_adventurer_to_game(ref game, 0, ItemId::Wand);
+
+        // defeat starter beast
+        game.attack(adventurer_id, false);
+
+        // don't buy anything from market
+        let shopping_cart = ArrayTrait::<ItemPurchase>::new();
+        let stat_upgrades = Stats {
+            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 1, luck: 0
+        };
+        game.upgrade(adventurer_id, 0, stat_upgrades, shopping_cart.clone());
+        game.explore(adventurer_id, true);
+        let death_date = starting_time + 1000;
+        testing::set_block_timestamp(death_date);
+        game.attack(adventurer_id, true);
+
+        let mut metadata = game.get_adventurer_meta(adventurer_id);
+        assert(metadata.death_date == death_date, 'Death date not set correctly');
+
+        // Set obituary
+        let obituary: ByteArray = "Brave adventurer fell to a mighty beast";
+        game.set_adventurer_obituary(adventurer_id, obituary.clone());
+
+        // Verify obituary was set
+        let stored_obituary = game.get_adventurer_obituary(adventurer_id);
+        assert(obituary == stored_obituary, 'Obituary not set correctly');
+    }
+
+    #[test]
+    #[should_panic(expected: ('obituary already set', 'ENTRYPOINT_FAILED'))]
+    fn test_set_adventurer_obituary_twice() {
+        // Setup
+        let starting_block = 1000;
+        let starting_time = 1696201757;
+        let (mut game, _, _, _, _) = setup(starting_block, starting_time, 0);
+
+        // Create a new adventurer
+        let adventurer_id = 1;
+        add_adventurer_to_game(ref game, 0, ItemId::Wand);
+
+        // defeat starter beast
+        game.attack(adventurer_id, false);
+
+        // don't buy anything from market
+        let shopping_cart = ArrayTrait::<ItemPurchase>::new();
+        let stat_upgrades = Stats {
+            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 1, luck: 0
+        };
+        game.upgrade(adventurer_id, 0, stat_upgrades, shopping_cart.clone());
+        game.explore(adventurer_id, true);
+        let death_date = starting_time + 1000;
+        testing::set_block_timestamp(death_date);
+        game.attack(adventurer_id, true);
+
+        let mut metadata = game.get_adventurer_meta(adventurer_id);
+        assert(metadata.death_date == death_date, 'Death date not set correctly');
+
+        // Set obituary
+        let obituary: ByteArray = "Brave adventurer fell to a mighty beast";
+        game.set_adventurer_obituary(adventurer_id, obituary.clone());
+
+        // Attempt to set obituary again
+        // should panic
+        let obituary_two: ByteArray = "Brave adventurer fell to a mighty obstacle";
+        game.set_adventurer_obituary(adventurer_id, obituary_two.clone());
+    }
+
+    #[test]
+    #[should_panic(expected: ('obituary window closed', 'ENTRYPOINT_FAILED'))]
+    fn test_set_adventurer_obituary_after_window_closed() {
+        // Setup
+        let starting_block = 1000;
+        let starting_time = 1696201757;
+        let (mut game, _, _, _, _) = setup(starting_block, starting_time, 0);
+
+        // Create a new adventurer
+        let adventurer_id = 1;
+        add_adventurer_to_game(ref game, 0, ItemId::Wand);
+
+        // defeat starter beast
+        game.attack(adventurer_id, false);
+
+        // don't buy anything from market
+        let shopping_cart = ArrayTrait::<ItemPurchase>::new();
+        let stat_upgrades = Stats {
+            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 1, luck: 0
+        };
+        game.upgrade(adventurer_id, 0, stat_upgrades, shopping_cart.clone());
+        game.explore(adventurer_id, true);
+        let death_date = starting_time + 1000;
+        testing::set_block_timestamp(death_date);
+        game.attack(adventurer_id, true);
+
+        let mut metadata = game.get_adventurer_meta(adventurer_id);
+        assert(metadata.death_date == death_date, 'Death date not set correctly');
+
+        // increase the blockchain to 1s past the obituary window
+        testing::set_block_timestamp(
+            death_date + (Game::OBITUARY_EXPIRY_DAYS.into() * Game::SECONDS_IN_DAY.into()) + 1
+        );
+
+        // attempt to set obituary
+        // should panic
+        let obituary: ByteArray = "Brave adventurer fell to a mighty beast";
+        game.set_adventurer_obituary(adventurer_id, obituary.clone());
+    }
+
+    #[test]
+    #[should_panic(expected: ('Adventurer is still alive', 'ENTRYPOINT_FAILED'))]
+    fn test_set_adventurer_obituary_still_alive() {
+        // Setup
+        let starting_block = 1000;
+        let starting_time = 1696201757;
+        let (mut game, _, _, _, _) = setup(starting_block, starting_time, 0);
+
+        // Create a new adventurer
+        let adventurer_id = 1;
+        add_adventurer_to_game(ref game, 0, ItemId::Wand);
+
+        // defeat starter beast
+        game.attack(adventurer_id, false);
+
+        // attempt to set obituary
+        // should panic
+        let obituary: ByteArray = "Brave adventurer fell to a mighty beast";
+        game.set_adventurer_obituary(adventurer_id, obituary.clone());
+    }
+
+    #[test]
+    fn test_dead_adventurer_metadata() {
+        // Setup
+        let starting_block = 1000;
+        let starting_time = 1696201757;
+        let (mut game, _, _, _, _) = setup(starting_block, starting_time, 0);
+
+        // Create a new adventurer
+        let adventurer_id = 1;
+        add_adventurer_to_game(ref game, 0, ItemId::Wand);
+
+        // defeat starter beast
+        game.attack(adventurer_id, false);
+
+        // don't buy anything from market
+        let shopping_cart = ArrayTrait::<ItemPurchase>::new();
+        let stat_upgrades = Stats {
+            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 1, luck: 0
+        };
+        game.upgrade(adventurer_id, 0, stat_upgrades, shopping_cart.clone());
+        game.explore(adventurer_id, true);
+        let death_date = starting_time + 1000;
+        testing::set_block_timestamp(death_date);
+        game.attack(adventurer_id, true);
+
+        // check adventurer metadata to ensure birth date and death date are correct
+        let mut metadata = game.get_adventurer_meta(adventurer_id);
+        assert(metadata.death_date == death_date, 'Death date not set correctly');
+        assert(metadata.birth_date == starting_time, 'Birth date not set correctly');
+    }
+
+    #[test]
+    fn test_adventurer_death_ranking() {
+        // Setup
+        let shopping_cart = ArrayTrait::<ItemPurchase>::new();
+        let stat_upgrades = Stats {
+            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 1, luck: 0
+        };
+        let starting_block = 1000;
+        let mut current_block_time = 1696201757;
+        let (mut game, _, _, _, _) = setup(starting_block, current_block_time, 0);
+
+        // Create a new adventurer
+        current_block_time += 777;
+        let player1_birth_date = current_block_time;
+        testing::set_block_timestamp(current_block_time);
+        let player1 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
+        game.attack(player1, false);
+        game.upgrade(player1, 0, stat_upgrades, shopping_cart.clone());
+        game.explore(player1, true);
+        current_block_time += 1000;
+        let player1_death_date = current_block_time; 
+        testing::set_block_timestamp(current_block_time);
+        game.attack(player1, true);
+
+        // assert adventurer metadata and leaderboard
+        let player1_metadata = game.get_adventurer_meta(player1);
+        let leaderboard = game.get_leaderboard();
+        assert(player1_metadata.birth_date == player1_birth_date, 'Birth date not set correctly');
+        assert(player1_metadata.death_date == player1_death_date, 'Death date not set correctly');
+        assert(player1_metadata.rank_at_death == 1, 'Rank at death not set correctly');
+        assert(leaderboard.first.adventurer_id.into() == player1, 'player1 should be 1st place');
+
+        // introduce second player (new top score)
+        current_block_time += 777;
+        let player2_birth_date = current_block_time;
+        testing::set_block_timestamp(current_block_time);
+        let player2 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
+        game.attack(player2, false);
+        game.upgrade(player2, 1, stat_upgrades, shopping_cart.clone());
+        game.explore(player2, true);
+        current_block_time += 777;
+        let player2_death_date = current_block_time;
+        testing::set_block_timestamp(current_block_time);
+        game.upgrade(player2, 1, stat_upgrades, shopping_cart.clone());
+        game.explore(player2, true);
+        game.attack(player2, true);
+
+        // assert adventurer metadata and leaderboard
+        let player1_metadata = game.get_adventurer_meta(player1);
+        let player2_metadata = game.get_adventurer_meta(player2);
+        let leaderboard = game.get_leaderboard();
+        assert(player2_metadata.birth_date == player2_birth_date, 'Birth date not set correctly');
+        assert(player2_metadata.death_date == player2_death_date, 'Death date not set correctly');
+        assert(player2_metadata.rank_at_death == 1, 'P2 should be death rank 1');
+        assert(player1_metadata.rank_at_death == 1, 'P1 should be death rank 1');
+        assert(leaderboard.first.adventurer_id.into() == player2, 'P2 should be 1st on LB');
+        assert(leaderboard.second.adventurer_id.into() == player1, 'P1 should be 2nd on LB');
+
+        // introduce third player (new top score)
+        current_block_time += 777;
+        let player3_birth_date = current_block_time;
+        testing::set_block_timestamp(current_block_time);
+        let player3 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
+        game.attack(player3, false);
+        let stat_upgrades = Stats {
+            strength: 0, dexterity: 1, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
+        };
+        game.upgrade(player3, 1, stat_upgrades, shopping_cart.clone());
+        game.explore(player3, true);
+        game.flee(player3, true);
+        game.explore(player3, true);
+        game.upgrade(player3, 0, stat_upgrades, shopping_cart.clone());
+        game.explore(player3, true);
+        game.upgrade(player3, 0, stat_upgrades, shopping_cart.clone());
+        game.explore(player3, true);
+        game.attack(player3, true);
+        game.explore(player3, true);
+        game.upgrade(player3, 0, stat_upgrades, shopping_cart.clone());
+        game.explore(player3, true);
+        current_block_time += 777;
+        let player3_death_date = current_block_time;
+        testing::set_block_timestamp(current_block_time);
+        game.attack(player3, true);
+
+        // assert adventurer metadata and leaderboard
+        let player3_metadata = game.get_adventurer_meta(player3);
+        let player2_metadata = game.get_adventurer_meta(player2);
+        let player1_metadata = game.get_adventurer_meta(player1);
+        let leaderboard = game.get_leaderboard();
+        assert(player3_metadata.death_date == player3_death_date, 'P3 death date not set correctly');
+        assert(player3_metadata.birth_date == player3_birth_date, 'P3 birth date not set correctly');
+        assert(player3_metadata.rank_at_death == 1, 'P3 should be death rank 1');
+        assert(player2_metadata.rank_at_death == 1, 'P2 should be death rank 1');
+        assert(player1_metadata.rank_at_death == 1, 'P1 should be death rank 1');
+        assert(leaderboard.first.adventurer_id.into() == player3, 'P3 should be 1st on LB');
+        assert(leaderboard.second.adventurer_id.into() == player2, 'P2 should be 2nd on LB');
+        assert(leaderboard.third.adventurer_id.into() == player1, 'P1 should be 3rd on LB');
+
+        // introduce fourth player (2nd place finish)
+        current_block_time += 777;
+        let player4_birth_date = current_block_time;
+        testing::set_block_timestamp(current_block_time);
+        let player4 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
+        game.attack(player4, false);
+        game.upgrade(player4, 0, stat_upgrades, shopping_cart.clone());
+        game.explore(player4, true);
+        game.upgrade(player4, 0, stat_upgrades, shopping_cart.clone());
+        game.explore(player4, true);
+        game.attack(player4, true);
+        game.explore(player4, true);
+        game.upgrade(player4, 0, stat_upgrades, shopping_cart.clone());
+        game.explore(player4, true);
+        current_block_time += 777;
+        let player4_death_date = current_block_time;
+        testing::set_block_timestamp(current_block_time);
+        game.attack(player4, true);
+
+        // assert adventurer metadata and leaderboard
+        let player1_metadata = game.get_adventurer_meta(player1);
+        let player2_metadata = game.get_adventurer_meta(player2);
+        let player3_metadata = game.get_adventurer_meta(player3);
+        let player4_metadata = game.get_adventurer_meta(player4);
+        let leaderboard = game.get_leaderboard();
+        assert(player4_metadata.birth_date == player4_birth_date, 'P4 birth date not set correctly');
+        assert(player4_metadata.death_date == player4_death_date, 'P4 death date not set correctly');
+        assert(player4_metadata.rank_at_death == 2, 'P4 should be death rank 2');
+        assert(player3_metadata.rank_at_death == 1, 'P3 should be death rank 1');
+        assert(player2_metadata.rank_at_death == 1, 'P2 should be death rank 1');
+        assert(player1_metadata.rank_at_death == 1, 'P1 should be death rank 1');
+        assert(leaderboard.first.adventurer_id.into() == player3, 'P3 should be 1st on LB');
+        assert(leaderboard.second.adventurer_id.into() == player4, 'P4 should be 2nd on LB');
+        assert(leaderboard.third.adventurer_id.into() == player2, 'P2 should be 3rd on LB');
     }
 }

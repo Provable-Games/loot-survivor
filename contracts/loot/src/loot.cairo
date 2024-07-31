@@ -1,6 +1,6 @@
 use core::{
     serde::Serde, clone::Clone, option::OptionTrait, starknet::StorePacking,
-    traits::{TryInto, Into}, integer::u64_overflowing_add
+    traits::{TryInto, Into}, integer::{u64_overflowing_add, u16_overflowing_add}
 };
 
 use combat::{combat::{ImplCombat, SpecialPowers}, constants::CombatEnums::{Type, Tier, Slot}};
@@ -27,53 +27,21 @@ struct Loot {
     slot: Slot,
 }
 
-impl LootPacking of StorePacking<Loot, felt252> {
-    fn pack(value: Loot) -> felt252 {
-        let item_tier = ImplCombat::tier_to_u8(value.tier);
-        let item_type = ImplCombat::type_to_u8(value.item_type);
-        let item_slot = ImplCombat::slot_to_u8(value.slot);
-
-        (value.id.into()
-            + item_tier.into() * TWO_POW_8
-            + item_type.into() * TWO_POW_16
-            + item_slot.into() * TWO_POW_24)
-            .try_into()
-            .unwrap()
-    }
-    fn unpack(value: felt252) -> Loot {
-        let packed = value.into();
-        let (packed, item_id) = integer::U256DivRem::div_rem(packed, TWO_POW_8.try_into().unwrap());
-        let (packed, item_tier) = integer::U256DivRem::div_rem(
-            packed, TWO_POW_8.try_into().unwrap()
-        );
-        let (packed, item_type) = integer::U256DivRem::div_rem(
-            packed, TWO_POW_8.try_into().unwrap()
-        );
-        let (_, item_slot) = integer::U256DivRem::div_rem(packed, TWO_POW_8.try_into().unwrap());
-
-        Loot {
-            id: item_id.try_into().unwrap(),
-            tier: ImplCombat::u8_to_tier(item_tier.try_into().unwrap()),
-            item_type: ImplCombat::u8_to_type(item_type.try_into().unwrap()),
-            slot: ImplCombat::u8_to_slot(item_slot.try_into().unwrap())
-        }
-    }
-}
+const TWO_POW_64: u256 = 0x10000000000000000;
 
 #[generate_trait]
 impl ImplLoot of ILoot {
-    // generate_naming_seed generates a seed for naming an item.
+    // get_specials_seed generates a seed for naming an item.
     // @param self The item.
-    // @param entropy The entropy.
+    // @param seed The seed to use for generating the item special names
     // @return The naming seed.
     #[inline(always)]
-    fn generate_naming_seed(item_id: u8, entropy: u64) -> u64 {
-        let mut item_entropy = 1;
-        if (u64_overflowing_add(entropy, item_id.into()).is_ok()) {
-            item_entropy = entropy + item_id.into();
+    fn get_specials_seed(item_id: u8, entropy: u16) -> u16 {
+        let item_entropy = if (u16_overflowing_add(entropy, item_id.into()).is_ok()) {
+            entropy + item_id.into()
         } else {
-            item_entropy = entropy - item_id.into();
-        }
+            entropy - item_id.into()
+        };
 
         let rnd = item_entropy % NUM_ITEMS.into();
         rnd * ImplLoot::get_slot_length(ImplLoot::get_slot(item_id)).into()
@@ -82,33 +50,33 @@ impl ImplLoot of ILoot {
 
     // get_prefix1 returns the name prefix of an item (Agony, Apocalypse, Armageddon, etc)
     // @param self The item.
-    // @param entropy The entropy.
-    // @return The name prefix id.
+    // @param seed The seed for generating the prefix
+    // @return The first part of the prefix for the item
     #[inline(always)]
-    fn get_prefix1(item_id: u8, entropy: u64) -> u8 {
-        (ImplLoot::generate_naming_seed(item_id, entropy) % NamePrefixLength.into() + 1)
+    fn get_prefix1(item_id: u8, seed: u16) -> u8 {
+        (ImplLoot::get_specials_seed(item_id, seed) % NamePrefixLength.into() + 1)
             .try_into()
             .unwrap()
     }
 
     // get_prefix2 returns the name suffix of an item (Bane, Root, Bite, etc)
     // @param self The item.
-    // @param entropy The entropy.
-    // @return The name suffix id.
+    // @param seed The seed for generating the prefix
+    // @return The second part of the prefix for the item
     #[inline(always)]
-    fn get_prefix2(item_id: u8, entropy: u64) -> u8 {
-        (ImplLoot::generate_naming_seed(item_id, entropy) % NameSuffixLength.into() + 1)
+    fn get_prefix2(item_id: u8, seed: u16) -> u8 {
+        (ImplLoot::get_specials_seed(item_id, seed) % NameSuffixLength.into() + 1)
             .try_into()
             .unwrap()
     }
 
     // @notice gets the item suffix of an item (of_Power, of_Giant, of_Titans, etc)
     // @param item_id the id of the item to get special1 for
-    // @param entropy The entropy for randomness
-    // @return u8 special1 for the item
+    // @param seed The seed for generating the suffix
+    // @return u8 the suffix for the item
     #[inline(always)]
-    fn get_suffix(item_id: u8, entropy: u64) -> u8 {
-        (ImplLoot::generate_naming_seed(item_id, entropy) % ItemSuffixLength.into() + 1)
+    fn get_suffix(item_id: u8, seed: u16) -> u8 {
+        (ImplLoot::get_specials_seed(item_id, seed) % ItemSuffixLength.into() + 1)
             .try_into()
             .unwrap()
     }
@@ -118,18 +86,16 @@ impl ImplLoot of ILoot {
     // @param greatness the greatness of the item
     // @param start_entropy the entropy to use for randomness
     // @return the specials of the item
-    fn get_specials(id: u8, greatness: u8, start_entropy: u64) -> SpecialPowers {
+    fn get_specials(id: u8, greatness: u8, seed: u16) -> SpecialPowers {
         if greatness < SUFFIX_UNLOCK_GREATNESS {
             SpecialPowers { special1: 0, special2: 0, special3: 0 }
         } else if greatness < PREFIXES_UNLOCK_GREATNESS {
-            SpecialPowers {
-                special1: ImplLoot::get_suffix(id, start_entropy), special2: 0, special3: 0,
-            }
+            SpecialPowers { special1: ImplLoot::get_suffix(id, seed), special2: 0, special3: 0, }
         } else {
             SpecialPowers {
-                special1: ImplLoot::get_suffix(id, start_entropy),
-                special2: ImplLoot::get_prefix1(id, start_entropy),
-                special3: ImplLoot::get_prefix2(id, start_entropy),
+                special1: ImplLoot::get_suffix(id, seed),
+                special2: ImplLoot::get_prefix1(id, seed),
+                special3: ImplLoot::get_prefix2(id, seed),
             }
         }
     }
@@ -1030,9 +996,6 @@ impl ImplLoot of ILoot {
         }
     }
 }
-const TWO_POW_8: u256 = 0x100;
-const TWO_POW_16: u256 = 0x10000;
-const TWO_POW_24: u256 = 0x1000000;
 
 // ---------------------------
 // ---------- Tests ----------
@@ -1045,7 +1008,7 @@ mod tests {
 
     use combat::{combat::ImplCombat, constants::CombatEnums::{Type, Tier, Slot}};
     use loot::{
-        loot::{ImplLoot, ILoot, LootPacking, Loot},
+        loot::{ImplLoot, ILoot, Loot},
         constants::{
             NamePrefixLength, ItemNameSuffix, ItemId, ItemNamePrefix, NameSuffixLength,
             ItemSuffixLength, ItemSuffix, NUM_ITEMS,
@@ -1060,9 +1023,33 @@ mod tests {
     };
 
     #[test]
+    #[available_gas(51540)]
+    fn test_get_prefix1_gas() {
+        ImplLoot::get_prefix1(ItemId::Warhammer, 0);
+    }
+
+    #[test]
+    #[available_gas(51540)]
+    fn test_get_prefix2_gas() {
+        ImplLoot::get_prefix2(ItemId::Warhammer, 0);
+    }
+
+    #[test]
+    #[available_gas(51540)]
+    fn test_get_suffix_gas() {
+        ImplLoot::get_suffix(ItemId::Warhammer, 0);
+    }
+
+    #[test]
+    #[available_gas(48090)]
+    fn test_get_specials_seed_gas() {
+        ImplLoot::get_specials_seed(ItemId::Warhammer, 0);
+    }
+
+    #[test]
     #[available_gas(3975111110)]
     fn test_suffix_assignments() {
-        let mut i: u64 = 0;
+        let mut i: u16 = 0;
         loop {
             if i > ItemSuffixLength.into() {
                 break ();
@@ -1148,7 +1135,7 @@ mod tests {
     #[test]
     #[available_gas(2298200670)]
     fn test_prefix2_assignments() {
-        let mut i: u64 = 0;
+        let mut i: u16 = 0;
 
         loop {
             // test over entire entropy set which is size of name suffix list
@@ -1410,7 +1397,7 @@ mod tests {
     #[test]
     #[available_gas(1655011840)]
     fn test_prefix1_assignment() {
-        let mut i: u64 = 0;
+        let mut i: u16 = 0;
         loop {
             if i > NamePrefixLength.into() {
                 break ();
@@ -1810,20 +1797,6 @@ mod tests {
 
             i += 1;
         };
-    }
-
-    #[test]
-    #[available_gas(229280)]
-    fn test_pack_and_unpack() {
-        let loot = Loot {
-            id: 1, tier: Tier::T1(()), item_type: Type::Bludgeon_or_Metal(()), slot: Slot::Waist(())
-        };
-
-        let unpacked: Loot = LootPacking::unpack(LootPacking::pack(loot));
-        assert(loot.id == unpacked.id, 'id');
-        assert(loot.tier == unpacked.tier, 'tier');
-        assert(loot.item_type == unpacked.item_type, 'item_type');
-        assert(loot.slot == unpacked.slot, 'slot');
     }
 
     #[test]

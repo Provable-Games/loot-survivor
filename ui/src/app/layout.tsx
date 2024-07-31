@@ -5,7 +5,6 @@ import { ApolloProvider } from "@apollo/client";
 import { ControllerProvider } from "@/app/context/ControllerContext";
 import { gameClient, goldenTokenClient } from "@/app/lib/clients";
 import useUIStore from "@/app/hooks/useUIStore";
-import { networkConfig } from "@/app/lib/networkConfig";
 import { StarknetProvider } from "@/app/provider";
 import { DojoProvider } from "@/app/dojo/DojoContext";
 import { setup } from "@/app/dojo/setup";
@@ -17,6 +16,7 @@ import { RpcProvider } from "starknet";
 import Head from "@/app/head";
 import { Analytics } from "@vercel/analytics/react";
 import BurnerLoader from "@/app/components/animations/BurnerLoader";
+import { networkConfig } from "./lib/networkConfig";
 
 type SetupResult = {
   config: {
@@ -45,7 +45,7 @@ export default function RootLayout({
     async function initializeSetup() {
       if (network) {
         const result = await setup({
-          rpcUrl: networkConfig[network].rpcUrl,
+          rpcUrl: networkConfig[network].rpcUrl!,
           network,
           setCreateBurner,
         });
@@ -62,6 +62,7 @@ export default function RootLayout({
         suppressHydrationWarning={false}
         className="min-h-screen overflow-hidden text-terminal-green bg-conic-to-br to-terminal-black from-terminal-black bezel-container"
       >
+        <Analytics />
         <img
           src="/crt_green_mask.png"
           alt="crt green mask"
@@ -83,14 +84,11 @@ export default function RootLayout({
         ) : (
           <ApolloProvider client={gameClient(networkConfig[network].lsGQLURL!)}>
             <ApolloProvider
-              client={goldenTokenClient(networkConfig[network].tokensGQLURL!)}
+              client={goldenTokenClient(networkConfig[network].tokensGQLURL)}
             >
               <ControllerProvider>
                 <StarknetProvider network={network}>
-                  <DojoProvider value={setupResult}>
-                    {children}
-                    <Analytics />
-                  </DojoProvider>
+                  <DojoProvider value={setupResult}>{children}</DojoProvider>
                 </StarknetProvider>
               </ControllerProvider>
             </ApolloProvider>
