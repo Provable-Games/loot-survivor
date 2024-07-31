@@ -56,7 +56,7 @@ export function insertAdventurer({
         wisdom: parseInt(wisdom),
         charisma: parseInt(charisma),
         gold: parseInt(gold),
-        actions: encodeIntAsBytes(parseInt(actions)),
+        actions: parseInt(actions),
         weapon: checkExistsInt(parseInt(weapon)),
         chest: checkExistsInt(parseInt(chest)),
         head: checkExistsInt(parseInt(head)),
@@ -582,7 +582,7 @@ export function insertHighScore({ adventurerId, timestamp, totalPayout }: any) {
 
 export function updateItemsOwner({ adventurerId, timestamp, newOwner }: any) {
   const entity = {
-    adventurerId: checkExistsInt(BigInt(adventurerId)),
+    adventurerId: checkExistsInt(parseInt(adventurerId)),
   };
 
   return {
@@ -590,29 +590,13 @@ export function updateItemsOwner({ adventurerId, timestamp, newOwner }: any) {
     update: {
       $set: {
         ...entity,
-        ownerAddress: checkExistsInt(BigInt(newOwner)),
+        ownerAddress: checkExistsInt(BigInt(newOwner).toString(16)),
         timestamp,
       },
     },
   };
 }
 
-export function updateItemsOwner({ adventurerId, timestamp, newOwner }: any) {
-  const entity = {
-    adventurerId: checkExistsInt(BigInt(adventurerId)),
-  };
-
-  return {
-    entity,
-    update: {
-      $set: {
-        ...entity,
-        ownerAddress: checkExistsInt(BigInt(newOwner)),
-        timestamp,
-      },
-    },
-  };
-}
 export function updateTotalPayout({ adventurerId, timestamp, newPayout }: any) {
   const entity = {
     adventurerId: checkExistsInt(parseInt(adventurerId)),
