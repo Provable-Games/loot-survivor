@@ -18,13 +18,7 @@ import useUIStore from "@/app/hooks/useUIStore";
 import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
 import { NotificationDisplay } from "@/app/components/notifications/NotificationDisplay";
 import { useMusic } from "@/app/hooks/useMusic";
-import {
-  Menu,
-  ZeroUpgrade,
-  BurnerStorage,
-  Adventurer,
-  PragmaPrice,
-} from "@/app/types";
+import { Menu, ZeroUpgrade, BurnerStorage, Adventurer } from "@/app/types";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import Profile from "@/app/containers/ProfileScreen";
 import { DeathDialog } from "@/app/components/adventurer/DeathDialog";
@@ -548,39 +542,6 @@ function Home() {
     };
     getCostToPlay();
   }, [gameContract]);
-
-  useEffect(() => {
-    const getEthPrice = async () => {
-      if (pragmaContract) {
-        const variables = [0, 19514442401534788]; // ETH/USD pair datatype
-        const DataType = {
-          SpotEntry: (pairId: string) => ({
-            variant: "SpotEntry",
-            activeVariant: () => "SpotEntry",
-            unwrap: () => pairId,
-          }),
-          FutureEntry: (pairId: string, expirationTimestamp: string) => ({
-            variant: "FutureEntry",
-            activeVariant: () => "FutureEntry",
-            unwrap: () => [pairId, expirationTimestamp],
-          }),
-          GenericEntry: (key: string) => ({
-            variant: "GenericEntry",
-            activeVariant: () => "GenericEntry",
-            unwrap: () => key,
-          }),
-        };
-        const result = await pragmaContract.call("get_data_median", [
-          DataType.SpotEntry("19514442401534788"),
-        ]);
-        console.log(result);
-        const dollarPrice =
-          ((result as PragmaPrice).price / 10n ** 8n) * 10n ** 18n;
-        console.log(dollarPrice);
-      }
-    };
-    getEthPrice();
-  }, [pragmaContract]);
 
   const { setCondition } = useController();
   useControls();

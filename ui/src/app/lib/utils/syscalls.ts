@@ -20,8 +20,14 @@ import {
   Beast,
   SpecialBeast,
   Discovery,
+  PragmaPrice,
 } from "@/app/types";
-import { getKeyFromValue, stringToFelt, indexAddress } from "@/app/lib/utils";
+import {
+  getKeyFromValue,
+  stringToFelt,
+  indexAddress,
+  DataType,
+} from "@/app/lib/utils";
 import { parseEvents } from "@/app/lib/utils/parseEvents";
 import { processNotifications } from "@/app/components/notifications/NotificationHandler";
 import { Connector } from "@starknet-react/core";
@@ -276,19 +282,17 @@ export function createSyscalls({
       ? "0"
       : providerInterfaceCamel(connector!.id);
 
-    const variables = [0, 19514442401534788]; // ETH/USD pair datatype
-
-    const priceData: any = await gameContract!.call(
-      "get_data_median",
-      variables
-    );
-
-    const dollar_in_eth = (priceData[0].value / 100000000) * 10 ** 18; // Divide result by 1 dollar by 8 decimals
+    const result = await pragmaContract.call("get_data_median", [
+      DataType.SpotEntry("19514442401534788"),
+    ]);
+    const dollarToWei = BigInt(1) * BigInt(10) ** BigInt(18);
+    const ethToWei = (result as PragmaPrice).price / BigInt(10) ** BigInt(8);
+    const dollarPrice = dollarToWei / ethToWei;
 
     const approvePragmaEthSpendingTx = {
       contractAddress: ethContract?.address ?? "",
       entrypoint: "approve",
-      calldata: [gameContract?.address ?? "", dollar_in_eth!.toString(), "0"],
+      calldata: [gameContract?.address ?? "", dollarPrice!.toString(), "0"],
     }; // Approve dynamic LORDS to be spent each time spawn is called based on the get_cost_to_play
 
     const approveLordsSpendingTx = {
