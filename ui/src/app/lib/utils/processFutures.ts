@@ -809,7 +809,7 @@ export function nextAttackResult(
 } {
   let { rnd1, rnd2 } = getRandomnessWithActions(
     adventurer.xp,
-    adventurer.actions,
+    adventurer.battleActionCount,
     adventurerEntropy
   );
   let weapon = items.find((item) => item.slot === "Weapon");
@@ -912,7 +912,7 @@ export function simulateBattle(
   while (health > 0) {
     let { rnd1, rnd2 } = getRandomnessWithActions(
       adventurer.xp,
-      health,
+      adventurer.battleActionCount,
       adventurerEntropy
     );
     let weapon = items.find((item) => item.slot === "Weapon");
@@ -1000,7 +1000,7 @@ export function simulateFlee(
   while (health > 0) {
     let { rnd1, rnd2 } = getRandomnessWithActions(
       adventurer.xp,
-      health,
+      adventurer.battleActionCount,
       adventurerEntropy
     );
     let roll = abilityBasedAvoidThreat(level, rnd1);

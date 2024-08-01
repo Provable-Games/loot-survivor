@@ -258,6 +258,7 @@ function Home() {
     lordsContract: lordsContract!,
     beastsContract: beastsContract!,
     pragmaContract: pragmaContract!,
+    rendererContractAddress: networkConfig[network!].rendererAddress,
     addTransaction,
     queryData: data,
     resetData,
@@ -574,9 +575,13 @@ function Home() {
   useEffect(() => {
     const fetchEntropy = async () => {
       if (adventurer?.id) {
-        const entropy = await gameContract!.call("get_adventurer_entropy", [
-          adventurer?.id!,
-        ]);
+        const adventurerMeta: any = await gameContract!.call(
+          "get_adventurer_meta",
+          [adventurer?.id!]
+        );
+        console.log(adventurerMeta);
+        const entropy = adventurerMeta.level_seed;
+        console.log(entropy);
         if (entropy !== BigInt(0)) {
           setAdventurerEntropy(BigInt(entropy.toString()));
           setEntropyReady(true);
@@ -596,7 +601,7 @@ function Home() {
 
   const fetchItemSpecials = async () => {
     if (entropyReady || onKatana) {
-      const marketItems = (await gameContract!.call("get_items_on_market", [
+      const marketItems = (await gameContract!.call("get_market", [
         adventurer?.id!,
       ])) as string[];
       const itemData = [];

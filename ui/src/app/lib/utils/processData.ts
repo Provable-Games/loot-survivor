@@ -86,7 +86,7 @@ function processAdventurerState(
     charisma: data.adventurerState["adventurer"]["stats"]["charisma"],
     luck: data.adventurerState["adventurer"]["stats"]["luck"],
     gold: data.adventurerState["adventurer"]["gold"],
-    actions: data.adventurerState["adventurer"]["actions"],
+    battleActionCount: data.adventurerState["adventurer"]["battleActionCount"],
     weapon:
       gameData.ITEMS[
         data.adventurerState["adventurer"]["equipment"]["weapon"]["id"]
@@ -277,6 +277,8 @@ export function processData(
             "id"
           ]
         ],
+        battleActionCount:
+          startGameEvent.adventurerState["adventurer"]["battleActionCount"],
         beastHealth:
           startGameEvent.adventurerState["adventurer"]["beastHealth"],
         statUpgrades:

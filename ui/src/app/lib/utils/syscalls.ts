@@ -47,6 +47,7 @@ export interface SyscallsProps {
   lordsContract: Contract;
   beastsContract: Contract;
   pragmaContract: Contract;
+  rendererContractAddress: string;
   addTransaction: ({ hash, metadata }: TransactionParams) => void;
   queryData: QueryData;
   resetData: (queryKey?: QueryKey) => void;
@@ -184,6 +185,7 @@ export function createSyscalls({
   lordsContract,
   beastsContract,
   pragmaContract,
+  rendererContractAddress,
   addTransaction,
   account,
   queryData,
@@ -278,29 +280,6 @@ export function createSyscalls({
     revenueAddress: string,
     costToPlay?: number
   ) => {
-    const interfaceCamel = onKatana
-      ? "0"
-      : providerInterfaceCamel(connector!.id);
-
-    const result = await pragmaContract.call("get_data_median", [
-      DataType.SpotEntry("19514442401534788"),
-    ]);
-    const dollarToWei = BigInt(1) * BigInt(10) ** BigInt(18);
-    const ethToWei = (result as PragmaPrice).price / BigInt(10) ** BigInt(8);
-    const dollarPrice = dollarToWei / ethToWei;
-
-    const approvePragmaEthSpendingTx = {
-      contractAddress: ethContract?.address ?? "",
-      entrypoint: "approve",
-      calldata: [gameContract?.address ?? "", dollarPrice!.toString(), "0"],
-    }; // Approve dynamic LORDS to be spent each time spawn is called based on the get_cost_to_play
-
-    const approveLordsSpendingTx = {
-      contractAddress: lordsContract?.address ?? "",
-      entrypoint: "approve",
-      calldata: [gameContract?.address ?? "", costToPlay!.toString(), "0"],
-    }; // Approve dynamic LORDS to be spent each time spawn is called based on the get_cost_to_play
-
     const mintAdventurerTx = {
       contractAddress: gameContract?.address ?? "",
       entrypoint: "new_game",
@@ -310,26 +289,42 @@ export function createSyscalls({
         stringToFelt(formData.name).toString(),
         goldenTokenId,
         "0",
-        interfaceCamel,
-        VRF_FEE_LIMIT.toString(),
+        "0", // delay_stat_reveal
+        rendererContractAddress,
       ],
     };
 
     addToCalls(mintAdventurerTx);
 
-    const payWithLordsCalls = [
-      ...calls,
-      approvePragmaEthSpendingTx,
-      approveLordsSpendingTx,
-      mintAdventurerTx,
-    ];
+    let spawnCalls = [...calls, mintAdventurerTx];
 
-    const payWithGoldenTokenCalls = [...calls, mintAdventurerTx];
+    if (!onKatana && goldenTokenId === "0") {
+      const result = await pragmaContract.call("get_data_median", [
+        DataType.SpotEntry("19514442401534788"),
+      ]);
+      const dollarToWei = BigInt(1) * BigInt(10) ** BigInt(18);
+      const ethToWei = (result as PragmaPrice).price / BigInt(10) ** BigInt(8);
+      const dollarPrice = dollarToWei / ethToWei;
 
-    const spawnCalls =
-      goldenTokenId === "0" && !onKatana
-        ? payWithLordsCalls
-        : payWithGoldenTokenCalls;
+      const approvePragmaEthSpendingTx = {
+        contractAddress: ethContract?.address ?? "",
+        entrypoint: "approve",
+        calldata: [gameContract?.address ?? "", dollarPrice!.toString(), "0"],
+      };
+
+      const approveLordsSpendingTx = {
+        contractAddress: lordsContract?.address ?? "",
+        entrypoint: "approve",
+        calldata: [gameContract?.address ?? "", costToPlay!.toString(), "0"],
+      };
+
+      spawnCalls = [
+        ...calls,
+        approvePragmaEthSpendingTx,
+        approveLordsSpendingTx,
+        mintAdventurerTx,
+      ];
+    }
 
     startLoading(
       "Create",
@@ -443,7 +438,11 @@ export function createSyscalls({
     const exploreTx = {
       contractAddress: gameContract?.address ?? "",
       entrypoint: "explore",
-      calldata: [adventurer?.id?.toString() ?? "", "0", till_beast ? "1" : "0"],
+      calldata: [
+        adventurer?.id?.toString() ?? "",
+        // "0",
+        till_beast ? "1" : "0",
+      ],
     };
     addToCalls(exploreTx);
 
@@ -924,7 +923,11 @@ export function createSyscalls({
     const fleeTx = {
       contractAddress: gameContract?.address ?? "",
       entrypoint: "flee",
-      calldata: [adventurer?.id?.toString() ?? "", "0", tillDeath ? "1" : "0"],
+      calldata: [
+        adventurer?.id?.toString() ?? "",
+        // "0",
+        tillDeath ? "1" : "0",
+      ],
     };
     addToCalls(fleeTx);
 

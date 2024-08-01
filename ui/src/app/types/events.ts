@@ -51,7 +51,9 @@ type Adventurer = {
   statUpgradesAvailable: u8;
   stats: Stats;
   equipment: Equipment;
+  battleActionCount: u8;
   mutated: boolean;
+  awaitingItemSpecials: boolean;
 };
 
 type Bag = {

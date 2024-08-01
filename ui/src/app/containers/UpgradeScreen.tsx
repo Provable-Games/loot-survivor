@@ -107,7 +107,7 @@ export default function UpgradeScreen({
   useEffect(() => {
     const fetchMarketItems = async () => {
       if (entropyReady || onKatana) {
-        const marketItems = (await gameContract!.call("get_items_on_market", [
+        const marketItems = (await gameContract!.call("get_market", [
           adventurer?.id!,
         ])) as string[];
         const itemData = [];
@@ -372,7 +372,7 @@ export default function UpgradeScreen({
       entrypoint: "upgrade",
       calldata: [
         adventurer?.id?.toString() ?? "",
-        "0",
+        // "0",
         potions !== undefined ? potions.toString() : potionAmount.toString(),
         currentUpgrades
           ? currentUpgrades["Strength"].toString()

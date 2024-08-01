@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# clear out previous .env file
-echo '' >/katana/.env
-
 # source bashrc
 source ~/.bashrc
 
