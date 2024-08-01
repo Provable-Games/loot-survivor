@@ -180,9 +180,11 @@ export const parseAdventurerDied = combineParsers({
 export const parseAdventurerMetadata = combineParsers({
   birthDate: { index: 0, parser: parseU64 },
   deathDate: { index: 1, parser: parseU64 },
-  delayStatReveal: { index: 2, parser: parseBoolean },
+  adventurerEntropy: { index: 2, parser: parseU64 },
+  itemSpecialsSeed: { index: 3, parser: parseU16 },
+  rankAtDeath: { index: 4, parser: parseU8 },
+  delayStatReveal: { index: 5, parser: parseBoolean },
 });
-
 export const parseStartGame = combineParsers({
   adventurerState: { index: 0, parser: parseAdventurerState },
   adventurerMeta: { index: 1, parser: parseAdventurerMetadata },

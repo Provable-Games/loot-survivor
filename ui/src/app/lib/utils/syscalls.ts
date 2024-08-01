@@ -31,14 +31,11 @@ import {
 import { parseEvents } from "@/app/lib/utils/parseEvents";
 import { processNotifications } from "@/app/components/notifications/NotificationHandler";
 import { Connector } from "@starknet-react/core";
-import {
-  checkArcadeConnector,
-  providerInterfaceCamel,
-} from "@/app/lib/connectors";
+import { checkArcadeConnector } from "@/app/lib/connectors";
 import { QueryData, QueryKey } from "@/app/hooks/useQueryStore";
 import { AdventurerClass } from "@/app/lib/classes";
 import { ScreenPage } from "@/app/hooks/useUIStore";
-import { getWaitRetryInterval, VRF_FEE_LIMIT } from "@/app/lib/constants";
+import { getWaitRetryInterval } from "@/app/lib/constants";
 import { Network } from "@/app/hooks/useUIStore";
 
 export interface SyscallsProps {
