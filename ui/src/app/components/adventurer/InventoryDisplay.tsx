@@ -91,7 +91,6 @@ export const InventoryCard = ({
         entrypoint: "equip",
         calldata: [
           adventurer?.id?.toString() ?? "",
-          "0",
           newEquipItems.length.toString(),
           ...newEquipItems,
         ],

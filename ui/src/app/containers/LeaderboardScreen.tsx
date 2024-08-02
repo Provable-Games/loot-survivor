@@ -88,7 +88,7 @@ export default function LeaderboardScreen() {
             {adventurerCountsData?.countAliveAdventurers}
           </p>
         </div>
-        <Button
+        {/* <Button
           onClick={async () => {
             const adventurersByXPdata = await refetch(
               "adventurersByXPQuery",
@@ -99,7 +99,7 @@ export default function LeaderboardScreen() {
           }}
         >
           <RefreshIcon className="w-4 sm:w-8" />
-        </Button>
+        </Button> */}
         <div className="flex flex-row border border-terminal-green items-center justify-between w-16 h-8 sm:w-24 sm:h-12 px-2">
           <SkullIcon className="fill-current w-4 h-4 sm:w-8 sm:h-8" />
           <p className="sm:text-2xl">

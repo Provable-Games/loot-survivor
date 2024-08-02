@@ -1169,7 +1169,7 @@ export function createSyscalls({
         }
         for (let unequippedItem of equippedItemsEvent.data[2]) {
           let item = purchasedItems.find(
-            (item) => item.item === unequippedItem
+            (item) => gameData.ITEMS[parseInt(item.item)] === unequippedItem
           );
           if (item) {
             item.equipped = false;

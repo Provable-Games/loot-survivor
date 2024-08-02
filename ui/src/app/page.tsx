@@ -579,9 +579,7 @@ function Home() {
           "get_adventurer_meta",
           [adventurer?.id!]
         );
-        console.log(adventurerMeta);
         const entropy = adventurerMeta.level_seed;
-        console.log(entropy);
         if (entropy !== BigInt(0)) {
           setAdventurerEntropy(BigInt(entropy.toString()));
           setEntropyReady(true);

@@ -371,7 +371,7 @@ export async function parseEvents(
           droppedItems: equipmentChangedDroppedItems,
         } = parseEquipmentChanged(
           // Include equipped array length
-          raw.data.slice(64)
+          raw.data.slice(65)
         );
         const equipmentChangedData: EquipmentChangedEvent = {
           adventurerStateWithBag: {
@@ -643,7 +643,7 @@ export async function parseEvents(
       case "EquippedItems":
         const { equippedItems, unequippedItems } = parseEquippedItems(
           // Include equipped array length
-          raw.data.slice(64)
+          raw.data.slice(65)
         );
         const equippedItemsData: EquippedItemsEvent = {
           adventurerStateWithBag: {

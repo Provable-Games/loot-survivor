@@ -86,7 +86,6 @@ function processAdventurerState(
     charisma: data.adventurerState["adventurer"]["stats"]["charisma"],
     luck: data.adventurerState["adventurer"]["stats"]["luck"],
     gold: data.adventurerState["adventurer"]["gold"],
-    battleActionCount: data.adventurerState["adventurer"]["battleActionCount"],
     weapon:
       gameData.ITEMS[
         data.adventurerState["adventurer"]["equipment"]["weapon"]["id"]
@@ -117,8 +116,11 @@ function processAdventurerState(
     beastHealth: data.adventurerState["adventurer"]["beastHealth"],
     statUpgrades: data.adventurerState["adventurer"]["statUpgradesAvailable"],
     name: currentAdventurer!["name"],
-    startEntropy: currentAdventurer!["startEntropy"],
-    revealBlock: currentAdventurer!["revealBlock"],
+    birthDate: currentAdventurer!["birthDate"],
+    deathDate: currentAdventurer!["deathDate"],
+    goldenTokenId: currentAdventurer!["goldenTokenId"],
+    customRenderer: currentAdventurer!["customRenderer"],
+    battleActionCount: data.adventurerState["adventurer"]["battleActionCount"],
     createdTime: currentAdventurer?.createdTime,
     lastUpdatedTime: new Date(), // Use this date for now though it is block_timestamp in indexer
     timestamp: new Date(), // Equivalent to datetime.now() in Python.
