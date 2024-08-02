@@ -206,7 +206,7 @@ const useUIStore = create<State>((set) => ({
   adventurerEntropy: BigInt(0),
   setAdventurerEntropy: (value) => set({ adventurerEntropy: value }),
   itemEntropy: BigInt(0),
-  setItemEntropy: (value) => set({ adventurerEntropy: value }),
+  setItemEntropy: (value) => set({ itemEntropy: value }),
   entropyReady: false,
   setEntropyReady: (value) => set({ entropyReady: value }),
   loginScreen: false,
