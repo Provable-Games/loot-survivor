@@ -12,7 +12,7 @@ import { Adventurer } from "@/app/types";
 import BeastTable from "@/app/components/leaderboard/BeastTable";
 import ScoreTable from "@/app/components/leaderboard/ScoreTable";
 import LiveTable from "@/app/components/leaderboard/LiveTable";
-import { RefreshIcon } from "@/app/components/icons/Icons";
+// import { RefreshIcon } from "@/app/components/icons/Icons";
 import { ProfileIcon, SkullIcon } from "@/app/components/icons/Icons";
 
 /**

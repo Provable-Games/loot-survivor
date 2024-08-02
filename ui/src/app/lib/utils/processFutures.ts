@@ -3,7 +3,6 @@ import { calculateLevel, formatItemName, getKeyFromValue } from ".";
 import { GameData } from "../data/GameData";
 
 const MAX_ID = BigInt(75);
-const U128_MAX = BigInt("340282366920938463463374607431768211455");
 const TWO_POW_64_NZ = BigInt("18446744073709551616");
 const TWO_POW_32_NZ = BigInt("4294967296");
 const TWO_POW_16_NZ = BigInt("65536");
