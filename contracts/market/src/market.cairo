@@ -219,7 +219,7 @@ impl ImplMarket of IMarket {
     /// @return A tuple where the first element is a u64 representing the market seed and the second element is a u8 representing the market offset.1
     fn get_market_seed_and_offset(seed: u64) -> (u64, u8) {
         let (seed, offset) = integer::u64_safe_divmod(seed, NUM_ITEMS_NZ_MINUS_ONE);
-        (seed, offset.try_into().unwrap())
+        (seed, 1 + offset.try_into().unwrap())
     }
 }
 
@@ -496,19 +496,30 @@ mod tests {
 
     #[test]
     fn test_unique_market() {
-        let seed: u64 = 101;
-        let (market_seed, offset) = ImplMarket::get_market_seed_and_offset(seed);
-        let item1 = ImplMarket::get_id(market_seed);
-        let item2 = ImplMarket::get_id(market_seed + offset.into());
-        let item3 = ImplMarket::get_id(market_seed + (offset.into() * 2));
-        let item4 = ImplMarket::get_id(market_seed + (offset.into() * 3));
 
-        // assert items are different
-        assert(item1 != item2, 'item1 and item2 are same');
-        assert(item1 != item3, 'item1 and item3 are same');
-        assert(item1 != item4, 'item1 and item4 are same');
-        assert(item2 != item3, 'item2 and item3 are same');
-        assert(item2 != item4, 'item2 and item4 are same');
-        assert(item3 != item4, 'item3 and item4 are same');
+        // loop from 0 to 255 and get the market seed and offset
+        let mut i: u64 = 0;
+        loop {
+            if (i > 101) {
+                break;
+            }
+            let seed: u64 = i;
+            let (market_seed, offset) = ImplMarket::get_market_seed_and_offset(seed);
+            let item1 = ImplMarket::get_id(market_seed);
+            let item2 = ImplMarket::get_id(market_seed + offset.into());
+            let item3 = ImplMarket::get_id(market_seed + (offset.into() * 2));
+            let item4 = ImplMarket::get_id(market_seed + (offset.into() * 3));
+
+            // assert items are different
+            assert(item1 != item2, 'item1 and item2 are same');
+            assert(item1 != item3, 'item1 and item3 are same');
+            assert(item1 != item4, 'item1 and item4 are same');
+            assert(item2 != item3, 'item2 and item3 are same');
+            assert(item2 != item4, 'item2 and item4 are same');
+            assert(item3 != item4, 'item3 and item4 are same');
+
+            // increment i
+            i += 1;
+        };
     }
 }
