@@ -399,8 +399,8 @@ export default function transform({ header, events }: Block) {
         const { value } = parseTransfer(event.data, 0);
         console.log("TRANSFER", "->", "ITEMS UPDATES");
         return updateItemsOwner({
-          adventurerId: value.toAddress,
-          newOwner: value.fromAddress,
+          adventurerId: value.tokenId,
+          newOwner: value.toAddress,
           timestamp: new Date().toISOString(),
         });
       }

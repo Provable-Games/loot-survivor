@@ -368,5 +368,5 @@ export const parseGameEntropyRotated = combineParsers({
 export const parseTransfer = combineParsers({
   fromAddress: { index: 0, parser: parseFelt252 },
   toAddress: { index: 1, parser: parseFelt252 },
-  amount: { index: 2, parser: parseU256 },
+  tokenId: { index: 2, parser: parseU256 },
 });
