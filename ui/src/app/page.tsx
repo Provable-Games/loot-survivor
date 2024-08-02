@@ -486,6 +486,8 @@ function Home() {
     }
   };
 
+  console.log(account);
+
   useEffect(() => {
     getAccountChainId();
     const isWrongNetwork =
