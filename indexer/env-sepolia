@@ -3,3 +3,5 @@ START=68300
 MONGO_CONNECTION_STRING="mongodb://mongo:mongo@mongo:27017"
 MONGO_DB="mongo"
 STREAM_URL='https://sepolia.starknet.a5a.ch'
+TOKENS=0x123,0x456,0x789,0xabc
+TOKEN_START=0

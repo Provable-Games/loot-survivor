@@ -48,7 +48,9 @@ export const NEW_HIGH_SCORE = eventKey("NewHighScore");
 export const REWARD_DISTRIBUTION = eventKey("RewardDistribution");
 export const GAME_ENTROPY_ROTATED = eventKey("GameEntropyRotatedEvent");
 
+// Tokens
 export const TRANSFER = eventKey("Transfer");
+export const CLAIMED_FREE_GAME = eventKey("ClaimedFreeGame");
 
 export const parseStats = combineParsers({
   strength: { index: 0, parser: parseU8 },
@@ -368,5 +370,11 @@ export const parseGameEntropyRotated = combineParsers({
 export const parseTransfer = combineParsers({
   fromAddress: { index: 0, parser: parseFelt252 },
   toAddress: { index: 1, parser: parseFelt252 },
+  tokenId: { index: 2, parser: parseU256 },
+});
+
+export const parseClaimedFreeGame = combineParsers({
+  adventurerId: { index: 0, parser: parseFelt252 },
+  tokenAddress: { index: 1, parser: parseFelt252 },
   tokenId: { index: 2, parser: parseU256 },
 });

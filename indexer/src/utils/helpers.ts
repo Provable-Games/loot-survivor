@@ -613,3 +613,21 @@ export function updateTotalPayout({ adventurerId, timestamp, newPayout }: any) {
     },
   };
 }
+
+export function updateTokenOwner({ token, tokenId, timestamp, newOwner }: any) {
+  const entity = {
+    token: checkExistsInt(parseInt(token)),
+    tokenId: checkExistsInt(parseInt(tokenId)),
+  };
+
+  return {
+    entity,
+    update: {
+      $set: {
+        ...entity,
+        ownerAddress: checkExistsInt(BigInt(newOwner).toString(16)),
+        timestamp,
+      },
+    },
+  };
+}
