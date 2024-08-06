@@ -1302,6 +1302,36 @@ class ItemsFilter:
 
 
 @strawberry.input
+class TokensFilter:
+    token: Optional[HexValueFilter] = None
+    tokenId: Optional[FeltValueFilter] = None
+    ownerAddress: Optional[HexValueFilter] = None
+    timestamp: Optional[DateTimeFilter] = None
+
+    def to_dict(self):
+        return {
+            "token": self.token.to_dict() if self.token else None,
+            "tokenId": self.tokenId.to_dict() if self.tokenId else None,
+            "ownerAddress": self.ownerAddress.to_dict() if self.ownerAddress else None,
+            "timestamp": self.timestamp.to_dict() if self.timestamp else None,
+        }
+
+
+@strawberry.input
+class FreeGamesFilter:
+    token: Optional[HexValueFilter] = None
+    tokenId: Optional[FeltValueFilter] = None
+    used: Optional[BooleanFilter] = None
+
+    def to_dict(self):
+        return {
+            "token": self.token.to_dict() if self.token else None,
+            "tokenId": self.tokenId.to_dict() if self.tokenId else None,
+            "used": self.used.to_dict() if self.used else None,
+        }
+
+
+@strawberry.input
 class AdventurersOrderByInput:
     id: Optional[OrderByInput] = None
     entropy: Optional[OrderByInput] = None
@@ -1607,6 +1637,36 @@ class ItemsOrderByInput:
         }
 
 
+@strawberry.input
+class TokensOrderByInput:
+    token: Optional[OrderByInput] = None
+    tokenId: Optional[OrderByInput] = None
+    ownerAddress: Optional[OrderByInput] = None
+    timestamp: Optional[OrderByInput] = None
+
+    def to_dict(self):
+        return {
+            "token": self.token.to_dict() if self.token else None,
+            "tokenId": self.tokenId.to_dict() if self.tokenId else None,
+            "ownerAddress": self.ownerAddress.to_dict() if self.ownerAddress else None,
+            "timestamp": self.timestamp.to_dict() if self.timestamp else None,
+        }
+
+
+@strawberry.input
+class FreeGamesOrderByInput:
+    token: Optional[OrderByInput] = None
+    tokenId: Optional[OrderByInput] = None
+    used: Optional[OrderByInput] = None
+
+    def to_dict(self):
+        return {
+            "token": self.token.to_dict() if self.token else None,
+            "tokenId": self.tokenId.to_dict() if self.tokenId else None,
+            "used": self.used.to_dict() if self.used else None,
+        }
+
+
 @strawberry.type
 class Adventurer:
     id: Optional[FeltValue]
@@ -1900,6 +1960,38 @@ class Item:
             xp=data["xp"],
             isAvailable=data["isAvailable"],
             timestamp=data["timestamp"],
+        )
+
+
+@strawberry.type
+class Token:
+    token: Optional[HexValue]
+    tokenId: Optional[FeltValue]
+    ownerAddress: Optional[HexValue]
+    timestamp: Optional[str]
+
+    @classmethod
+    def from_mongo(cls, data):
+        return cls(
+            token=data["token"],
+            tokenId=data["tokenId"],
+            ownerAddress=data["ownerAddress"],
+            timestamp=data["timestamp"],
+        )
+
+
+@strawberry.type
+class FreeGame:
+    token: Optional[HexValue]
+    tokenId: Optional[FeltValue]
+    used: Optional[bool]
+
+    @classmethod
+    def from_mongo(cls, data):
+        return cls(
+            token=data["token"],
+            tokenId=data["tokenId"],
+            used=data["used"],
         )
 
 
@@ -2423,6 +2515,138 @@ async def get_items(
     return result
 
 
+async def get_tokens(
+    info,
+    where: Optional[TokensFilter] = {},
+    limit: Optional[int] = 10,
+    skip: Optional[int] = 0,
+    orderBy: Optional[TokensOrderByInput] = {},
+) -> List[Token]:
+    db = info.context["db"]
+    redis = info.context["redis"]
+
+    # Convert custom filter objects to dictionaries
+    where_dict = where.to_dict() if where else {}
+    orderBy_dict = orderBy.to_dict() if orderBy else {}
+
+    # Create a unique cache key based on the query parameters
+    cache_key = (
+        f"tokens:{json.dumps(where_dict)}:{limit}:{skip}:{json.dumps(orderBy_dict)}"
+    )
+    cached_result = await redis.get(cache_key)
+
+    if cached_result:
+        cached_result = cached_result.decode("utf-8")  # Decode the byte string
+        return [Token.from_mongo(item) for item in json.loads(cached_result)]
+
+    filter = {"_cursor.to": None}
+
+    if where:
+        processed_filters = process_filters(where)
+        for key, value in processed_filters.items():
+            if isinstance(value, StringFilter):
+                filter[key] = get_str_filters(value)
+            elif isinstance(value, HexValueFilter):
+                filter[key] = get_hex_filters(value)
+            elif isinstance(value, DateTimeFilter):
+                filter[key] = get_date_filters(value)
+            elif isinstance(value, FeltValueFilter):
+                filter[key] = get_felt_filters(value)
+            elif isinstance(value, BooleanFilter):
+                filter[key] = get_bool_filters(value)
+
+    sort_options = {k: v for k, v in orderBy.__dict__.items() if v is not None}
+
+    sort_var = "updated_at"
+    sort_dir = -1
+
+    for key, value in sort_options.items():
+        if value.asc:
+            sort_var = key
+            sort_dir = 1
+            break
+        if value.desc:
+            sort_var = key
+            sort_dir = -1
+            break
+
+    query = db["tokens"].find(filter).skip(skip).limit(limit).sort(sort_var, sort_dir)
+
+    result = [Token.from_mongo(t) for t in query]
+
+    # Cache the result
+    await redis.set(cache_key, json.dumps([item.__dict__ for item in result]), ex=60)
+
+    return result
+
+
+async def get_free_games(
+    info,
+    where: Optional[FreeGamesFilter] = {},
+    limit: Optional[int] = 10,
+    skip: Optional[int] = 0,
+    orderBy: Optional[FreeGamesOrderByInput] = {},
+) -> List[FreeGame]:
+    db = info.context["db"]
+    redis = info.context["redis"]
+
+    # Convert custom filter objects to dictionaries
+    where_dict = where.to_dict() if where else {}
+    orderBy_dict = orderBy.to_dict() if orderBy else {}
+
+    # Create a unique cache key based on the query parameters
+    cache_key = (
+        f"free_games:{json.dumps(where_dict)}:{limit}:{skip}:{json.dumps(orderBy_dict)}"
+    )
+    cached_result = await redis.get(cache_key)
+
+    if cached_result:
+        cached_result = cached_result.decode("utf-8")  # Decode the byte string
+        return [FreeGame.from_mongo(item) for item in json.loads(cached_result)]
+
+    filter = {"_cursor.to": None}
+
+    if where:
+        processed_filters = process_filters(where)
+        for key, value in processed_filters.items():
+            if isinstance(value, StringFilter):
+                filter[key] = get_str_filters(value)
+            elif isinstance(value, HexValueFilter):
+                filter[key] = get_hex_filters(value)
+            elif isinstance(value, DateTimeFilter):
+                filter[key] = get_date_filters(value)
+            elif isinstance(value, FeltValueFilter):
+                filter[key] = get_felt_filters(value)
+            elif isinstance(value, BooleanFilter):
+                filter[key] = get_bool_filters(value)
+
+    sort_options = {k: v for k, v in orderBy.__dict__.items() if v is not None}
+
+    sort_var = "updated_at"
+    sort_dir = -1
+
+    for key, value in sort_options.items():
+        if value.asc:
+            sort_var = key
+            sort_dir = 1
+            break
+        if value.desc:
+            sort_var = key
+            sort_dir = -1
+            break
+
+    query = (
+        db["free_games"].find(filter).skip(skip).limit(limit).sort(sort_var, sort_dir)
+    )
+
+    result = [FreeGame.from_mongo(t) for t in query]
+
+    # Cache the result
+    await redis.set(cache_key, json.dumps([item.__dict__ for item in result]), ex=60)
+
+    return result
+
+
 async def get_discoveries_and_battles(
     info,
     where: Optional[ItemsFilter] = {},
@@ -2694,6 +2918,8 @@ class Query:
     beasts: List[Beast] = strawberry.field(resolver=get_beasts)
     discoveries: List[Discovery] = strawberry.field(resolver=get_discoveries)
     battles: List[Battle] = strawberry.field(resolver=get_battles)
+    tokens: List[Token] = strawberry.field(resolver=get_tokens)
+    freeGames: List[FreeGame] = strawberry.field(resolver=get_free_games)
     discoveriesAndBattles: List[DiscoveryOrBattle] = strawberry.field(
         resolver=get_discoveries_and_battles
     )
