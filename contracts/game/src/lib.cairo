@@ -229,7 +229,7 @@ mod Game {
 
         // give VRF provider approval for all ETH in the contract since the only
         // reason ETH will be in the contract is to cover VRF costs
-        if chain_id == MAINNET_CHAIN_ID || chain_id == SEPOLIA_CHAIN_ID {
+        if _network_supports_vrf() {
             let eth_dispatcher = IERC20Dispatcher { contract_address: eth_address };
             eth_dispatcher.approve(randomness_contract_address, BoundedInt::max());
         }
@@ -254,8 +254,7 @@ mod Game {
                 'caller not vrf contract'
             );
 
-            let chain_id = get_tx_info().unbox().chain_id;
-            if chain_id == MAINNET_CHAIN_ID || chain_id == SEPOLIA_CHAIN_ID {
+            if _network_supports_vrf() {
                 assert(
                     requestor_address == starknet::get_contract_address(),
                     'vrf requestor is not self'
@@ -312,8 +311,7 @@ mod Game {
             _assert_valid_starter_weapon(weapon);
 
             // don't process payment distributions on Katana
-            let chain_id = get_tx_info().unbox().chain_id;
-            if chain_id == MAINNET_CHAIN_ID || chain_id == SEPOLIA_CHAIN_ID {
+            if _network_supports_vrf() {
                 // process payment for game and distribute rewards
                 if (golden_token_id != 0) {
                     _play_with_token(ref self, golden_token_id);
@@ -1194,10 +1192,9 @@ mod Game {
             _process_level_up(ref self, ref adventurer, adventurer_id, previous_level, new_level);
         }
 
-        let chain_id = get_tx_info().unbox().chain_id;
         // if beast beast level is above collectible threshold
         if beast.combat_spec.level >= BEAST_SPECIAL_NAME_LEVEL_UNLOCK.into()
-            && (chain_id == MAINNET_CHAIN_ID || chain_id == SEPOLIA_CHAIN_ID) {
+            && _network_supports_vrf() {
             // mint beast to owner of the adventurer
             _mint_beast(@self, beast, _get_owner(@self, adventurer_id));
         }
@@ -1477,8 +1474,7 @@ mod Game {
         let beast_battle_details = _starter_beast_ambush(ref adventurer, adventurer_id, weapon);
 
         // if we're not running on Katana, request randomness from VRF as soon as game starts
-        let chain_id = get_tx_info().unbox().chain_id;
-        if !delay_stat_reveal && (chain_id == MAINNET_CHAIN_ID || chain_id == SEPOLIA_CHAIN_ID) {
+        if !delay_stat_reveal && _network_supports_vrf() {
             _request_randomness(ref self, adventurer_id.try_into().unwrap(), adventurer_id, 0);
         }
 
@@ -2005,8 +2001,7 @@ mod Game {
                             ref self, adventurer_id, self._randomness_contract_address.read()
                         );
 
-                        let chain_id = get_tx_info().unbox().chain_id;
-                        if chain_id == MAINNET_CHAIN_ID || chain_id == SEPOLIA_CHAIN_ID {
+                        if _network_supports_vrf() {
                             _request_randomness(
                                 ref self, adventurer_id.try_into().unwrap(), adventurer_id, 1
                             );
@@ -2035,6 +2030,11 @@ mod Game {
             prefixes_unlocked,
             specials
         }
+    }
+
+    fn _network_supports_vrf() -> bool {
+        let chain_id = get_tx_info().unbox().chain_id;
+        chain_id == MAINNET_CHAIN_ID || chain_id == SEPOLIA_CHAIN_ID
     }
 
     fn _get_and_apply_item_specials(
@@ -2708,7 +2708,9 @@ mod Game {
         _load_adventurer_metadata(self, adventurer_id).item_specials_seed
     }
 
-    fn _set_item_specials_seed(ref self: ContractState, adventurer_id: felt252, item_specials_seed: u16) {
+    fn _set_item_specials_seed(
+        ref self: ContractState, adventurer_id: felt252, item_specials_seed: u16
+    ) {
         let mut adventurer_meta = _load_adventurer_metadata(@self, adventurer_id);
         adventurer_meta.item_specials_seed = item_specials_seed;
         _save_adventurer_metadata(ref self, adventurer_id, adventurer_meta);
@@ -2833,20 +2835,8 @@ mod Game {
                 ref self, adventurer, adventurer_id, previous_level, new_level
             );
 
-            // if we're running on a network other than mainnet or sepolia (such as katana)
-            let chain_id = get_tx_info().unbox().chain_id;
-            if !(chain_id == MAINNET_CHAIN_ID || chain_id == SEPOLIA_CHAIN_ID) {
-                // generate local randomness instead of requesting vrf
-                process_new_level_seed(
-                    ref self,
-                    starknet::get_contract_address(),
-                    ref adventurer,
-                    adventurer_id,
-                    ImplAdventurer::get_simple_entropy(adventurer.xp, adventurer_id),
-                    0
-                );
-            } else {
-                // else contract is running on mainnet or sepolia
+            // if the network we're running on supports vrf
+            if _network_supports_vrf() {
                 // check to see if we have vrf seed for the next level
                 if (current_level_seed != 0) {
                     // process initial entropy which will reveal starting stats and emit starting market
@@ -2865,11 +2855,20 @@ mod Game {
                         );
                     }
                 }
+            } else {
+                // generate local randomness instead of requesting vrf
+                process_new_level_seed(
+                    ref self,
+                    starknet::get_contract_address(),
+                    ref adventurer,
+                    adventurer_id,
+                    ImplAdventurer::get_simple_entropy(adventurer.xp, adventurer_id),
+                    0
+                );
             }
         } else if (new_level > previous_level) {
             // if this is any level up beyond the starter beast
-            let chain_id = get_tx_info().unbox().chain_id;
-            if chain_id == MAINNET_CHAIN_ID || chain_id == SEPOLIA_CHAIN_ID {
+            if _network_supports_vrf() {
                 // zero out level seed to freeze game state till vrf comes back
                 _set_level_seed(ref self, adventurer_id, 0);
 
