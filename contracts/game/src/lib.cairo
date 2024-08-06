@@ -2021,6 +2021,9 @@ mod Game {
                         }
                     }
                 } else { // apply them and record the new specials so we can include them in event
+                    _get_and_apply_item_specials(
+                        ref adventurer, ref specials, item, item_specials_seed
+                    );
                 }
             }
         }
