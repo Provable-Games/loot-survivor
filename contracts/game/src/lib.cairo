@@ -2004,27 +2004,23 @@ mod Game {
                         _event_RequestedItemSpecialsSeed(
                             ref self, adventurer_id, self._randomness_contract_address.read()
                         );
-                        _request_randomness(
-                            ref self, adventurer_id.try_into().unwrap(), adventurer_id, 1
-                        );
+
+                        let chain_id = get_tx_info().unbox().chain_id;
+                        if chain_id == MAINNET_CHAIN_ID || chain_id == SEPOLIA_CHAIN_ID {
+                            _request_randomness(
+                                ref self, adventurer_id.try_into().unwrap(), adventurer_id, 1
+                            );
+                        } else {
+                            // on katana we simply use item.xp + item.id as a simple seed
+                            // that will always fit in a u16
+                            let item_specials_seed = item.xp + item.id.into();
+                            _set_item_specials_seed(ref self, adventurer_id, item_specials_seed);
+                            _get_and_apply_item_specials(
+                                ref adventurer, ref specials, item, item_specials_seed
+                            );
+                        }
                     }
-                } else {
-                    // apply them and record the new specials so we can include them in event
-
-                    specials =
-                        ImplLoot::get_specials(item.id, item.get_greatness(), item_specials_seed);
-
-                    // apply the item stat boosts so that subsequent events include this information
-                    adventurer.stats.apply_suffix_boost(specials.special1);
-
-                    // check if the suffix provided a vitality boost
-                    let vitality_boost = ImplAdventurer::get_vitality_item_boost(specials.special1);
-                    if (vitality_boost != 0) {
-                        // if so, adventurer gets health
-                        let health_amount = vitality_boost.into()
-                            * VITALITY_INSTANT_HEALTH_BONUS.into();
-                        adventurer.increase_health(health_amount);
-                    }
+                } else { // apply them and record the new specials so we can include them in event
                 }
             }
         }
@@ -2035,6 +2031,23 @@ mod Game {
             suffix_unlocked,
             prefixes_unlocked,
             specials
+        }
+    }
+
+    fn _get_and_apply_item_specials(
+        ref adventurer: Adventurer, ref specials: SpecialPowers, item: Item, item_specials_seed: u16
+    ) {
+        specials = ImplLoot::get_specials(item.id, item.get_greatness(), item_specials_seed);
+
+        // apply the item stat boosts so that subsequent events include this information
+        adventurer.stats.apply_suffix_boost(specials.special1);
+
+        // check if the suffix provided a vitality boost
+        let vitality_boost = ImplAdventurer::get_vitality_item_boost(specials.special1);
+        if (vitality_boost != 0) {
+            // if so, adventurer gets health
+            let health_amount = vitality_boost.into() * VITALITY_INSTANT_HEALTH_BONUS.into();
+            adventurer.increase_health(health_amount);
         }
     }
 
@@ -2692,6 +2705,12 @@ mod Game {
         _load_adventurer_metadata(self, adventurer_id).item_specials_seed
     }
 
+    fn _set_item_specials_seed(ref self: ContractState, adventurer_id: felt252, item_specials_seed: u16) {
+        let mut adventurer_meta = _load_adventurer_metadata(@self, adventurer_id);
+        adventurer_meta.item_specials_seed = item_specials_seed;
+        _save_adventurer_metadata(ref self, adventurer_id, adventurer_meta);
+    }
+
     /// @title Apply Item Stat Boost
     /// @notice Applies the item stat boost to the adventurer.
     /// @dev This function is called when the item stat boost is applied to the adventurer.
@@ -2755,8 +2774,8 @@ mod Game {
     fn _remove_equipment_stat_boosts(
         self: @ContractState, ref adventurer: Adventurer, adventurer_id: felt252
     ) {
-        if adventurer.equipment.has_specials() {
-            let item_specials_seed = _get_item_specials_seed(self, adventurer_id);
+        let item_specials_seed = _get_item_specials_seed(self, adventurer_id);
+        if adventurer.equipment.has_specials() && item_specials_seed != 0 {
             let item_stat_boosts = adventurer.equipment.get_stat_boosts(item_specials_seed);
             adventurer.stats.remove_stats(item_stat_boosts);
         }
