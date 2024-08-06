@@ -616,7 +616,7 @@ export function updateTotalPayout({ adventurerId, timestamp, newPayout }: any) {
 
 export function updateTokenOwner({ token, tokenId, timestamp, newOwner }: any) {
   const entity = {
-    token: checkExistsInt(parseInt(token)),
+    token: checkExistsInt(BigInt(token).toString(16)),
     tokenId: checkExistsInt(parseInt(tokenId)),
   };
 
@@ -627,6 +627,23 @@ export function updateTokenOwner({ token, tokenId, timestamp, newOwner }: any) {
         ...entity,
         ownerAddress: checkExistsInt(BigInt(newOwner).toString(16)),
         timestamp,
+      },
+    },
+  };
+}
+
+export function updateTokenFreeGame({ token, tokenId, used }: any) {
+  const entity = {
+    token: checkExistsInt(BigInt(token).toString(16)),
+    tokenId: checkExistsInt(parseInt(tokenId)),
+  };
+
+  return {
+    entity,
+    update: {
+      $set: {
+        ...entity,
+        used: used,
       },
     },
   };

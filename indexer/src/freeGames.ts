@@ -3,7 +3,7 @@ import type { Block, Starknet } from "https://esm.sh/@apibara/indexer/starknet";
 import type { Mongo } from "https://esm.sh/@apibara/indexer/sink/mongo";
 import type { Console } from "https://esm.sh/@apibara/indexer/sink/console";
 import { TRANSFER, parseTransfer, CLAIMED_FREE_GAME } from "./utils/events.ts";
-import { updateTokenOwner } from "./utils/helpers.ts";
+import { updateTokenFreeGame } from "./utils/helpers.ts";
 import { MONGO_CONNECTION_STRING } from "./utils/constants.ts";
 
 const GAME = Deno.env.get("GAME");
@@ -34,7 +34,7 @@ export const config: Config<Starknet, Mongo | Console> = {
   sinkOptions: {
     connectionString: MONGO_CONNECTION_STRING,
     database: MONGO_DB,
-    collectionName: "tokens",
+    collectionName: "free_games",
     // @ts-ignore - indexer package not updated
     entityMode: true,
   },
@@ -43,14 +43,13 @@ export const config: Config<Starknet, Mongo | Console> = {
 export default function transform({ header, events }: Block) {
   return events.flatMap(({ event, receipt }) => {
     switch (event.keys[0]) {
-      case TRANSFER: {
+      case CLAIMED_FREE_GAME: {
         const { value } = parseTransfer(event.data, 0);
-        console.log("TRANSFER", "->", "TOKENS UPDATES");
-        return updateTokenOwner({
-          token: event.fromAddress,
+        console.log("CLAIMED_FREE_GAME", "->", "TOKENS UPDATES");
+        return updateTokenFreeGame({
+          token: value.toAddress,
           tokenId: value.tokenId,
-          newOwner: value.toAddress,
-          timestamp: new Date().toISOString(),
+          used: true,
         });
       }
 
