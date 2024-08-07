@@ -168,6 +168,7 @@ mod Game {
         ERC721Event: ERC721Component::Event,
         #[flat]
         SRC5Event: SRC5Component::Event,
+        ClaimedFreeGame: ClaimedFreeGame,
     }
 
     // @title Constructor
@@ -896,7 +897,12 @@ mod Game {
             self._claimed_tokens.write(token_hash, true);
 
             // start the game
-            _start_game(ref self, weapon, name, custom_renderer, delay_stat_reveal, 0);
+            let adventurer_id = _start_game(
+                ref self, weapon, name, custom_renderer, delay_stat_reveal, 0
+            );
+
+            // emit claimed free game event
+            __event_ClaimedFreeGame(ref self, adventurer_id, nft_address, token_id);
         }
 
 
@@ -3081,9 +3087,7 @@ mod Game {
         }
     }
 
-    fn _assert_is_qualifying_nft(
-        self: @ContractState, nft_collection_address: ContractAddress
-    ) {
+    fn _assert_is_qualifying_nft(self: @ContractState, nft_collection_address: ContractAddress) {
         assert(
             self._qualifying_collections.read(nft_collection_address),
             messages::NFT_COLLECTION_NOT_ELIGIBLE
@@ -3562,6 +3566,13 @@ mod Game {
         obituary: ByteArray,
     }
 
+    #[derive(Drop, starknet::Event)]
+    struct ClaimedFreeGame {
+        adventurer_id: felt252,
+        collection_address: ContractAddress,
+        token_id: u256
+    }
+
     #[derive(Drop, Serde)]
     struct PlayerReward {
         adventurer_id: felt252,
@@ -3967,6 +3978,12 @@ mod Game {
             owner: _get_owner(@self, adventurer_id), adventurer_id, level_seed, adventurer
         };
         self.emit(PurchasedPotions { adventurer_state, quantity, cost, health, });
+    }
+
+    fn __event_ClaimedFreeGame(
+        ref self: ContractState, adventurer_id: felt252, collection_address: ContractAddress, token_id: u256
+    ) {
+        self.emit(ClaimedFreeGame { adventurer_id, collection_address, token_id });
     }
 
 
