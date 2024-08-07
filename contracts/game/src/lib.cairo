@@ -4,6 +4,7 @@ mod game {
     mod renderer;
     mod encoding;
     mod RenderContract;
+    mod MockNft;
 }
 mod tests {
     mod test_game;
