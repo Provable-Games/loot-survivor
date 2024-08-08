@@ -17,6 +17,7 @@ import { GameData } from "@/app/lib/data/GameData";
 import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
 import { calculateLevel } from "@/app/lib/utils";
 import { vitalityIncrease } from "@/app/lib/constants";
+import LootIconLoader from "@/app/components/icons/Loader";
 
 interface InfoProps {
   adventurer: Adventurer | undefined;
@@ -292,20 +293,26 @@ export default function Info({
           )}
 
           <div className="w-full flex flex-col gap-1 text-xs overflow-y-scroll default-scroll h-[500px]">
-            {bodyParts.map((part) => (
-              <ItemDisplay
-                item={
-                  filteredItems.find((item: Item) => {
-                    const { slot } = getItemData(item.item!);
-                    return slot === part && item.equipped;
-                  }) || NullItem
-                }
-                itemSlot={part}
-                handleDrop={handleDropItems}
-                gameContract={gameContract}
-                key={part}
-              />
-            ))}
+            {!data.itemsByAdventurerQuery ? (
+              <div>
+                <LootIconLoader className="m-auto" size="w-10" />
+              </div>
+            ) : (
+              bodyParts.map((part) => (
+                <ItemDisplay
+                  item={
+                    filteredItems.find((item: Item) => {
+                      const { slot } = getItemData(item.item!);
+                      return slot === part && item.equipped;
+                    }) || NullItem
+                  }
+                  itemSlot={part}
+                  handleDrop={handleDropItems}
+                  gameContract={gameContract}
+                  key={part}
+                />
+              ))
+            )}
           </div>
         </div>
       ) : (

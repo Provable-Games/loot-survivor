@@ -435,11 +435,7 @@ export function createSyscalls({
     const exploreTx = {
       contractAddress: gameContract?.address ?? "",
       entrypoint: "explore",
-      calldata: [
-        adventurer?.id?.toString() ?? "",
-        // "0",
-        till_beast ? "1" : "0",
-      ],
+      calldata: [adventurer?.id?.toString() ?? "", till_beast ? "1" : "0"],
     };
     addToCalls(exploreTx);
 
@@ -920,11 +916,7 @@ export function createSyscalls({
     const fleeTx = {
       contractAddress: gameContract?.address ?? "",
       entrypoint: "flee",
-      calldata: [
-        adventurer?.id?.toString() ?? "",
-        // "0",
-        tillDeath ? "1" : "0",
-      ],
+      calldata: [adventurer?.id?.toString() ?? "", tillDeath ? "1" : "0"],
     };
     addToCalls(fleeTx);
 
@@ -1405,8 +1397,8 @@ export function createSyscalls({
   const mintLords = async () => {
     const mintLords: Call = {
       contractAddress: lordsContract?.address ?? "",
-      entrypoint: "mint",
-      calldata: [account.address, "50000000000000000000000", "0"],
+      entrypoint: "mint_lords",
+      calldata: [],
     };
     const isArcade = checkArcadeConnector(connector!);
     try {

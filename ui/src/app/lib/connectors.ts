@@ -53,7 +53,11 @@ export const providerInterfaceCamel = (provider: string) => {
 //   url: argentWebWalletUrl(),
 // });
 
-const cartridgeConnector = (gameAddress: string, lordsAddress: string) =>
+const cartridgeConnector = (
+  gameAddress: string,
+  lordsAddress: string,
+  ethAddress: string
+) =>
   new CartridgeConnector(
     [
       {
@@ -90,7 +94,11 @@ const cartridgeConnector = (gameAddress: string, lordsAddress: string) =>
       },
       {
         target: lordsAddress,
-        method: "mint",
+        method: "mint_lords",
+      },
+      {
+        target: ethAddress,
+        method: "approve",
       },
     ],
     {
@@ -101,8 +109,12 @@ const cartridgeConnector = (gameAddress: string, lordsAddress: string) =>
     }
   ) as never as Connector;
 
-export const connectors = (gameAddress: string, lordsAddress: string) => [
-  cartridgeConnector(gameAddress, lordsAddress),
+export const connectors = (
+  gameAddress: string,
+  lordsAddress: string,
+  ethAddress: string
+) => [
+  cartridgeConnector(gameAddress, lordsAddress, ethAddress),
   new InjectedConnector({ options: { id: "braavos", name: "Braavos" } }),
   new InjectedConnector({ options: { id: "argentX", name: "Argent X" } }),
   // argentWebWalletConnector,

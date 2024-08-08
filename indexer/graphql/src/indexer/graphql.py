@@ -2973,16 +2973,28 @@ async def run_graphql_api(
     app = web.Application()
 
     # Setup CORS with the specific origin
+    # cors = aiohttp_cors.setup(
+    #     app,
+    #     defaults={
+    #         origin: aiohttp_cors.ResourceOptions(
+    #             allow_credentials=True,
+    #             expose_headers="*",
+    #             allow_headers="*",
+    #             allow_methods=["POST", "GET"],
+    #         )
+    #         for origin in allowed_origins
+    #     },
+    # )
+
     cors = aiohttp_cors.setup(
         app,
         defaults={
-            origin: aiohttp_cors.ResourceOptions(
+            "*": aiohttp_cors.ResourceOptions(
                 allow_credentials=True,
                 expose_headers="*",
                 allow_headers="*",
                 allow_methods=["POST", "GET"],
             )
-            for origin in allowed_origins
         },
     )
 
