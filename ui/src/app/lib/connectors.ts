@@ -15,10 +15,7 @@ export const getArcadeConnectors = (connectors: Connector[]) => {
 };
 
 export const getWalletConnectors = (connectors: Connector[]) =>
-  connectors.filter(
-    (connector) =>
-      typeof connector.id !== "string" || !connector.id.includes("0x")
-  );
+  connectors.filter((connector) => connector.id !== "cartridge");
 
 export const checkCartridgeConnector = (connector?: Connector) => {
   return connector?.id === "cartridge";
