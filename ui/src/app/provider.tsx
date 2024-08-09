@@ -7,9 +7,10 @@ import {
 } from "@starknet-react/core";
 import { sepolia } from "@starknet-react/chains";
 import { Chain } from "@starknet-react/chains";
-import { connectors } from "@/app/lib/connectors";
 import { networkConfig } from "./lib/networkConfig";
 import { Network } from "./hooks/useUIStore";
+import { useInjectedConnectors } from "@starknet-react/core";
+import { cartridgeConnector } from "@/app/lib/connectors";
 
 export function StarknetProvider({
   children,
@@ -24,17 +25,25 @@ export function StarknetProvider({
     };
   }
 
+  const { connectors } = useInjectedConnectors({
+    // Randomize the order of the connectors.
+    order: "random",
+  });
+
   return (
     <StarknetConfig
       autoConnect={
         network === "mainnet" || network === "sepolia" ? true : false
       }
       chains={[sepolia]}
-      connectors={connectors(
-        networkConfig[network!].gameAddress,
-        networkConfig[network!].lordsAddress,
-        networkConfig[network!].ethAddress
-      )}
+      connectors={[
+        ...connectors,
+        cartridgeConnector(
+          networkConfig[network!].gameAddress,
+          networkConfig[network!].lordsAddress,
+          networkConfig[network!].ethAddress
+        ),
+      ]}
       explorer={starkscan}
       provider={jsonRpcProvider({ rpc })}
     >

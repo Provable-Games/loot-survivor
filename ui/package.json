@@ -13,7 +13,7 @@
     "@cartridge/connector": "^0.3.38",
     "@dojoengine/create-burner": "^0.7.0-alpha.1",
     "@fontsource/vt323": "^4.5.10",
-    "@starknet-react/core": "^2.5.0",
+    "@starknet-react/core": "^2.9.0",
     "@svgr/webpack": "^7.0.0",
     "@types/js-cookie": "^3.0.3",
     "@types/node": "18.15.11",

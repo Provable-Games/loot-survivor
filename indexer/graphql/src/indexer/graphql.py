@@ -1996,6 +1996,24 @@ class FreeGame:
 
 
 @strawberry.type
+class TokenWithFreeGameStatus:
+    token: Optional[HexValue]
+    tokenId: Optional[FeltValue]
+    ownerAddress: Optional[HexValue]
+    freeGameUsed: bool
+
+    @classmethod
+    def from_mongo(cls, token_data, free_game_data):
+        return cls(
+            token=token_data["token"],
+            tokenId=token_data["tokenId"],
+            ownerAddress=token_data["ownerAddress"],
+            freeGameUsed=free_game_data is not None
+            and free_game_data.get("used", False),
+        )
+
+
+@strawberry.type
 class AdventurerRank:
     adventurer_id: str
     xp: int
@@ -2647,6 +2665,69 @@ async def get_free_games(
     return result
 
 
+async def get_tokens_with_free_game_status(
+    info,
+    where: Optional[TokensFilter] = {},
+    limit: Optional[int] = 10,
+    skip: Optional[int] = 0,
+    orderBy: Optional[TokensOrderByInput] = {},
+) -> List[TokenWithFreeGameStatus]:
+    db = info.context["db"]
+    redis = info.context["redis"]
+
+    # Create a unique cache key
+    cache_key = f"tokens_with_free_game_status:{json.dumps(where.to_dict() if where else {})}:{limit}:{skip}:{json.dumps(orderBy.to_dict() if orderBy else {})}"
+
+    cached_result = await redis.get(cache_key)
+    if cached_result:
+        return [
+            TokenWithFreeGameStatus(**item)
+            for item in json.loads(cached_result.decode("utf-8"))
+        ]
+
+    # Query tokens
+    token_filter = {"ownerAddress": ownerAddress, "_cursor.to": None}
+    if where:
+        processed_filters = process_filters(where)
+        for key, value in processed_filters.items():
+            if isinstance(value, HexValueFilter):
+                token_filter[key] = get_hex_filters(value)
+            elif isinstance(value, FeltValueFilter):
+                token_filter[key] = get_felt_filters(value)
+            elif isinstance(value, DateTimeFilter):
+                token_filter[key] = get_date_filters(value)
+
+    sort_options = {
+        k: v for k, v in (orderBy.__dict__ if orderBy else {}).items() if v is not None
+    }
+    sort_var = next(
+        (k for k, v in sort_options.items() if v.asc or v.desc), "timestamp"
+    )
+    sort_dir = 1 if sort_options.get(sort_var, OrderByInput()).asc else -1
+
+    tokens = list(
+        db["tokens"].find(token_filter).skip(skip).limit(limit).sort(sort_var, sort_dir)
+    )
+
+    # Query free games for these tokens
+    token_ids = [token["tokenId"] for token in tokens]
+    free_games = {
+        fg["tokenId"]: fg
+        for fg in db["free_games"].find({"tokenId": {"$in": token_ids}})
+    }
+
+    # Combine token and free game information
+    result = [
+        TokenWithFreeGameStatus.from_mongo(token, free_games.get(token["tokenId"]))
+        for token in tokens
+    ]
+
+    # Cache the result
+    await redis.set(cache_key, json.dumps([item.__dict__ for item in result]), ex=60)
+
+    return result
+
+
 async def get_discoveries_and_battles(
     info,
     where: Optional[ItemsFilter] = {},
@@ -2920,6 +3001,9 @@ class Query:
     battles: List[Battle] = strawberry.field(resolver=get_battles)
     tokens: List[Token] = strawberry.field(resolver=get_tokens)
     freeGames: List[FreeGame] = strawberry.field(resolver=get_free_games)
+    tokensWithFreeGameStatus: List[TokenWithFreeGameStatus] = strawberry.field(
+        resolver=get_tokens_with_free_game_status
+    )
     discoveriesAndBattles: List[DiscoveryOrBattle] = strawberry.field(
         resolver=get_discoveries_and_battles
     )
