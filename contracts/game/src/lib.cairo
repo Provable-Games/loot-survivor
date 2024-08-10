@@ -62,9 +62,9 @@ mod Game {
 
     use loot::{loot::{ILoot, Loot, ImplLoot}, constants::{ItemId, SUFFIX_UNLOCK_GREATNESS}};
     use adventurer::{
-        adventurer::{Adventurer, ImplAdventurer, IAdventurer}, stats::{Stats, ImplStats},
-        item::{ImplItem, Item}, equipment::{Equipment, ImplEquipment}, bag::{Bag, IBag, ImplBag},
-        adventurer_meta::{AdventurerMetadata, ImplAdventurerMetadata},
+        adventurer::{Adventurer, ImplAdventurer, IAdventurer, ItemLeveledUp, ItemSpecial},
+        stats::{Stats, ImplStats}, item::{ImplItem, Item}, equipment::{Equipment, ImplEquipment},
+        bag::{Bag, IBag, ImplBag}, adventurer_meta::{AdventurerMetadata, ImplAdventurerMetadata},
         constants::{
             discovery_constants::DiscoveryEnums::{ExploreResult, DiscoveryType},
             adventurer_constants::{
@@ -285,7 +285,7 @@ mod Game {
                 );
             } else {
                 process_item_specials_seed(
-                    ref self, requestor_address, adventurer_id, rnd, request_id
+                    ref self, adventurer, requestor_address, adventurer_id, rnd, request_id
                 );
             }
 
@@ -918,6 +918,30 @@ mod Game {
         fn get_adventurer_obituary(self: @ContractState, adventurer_id: felt252) -> ByteArray {
             self._adventurer_obituary.read(adventurer_id)
         }
+        fn get_item_specials(self: @ContractState, adventurer_id: felt252) -> Array<ItemSpecial> {
+            let mut item_specials: Array<ItemSpecial> = ArrayTrait::<ItemSpecial>::new();
+            let specials_seed = _load_adventurer_metadata(self, adventurer_id).item_specials_seed;
+
+            // assert specials seed is not 0
+            assert(specials_seed != 0, messages::ITEM_SPECIALS_UNAVAILABLE);
+
+            let mut item_id = 1;
+            loop {
+                if item_id > 101 {
+                    break;
+                }
+
+                let special_power = SpecialPowers {
+                    special1: ImplLoot::get_suffix(item_id, specials_seed),
+                    special2: ImplLoot::get_prefix1(item_id, specials_seed),
+                    special3: ImplLoot::get_prefix2(item_id, specials_seed),
+                };
+                item_specials.append(ItemSpecial { item_id, special_power, });
+
+                item_id += 1;
+            };
+            item_specials
+        }
         fn get_randomness_address(self: @ContractState) -> ContractAddress {
             self._randomness_contract_address.read()
         }
@@ -1044,6 +1068,7 @@ mod Game {
     /// @param request_id A u64 representing the request ID.
     fn process_item_specials_seed(
         ref self: ContractState,
+        adventurer: Adventurer,
         requestor_address: ContractAddress,
         adventurer_id: felt252,
         item_specials_seed: felt252,
@@ -1059,6 +1084,12 @@ mod Game {
         _event_ReceivedItemSpecialsSeed(
             ref self, adventurer_id, requestor_address, item_specials_seed, request_id
         );
+        // get adventurer equipment
+
+        let items_leveled_up = ImplAdventurer::get_items_leveled_up(
+            adventurer.equipment, item_specials_seed_u16
+        );
+        __event_ItemsLeveledUp(ref self, adventurer, adventurer_id, items_leveled_up);
     }
 
     /// @title Process VRF Randomness
@@ -1338,7 +1369,14 @@ mod Game {
         ref self: ContractState, adventurer_id: felt252, item_specials_seed: u16
     ) {
         let mut adventurer_meta = self._adventurer_meta.read(adventurer_id);
-        adventurer_meta.item_specials_seed = item_specials_seed;
+
+        // reserve zero for unset item specials
+        if item_specials_seed == 0 {
+            adventurer_meta.item_specials_seed = item_specials_seed + 1;
+        } else {
+            adventurer_meta.item_specials_seed = item_specials_seed;
+        }
+
         self._adventurer_meta.write(adventurer_id, adventurer_meta);
     }
 
@@ -3448,16 +3486,6 @@ mod Game {
         item_ids: Array<u8>,
     }
 
-    #[derive(Drop, Serde)]
-    struct ItemLeveledUp {
-        item_id: u8,
-        previous_level: u8,
-        new_level: u8,
-        suffix_unlocked: bool,
-        prefixes_unlocked: bool,
-        specials: SpecialPowers
-    }
-
     #[derive(Drop, starknet::Event)]
     struct ItemsLeveledUp {
         adventurer_state: AdventurerState,
@@ -3981,7 +4009,10 @@ mod Game {
     }
 
     fn __event_ClaimedFreeGame(
-        ref self: ContractState, adventurer_id: felt252, collection_address: ContractAddress, token_id: u256
+        ref self: ContractState,
+        adventurer_id: felt252,
+        collection_address: ContractAddress,
+        token_id: u256
     ) {
         self.emit(ClaimedFreeGame { adventurer_id, collection_address, token_id });
     }

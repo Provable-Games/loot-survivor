@@ -68,7 +68,7 @@ mod messages {
     const NFT_COLLECTION_NOT_ELIGIBLE: felt252 = 'nft collection not eligible';
     const NOT_TOKEN_OWNER: felt252 = 'not token owner';
     const TOKEN_ALREADY_CLAIMED: felt252 = 'token already claimed';
-
+    const ITEM_SPECIALS_UNAVAILABLE: felt252 = 'item specials unavailable';
 }
 
 #[derive(Drop, Copy)]

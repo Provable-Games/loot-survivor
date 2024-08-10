@@ -3,7 +3,7 @@ use starknet::ContractAddress;
 use beasts::beast::Beast;
 use market::market::{ItemPurchase};
 use adventurer::{
-    bag::Bag, adventurer::{Adventurer, Stats}, adventurer_meta::AdventurerMetadata,
+    bag::Bag, adventurer::{Adventurer, Stats, ItemSpecial}, adventurer_meta::AdventurerMetadata,
     leaderboard::Leaderboard, item::{Item},
     constants::discovery_constants::DiscoveryEnums::ExploreResult
 };
@@ -82,6 +82,7 @@ trait IGame<TContractState> {
 
     // beast details
     fn get_attacking_beast(self: @TContractState, adventurer_id: felt252) -> Beast;
+    fn get_item_specials(self: @TContractState, adventurer_id: felt252) -> Array<ItemSpecial>;
     // fn get_beast_type(self: @TContractState, beast_id: u8) -> u8;
     // fn get_beast_tier(self: @TContractState, beast_id: u8) -> u8;
 

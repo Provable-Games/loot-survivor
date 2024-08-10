@@ -12,6 +12,7 @@ use loot::{
     loot::{Loot, ILoot, ImplLoot},
     constants::{
         ItemSuffix, ItemId, NamePrefixLength, NameSuffixLength, SUFFIX_UNLOCK_GREATNESS,
+        PREFIXES_UNLOCK_GREATNESS,
         ItemSuffix::{
             of_Power, of_Giant, of_Titans, of_Skill, of_Perfection, of_Brilliance, of_Enlightenment,
             of_Protection, of_Anger, of_Rage, of_Fury, of_Vitriol, of_the_Fox, of_Detection,
@@ -57,6 +58,22 @@ struct Adventurer {
     battle_action_count: u8, // 8 bits
     mutated: bool, // not packed
     awaiting_item_specials: bool, // not packed
+}
+
+#[derive(Drop, Serde)]
+struct ItemLeveledUp {
+    item_id: u8,
+    previous_level: u8,
+    new_level: u8,
+    suffix_unlocked: bool,
+    prefixes_unlocked: bool,
+    specials: SpecialPowers
+}
+
+#[derive(Drop, Serde)]
+struct ItemSpecial {
+    item_id: u8,
+    special_power: SpecialPowers
 }
 
 /// @title Adventurer Packing
@@ -1176,6 +1193,153 @@ impl ImplAdventurer of IAdventurer {
         hash_span.append(adventurer_xp.into());
         hash_span.append(adventurer_id);
         poseidon_hash_span(hash_span.span()).into()
+    }
+
+    /// @notice Generates item leveled up events
+    /// @param equipment: adventurer equipment
+    /// @param seed: seed for randomness
+    /// @return Array<ItemSpecial>: array of item specials
+    /// @dev this function is used immediately after receiving item specials entropy from VRF to let the client know the specials of the items that triggered the specials
+    fn get_items_leveled_up(equipment: Equipment, seed: u16,) -> Array<ItemLeveledUp> {
+        let mut items_leveled_up = ArrayTrait::<ItemLeveledUp>::new();
+        let weapon_level = ImplCombat::get_level_from_xp(equipment.weapon.xp);
+        if weapon_level >= SUFFIX_UNLOCK_GREATNESS {
+            let weapon_id = equipment.weapon.id;
+            let weapon_leveled_up_event = ItemLeveledUp {
+                item_id: weapon_id,
+                previous_level: weapon_level,
+                new_level: weapon_level,
+                suffix_unlocked: true,
+                prefixes_unlocked: weapon_level > PREFIXES_UNLOCK_GREATNESS,
+                specials: SpecialPowers {
+                    special1: ImplLoot::get_suffix(weapon_id, seed),
+                    special2: ImplLoot::get_prefix1(weapon_id, seed),
+                    special3: ImplLoot::get_prefix2(weapon_id, seed),
+                },
+            };
+
+            items_leveled_up.append(weapon_leveled_up_event);
+        }
+        let chest_level = ImplCombat::get_level_from_xp(equipment.chest.xp);
+        if chest_level >= SUFFIX_UNLOCK_GREATNESS {
+            let chest_id = equipment.chest.id;
+            let chest_leveled_up_event = ItemLeveledUp {
+                item_id: chest_id,
+                previous_level: chest_level,
+                new_level: chest_level,
+                suffix_unlocked: true,
+                prefixes_unlocked: chest_level > PREFIXES_UNLOCK_GREATNESS,
+                specials: SpecialPowers {
+                    special1: ImplLoot::get_suffix(chest_id, seed),
+                    special2: ImplLoot::get_prefix1(chest_id, seed),
+                    special3: ImplLoot::get_prefix2(chest_id, seed),
+                },
+            };
+            items_leveled_up.append(chest_leveled_up_event);
+        }
+        let head_level = ImplCombat::get_level_from_xp(equipment.head.xp);
+        if head_level >= SUFFIX_UNLOCK_GREATNESS {
+            let head_id = equipment.head.id;
+            let head_leveled_up_event = ItemLeveledUp {
+                item_id: head_id,
+                previous_level: head_level,
+                new_level: head_level,
+                suffix_unlocked: true,
+                prefixes_unlocked: head_level > PREFIXES_UNLOCK_GREATNESS,
+                specials: SpecialPowers {
+                    special1: ImplLoot::get_suffix(head_id, seed),
+                    special2: ImplLoot::get_prefix1(head_id, seed),
+                    special3: ImplLoot::get_prefix2(head_id, seed),
+                },
+            };
+            items_leveled_up.append(head_leveled_up_event);
+        }
+        let waist_level = ImplCombat::get_level_from_xp(equipment.waist.xp);
+        if waist_level >= SUFFIX_UNLOCK_GREATNESS {
+            let waist_id = equipment.waist.id;
+            let waist_leveled_up_event = ItemLeveledUp {
+                item_id: waist_id,
+                previous_level: waist_level,
+                new_level: waist_level,
+                suffix_unlocked: true,
+                prefixes_unlocked: waist_level > PREFIXES_UNLOCK_GREATNESS,
+                specials: SpecialPowers {
+                    special1: ImplLoot::get_suffix(waist_id, seed),
+                    special2: ImplLoot::get_prefix1(waist_id, seed),
+                    special3: ImplLoot::get_prefix2(waist_id, seed),
+                },
+            };
+            items_leveled_up.append(waist_leveled_up_event);
+        }
+        let foot_level = ImplCombat::get_level_from_xp(equipment.foot.xp);
+        if foot_level >= SUFFIX_UNLOCK_GREATNESS {
+            let foot_id = equipment.foot.id;
+            let foot_leveled_up_event = ItemLeveledUp {
+                item_id: foot_id,
+                previous_level: foot_level,
+                new_level: foot_level,
+                suffix_unlocked: true,
+                prefixes_unlocked: foot_level > PREFIXES_UNLOCK_GREATNESS,
+                specials: SpecialPowers {
+                    special1: ImplLoot::get_suffix(foot_id, seed),
+                    special2: ImplLoot::get_prefix1(foot_id, seed),
+                    special3: ImplLoot::get_prefix2(foot_id, seed),
+                },
+            };
+            items_leveled_up.append(foot_leveled_up_event);
+        }
+        let hand_level = ImplCombat::get_level_from_xp(equipment.hand.xp);
+        if hand_level >= SUFFIX_UNLOCK_GREATNESS {
+            let hand_id = equipment.hand.id;
+            let hand_leveled_up_event = ItemLeveledUp {
+                item_id: hand_id,
+                previous_level: hand_level,
+                new_level: hand_level,
+                suffix_unlocked: true,
+                prefixes_unlocked: hand_level > PREFIXES_UNLOCK_GREATNESS,
+                specials: SpecialPowers {
+                    special1: ImplLoot::get_suffix(hand_id, seed),
+                    special2: ImplLoot::get_prefix1(hand_id, seed),
+                    special3: ImplLoot::get_prefix2(hand_id, seed),
+                },
+            };
+            items_leveled_up.append(hand_leveled_up_event);
+        }
+        let neck_level = ImplCombat::get_level_from_xp(equipment.neck.xp);
+        if neck_level >= SUFFIX_UNLOCK_GREATNESS {
+            let neck_id = equipment.neck.id;
+            let neck_leveled_up_event = ItemLeveledUp {
+                item_id: neck_id,
+                previous_level: neck_level,
+                new_level: neck_level,
+                suffix_unlocked: true,
+                prefixes_unlocked: neck_level > PREFIXES_UNLOCK_GREATNESS,
+                specials: SpecialPowers {
+                    special1: ImplLoot::get_suffix(neck_id, seed),
+                    special2: ImplLoot::get_prefix1(neck_id, seed),
+                    special3: ImplLoot::get_prefix2(neck_id, seed),
+                },
+            };
+            items_leveled_up.append(neck_leveled_up_event);
+        }
+        let ring_level = ImplCombat::get_level_from_xp(equipment.ring.xp);
+        if ring_level >= SUFFIX_UNLOCK_GREATNESS {
+            let ring_id = equipment.ring.id;
+            let ring_leveled_up_event = ItemLeveledUp {
+                item_id: ring_id,
+                previous_level: ring_level,
+                new_level: ring_level,
+                suffix_unlocked: true,
+                prefixes_unlocked: ring_level > PREFIXES_UNLOCK_GREATNESS,
+                specials: SpecialPowers {
+                    special1: ImplLoot::get_suffix(ring_id, seed),
+                    special2: ImplLoot::get_prefix1(ring_id, seed),
+                    special3: ImplLoot::get_prefix2(ring_id, seed),
+                },
+            };
+            items_leveled_up.append(ring_leveled_up_event);
+        }
+        items_leveled_up
     }
 }
 

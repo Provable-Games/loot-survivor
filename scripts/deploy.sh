@@ -19,7 +19,8 @@ interface_camel=0
 vrf_fee_limit=5000000000000000
 eth_contract=0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
 custom_renderer=0x0
-
+qualifying_collections="3 0x07c006181ea9cc7dd1b09c29e9ff23112be30ecfef73b760fabe5bc7ae6ecb44 0x04efe851716110abeee81b7f22f7964845355ffa32e6833fc3a557a1881721ac 0x04a79a62dc260f2e9e4b208181b2014c14f3ff44fe7d0e6452a759ed91a106d1"
+launch_promotion_end_timestamp=1723835867
 # Source env vars
 ENV_FILE="/workspaces/loot-survivor/.env"
 source $ENV_FILE
@@ -38,11 +39,11 @@ game_class_hash=$(starkli declare --watch /workspaces/loot-survivor/target/dev/g
 renderer_contract=$(starkli deploy --watch $renderer_class_hash --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null)
 
 # deploy game
-game_contract=$(starkli deploy --watch $game_class_hash $lords_contract $eth_contract $dao_address $pg_address $beasts_address $golden_token_address $terminal_timestamp $randomness_contract $randomness_rotation_interval $oracle_address $renderer_contract --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null)
+game_contract=$(starkli deploy --watch $game_class_hash $lords_contract $eth_contract $dao_address $pg_address $beasts_address $golden_token_address $terminal_timestamp $randomness_contract $oracle_address $renderer_contract $qualifying_collections $launch_promotion_end_timestamp --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null)
 
 # mint lords
 echo "minting lords"
-starkli invoke --watch $lords_contract mint $ACCOUNT_ADDRESS 1000000000000000000000 0 --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null
+starkli invoke --watch $lords_contract mint_lords $ACCOUNT_ADDRESS 1000000000000000000000 0 --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null
 
 # give game contract approval to spent lords
 echo "approving game contract to spend lords"
