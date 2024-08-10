@@ -861,15 +861,15 @@ mod Game {
             }
         }
 
-        /// @title Claim Free Game
-        /// @notice Allows an adventurer to claim a free game.
+        /// @title Enter Genesis Tournament
+        /// @notice Allows an adventurer to enter the genesis tournament.
         /// @param weapon A u8 representing the weapon to use in the game.
         /// @param name A felt252 representing the name of the adventurer.
         /// @param custom_renderer A ContractAddress representing the custom renderer to use for the adventurer.
         /// @param delay_stat_reveal A bool representing whether to delay the stat reveal.
         /// @param nft_address A ContractAddress representing the address of the NFT collection.
         /// @param token_id A u256 representing the token ID of the NFT.
-        fn claim_free_game(
+        fn enter_genesis_tournament(
             ref self: ContractState,
             weapon: u8,
             name: felt252,
@@ -877,9 +877,9 @@ mod Game {
             delay_stat_reveal: bool,
             nft_address: ContractAddress,
             token_id: u256
-        ) {
+        ) -> felt252 {
             // assert game terminal time has not been reached
-            _assert_launch_promotion_open(@self);
+            _assert_genesis_tournament_active(@self);
 
             // assert the nft collection is part of the set of free game nft collections
             _assert_is_qualifying_nft(@self, nft_address);
@@ -903,6 +903,8 @@ mod Game {
 
             // emit claimed free game event
             __event_ClaimedFreeGame(ref self, adventurer_id, nft_address, token_id);
+            
+            adventurer_id
         }
 
 
@@ -3104,11 +3106,11 @@ mod Game {
         }
     }
 
-    fn _assert_launch_promotion_open(self: @ContractState) {
+    fn _assert_genesis_tournament_active(self: @ContractState) {
         let current_timestamp = starknet::get_block_info().unbox().block_timestamp;
         let launch_promotion_end_timestamp = self._launch_promotion_end_timestamp.read();
         assert(
-            current_timestamp < launch_promotion_end_timestamp, messages::LAUNCH_PROMOTION_CLOSED
+            current_timestamp <= launch_promotion_end_timestamp, messages::LAUNCH_TOURNAMENT_ENDED
         );
     }
 
@@ -3155,7 +3157,7 @@ mod Game {
 
     fn _assert_token_not_claimed(self: @ContractState, token_hash: felt252) {
         let token_hashed = self._claimed_tokens.read(token_hash);
-        assert(!token_hashed, messages::TOKEN_ALREADY_CLAIMED);
+        assert(!token_hashed, messages::TOKEN_ALREADY_REGISTERED);
     }
 
     fn _get_market(

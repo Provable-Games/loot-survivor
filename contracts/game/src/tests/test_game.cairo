@@ -88,16 +88,17 @@ mod tests {
         contract_address_const::<1>()
     }
 
+    fn ARBITRARY_ADDRESS() -> ContractAddress {
+        contract_address_const::<12345>()
+    }
+
     fn QUALIFYING_COLLECTIONS() -> Span<ContractAddress> {
         let mut qualifying_collections = ArrayTrait::<ContractAddress>::new();
-        qualifying_collections.append(contract_address_const::<1>());
+        let (_, blobert_dispatcher) = deploy_bloberts();
+        qualifying_collections.append(blobert_dispatcher.contract_address);
         qualifying_collections.append(contract_address_const::<2>());
         qualifying_collections.append(contract_address_const::<3>());
         qualifying_collections.span()
-    }
-
-    fn LAUNCH_PROMOTION_END_TIMESTAMP() -> u64 {
-        0
     }
 
     fn ZERO_ADDRESS() -> ContractAddress {
@@ -177,6 +178,25 @@ mod tests {
         )
     }
 
+    fn deploy_bloberts() -> (DualCaseERC721, IERC721Dispatcher) {
+        let token_name: ByteArray = "Bloberts";
+        let token_symbol: ByteArray = "BLOB";
+        let TOKEN_ID: u256 = 1;
+
+        let mut calldata = array![];
+        calldata.append_serde(token_name);
+        calldata.append_serde(token_symbol);
+        calldata.append_serde(BASE_URI());
+        calldata.append_serde(OWNER());
+        calldata.append_serde(TOKEN_ID);
+        set_contract_address(OWNER());
+        let target = utils::deploy(SnakeERC721Mock::TEST_CLASS_HASH, calldata);
+        (
+            DualCaseERC721 { contract_address: target },
+            IERC721Dispatcher { contract_address: target }
+        )
+    }
+
     fn deploy_randomness() -> IMockRandomnessDispatcher {
         let mut calldata = ArrayTrait::<felt252>::new();
         calldata.append(123);
@@ -189,7 +209,9 @@ mod tests {
         eth: ContractAddress,
         golden_token: ContractAddress,
         terminal_timestamp: u64,
-        randomness: ContractAddress
+        randomness: ContractAddress,
+        qualifying_collections: Span<ContractAddress>,
+        launch_promotion_end_timestamp: u64
     ) -> IGameDispatcher {
         let mut calldata = ArrayTrait::<felt252>::new();
         calldata.append(lords.into());
@@ -202,27 +224,25 @@ mod tests {
         calldata.append(randomness.into());
         calldata.append(ORACLE_ADDRESS().into());
         calldata.append(RENDER_CONTRACT().into());
-        calldata.append(0);
-        // TODO: add qualifying collections at deployment so we can properly
-        // test
-        // let mut qualifying_collections = QUALIFYING_COLLECTIONS();
-        // loop {
-        //     match qualifying_collections.pop_front() {
-        //         Option::Some(collection) => { 
-        //             let collection = *collection; 
-        //             calldata.append(collection.into()); 
-        //         },
-        //         Option::None(_) => { break; }
-        //     };
-        // };
+        calldata.append(qualifying_collections.len().into());
+        let mut collection_count = 0;
 
-        calldata.append(LAUNCH_PROMOTION_END_TIMESTAMP().into());
+        loop {
+            if collection_count == qualifying_collections.len() {
+                break;
+            }
+            let collection = *qualifying_collections.at(collection_count);
+            calldata.append(collection.into());
+            collection_count += 1;
+        };
+
+        calldata.append(launch_promotion_end_timestamp.into());
         IGameDispatcher { contract_address: utils::deploy(Game::TEST_CLASS_HASH, calldata) }
     }
 
     fn setup(
-        starting_block: u64, starting_timestamp: u64, terminal_block: u64
-    ) -> (IGameDispatcher, IERC20Dispatcher, IERC20Dispatcher, IERC721Dispatcher, ContractAddress) {
+        starting_block: u64, starting_timestamp: u64, terminal_block: u64, launch_promotion_end_timestamp: u64
+    ) -> (IGameDispatcher, IERC20Dispatcher, IERC20Dispatcher, IERC721Dispatcher, ContractAddress, IERC721Dispatcher ) {
         testing::set_block_number(starting_block);
         testing::set_block_timestamp(starting_timestamp);
         testing::set_contract_address(OWNER());
@@ -236,6 +256,11 @@ mod tests {
         // deploy golden token
         let (_, golden_token) = setup_golden_token();
 
+        // deploy bloberts
+        let (_, bloberts) = deploy_bloberts();
+        let mut qualifying_collections = ArrayTrait::<ContractAddress>::new();
+        qualifying_collections.append(bloberts.contract_address);
+
         // randomness
         let randomness = deploy_randomness();
 
@@ -245,7 +270,9 @@ mod tests {
             eth.contract_address,
             golden_token.contract_address,
             terminal_block,
-            randomness.contract_address
+            randomness.contract_address,
+            qualifying_collections.span(),
+            launch_promotion_end_timestamp
         );
 
         // transfer lords to caller address and approve 
@@ -260,7 +287,7 @@ mod tests {
         testing::set_contract_address(OWNER());
         lords.approve(game.contract_address, APPROVE.into());
 
-        (game, lords, eth, golden_token, OWNER())
+        (game, lords, eth, golden_token, OWNER(), bloberts)
     }
 
     fn add_adventurer_to_game(
@@ -302,7 +329,7 @@ mod tests {
 
     fn new_adventurer(starting_block: u64, starting_time: u64) -> IGameDispatcher {
         let terminal_block = 0;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_time, terminal_block);
+        let (mut game, _, _, _, _, _) = setup(starting_block, starting_time, terminal_block, 0);
         let starting_weapon = ItemId::Wand;
         let name = 'abcdefghijklmno';
 
@@ -625,8 +652,8 @@ mod tests {
     fn new_adventurer_with_lords(starting_block: u64) -> (IGameDispatcher, IERC20Dispatcher) {
         let starting_timestamp = 1;
         let terminal_timestamp = 0;
-        let (mut game, lords, _, _, _) = setup(
-            starting_block, starting_timestamp, terminal_timestamp
+        let (mut game, lords, _, _, _, _) = setup(
+            starting_block, starting_timestamp, terminal_timestamp, 0
         );
         let starting_weapon = ItemId::Wand;
         let name = 'abcdefghijklmno';
@@ -1643,7 +1670,7 @@ mod tests {
         let starting_block = 1;
         let starting_timestamp = 1;
         let terminal_timestamp = 100;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
+        let (mut game, _, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp, 0    );
 
         // add a player to the game
         add_adventurer_to_game(ref game, 0, ItemId::Wand);
@@ -1662,7 +1689,7 @@ mod tests {
         let starting_block = 1;
         let starting_timestamp = 1;
         let terminal_timestamp = 0;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
+        let (mut game, _, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp, 0);
 
         // add a player to the game
         add_adventurer_to_game(ref game, 0, ItemId::Wand);
@@ -1681,7 +1708,7 @@ mod tests {
         let starting_block = 364063;
         let starting_timestamp = 1698678554;
         let terminal_timestamp = 0;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
+        let (mut game, _, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp, 0);
         add_adventurer_to_game(ref game, 1, ItemId::Wand);
         testing::set_block_timestamp(starting_timestamp + DAY);
         add_adventurer_to_game(ref game, 1, ItemId::Wand);
@@ -1695,7 +1722,7 @@ mod tests {
     //     let starting_block = 364063;
     //     let starting_timestamp = 1698678554;
     //     let terminal_timestamp = 0;
-    //     let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
+    //     let (mut game, _, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp, 0);
     //     assert(game.can_play(1), 'should be able to play');
     //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
     //     assert(!game.can_play(1), 'should not be able to play');
@@ -1714,7 +1741,7 @@ mod tests {
     //     let starting_block = 364063;
     //     let starting_timestamp = 1698678554;
     //     let terminal_timestamp = 0;
-    //     let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
+    //     let (mut game, _, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp, 0);
     //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
     // }
 
@@ -1727,7 +1754,7 @@ mod tests {
     //     let starting_block = 364063;
     //     let starting_timestamp = 1698678554;
     //     let terminal_timestamp = 0;
-    //     let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
+    //     let (mut game, _, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp, 0);
     //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
 
     //     // roll blockchain forward 1 second less than a day
@@ -1761,7 +1788,7 @@ mod tests {
     fn test_different_starter_beasts() {
         let starting_block = 364063;
         let starting_timestamp = 1698678554;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, 0);
+        let (mut game, _, _, _, _, _) = setup(starting_block, starting_timestamp, 0, 0);
         let mut game_count = game.get_game_count();
         assert(game_count == 0, 'game count should be 0');
 
@@ -2058,7 +2085,7 @@ mod tests {
         // Setup
         let starting_block = 1000;
         let starting_time = 1696201757;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_time, 0);
+        let (mut game, _, _, _, _, _) = setup(starting_block, starting_time, 0, 0);
 
         // Create a new adventurer
         let adventurer_id = 1;
@@ -2096,7 +2123,7 @@ mod tests {
         // Setup
         let starting_block = 1000;
         let starting_time = 1696201757;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_time, 0);
+        let (mut game, _, _, _, _, _) = setup(starting_block, starting_time, 0, 0);
 
         // Create a new adventurer
         let adventurer_id = 1;
@@ -2135,7 +2162,7 @@ mod tests {
         // Setup
         let starting_block = 1000;
         let starting_time = 1696201757;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_time, 0);
+        let (mut game, _, _, _, _, _) = setup(starting_block, starting_time, 0, 0);
 
         // Create a new adventurer
         let adventurer_id = 1;
@@ -2175,7 +2202,7 @@ mod tests {
         // Setup
         let starting_block = 1000;
         let starting_time = 1696201757;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_time, 0);
+        let (mut game, _, _, _, _, _) = setup(starting_block, starting_time, 0, 0);
 
         // Create a new adventurer
         let adventurer_id = 1;
@@ -2195,7 +2222,7 @@ mod tests {
         // Setup
         let starting_block = 1000;
         let starting_time = 1696201757;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_time, 0);
+        let (mut game, _, _, _, _, _) = setup(starting_block, starting_time, 0, 0);
 
         // Create a new adventurer
         let adventurer_id = 1;
@@ -2230,7 +2257,7 @@ mod tests {
         };
         let starting_block = 1000;
         let mut current_block_time = 1696201757;
-        let (mut game, _, _, _, _) = setup(starting_block, current_block_time, 0);
+        let (mut game, _, _, _, _, _) = setup(starting_block, current_block_time, 0, 0);
 
         // Create a new adventurer
         current_block_time += 777;
@@ -2361,5 +2388,92 @@ mod tests {
         assert(leaderboard.first.adventurer_id.into() == player3, 'P3 should be 1st on LB');
         assert(leaderboard.second.adventurer_id.into() == player4, 'P4 should be 2nd on LB');
         assert(leaderboard.third.adventurer_id.into() == player2, 'P2 should be 3rd on LB');
+    }
+
+    #[test]
+    #[should_panic(expected: ('launch tournament has ended', 'ENTRYPOINT_FAILED'))]
+    fn test_genesis_tournament_ended() {
+        let starting_block = 1000;
+        let mut current_block_time = 1696201757;
+
+        // use one week for launch tournament
+        let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
+        let (mut game, _, _, _, _, _) = setup(starting_block, current_block_time, 0, genesis_tournament_end);
+
+        // set block timestamp to one second after the launch tournament end
+        testing::set_block_timestamp(genesis_tournament_end + 1);
+        // try to enter launch tournament should panic
+        game.enter_genesis_tournament(12, 123, ZERO_ADDRESS(), false, ZERO_ADDRESS(), 0);
+    }
+
+    #[test]
+    #[should_panic(expected: ('nft collection not eligible', 'ENTRYPOINT_FAILED'))]
+    fn test_genesis_tournament_nonqualifying_collection() {
+        let starting_block = 1000;
+        let mut current_block_time = 1696201757;
+
+        // use one week for launch tournament
+        let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
+        let (mut game, _, _, _, _, _) = setup(starting_block, current_block_time, 0, genesis_tournament_end);
+
+        // try to enter launch tournament should panic
+        game.enter_genesis_tournament(12, 123, ZERO_ADDRESS(), false, ZERO_ADDRESS(), 0);
+    }
+
+    #[test]
+    #[should_panic(expected: ('not token owner', 'ENTRYPOINT_FAILED'))]
+    fn test_genesis_tournament_not_token_owner() {
+        let starting_block = 1000;
+        let mut current_block_time = 1696201757;
+
+        // use one week for launch tournament
+        let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
+        let (mut game, _, _, _, _, blobert_dispatcher) = setup(starting_block, current_block_time, 0, genesis_tournament_end);
+
+        // set caller to a different address than the token owner
+        testing::set_contract_address(ARBITRARY_ADDRESS());
+
+        // try to enter tournament with a wallet that doesn't own the qualifying token
+        game.enter_genesis_tournament(12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1);
+    }
+
+    #[test]
+    #[should_panic(expected: ('token already registered', 'ENTRYPOINT_FAILED'))]
+    fn test_genesis_tournament_token_already_registered() {
+        let starting_block = 1000;
+        let mut current_block_time = 1696201757;
+
+        // use one week for launch tournament
+        let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
+        let (mut game, _, _, _, _, blobert_dispatcher) = setup(starting_block, current_block_time, 0, genesis_tournament_end);
+
+        // Enter genesis tournament using token id 1
+        game.enter_genesis_tournament(12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1);
+
+        // try to enter tournament with the same token id again
+        // should panic
+        game.enter_genesis_tournament(12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1);
+    }
+
+    #[test]
+    fn test_genesis_tournament_success() {
+        let starting_block = 1000;
+        let mut current_block_time = 1696201757;
+
+        // use one week for launch tournament
+        let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
+        let (mut game, _, _, _, _, blobert_dispatcher) = setup(starting_block, current_block_time, 0, genesis_tournament_end);
+
+        // Enter genesis tournament using token id 1
+        let adventurer_id = game.enter_genesis_tournament(12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1);
+
+        // get adventurer id details and assert they are correct
+        let adventurer_meta = game.get_adventurer_meta(adventurer_id);
+        let adventurer_name = game.get_adventurer_name(adventurer_id);
+        let adventurer = game.get_adventurer(adventurer_id);
+        assert(adventurer_name == 123, 'Name not set correctly');
+        assert(adventurer_meta.birth_date == current_block_time, 'birthdate not set correctly');
+        assert(adventurer.equipment.weapon.id == 12, 'Weapon not set correctly');
+        assert(adventurer.health == 90, 'Health not set correctly');
     }
 }

@@ -51,8 +51,7 @@ trait IGame<TContractState> {
         ref self: TContractState, adventurer_id: felt252, obituary: ByteArray
     );
     fn slay_expired_adventurers(ref self: TContractState, adventurer_ids: Array<felt252>);
-
-    fn claim_free_game(
+    fn enter_genesis_tournament(
         ref self: TContractState,
         weapon: u8,
         name: felt252,
@@ -60,7 +59,7 @@ trait IGame<TContractState> {
         delay_stat_reveal: bool,
         nft_address: ContractAddress,
         token_id: u256
-    );
+    ) -> felt252;
     // ------ View Functions ------
 
     // adventurer details
