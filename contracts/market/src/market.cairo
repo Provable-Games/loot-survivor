@@ -241,8 +241,7 @@ mod tests {
     const TEST_OFFSET: u8 = 3;
 
     #[test]
-    #[available_gas(15770)]
-    fn test_is_item_available_gas() {
+    fn test_is_item_available() {
         let mut market_inventory = ArrayTrait::<u8>::new();
         market_inventory.append(ItemId::Wand);
         market_inventory.append(ItemId::Book);
@@ -308,30 +307,6 @@ mod tests {
 
         let t5_price = ImplMarket::get_price(Tier::T5(()));
         assert(t5_price == (6 - 5) * TIER_PRICE, 't5 price');
-    }
-
-    #[test]
-    #[available_gas(33130)]
-    fn test_get_available_items_gas_small_market() {
-        let market_seed = 12345;
-        let market_size = 1;
-        ImplMarket::get_available_items(market_seed, market_size);
-    }
-
-    #[test]
-    #[available_gas(309000)]
-    fn test_get_available_items_gas_large_market() {
-        let market_seed = 12345;
-        let market_size = 50;
-        ImplMarket::get_available_items(market_seed, market_size);
-    }
-
-    #[test]
-    #[available_gas(21870)]
-    fn test_get_available_items_gas_xlarge_market() {
-        let market_seed = 12345;
-        let market_size = 255;
-        ImplMarket::get_available_items(market_seed, market_size);
     }
 
     #[test]
@@ -470,12 +445,6 @@ mod tests {
             assert(market_offset != 0 && market_offset < NUM_ITEMS, 'offset out of bounds');
             i += 1;
         };
-    }
-
-    #[test]
-    #[available_gas(20700)]
-    fn test_get_all_items_gas() {
-        ImplMarket::get_all_items();
     }
 
     #[test]

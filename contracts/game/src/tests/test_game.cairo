@@ -10,6 +10,7 @@ mod tests {
     use traits::TryInto;
     use box::BoxTrait;
     use market::market::{ImplMarket, LootWithPrice, ItemPurchase};
+    use snforge_std::{declare, ContractClassTrait, start_cheat_block_timestamp_global, start_cheat_block_number_global, start_cheat_caller_address_global};
     use loot::{loot::{Loot, ImplLoot, ILoot}, constants::{ItemId}};
     use game::{
         Game,
@@ -56,7 +57,6 @@ mod tests {
     };
 
     use starknet::testing::set_caller_address;
-    use starknet::testing::set_contract_address;
 
     const ADVENTURER_ID: felt252 = 1;
     const MAX_LORDS: u256 = 10000000000000000000000000000000000000000;
@@ -141,8 +141,12 @@ mod tests {
         calldata.append_serde(lords_symbol);
         calldata.append_serde(lords_supply);
         calldata.append_serde(OWNER());
-        let target = utils::deploy(SnakeERC20Mock::TEST_CLASS_HASH, calldata);
-        (DualCaseERC20 { contract_address: target }, IERC20Dispatcher { contract_address: target })
+        // First declare and deploy a contract
+        let contract = declare("ERC20Component").unwrap();
+        // Alternatively we could use `deploy_syscall` here
+        let (contract_address, _) = contract.deploy(@calldata).unwrap();
+
+        (DualCaseERC20 { contract_address: contract_address }, IERC20Dispatcher { contract_address: contract_address })
     }
 
     fn setup_eth() -> (DualCaseERC20, IERC20Dispatcher) {
@@ -155,8 +159,12 @@ mod tests {
         calldata.append_serde(eth_symbol);
         calldata.append_serde(eth_supply);
         calldata.append_serde(OWNER());
-        let target = utils::deploy(SnakeERC20Mock::TEST_CLASS_HASH, calldata);
-        (DualCaseERC20 { contract_address: target }, IERC20Dispatcher { contract_address: target })
+        let contract = declare("ERC20Component").unwrap();
+        let (contract_address, _) = contract.deploy(@calldata).unwrap();
+        (
+            DualCaseERC20 { contract_address: contract_address },
+            IERC20Dispatcher { contract_address: contract_address }
+        )
     }
 
     fn setup_golden_token() -> (DualCaseERC721, IERC721Dispatcher) {
@@ -170,11 +178,13 @@ mod tests {
         calldata.append_serde(BASE_URI());
         calldata.append_serde(OWNER());
         calldata.append_serde(TOKEN_ID);
-        set_contract_address(OWNER());
-        let target = utils::deploy(SnakeERC721Mock::TEST_CLASS_HASH, calldata);
+        start_cheat_caller_address_global(OWNER());
+
+        let contract = declare("SnakeERC721Mock").unwrap();
+        let (contract_address, _) = contract.deploy(@calldata).unwrap();
         (
-            DualCaseERC721 { contract_address: target },
-            IERC721Dispatcher { contract_address: target }
+            DualCaseERC721 { contract_address: contract_address },
+            IERC721Dispatcher { contract_address: contract_address }
         )
     }
 
@@ -189,18 +199,20 @@ mod tests {
         calldata.append_serde(BASE_URI());
         calldata.append_serde(OWNER());
         calldata.append_serde(TOKEN_ID);
-        set_contract_address(OWNER());
-        let target = utils::deploy(SnakeERC721Mock::TEST_CLASS_HASH, calldata);
+        start_cheat_caller_address_global(OWNER());
+        let contract = declare("SnakeERC721Mock").unwrap();
+        let (contract_address, _) = contract.deploy(@calldata).unwrap();
         (
-            DualCaseERC721 { contract_address: target },
-            IERC721Dispatcher { contract_address: target }
+            DualCaseERC721 { contract_address: contract_address },
+            IERC721Dispatcher { contract_address: contract_address }
         )
     }
 
     fn deploy_randomness() -> IMockRandomnessDispatcher {
         let mut calldata = ArrayTrait::<felt252>::new();
         calldata.append(123);
-        let contract_address = utils::deploy(MockRandomness::TEST_CLASS_HASH, calldata);
+        let contract = declare("MockRandomness").unwrap();
+        let (contract_address, _) = contract.deploy(@calldata).unwrap();
         IMockRandomnessDispatcher { contract_address }
     }
 
@@ -237,15 +249,27 @@ mod tests {
         };
 
         calldata.append(launch_promotion_end_timestamp.into());
-        IGameDispatcher { contract_address: utils::deploy(Game::TEST_CLASS_HASH, calldata) }
+        let contract = declare("Game").unwrap();
+        let (contract_address, _) = contract.deploy(@calldata).unwrap();
+        IGameDispatcher { contract_address }
     }
 
     fn setup(
-        starting_block: u64, starting_timestamp: u64, terminal_block: u64, launch_promotion_end_timestamp: u64
-    ) -> (IGameDispatcher, IERC20Dispatcher, IERC20Dispatcher, IERC721Dispatcher, ContractAddress, IERC721Dispatcher ) {
-        testing::set_block_number(starting_block);
-        testing::set_block_timestamp(starting_timestamp);
-        testing::set_contract_address(OWNER());
+        starting_block: u64,
+        starting_timestamp: u64,
+        terminal_block: u64,
+        launch_promotion_end_timestamp: u64
+    ) -> (
+        IGameDispatcher,
+        IERC20Dispatcher,
+        IERC20Dispatcher,
+        IERC721Dispatcher,
+        ContractAddress,
+        IERC721Dispatcher
+    ) {
+        start_cheat_block_number_global(starting_block);
+        start_cheat_block_timestamp_global(starting_timestamp);
+        start_cheat_caller_address_global(OWNER());
 
         // deploy lords, eth, and golden token
         let (_, lords) = setup_lords();
@@ -284,7 +308,7 @@ mod tests {
 
         lords.transfer(OWNER(), 1000000000000000000000000);
 
-        testing::set_contract_address(OWNER());
+        start_cheat_caller_address_global(OWNER());
         lords.approve(game.contract_address, APPROVE.into());
 
         (game, lords, eth, golden_token, OWNER(), bloberts)
@@ -719,7 +743,7 @@ mod tests {
     fn test_attack() {
         let mut game = new_adventurer(1000, 1696201757);
 
-        testing::set_block_number(1002);
+        start_cheat_block_number_global(1002);
 
         let adventurer_start = game.get_adventurer(ADVENTURER_ID);
 
@@ -1628,7 +1652,7 @@ mod tests {
     //     assert(lords.balance_of(DAO()) == COST_TO_PLAY.into(), 'wrong stage 1 balance');
 
     //     // stage 1
-    //     testing::set_block_number(1001 + BLOCKS_IN_A_WEEK * 2);
+    //     start_cheat_block_number_global(1001 + BLOCKS_IN_A_WEEK * 2);
 
     //     // spawn new
 
@@ -1659,9 +1683,10 @@ mod tests {
     // // (COST_TO_PLAY * 9 / 10).print();
     // }
 
-    #[test]
-    #[available_gas(9000000000)]
-    fn test_update_cost_to_play() {}
+    // TODO
+    // #[test]
+    // #[available_gas(9000000000)]
+    // fn test_update_cost_to_play() {}
 
     #[test]
     #[available_gas(9000000000)]
@@ -1670,12 +1695,14 @@ mod tests {
         let starting_block = 1;
         let starting_timestamp = 1;
         let terminal_timestamp = 100;
-        let (mut game, _, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp, 0    );
+        let (mut game, _, _, _, _, _) = setup(
+            starting_block, starting_timestamp, terminal_timestamp, 0
+        );
 
         // add a player to the game
         add_adventurer_to_game(ref game, 0, ItemId::Wand);
         // advance blockchain timestamp beyond terminal timestamp
-        starknet::testing::set_block_timestamp(terminal_timestamp + 1);
+        start_cheat_block_timestamp_global(terminal_timestamp + 1);
 
         // try to start a new game
         // should panic with 'terminal time reached'
@@ -1689,14 +1716,16 @@ mod tests {
         let starting_block = 1;
         let starting_timestamp = 1;
         let terminal_timestamp = 0;
-        let (mut game, _, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp, 0);
+        let (mut game, _, _, _, _, _) = setup(
+            starting_block, starting_timestamp, terminal_timestamp, 0
+        );
 
         // add a player to the game
         add_adventurer_to_game(ref game, 0, ItemId::Wand);
 
         // advance blockchain timestamp to max u64
         let max_u64_timestamp = 18446744073709551615;
-        starknet::testing::set_block_timestamp(max_u64_timestamp);
+        start_cheat_block_timestamp_global(max_u64_timestamp);
 
         // verify we can still start a new game
         add_adventurer_to_game(ref game, 0, ItemId::Wand);
@@ -1708,9 +1737,11 @@ mod tests {
         let starting_block = 364063;
         let starting_timestamp = 1698678554;
         let terminal_timestamp = 0;
-        let (mut game, _, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp, 0);
+        let (mut game, _, _, _, _, _) = setup(
+            starting_block, starting_timestamp, terminal_timestamp, 0
+        );
         add_adventurer_to_game(ref game, 1, ItemId::Wand);
-        testing::set_block_timestamp(starting_timestamp + DAY);
+        start_cheat_block_timestamp_global(starting_timestamp + DAY);
         add_adventurer_to_game(ref game, 1, ItemId::Wand);
     }
 
@@ -1726,7 +1757,7 @@ mod tests {
     //     assert(game.can_play(1), 'should be able to play');
     //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
     //     assert(!game.can_play(1), 'should not be able to play');
-    //     testing::set_block_timestamp(starting_timestamp + DAY);
+    //     start_cheat_block_timestamp_global(starting_timestamp + DAY);
     //     assert(game.can_play(1), 'should be able to play again');
     // }
 
@@ -1758,7 +1789,7 @@ mod tests {
     //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
 
     //     // roll blockchain forward 1 second less than a day
-    //     testing::set_block_timestamp(starting_timestamp + (DAY - 1));
+    //     start_cheat_block_timestamp_global(starting_timestamp + (DAY - 1));
 
     //     // try to play again with golden token which should cause panic
     //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
@@ -1897,7 +1928,7 @@ mod tests {
     fn test_transfered_attack() {
         let mut game = new_adventurer(364063, 1698678554);
         transfer_ownership(game, OWNER(), OWNER_TWO());
-        testing::set_contract_address(OWNER_TWO());
+        start_cheat_caller_address_global(OWNER_TWO());
         game.attack(ADVENTURER_ID, false);
     }
 
@@ -1929,7 +1960,7 @@ mod tests {
     fn test_original_owner_explore() {
         let mut game = new_adventurer_lvl2(364063, 1698678554, 0);
         transfer_ownership(game, OWNER(), OWNER_TWO());
-        testing::set_contract_address(OWNER_TWO());
+        start_cheat_caller_address_global(OWNER_TWO());
 
         let shopping_cart = ArrayTrait::<ItemPurchase>::new();
         let stat_upgrades = Stats {
@@ -1937,7 +1968,7 @@ mod tests {
         };
         game.upgrade(ADVENTURER_ID, 0, stat_upgrades, shopping_cart.clone());
 
-        testing::set_contract_address(OWNER());
+        start_cheat_caller_address_global(OWNER());
 
         game.explore(ADVENTURER_ID, true);
     }
@@ -1947,7 +1978,7 @@ mod tests {
     fn test_original_owner_flee() {
         let mut game = new_adventurer_lvl2(364063, 1698678554, 0);
         transfer_ownership(game, OWNER(), OWNER_TWO());
-        testing::set_contract_address(OWNER_TWO());
+        start_cheat_caller_address_global(OWNER_TWO());
 
         let shopping_cart = ArrayTrait::<ItemPurchase>::new();
         let stat_upgrades = Stats {
@@ -1958,7 +1989,7 @@ mod tests {
         // go explore
         game.explore(ADVENTURER_ID, true);
 
-        testing::set_contract_address(OWNER());
+        start_cheat_caller_address_global(OWNER());
 
         game.flee(ADVENTURER_ID, true);
     }
@@ -1968,7 +1999,7 @@ mod tests {
     fn test_transfered_upgrade_explore_flee() {
         let mut game = new_adventurer_lvl2(123, 1696201757, 0);
         transfer_ownership(game, OWNER(), OWNER_TWO());
-        testing::set_contract_address(OWNER_TWO());
+        start_cheat_caller_address_global(OWNER_TWO());
 
         let shopping_cart = ArrayTrait::<ItemPurchase>::new();
         let stat_upgrades = Stats {
@@ -1990,7 +2021,7 @@ mod tests {
 
 
     #[starknet::contract]
-    mod SnakeERC20Mock {
+    mod ERC20Component {
         use openzeppelin::token::erc20::{ERC20Component, ERC20HooksEmptyImpl};
         use starknet::ContractAddress;
 
@@ -2102,7 +2133,7 @@ mod tests {
         game.upgrade(adventurer_id, 0, stat_upgrades, shopping_cart.clone());
         game.explore(adventurer_id, true);
         let death_date = starting_time + 1000;
-        testing::set_block_timestamp(death_date);
+        start_cheat_block_timestamp_global(death_date);
         game.attack(adventurer_id, true);
 
         let mut metadata = game.get_adventurer_meta(adventurer_id);
@@ -2140,7 +2171,7 @@ mod tests {
         game.upgrade(adventurer_id, 0, stat_upgrades, shopping_cart.clone());
         game.explore(adventurer_id, true);
         let death_date = starting_time + 1000;
-        testing::set_block_timestamp(death_date);
+        start_cheat_block_timestamp_global(death_date);
         game.attack(adventurer_id, true);
 
         let mut metadata = game.get_adventurer_meta(adventurer_id);
@@ -2179,14 +2210,14 @@ mod tests {
         game.upgrade(adventurer_id, 0, stat_upgrades, shopping_cart.clone());
         game.explore(adventurer_id, true);
         let death_date = starting_time + 1000;
-        testing::set_block_timestamp(death_date);
+        start_cheat_block_timestamp_global(death_date);
         game.attack(adventurer_id, true);
 
         let mut metadata = game.get_adventurer_meta(adventurer_id);
         assert(metadata.death_date == death_date, 'Death date not set correctly');
 
         // increase the blockchain to 1s past the obituary window
-        testing::set_block_timestamp(
+        start_cheat_block_timestamp_global(
             death_date + (Game::OBITUARY_EXPIRY_DAYS.into() * Game::SECONDS_IN_DAY.into()) + 1
         );
 
@@ -2239,7 +2270,7 @@ mod tests {
         game.upgrade(adventurer_id, 0, stat_upgrades, shopping_cart.clone());
         game.explore(adventurer_id, true);
         let death_date = starting_time + 1000;
-        testing::set_block_timestamp(death_date);
+        start_cheat_block_timestamp_global(death_date);
         game.attack(adventurer_id, true);
 
         // check adventurer metadata to ensure birth date and death date are correct
@@ -2262,14 +2293,14 @@ mod tests {
         // Create a new adventurer
         current_block_time += 777;
         let player1_birth_date = current_block_time;
-        testing::set_block_timestamp(current_block_time);
+        start_cheat_block_timestamp_global(current_block_time);
         let player1 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
         game.attack(player1, false);
         game.upgrade(player1, 0, stat_upgrades, shopping_cart.clone());
         game.explore(player1, true);
         current_block_time += 1000;
         let player1_death_date = current_block_time;
-        testing::set_block_timestamp(current_block_time);
+        start_cheat_block_timestamp_global(current_block_time);
         game.attack(player1, true);
 
         // assert adventurer metadata and leaderboard
@@ -2283,14 +2314,14 @@ mod tests {
         // introduce second player (new top score)
         current_block_time += 777;
         let player2_birth_date = current_block_time;
-        testing::set_block_timestamp(current_block_time);
+        start_cheat_block_timestamp_global(current_block_time);
         let player2 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
         game.attack(player2, false);
         game.upgrade(player2, 1, stat_upgrades, shopping_cart.clone());
         game.explore(player2, true);
         current_block_time += 777;
         let player2_death_date = current_block_time;
-        testing::set_block_timestamp(current_block_time);
+        start_cheat_block_timestamp_global(current_block_time);
         game.upgrade(player2, 1, stat_upgrades, shopping_cart.clone());
         game.explore(player2, true);
         game.attack(player2, true);
@@ -2309,7 +2340,7 @@ mod tests {
         // introduce third player (new top score)
         current_block_time += 777;
         let player3_birth_date = current_block_time;
-        testing::set_block_timestamp(current_block_time);
+        start_cheat_block_timestamp_global(current_block_time);
         let player3 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
         game.attack(player3, false);
         let stat_upgrades = Stats {
@@ -2329,7 +2360,7 @@ mod tests {
         game.explore(player3, true);
         current_block_time += 777;
         let player3_death_date = current_block_time;
-        testing::set_block_timestamp(current_block_time);
+        start_cheat_block_timestamp_global(current_block_time);
         game.attack(player3, true);
 
         // assert adventurer metadata and leaderboard
@@ -2353,7 +2384,7 @@ mod tests {
         // introduce fourth player (2nd place finish)
         current_block_time += 777;
         let player4_birth_date = current_block_time;
-        testing::set_block_timestamp(current_block_time);
+        start_cheat_block_timestamp_global(current_block_time);
         let player4 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
         game.attack(player4, false);
         game.upgrade(player4, 0, stat_upgrades, shopping_cart.clone());
@@ -2366,7 +2397,7 @@ mod tests {
         game.explore(player4, true);
         current_block_time += 777;
         let player4_death_date = current_block_time;
-        testing::set_block_timestamp(current_block_time);
+        start_cheat_block_timestamp_global(current_block_time);
         game.attack(player4, true);
 
         // assert adventurer metadata and leaderboard
@@ -2398,10 +2429,12 @@ mod tests {
 
         // use one week for launch tournament
         let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
-        let (mut game, _, _, _, _, _) = setup(starting_block, current_block_time, 0, genesis_tournament_end);
+        let (mut game, _, _, _, _, _) = setup(
+            starting_block, current_block_time, 0, genesis_tournament_end
+        );
 
         // set block timestamp to one second after the launch tournament end
-        testing::set_block_timestamp(genesis_tournament_end + 1);
+        start_cheat_block_timestamp_global(genesis_tournament_end + 1);
         // try to enter launch tournament should panic
         game.enter_genesis_tournament(12, 123, ZERO_ADDRESS(), false, ZERO_ADDRESS(), 0);
     }
@@ -2414,7 +2447,9 @@ mod tests {
 
         // use one week for launch tournament
         let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
-        let (mut game, _, _, _, _, _) = setup(starting_block, current_block_time, 0, genesis_tournament_end);
+        let (mut game, _, _, _, _, _) = setup(
+            starting_block, current_block_time, 0, genesis_tournament_end
+        );
 
         // try to enter launch tournament should panic
         game.enter_genesis_tournament(12, 123, ZERO_ADDRESS(), false, ZERO_ADDRESS(), 0);
@@ -2428,13 +2463,18 @@ mod tests {
 
         // use one week for launch tournament
         let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
-        let (mut game, _, _, _, _, blobert_dispatcher) = setup(starting_block, current_block_time, 0, genesis_tournament_end);
+        let (mut game, _, _, _, _, blobert_dispatcher) = setup(
+            starting_block, current_block_time, 0, genesis_tournament_end
+        );
 
         // set caller to a different address than the token owner
-        testing::set_contract_address(ARBITRARY_ADDRESS());
+        start_cheat_caller_address_global(ARBITRARY_ADDRESS());
 
         // try to enter tournament with a wallet that doesn't own the qualifying token
-        game.enter_genesis_tournament(12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1);
+        game
+            .enter_genesis_tournament(
+                12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1
+            );
     }
 
     #[test]
@@ -2445,14 +2485,22 @@ mod tests {
 
         // use one week for launch tournament
         let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
-        let (mut game, _, _, _, _, blobert_dispatcher) = setup(starting_block, current_block_time, 0, genesis_tournament_end);
+        let (mut game, _, _, _, _, blobert_dispatcher) = setup(
+            starting_block, current_block_time, 0, genesis_tournament_end
+        );
 
         // Enter genesis tournament using token id 1
-        game.enter_genesis_tournament(12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1);
+        game
+            .enter_genesis_tournament(
+                12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1
+            );
 
         // try to enter tournament with the same token id again
         // should panic
-        game.enter_genesis_tournament(12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1);
+        game
+            .enter_genesis_tournament(
+                12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1
+            );
     }
 
     #[test]
@@ -2462,10 +2510,15 @@ mod tests {
 
         // use one week for launch tournament
         let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
-        let (mut game, _, _, _, _, blobert_dispatcher) = setup(starting_block, current_block_time, 0, genesis_tournament_end);
+        let (mut game, _, _, _, _, blobert_dispatcher) = setup(
+            starting_block, current_block_time, 0, genesis_tournament_end
+        );
 
         // Enter genesis tournament using token id 1
-        let adventurer_id = game.enter_genesis_tournament(12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1);
+        let adventurer_id = game
+            .enter_genesis_tournament(
+                12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1
+            );
 
         // get adventurer id details and assert they are correct
         let adventurer_meta = game.get_adventurer_meta(adventurer_id);

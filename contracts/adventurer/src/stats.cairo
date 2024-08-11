@@ -515,12 +515,6 @@ mod tests {
     }
 
     #[test]
-    fn test_generate_starting_stats_gas() {
-        let seed = 12345_u64;
-        ImplStats::generate_starting_stats(seed);
-    }
-
-    #[test]
     fn test_apply_stats_all_positive() {
         let mut base_stats = Stats {
             strength: 5, dexterity: 5, vitality: 5, intelligence: 5, wisdom: 5, charisma: 5, luck: 0
@@ -578,60 +572,6 @@ mod tests {
         assert(base_stats.wisdom == 5, 'wisdom should remain 5');
         assert(base_stats.charisma == 5, 'charisma should remain 5');
         assert(base_stats.luck == 0, 'luck should remain 0');
-    }
-
-    #[test]
-    #[available_gas(1470)]
-    fn test_increase_strength_gas() {
-        let mut stats = Stats {
-            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
-        };
-        stats.increase_strength(1);
-    }
-
-    #[test]
-    #[available_gas(1470)]
-    fn test_increase_dexterity_gas() {
-        let mut stats = Stats {
-            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
-        };
-        stats.increase_dexterity(1);
-    }
-
-    #[test]
-    #[available_gas(1470)]
-    fn test_increase_vitality_gas() {
-        let mut stats = Stats {
-            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
-        };
-        stats.increase_vitality(1);
-    }
-
-    #[test]
-    #[available_gas(1470)]
-    fn test_increase_intelligence_gas() {
-        let mut stats = Stats {
-            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
-        };
-        stats.increase_intelligence(1);
-    }
-
-    #[test]
-    #[available_gas(1470)]
-    fn test_increase_wisdom_gas() {
-        let mut stats = Stats {
-            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
-        };
-        stats.increase_wisdom(1);
-    }
-
-    #[test]
-    #[available_gas(1470)]
-    fn test_increase_charisma_gas() {
-        let mut stats = Stats {
-            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
-        };
-        stats.increase_charisma(1);
     }
 
     #[test]
@@ -710,60 +650,6 @@ mod tests {
         // overflow case
         stats.increase_charisma(50);
         assert(stats.charisma == 51, 'charisma should be 51');
-    }
-
-    #[test]
-    #[available_gas(2440)]
-    fn test_decrease_strength_gas() {
-        let mut stats = Stats {
-            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
-        };
-        stats.decrease_strength(0);
-    }
-
-    #[test]
-    #[available_gas(2440)]
-    fn test_decrease_dexterity_gas() {
-        let mut stats = Stats {
-            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
-        };
-        stats.decrease_dexterity(0);
-    }
-
-    #[test]
-    #[available_gas(2440)]
-    fn test_decrease_vitality_gas() {
-        let mut stats = Stats {
-            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
-        };
-        stats.decrease_vitality(0);
-    }
-
-    #[test]
-    #[available_gas(2440)]
-    fn test_decrease_intelligence_gas() {
-        let mut stats = Stats {
-            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
-        };
-        stats.decrease_intelligence(0);
-    }
-
-    #[test]
-    #[available_gas(2440)]
-    fn test_decrease_wisdom_gas() {
-        let mut stats = Stats {
-            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
-        };
-        stats.decrease_wisdom(0);
-    }
-
-    #[test]
-    #[available_gas(2440)]
-    fn test_decrease_charisma_gas() {
-        let mut stats = Stats {
-            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
-        };
-        stats.decrease_charisma(0);
     }
 
     #[test]

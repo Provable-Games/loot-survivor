@@ -490,6 +490,8 @@ mod tests {
         equipment::{Equipment, EquipmentPacking}, bag::{Bag, IBag, ImplBag}, item::{ImplItem, Item},
     };
     use beasts::{constants::BeastSettings};
+    use snforge_std::{start_cheat_block_timestamp_global};
+
 
 
     #[test]
@@ -542,7 +544,7 @@ mod tests {
 
         let adventurer_metadata = ImplAdventurerMetadata::new(birth_date, delay_stat_reveal);
 
-        starknet::testing::set_block_timestamp(1721860860);
+        start_cheat_block_timestamp_global(1721860860);
 
         let current_1 = create_metadata(1000000, adventurer, 'thisisareallyreallyreallongname', adventurer_metadata, bag, 10, 1, 1);
 

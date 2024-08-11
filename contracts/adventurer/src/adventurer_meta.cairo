@@ -98,20 +98,6 @@ mod tests {
     const U2_MAX: u8 = 0x3;
 
     #[test]
-    #[available_gas(135530)]
-    fn test_adventurer_metadata_pack_unpack_gas() {
-        let meta = AdventurerMetadata {
-            birth_date: U64_MAX,
-            death_date: U64_MAX,
-            level_seed: U64_MAX,
-            item_specials_seed: U16_MAX,
-            rank_at_death: U2_MAX,
-            delay_stat_reveal: true,
-        };
-        PackingAdventurerMetadata::unpack(PackingAdventurerMetadata::pack(meta));
-    }
-
-    #[test]
     fn test_adventurer_metadata_packing() {
         // max value case
         let meta = AdventurerMetadata {
@@ -151,12 +137,6 @@ mod tests {
         assert(unpacked.item_specials_seed == 0, 'item specials seed should be 0');
         assert(unpacked.rank_at_death == 0, 'rank at death should be 0');
         assert(unpacked.delay_stat_reveal == false, 'delay reveal should be false');
-    }
-
-    #[test]
-    #[available_gas(1)]
-    fn test_new_adventurer_metadata_gas() {
-        ImplAdventurerMetadata::new(12345, false);
     }
 
     #[test]

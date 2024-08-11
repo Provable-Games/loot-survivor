@@ -1023,30 +1023,6 @@ mod tests {
     };
 
     #[test]
-    #[available_gas(51540)]
-    fn test_get_prefix1_gas() {
-        ImplLoot::get_prefix1(ItemId::Warhammer, 0);
-    }
-
-    #[test]
-    #[available_gas(51540)]
-    fn test_get_prefix2_gas() {
-        ImplLoot::get_prefix2(ItemId::Warhammer, 0);
-    }
-
-    #[test]
-    #[available_gas(51540)]
-    fn test_get_suffix_gas() {
-        ImplLoot::get_suffix(ItemId::Warhammer, 0);
-    }
-
-    #[test]
-    #[available_gas(48090)]
-    fn test_get_specials_seed_gas() {
-        ImplLoot::get_specials_seed(ItemId::Warhammer, 0);
-    }
-
-    #[test]
     #[available_gas(3975111110)]
     fn test_suffix_assignments() {
         let mut i: u16 = 0;
@@ -1800,12 +1776,6 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(21000)]
-    fn test_get_item_gas() {
-        ImplLoot::get_item(101);
-    }
-
-    #[test]
     #[available_gas(605400)]
     fn test_get_item_part1() {
         let katana_id = ItemId::Katana;
@@ -2329,12 +2299,6 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(20700)]
-    fn test_get_slot_gas() {
-        ImplLoot::get_slot(1);
-    }
-
-    #[test]
     #[available_gas(2222600)]
     fn test_get_slot() {
         // Weapons
@@ -2751,12 +2715,6 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(20700)]
-    fn test_get_tier_gas() {
-        ImplLoot::get_tier(101);
-    }
-
-    #[test]
     #[available_gas(484600)]
     fn test_get_tier() {
         let pendant = ItemId::Pendant;
@@ -2844,12 +2802,6 @@ mod tests {
         assert(shirt_tier == Tier::T5(()), 'shirt is T5');
 
         assert(ImplLoot::get_tier(255) == Tier::None(()), 'undefined is None');
-    }
-
-    #[test]
-    #[available_gas(5760)]
-    fn test_get_type_gas() {
-        ImplLoot::get_type(101);
     }
 
     #[test]

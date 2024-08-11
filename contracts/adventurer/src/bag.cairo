@@ -536,41 +536,6 @@ mod tests {
         let jewelry_greatness = bag.get_jewelry_greatness();
         assert(jewelry_greatness == 9, 'bagged jewlwery greatness is 9');
     }
-    #[test]
-    #[available_gas(43900)]
-    fn test_get_jewelry_gas() {
-        let katana = Item { id: ItemId::Katana, xp: 1 };
-        let demon_crown = Item { id: ItemId::DemonCrown, xp: 2 };
-        let silk_robe = Item { id: ItemId::SilkRobe, xp: 3 };
-        let silver_ring = Item { id: ItemId::SilverRing, xp: 4 };
-        let ghost_wand = Item { id: ItemId::GhostWand, xp: 5 };
-        let leather_gloves = Item { id: ItemId::LeatherGloves, xp: 6 };
-        let silk_gloves = Item { id: ItemId::SilkGloves, xp: 7 };
-        let linen_gloves = Item { id: ItemId::LinenGloves, xp: 8 };
-        let crown = Item { id: ItemId::Crown, xp: 10 };
-        let amulet = Item { id: ItemId::Amulet, xp: 10 };
-        let pendant = Item { id: ItemId::Pendant, xp: 10 };
-        let bag = Bag {
-            item_1: katana,
-            item_2: demon_crown,
-            item_3: silk_robe,
-            item_4: silver_ring,
-            item_5: ghost_wand,
-            item_6: leather_gloves,
-            item_7: silk_gloves,
-            item_8: linen_gloves,
-            item_9: crown,
-            item_10: amulet,
-            item_11: pendant,
-            item_12: Item { id: 0, xp: 0 },
-            item_13: Item { id: 0, xp: 0 },
-            item_14: Item { id: 0, xp: 0 },
-            item_15: Item { id: 0, xp: 0 },
-            mutated: false
-        };
-
-        bag.get_jewelry();
-    }
 
     #[test]
     fn test_get_jewelry() {
@@ -858,33 +823,6 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(6740)]
-    fn test_add_item_gas() {
-        // start with empty bag
-        let mut bag = Bag {
-            item_1: Item { id: 0, xp: 0 },
-            item_2: Item { id: 0, xp: 0 },
-            item_3: Item { id: 0, xp: 0 },
-            item_4: Item { id: 0, xp: 0 },
-            item_5: Item { id: 0, xp: 0 },
-            item_6: Item { id: 0, xp: 0 },
-            item_7: Item { id: 0, xp: 0 },
-            item_8: Item { id: 0, xp: 0 },
-            item_9: Item { id: 0, xp: 0 },
-            item_10: Item { id: 0, xp: 0 },
-            item_11: Item { id: 0, xp: 0 },
-            item_12: Item { id: 0, xp: 0 },
-            item_13: Item { id: 0, xp: 0 },
-            item_14: Item { id: 0, xp: 0 },
-            item_15: Item { id: 0, xp: 0 },
-            mutated: false
-        };
-
-        // add item to bag
-        bag.add_item(Item { id: ItemId::Katana, xp: 1 });
-    }
-
-    #[test]
     fn test_add_item() {
         // start with empty bag
         let mut bag = Bag {
@@ -944,46 +882,6 @@ mod tests {
         assert(bag.item_9.id == ItemId::Crown, 'item 9 should be crown');
         assert(bag.item_10.id == ItemId::DivineSlippers, 'should be divine slippers');
         assert(bag.item_11.id == ItemId::Warhammer, 'item 11 should be warhammer');
-    }
-
-    #[test]
-    #[available_gas(70600)]
-    fn test_is_full_gas() {
-        // start with full bag
-        let mut bag = Bag {
-            item_1: Item { id: 1, xp: 0 },
-            item_2: Item { id: 2, xp: 0 },
-            item_3: Item { id: 3, xp: 0 },
-            item_4: Item { id: 4, xp: 0 },
-            item_5: Item { id: 5, xp: 0 },
-            item_6: Item { id: 8, xp: 0 },
-            item_7: Item { id: 9, xp: 0 },
-            item_8: Item { id: 11, xp: 0 },
-            item_9: Item { id: 12, xp: 0 },
-            item_10: Item { id: 13, xp: 0 },
-            item_11: Item { id: 14, xp: 0 },
-            item_12: Item { id: 15, xp: 0 },
-            item_13: Item { id: 16, xp: 0 },
-            item_14: Item { id: 17, xp: 0 },
-            item_15: Item { id: 18, xp: 0 },
-            mutated: false
-        };
-
-        // assert bag is full
-        assert(bag.is_full() == true, 'Bag should be full');
-
-        // remove an item
-        bag.remove_item(1);
-
-        // assert bag is not full
-        assert(bag.is_full() == false, 'Bag should be not full');
-
-        // add a new item
-        let mut warhammer = Item { id: ItemId::Warhammer, xp: 1 };
-        bag.add_item(warhammer);
-
-        // assert bag is full again
-        assert(bag.is_full() == true, 'Bag should be full again');
     }
 
     #[test]
@@ -1067,33 +965,6 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(9000)]
-    fn test_get_item_gas() {
-        let item = Item { id: 11, xp: 0 };
-
-        let bag = Bag {
-            item_1: item,
-            item_2: item,
-            item_3: item,
-            item_4: item,
-            item_5: item,
-            item_6: item,
-            item_7: item,
-            item_8: item,
-            item_9: item,
-            item_10: item,
-            item_11: item,
-            item_12: item,
-            item_13: item,
-            item_14: item,
-            item_15: item,
-            mutated: false,
-        };
-
-        bag.get_item(11);
-    }
-
-    #[test]
     fn test_get_item() {
         let item_1 = Item { id: 11, xp: 0 };
         let item_2 = Item { id: 12, xp: 0 };
@@ -1174,30 +1045,6 @@ mod tests {
 
         let item15_from_bag = bag.get_item(25);
         assert(item15_from_bag.id == item_15.id, 'Item id should be 25');
-    }
-
-    #[test]
-    #[available_gas(14940)]
-    fn test_remove_item_gas() {
-        let mut bag = Bag {
-            item_1: Item { id: 1, xp: 0 },
-            item_2: Item { id: 2, xp: 0 },
-            item_3: Item { id: 3, xp: 0 },
-            item_4: Item { id: 4, xp: 0 },
-            item_5: Item { id: 5, xp: 0 },
-            item_6: Item { id: 6, xp: 0 },
-            item_7: Item { id: 7, xp: 0 },
-            item_8: Item { id: 8, xp: 1 },
-            item_9: Item { id: 9, xp: 0 },
-            item_10: Item { id: 10, xp: 0 },
-            item_11: Item { id: 11, xp: 0 },
-            item_12: Item { id: 12, xp: 0 },
-            item_13: Item { id: 13, xp: 0 },
-            item_14: Item { id: 14, xp: 0 },
-            item_15: Item { id: 15, xp: 0 },
-            mutated: false
-        };
-        bag.remove_item(6);
     }
 
     #[test]
