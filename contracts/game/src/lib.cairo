@@ -9,6 +9,10 @@ mod tests {
     mod test_game;
     mod mock_randomness;
     mod oz_constants;
+    mod mocks {
+        mod erc20_mocks;
+        mod erc721_mocks;
+    }
 }
 
 #[starknet::contract]

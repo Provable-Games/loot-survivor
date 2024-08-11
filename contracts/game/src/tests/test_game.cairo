@@ -10,7 +10,11 @@ mod tests {
     use traits::TryInto;
     use box::BoxTrait;
     use market::market::{ImplMarket, LootWithPrice, ItemPurchase};
-    use snforge_std::{declare, ContractClassTrait, start_cheat_block_timestamp_global, start_cheat_block_number_global, start_cheat_caller_address_global};
+    use snforge_std::{
+        declare, ContractClassTrait, start_cheat_block_timestamp_global,
+        start_cheat_block_number_global, start_cheat_caller_address_global,
+        cheatcodes::contract_class::ContractClass
+    };
     use loot::{loot::{Loot, ImplLoot, ILoot}, constants::{ItemId}};
     use game::{
         Game,
@@ -43,6 +47,8 @@ mod tests {
         OTHER, BASE_URI, TOKEN_ID
     };
 
+    use game::tests::mocks::erc20_mocks::DualCaseERC20Mock;
+    use game::tests::mocks::erc721_mocks::DualCaseERC721Mock;
     use openzeppelin::tests::utils;
     use openzeppelin::token::erc20::dual20::{DualCaseERC20, DualCaseERC20Trait};
     use openzeppelin::token::erc20::interface::{IERC20CamelDispatcher, IERC20CamelDispatcherTrait};
@@ -50,6 +56,10 @@ mod tests {
     use openzeppelin::utils::serde::SerializedAppend;
     use openzeppelin::token::erc721::dual721::{DualCaseERC721, DualCaseERC721Trait};
     use openzeppelin::token::erc721::interface::IERC721_ID;
+    use openzeppelin::token::erc20::ERC20Component::{Approval, Transfer};
+    use openzeppelin::token::erc20::ERC20Component::{ERC20CamelOnlyImpl, ERC20Impl};
+    use openzeppelin::token::erc20::ERC20Component::{ERC20MetadataImpl, InternalImpl};
+    use openzeppelin::token::erc20::ERC20Component;
 
     use openzeppelin::token::erc721::interface::{
         IERC721, IERC721Dispatcher, IERC721DispatcherTrait, IERC721LibraryDispatcher,
@@ -59,10 +69,23 @@ mod tests {
     use starknet::testing::set_caller_address;
 
     const ADVENTURER_ID: felt252 = 1;
-    const MAX_LORDS: u256 = 10000000000000000000000000000000000000000;
-    const APPROVE: u256 = 10000000000000000000000000000000000000000;
+    const APPROVE: u256 = 1000000000000000000000000000000000000000000;
     const DEFAULT_NO_GOLDEN_TOKEN: felt252 = 0;
     const DAY: u64 = 86400;
+
+    // type ComponentState = ERC20Component::ComponentState<DualCaseERC20Mock::ContractState>;
+
+    // fn COMPONENT_STATE() -> ComponentState {
+    //     ERC20Component::component_state_for_testing()
+    // }
+
+    // fn oz_erc20_setup() -> ComponentState {
+    //     let mut state = COMPONENT_STATE();
+    //     state.initializer(NAME(), SYMBOL());
+    //     state.mint(OWNER(), SUPPLY);
+    //     utils::drop_event(ZERO());
+    //     state
+    // }
 
     fn INTERFACE_ID() -> ContractAddress {
         contract_address_const::<1>()
@@ -94,8 +117,8 @@ mod tests {
 
     fn QUALIFYING_COLLECTIONS() -> Span<ContractAddress> {
         let mut qualifying_collections = ArrayTrait::<ContractAddress>::new();
-        let (_, blobert_dispatcher) = deploy_bloberts();
-        qualifying_collections.append(blobert_dispatcher.contract_address);
+        //let (_, blobert_dispatcher) = deploy_bloberts();
+        //qualifying_collections.append(blobert_dispatcher.contract_address);
         qualifying_collections.append(contract_address_const::<2>());
         qualifying_collections.append(contract_address_const::<3>());
         qualifying_collections.span()
@@ -131,7 +154,7 @@ mod tests {
         }
     }
 
-    fn setup_lords() -> (DualCaseERC20, IERC20Dispatcher) {
+    fn deploy_lords(contract: ContractClass) -> IERC20Dispatcher {
         let lords_name: ByteArray = "LORDS";
         let lords_symbol: ByteArray = "LORDS";
         let lords_supply: u256 = 10000000000000000000000000000000000000000;
@@ -141,74 +164,61 @@ mod tests {
         calldata.append_serde(lords_symbol);
         calldata.append_serde(lords_supply);
         calldata.append_serde(OWNER());
-        // First declare and deploy a contract
-        let contract = declare("ERC20Component").unwrap();
-        // Alternatively we could use `deploy_syscall` here
         let (contract_address, _) = contract.deploy(@calldata).unwrap();
 
-        (DualCaseERC20 { contract_address: contract_address }, IERC20Dispatcher { contract_address: contract_address })
+        IERC20Dispatcher { contract_address: contract_address }
     }
 
-    fn setup_eth() -> (DualCaseERC20, IERC20Dispatcher) {
-        let eth_name: ByteArray = "ETH";
-        let eth_symbol: ByteArray = "ETH";
-        let eth_supply: u256 = 10000000000000000000000000000000000000000;
+    fn deploy_eth(contract: ContractClass) -> IERC20Dispatcher {
+        let lords_name: ByteArray = "ETH";
+        let lords_symbol: ByteArray = "ETH";
+        let lords_supply: u256 = 10000000000000000000000000000000000000000;
 
         let mut calldata = array![];
-        calldata.append_serde(eth_name);
-        calldata.append_serde(eth_symbol);
-        calldata.append_serde(eth_supply);
+        calldata.append_serde(lords_name);
+        calldata.append_serde(lords_symbol);
+        calldata.append_serde(lords_supply);
         calldata.append_serde(OWNER());
-        let contract = declare("ERC20Component").unwrap();
+        
         let (contract_address, _) = contract.deploy(@calldata).unwrap();
-        (
-            DualCaseERC20 { contract_address: contract_address },
-            IERC20Dispatcher { contract_address: contract_address }
-        )
+
+        IERC20Dispatcher { contract_address: contract_address }
     }
 
-    fn setup_golden_token() -> (DualCaseERC721, IERC721Dispatcher) {
+    fn deploy_golden_token(erc721_contract_class: ContractClass) -> IERC721Dispatcher {
         let golden_token_name: ByteArray = "GOLDEN_TOKEN";
         let golden_token_symbol: ByteArray = "GLDTKN";
+        let base_uri: ByteArray = "https://golden-token.com/";
         let TOKEN_ID: u256 = 1;
 
         let mut calldata = array![];
         calldata.append_serde(golden_token_name);
         calldata.append_serde(golden_token_symbol);
-        calldata.append_serde(BASE_URI());
+        calldata.append_serde(base_uri);
         calldata.append_serde(OWNER());
         calldata.append_serde(TOKEN_ID);
         start_cheat_caller_address_global(OWNER());
-
-        let contract = declare("SnakeERC721Mock").unwrap();
-        let (contract_address, _) = contract.deploy(@calldata).unwrap();
-        (
-            DualCaseERC721 { contract_address: contract_address },
-            IERC721Dispatcher { contract_address: contract_address }
-        )
+        let (contract_address, _) = erc721_contract_class.deploy(@calldata).unwrap();
+        IERC721Dispatcher { contract_address: contract_address }
     }
 
-    fn deploy_bloberts() -> (DualCaseERC721, IERC721Dispatcher) {
+    fn deploy_bloberts(erc721_contract_class: ContractClass) -> IERC721Dispatcher {
         let token_name: ByteArray = "Bloberts";
         let token_symbol: ByteArray = "BLOB";
+        let base_uri: ByteArray = "https://bloberts.com/";
         let TOKEN_ID: u256 = 1;
-
         let mut calldata = array![];
         calldata.append_serde(token_name);
         calldata.append_serde(token_symbol);
-        calldata.append_serde(BASE_URI());
+        calldata.append_serde(base_uri);
         calldata.append_serde(OWNER());
         calldata.append_serde(TOKEN_ID);
         start_cheat_caller_address_global(OWNER());
-        let contract = declare("SnakeERC721Mock").unwrap();
-        let (contract_address, _) = contract.deploy(@calldata).unwrap();
-        (
-            DualCaseERC721 { contract_address: contract_address },
-            IERC721Dispatcher { contract_address: contract_address }
-        )
+        let (contract_address, _) = erc721_contract_class.deploy(@calldata).unwrap();
+        IERC721Dispatcher { contract_address: contract_address }
     }
 
-    fn deploy_randomness() -> IMockRandomnessDispatcher {
+    fn deploy_vrf() -> IMockRandomnessDispatcher {
         let mut calldata = ArrayTrait::<felt252>::new();
         calldata.append(123);
         let contract = declare("MockRandomness").unwrap();
@@ -271,22 +281,28 @@ mod tests {
         start_cheat_block_timestamp_global(starting_timestamp);
         start_cheat_caller_address_global(OWNER());
 
+        let erc20_contract = declare("DualCaseERC20Mock").unwrap();
+
         // deploy lords, eth, and golden token
-        let (_, lords) = setup_lords();
+        let lords = deploy_lords(erc20_contract);
 
         // deploy eth   
-        let (_, eth) = setup_eth();
+        let eth = deploy_eth(erc20_contract);
+
+        let erc721_contract = declare("DualCaseERC721Mock").unwrap();
 
         // deploy golden token
-        let (_, golden_token) = setup_golden_token();
+        let golden_token = deploy_golden_token(erc721_contract);
 
         // deploy bloberts
-        let (_, bloberts) = deploy_bloberts();
+        let bloberts = deploy_bloberts(erc721_contract);
+
+        // add bloberts to qualifying collections
         let mut qualifying_collections = ArrayTrait::<ContractAddress>::new();
         qualifying_collections.append(bloberts.contract_address);
 
-        // randomness
-        let randomness = deploy_randomness();
+        // deploy vrf/randomness
+        let randomness = deploy_vrf();
 
         // deploy game
         let game = deploy_game(
@@ -299,17 +315,24 @@ mod tests {
             launch_promotion_end_timestamp
         );
 
+        println!("here5");
+
         // transfer lords to caller address and approve 
         lords.transfer(OWNER(), 100000000000000000000000000000000);
+        println!("here6");
         eth.transfer(OWNER(), 100000000000000000000000000000000);
+        println!("here7");
 
         // give golden token contract approval to access ETH
         eth.approve(golden_token.contract_address, APPROVE.into());
+        println!("here8");
 
         lords.transfer(OWNER(), 1000000000000000000000000);
+        println!("here9");
 
-        start_cheat_caller_address_global(OWNER());
+        //start_cheat_caller_address_global(OWNER());
         lords.approve(game.contract_address, APPROVE.into());
+        println!("here10");
 
         (game, lords, eth, golden_token, OWNER(), bloberts)
     }
@@ -357,6 +380,8 @@ mod tests {
         let starting_weapon = ItemId::Wand;
         let name = 'abcdefghijklmno';
 
+        println!("here11");
+
         // start new game
         game
             .new_game(
@@ -367,6 +392,8 @@ mod tests {
                 false,
                 ZERO_ADDRESS()
             );
+
+        println!("here12");
 
         // get adventurer state
         let adventurer = game.get_adventurer(ADVENTURER_ID);
@@ -970,7 +997,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Market is closed', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Market is closed',))]
     #[available_gas(73000000)]
     fn test_buy_items_without_stat_upgrade() {
         // mint adventurer and advance to level 2
@@ -2017,98 +2044,6 @@ mod tests {
     fn test_transfered_transfer() {
         let mut game = new_adventurer(364063, 1698678554);
         transfer_ownership(game, OWNER(), OWNER_TWO());
-    }
-
-
-    #[starknet::contract]
-    mod ERC20Component {
-        use openzeppelin::token::erc20::{ERC20Component, ERC20HooksEmptyImpl};
-        use starknet::ContractAddress;
-
-        component!(path: ERC20Component, storage: erc20, event: ERC20Event);
-
-        #[abi(embed_v0)]
-        impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
-        #[abi(embed_v0)]
-        impl ERC20MetadataImpl = ERC20Component::ERC20MetadataImpl<ContractState>;
-        impl InternalImpl = ERC20Component::InternalImpl<ContractState>;
-
-        #[storage]
-        struct Storage {
-            #[substorage(v0)]
-            erc20: ERC20Component::Storage
-        }
-
-        #[event]
-        #[derive(Drop, starknet::Event)]
-        enum Event {
-            #[flat]
-            ERC20Event: ERC20Component::Event
-        }
-
-        #[constructor]
-        fn constructor(
-            ref self: ContractState,
-            name: ByteArray,
-            symbol: ByteArray,
-            initial_supply: u256,
-            recipient: ContractAddress
-        ) {
-            self.erc20.initializer(name, symbol);
-            self.erc20.mint(recipient, initial_supply);
-        }
-    }
-
-    #[starknet::contract]
-    mod SnakeERC721Mock {
-        use openzeppelin::introspection::src5::SRC5Component;
-        use openzeppelin::token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
-        use starknet::ContractAddress;
-
-        component!(path: ERC721Component, storage: erc721, event: ERC721Event);
-        component!(path: SRC5Component, storage: src5, event: SRC5Event);
-
-        // ERC721
-        #[abi(embed_v0)]
-        impl ERC721Impl = ERC721Component::ERC721Impl<ContractState>;
-        #[abi(embed_v0)]
-        impl ERC721MetadataImpl =
-            ERC721Component::ERC721MetadataImpl<ContractState>;
-        impl ERC721InternalImpl = ERC721Component::InternalImpl<ContractState>;
-
-        // SRC5
-        #[abi(embed_v0)]
-        impl SRC5Impl = SRC5Component::SRC5Impl<ContractState>;
-
-        #[storage]
-        struct Storage {
-            #[substorage(v0)]
-            erc721: ERC721Component::Storage,
-            #[substorage(v0)]
-            src5: SRC5Component::Storage
-        }
-
-        #[event]
-        #[derive(Drop, starknet::Event)]
-        enum Event {
-            #[flat]
-            ERC721Event: ERC721Component::Event,
-            #[flat]
-            SRC5Event: SRC5Component::Event
-        }
-
-        #[constructor]
-        fn constructor(
-            ref self: ContractState,
-            name: ByteArray,
-            symbol: ByteArray,
-            base_uri: ByteArray,
-            recipient: ContractAddress,
-            token_id: u256
-        ) {
-            self.erc721.initializer(name, symbol, base_uri);
-            self.erc721.mint(recipient, token_id);
-        }
     }
 
     #[test]
