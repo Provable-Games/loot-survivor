@@ -3316,9 +3316,11 @@ mod Game {
         let chain_id = get_tx_info().unbox().chain_id;
         if chain_id == MAINNET_CHAIN_ID {
             _dollar_to_wei(self, VRF_MAX_CALLBACK_MAINNET.into())
-        } else {
+        } else if chain_id == SEPOLIA_CHAIN_ID {
             // $3 for non-mainnet to prevent interference from gas price swings
             _dollar_to_wei(self, VRF_MAX_CALLBACK_TESTNET.into())
+        } else {
+            panic_with_felt252('network does not support vrf')
         }
     }
 

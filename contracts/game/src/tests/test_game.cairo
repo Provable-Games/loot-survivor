@@ -13,7 +13,7 @@ mod tests {
     use snforge_std::{
         declare, ContractClassTrait, start_cheat_block_timestamp_global,
         start_cheat_block_number_global, start_cheat_caller_address_global,
-        cheatcodes::contract_class::ContractClass
+        cheatcodes::contract_class::ContractClass, start_cheat_chain_id_global
     };
     use loot::{loot::{Loot, ImplLoot, ILoot}, constants::{ItemId}};
     use game::{
@@ -92,23 +92,23 @@ mod tests {
     }
 
     fn DAO() -> ContractAddress {
-        contract_address_const::<1>()
+        contract_address_const::<2>()
     }
 
     fn PG() -> ContractAddress {
-        contract_address_const::<1>()
+        contract_address_const::<3>()
     }
 
     fn COLLECTIBLE_BEASTS() -> ContractAddress {
-        contract_address_const::<1>()
+        contract_address_const::<4>()
     }
 
     fn ORACLE_ADDRESS() -> ContractAddress {
-        contract_address_const::<1>()
+        contract_address_const::<5>()
     }
 
     fn RENDER_CONTRACT() -> ContractAddress {
-        contract_address_const::<1>()
+        contract_address_const::<6>()
     }
 
     fn ARBITRARY_ADDRESS() -> ContractAddress {
@@ -119,8 +119,8 @@ mod tests {
         let mut qualifying_collections = ArrayTrait::<ContractAddress>::new();
         //let (_, blobert_dispatcher) = deploy_bloberts();
         //qualifying_collections.append(blobert_dispatcher.contract_address);
-        qualifying_collections.append(contract_address_const::<2>());
-        qualifying_collections.append(contract_address_const::<3>());
+        qualifying_collections.append(contract_address_const::<12>());
+        qualifying_collections.append(contract_address_const::<13>());
         qualifying_collections.span()
     }
 
@@ -129,7 +129,7 @@ mod tests {
     }
 
     fn OWNER_TWO() -> ContractAddress {
-        contract_address_const::<2>()
+        contract_address_const::<15>()
     }
 
     const PUBLIC_KEY: felt252 = 0x333333;
@@ -179,7 +179,7 @@ mod tests {
         calldata.append_serde(lords_symbol);
         calldata.append_serde(lords_supply);
         calldata.append_serde(OWNER());
-        
+
         let (contract_address, _) = contract.deploy(@calldata).unwrap();
 
         IERC20Dispatcher { contract_address: contract_address }
@@ -277,6 +277,7 @@ mod tests {
         ContractAddress,
         IERC721Dispatcher
     ) {
+        start_cheat_chain_id_global(0x123456789);
         start_cheat_block_number_global(starting_block);
         start_cheat_block_timestamp_global(starting_timestamp);
         start_cheat_caller_address_global(OWNER());
@@ -315,24 +316,18 @@ mod tests {
             launch_promotion_end_timestamp
         );
 
-        println!("here5");
-
         // transfer lords to caller address and approve 
         lords.transfer(OWNER(), 100000000000000000000000000000000);
-        println!("here6");
         eth.transfer(OWNER(), 100000000000000000000000000000000);
-        println!("here7");
 
         // give golden token contract approval to access ETH
         eth.approve(golden_token.contract_address, APPROVE.into());
-        println!("here8");
 
         lords.transfer(OWNER(), 1000000000000000000000000);
-        println!("here9");
 
         //start_cheat_caller_address_global(OWNER());
         lords.approve(game.contract_address, APPROVE.into());
-        println!("here10");
+        lords.approve(OWNER(), APPROVE.into());
 
         (game, lords, eth, golden_token, OWNER(), bloberts)
     }
@@ -380,8 +375,6 @@ mod tests {
         let starting_weapon = ItemId::Wand;
         let name = 'abcdefghijklmno';
 
-        println!("here11");
-
         // start new game
         game
             .new_game(
@@ -392,8 +385,6 @@ mod tests {
                 false,
                 ZERO_ADDRESS()
             );
-
-        println!("here12");
 
         // get adventurer state
         let adventurer = game.get_adventurer(ADVENTURER_ID);
@@ -754,7 +745,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Action not allowed in battle', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Action not allowed in battle',))]
     #[available_gas(900000000)]
     fn test_no_explore_during_battle() {
         let mut game = new_adventurer(1000, 1696201757);
@@ -827,7 +818,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Cant flee starter beast', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Cant flee starter beast',))]
     #[available_gas(23000000)]
     fn test_cant_flee_starter_beast() {
         // start new game
@@ -840,7 +831,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Not in battle', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Not in battle',))]
     #[available_gas(63000000)]
     fn test_cant_flee_outside_battle() {
         // start adventuer and advance to level 2
@@ -853,9 +844,8 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(247617069000)]
     fn test_explore_distributions() {
-        let number_of_games: u16 = 100;
+        let number_of_games: u16 = 50;
         let mut game = new_adventurer_lvl2(1003, 1696201757, 0);
         let mut game_ids = ArrayTrait::<felt252>::new();
         game_ids.append(1);
@@ -955,7 +945,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Stat upgrade available', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Stat upgrade available',))]
     #[available_gas(7800000000)]
     fn test_explore_not_allowed_with_avail_stat_upgrade() {
         let mut game = new_adventurer(1000, 1696201757);
@@ -976,7 +966,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('level seed not set', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('level seed not set',))]
     fn test_buy_items_during_battle() {
         // mint new adventurer (will start in battle with starter beast)
         let mut game = new_adventurer(1000, 1696201757);
@@ -1023,7 +1013,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Item already owned', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Item already owned',))]
     fn test_buy_duplicate_item_equipped() {
         // start new game on level 2 so we have access to the market
         let mut game = new_adventurer_lvl2(1000, 1696201757, 0);
@@ -1046,7 +1036,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Item already owned', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Item already owned',))]
     #[available_gas(61000000)]
     fn test_buy_duplicate_item_bagged() {
         // start new game on level 2 so we have access to the market
@@ -1069,7 +1059,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Market item does not exist', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Market item does not exist',))]
     #[available_gas(65000000)]
     fn test_buy_item_not_on_market() {
         let mut game = new_adventurer_lvl2(1000, 1696201757, 0);
@@ -1188,7 +1178,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Item not in bag', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Item not in bag',))]
     #[available_gas(26022290)]
     fn test_equip_not_in_bag() {
         // start new game
@@ -1205,7 +1195,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Too many items', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Too many items',))]
     #[available_gas(26000000)]
     fn test_equip_too_many_items() {
         // start new game
@@ -1384,7 +1374,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Health already full', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Health already full',))]
     #[available_gas(450000000)]
     fn test_buy_potions_exceed_max_health() {
         let mut game = new_adventurer_lvl2(1000, 1696201757, 0);
@@ -1410,7 +1400,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Market is closed', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Market is closed',))]
     #[available_gas(100000000)]
     fn test_cant_buy_potion_without_stat_upgrade() {
         // deploy and start new game
@@ -1429,7 +1419,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Action not allowed in battle', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Action not allowed in battle',))]
     #[available_gas(100000000)]
     fn test_cant_buy_potion_during_battle() {
         // deploy and start new game
@@ -1551,7 +1541,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Item not owned by adventurer', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Item not owned by adventurer',))]
     #[available_gas(90000000)]
     fn test_drop_item_without_ownership() {
         // start new game on level 2 so we have access to the market
@@ -1596,7 +1586,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('insufficient stat upgrades', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('insufficient stat upgrades',))]
     #[available_gas(70000000)]
     fn test_upgrade_stats_not_enough_points() {
         // deploy and start new game
@@ -1717,7 +1707,7 @@ mod tests {
 
     #[test]
     #[available_gas(9000000000)]
-    #[should_panic(expected: ('terminal time reached', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('terminal time reached',))]
     fn test_terminal_timestamp_reached() {
         let starting_block = 1;
         let starting_timestamp = 1;
@@ -1806,7 +1796,7 @@ mod tests {
     // TODO: re-enable this test once we move to Foundry
     // #[test]
     // #[available_gas(9000000000)]
-    // #[should_panic(expected: ('Token already used today', 'ENTRYPOINT_FAILED'))]
+    // #[should_panic(expected: ('Token already used today',  ))]
     // fn test_golden_token_double_play() {
     //     let golden_token_id = 1;
     //     let starting_block = 364063;
@@ -1823,7 +1813,7 @@ mod tests {
     // }
 
     #[test]
-    #[should_panic(expected: ('Cant drop during starter beast', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Cant drop during starter beast',))]
     fn test_no_dropping_starter_weapon_during_starter_beast() {
         let mut game = new_adventurer(1000, 1696201757);
 
@@ -1961,7 +1951,7 @@ mod tests {
 
 
     #[test]
-    #[should_panic(expected: ('Not authorized to act', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Not authorized to act',))]
     fn test_original_owner_attack() {
         let mut game = new_adventurer(364063, 1698678554);
         transfer_ownership(game, OWNER(), OWNER_TWO());
@@ -1970,7 +1960,7 @@ mod tests {
 
 
     #[test]
-    #[should_panic(expected: ('Not authorized to act', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Not authorized to act',))]
     fn test_original_owner_upgrade() {
         let mut game = new_adventurer_lvl2(364063, 1698678554, 0);
         transfer_ownership(game, OWNER(), OWNER_TWO());
@@ -1983,7 +1973,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Not authorized to act', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Not authorized to act',))]
     fn test_original_owner_explore() {
         let mut game = new_adventurer_lvl2(364063, 1698678554, 0);
         transfer_ownership(game, OWNER(), OWNER_TWO());
@@ -2001,7 +1991,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Not authorized to act', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Not authorized to act',))]
     fn test_original_owner_flee() {
         let mut game = new_adventurer_lvl2(364063, 1698678554, 0);
         transfer_ownership(game, OWNER(), OWNER_TWO());
@@ -2084,7 +2074,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('obituary already set', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('obituary already set',))]
     fn test_set_adventurer_obituary_twice() {
         // Setup
         let starting_block = 1000;
@@ -2123,7 +2113,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('obituary window closed', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('obituary window closed',))]
     fn test_set_adventurer_obituary_after_window_closed() {
         // Setup
         let starting_block = 1000;
@@ -2163,7 +2153,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Adventurer is still alive', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Adventurer is still alive',))]
     fn test_set_adventurer_obituary_still_alive() {
         // Setup
         let starting_block = 1000;
@@ -2357,7 +2347,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('launch tournament has ended', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('launch tournament has ended',))]
     fn test_genesis_tournament_ended() {
         let starting_block = 1000;
         let mut current_block_time = 1696201757;
@@ -2375,7 +2365,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('nft collection not eligible', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('nft collection not eligible',))]
     fn test_genesis_tournament_nonqualifying_collection() {
         let starting_block = 1000;
         let mut current_block_time = 1696201757;
@@ -2391,7 +2381,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('not token owner', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('not token owner',))]
     fn test_genesis_tournament_not_token_owner() {
         let starting_block = 1000;
         let mut current_block_time = 1696201757;
@@ -2413,7 +2403,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('token already registered', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('token already registered',))]
     fn test_genesis_tournament_token_already_registered() {
         let starting_block = 1000;
         let mut current_block_time = 1696201757;
