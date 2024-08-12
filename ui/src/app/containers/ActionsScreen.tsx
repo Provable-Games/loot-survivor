@@ -20,6 +20,7 @@ import {
   ClothIcon,
   HideIcon,
   MetalIcon,
+  CompleteIcon,
 } from "@/app/components/icons/Icons";
 import LootIcon from "@/app/components/icons/LootIcon";
 import { useUiSounds, soundSelector } from "@/app/hooks/useUiSound";
@@ -50,6 +51,8 @@ export default function ActionsScreen({
   const loading = useLoadingStore((state) => state.loading);
   const estimatingFee = useUIStore((state) => state.estimatingFee);
   const onKatana = useUIStore((state) => state.onKatana);
+  const tillDeath = useUIStore((state) => state.tillDeath);
+  const setTillDeath = useUIStore((state) => state.setTillDeath);
 
   const hasBeast = useAdventurerStore((state) => state.computed.hasBeast);
   const resetNotification = useLoadingStore((state) => state.resetNotification);
@@ -97,14 +100,9 @@ export default function ActionsScreen({
 
   const { play: clickPlay } = useUiSounds(soundSelector.click);
 
-  const handleSingleExplore = async () => {
+  const handleExplore = async () => {
     resetNotification();
-    await explore(false);
-  };
-
-  const handleExploreTillBeast = async () => {
-    resetNotification();
-    await explore(true);
+    await explore(tillDeath);
   };
 
   const { addControl } = useController();
@@ -112,12 +110,12 @@ export default function ActionsScreen({
   useEffect(() => {
     addControl("e", () => {
       console.log("Key e pressed");
-      handleSingleExplore();
+      handleExplore();
       clickPlay();
     });
     addControl("r", () => {
       console.log("Key r pressed");
-      handleExploreTillBeast();
+      handleExplore();
       clickPlay();
     });
   }, []);
@@ -125,26 +123,10 @@ export default function ActionsScreen({
   const buttonsData = [
     {
       id: 1,
-      label: loading ? "Exploring..." : hasBeast ? "Beast found!!" : "Once",
+      label: loading ? "Exploring..." : "Explore",
       value: "explore",
       action: async () => {
-        handleSingleExplore();
-      },
-      disabled: hasBeast || loading || !adventurer?.id || estimatingFee,
-      loading: loading,
-      className:
-        "bg-terminal-green-25 hover:bg-terminal-green hover:text-black",
-    },
-    {
-      id: 2,
-      label: loading
-        ? "Exploring..."
-        : hasBeast
-        ? "Beast found!!"
-        : "Till Beast",
-      value: "explore",
-      action: async () => {
-        handleExploreTillBeast();
+        handleExplore();
       },
       disabled: hasBeast || loading || !adventurer?.id || estimatingFee,
       loading: loading,
@@ -168,7 +150,7 @@ export default function ActionsScreen({
       ) : (
         <div className="flex flex-col sm:flex-row h-full w-full sm:w-1/2 lg:w-2/3">
           {adventurer?.id ? (
-            <div className="flex flex-col items-center lg:w-1/2 bg-terminal-black order-1 sm:order-2 h-5/6 sm:h-full">
+            <div className="flex flex-col gap-2 sm:gap-0 items-center lg:w-1/2 bg-terminal-black order-1 sm:order-2 h-5/6 sm:h-full">
               {!showFuture ? (
                 <Discovery discoveries={latestDiscoveries} />
               ) : null}
@@ -315,18 +297,29 @@ export default function ActionsScreen({
               Please Select an Adventurer
             </p>
           )}
-          <div className="flex flex-col items-center lg:w-1/2 my-4 w-full px-4 sm:order-1 h-1/6 sm:h-full">
+          <div className="flex flex-col items-center lg:w-1/2 sm:my-4 w-full px-4 sm:order-1 h-1/3 sm:h-full">
             {loading && !onKatana && <MazeLoader />}
-            <div className="w-3/4 h-full sm:h-1/6">
-              <ActionMenu
-                buttonsData={buttonsData}
-                size="fill"
-                title="Explore"
-              />
+            <div className="flex flex-col w-3/4 h-full sm:h-1/3 gap-5">
+              <div className="h-1/2">
+                <ActionMenu
+                  buttonsData={buttonsData}
+                  size="fill"
+                  title="Explore"
+                />
+              </div>
+              <div className="flex flex-row items-center justify-center gap-5">
+                <span
+                  onClick={() => setTillDeath(!tillDeath)}
+                  className="border border-terminal-green w-6 h-6 sm:w-10 sm:h-10 cursor-pointer"
+                >
+                  {tillDeath && <CompleteIcon />}
+                </span>
+                <span className="uppercase">Till Death</span>
+              </div>
             </div>
 
             {nextEncounter && (
-              <div className="hidden sm:flex flex-col items-center uppercase mt-8">
+              <div className="hidden sm:flex flex-col items-center uppercase mt-8 sm:mt-0">
                 <div>Next Big Encounter</div>
 
                 <div className="text-sm border p-2 border-terminal-green flex flex-col items-center mt-2 gap-1 w-[220px]">

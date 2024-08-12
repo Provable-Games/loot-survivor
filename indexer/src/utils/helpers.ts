@@ -67,7 +67,7 @@ export function insertAdventurer({
         ring: checkExistsInt(parseInt(ring)),
         beastHealth: parseInt(beastHealth),
         statUpgrades: parseInt(statUpgrades),
-        name: checkExistsInt(parseInt(name)),
+        name: checkExistsInt(BigInt(name).toString(16)),
         birthDate: parseInt(birthDate),
         deathDate: parseInt(deathDate),
         goldenTokenId: checkExistsInt(parseInt(goldenTokenId)),

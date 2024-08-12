@@ -53,20 +53,15 @@ def serialize_felt(value):
 
 
 def parse_string(value):
-    # Encode the string to UTF-8 bytes
-    bytes_array = value.encode("utf-8")
-    # Convert the bytes to an integer
-    int_value = int.from_bytes(bytes_array, byteorder="big")
-    # Return the integer as a string
-    return str(int_value)
+    # Assuming the input is a regular string
+    # Convert it to bytes and then to a hexadecimal string
+    return value.encode("utf-8").hex()
 
 
 def serialize_string(value):
-    int_value = int(value)
-    # Convert the integer to bytes
-    bytes_array = int_value.to_bytes((int_value.bit_length() + 7) // 8, byteorder="big")
-    # Decode the bytes using UTF-8
-    return bytes_array.decode("utf-8")
+    # Assuming the input is a hexadecimal string
+    # Convert it back to bytes and then to a UTF-8 string
+    return bytes.fromhex(value).decode("utf-8")
 
 
 def parse_class(value):

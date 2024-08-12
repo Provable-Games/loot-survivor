@@ -208,6 +208,7 @@ export interface Call {
 export interface ButtonData {
   id: number;
   label: string;
+  tip?: string;
   icon?: ReactElement;
   loading?: boolean;
   value?: string;

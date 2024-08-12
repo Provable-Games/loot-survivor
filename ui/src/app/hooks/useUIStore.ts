@@ -131,6 +131,8 @@ type State = {
   setIsController: (value: boolean) => void;
   controllerAdmin: string;
   setControllerAdmin: (value: string) => void;
+  tillDeath: boolean;
+  setTillDeath: (value: boolean) => void;
 };
 
 const useUIStore = create<State>((set) => ({
@@ -241,6 +243,8 @@ const useUIStore = create<State>((set) => ({
   setControllerAdmin: (value) => set({ controllerAdmin: value }),
   fetchUnlocksEntropy: false,
   setFetchUnlocksEntropy: (value) => set({ fetchUnlocksEntropy: value }),
+  tillDeath: false,
+  setTillDeath: (value) => set({ tillDeath: value }),
 }));
 
 export default useUIStore;

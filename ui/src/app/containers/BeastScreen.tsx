@@ -21,6 +21,7 @@ import {
   GiBattleGearIcon,
   HeartIcon,
   SkullCrossedBonesIcon,
+  CompleteIcon,
 } from "@/app/components/icons/Icons";
 import { FleeDialog } from "@/app/components/FleeDialog";
 import { BattleDialog } from "@/app/components/BattleDialog";
@@ -53,6 +54,8 @@ export default function BeastScreen({
   const fleeDialog = useUIStore((state) => state.fleeDialog);
   const showBattleDialog = useUIStore((state) => state.showBattleDialog);
   const showFleeDialog = useUIStore((state) => state.showFleeDialog);
+  const tillDeath = useUIStore((state) => state.tillDeath);
+  const setTillDeath = useUIStore((state) => state.setTillDeath);
   const resetNotification = useLoadingStore((state) => state.resetNotification);
   const [showBattleLog, setShowBattleLog] = useState(false);
   const [showFutures, setShowFutures] = useState(false);
@@ -65,36 +68,16 @@ export default function BeastScreen({
     (state) => state.data.battlesByBeastQuery?.battles || []
   );
 
-  const [buttonText, setButtonText] = useState("Flee");
-
   const { play: clickPlay } = useUiSounds(soundSelector.click);
 
-  const handleMouseEnter = () => {
-    setButtonText("You Coward!");
-  };
-
-  const handleMouseLeave = () => {
-    setButtonText("Flee");
-  };
-
-  const handleSingleAttack = async () => {
+  const handleAttack = async () => {
     resetNotification();
-    await attack(false, beastData);
+    await attack(tillDeath, beastData);
   };
 
-  const handleAttackTillDeath = async () => {
+  const handleFlee = async () => {
     resetNotification();
-    await attack(true, beastData);
-  };
-
-  const handleSingleFlee = async () => {
-    resetNotification();
-    await flee(false, beastData);
-  };
-
-  const handleFleeTillDeath = async () => {
-    resetNotification();
-    await flee(true, beastData);
+    await flee(tillDeath, beastData);
   };
 
   const { addControl } = useController();
@@ -102,22 +85,22 @@ export default function BeastScreen({
   useEffect(() => {
     addControl("a", () => {
       console.log("Key a pressed");
-      handleSingleAttack();
+      handleAttack();
       clickPlay();
     });
     addControl("s", () => {
       console.log("Key s pressed");
-      handleAttackTillDeath();
+      handleAttack();
       clickPlay();
     });
     addControl("f", () => {
       console.log("Key f pressed");
-      handleSingleFlee();
+      handleFlee();
       clickPlay();
     });
     addControl("g", () => {
       console.log("Key g pressed");
-      handleFleeTillDeath();
+      handleFlee();
       clickPlay();
     });
   }, []);
@@ -125,9 +108,9 @@ export default function BeastScreen({
   const attackButtonsData: ButtonData[] = [
     {
       id: 1,
-      label: "ONCE",
+      label: "ATTACK",
       action: async () => {
-        handleSingleAttack();
+        handleAttack();
       },
       disabled:
         adventurer?.beastHealth == undefined ||
@@ -136,33 +119,14 @@ export default function BeastScreen({
         estimatingFee,
       loading: loading,
       className:
-        "bg-terminal-green-25 hover:bg-terminal-green hover:text-black justify-start sm:justify-center px-2 sm:px-0",
+        "bg-terminal-green-50 hover:bg-terminal-green hover:text-black justify-center px-2 sm:px-0",
     },
-    {
-      id: 2,
-      label: "TILL DEATH",
-      action: async () => {
-        handleAttackTillDeath();
-      },
-      disabled:
-        adventurer?.beastHealth == undefined ||
-        adventurer?.beastHealth == 0 ||
-        loading ||
-        estimatingFee,
-      loading: loading,
-      className:
-        "bg-terminal-green-50 hover:bg-terminal-green hover:text-black justify-end sm:justify-center px-2 sm:px-0",
-    },
-  ];
-
-  const fleeButtonsData: ButtonData[] = [
     {
       id: 1,
-      label: adventurer?.dexterity === 0 ? "DEX TOO LOW" : "ONCE",
-      mouseEnter: handleMouseEnter,
-      mouseLeave: handleMouseLeave,
+      label: "FLEE",
+      tip: adventurer?.dexterity === 0 ? "No DEX" : "",
       action: async () => {
-        handleSingleFlee();
+        handleFlee();
       },
       disabled:
         adventurer?.beastHealth == undefined ||
@@ -173,26 +137,7 @@ export default function BeastScreen({
         estimatingFee,
       loading: loading,
       className:
-        "bg-terminal-yellow-25 hover:bg-terminal-yellow hover:text-black justify-start sm:justify-center px-2 sm:px-0",
-    },
-    {
-      id: 2,
-      label: adventurer?.dexterity === 0 ? "DEX TOO LOW" : "TILL DEATH",
-      mouseEnter: handleMouseEnter,
-      mouseLeave: handleMouseLeave,
-      action: async () => {
-        handleFleeTillDeath();
-      },
-      disabled:
-        adventurer?.beastHealth == undefined ||
-        adventurer?.beastHealth == 0 ||
-        loading ||
-        adventurer?.level == 1 ||
-        adventurer.dexterity === 0 ||
-        estimatingFee,
-      loading: loading,
-      className:
-        "bg-terminal-yellow-50 hover:bg-terminal-yellow hover:text-black justify-end sm:justify-center px-2 sm:px-0",
+        "bg-terminal-yellow-50 hover:bg-terminal-yellow hover:text-black justify-center px-2 sm:px-0",
     },
   ];
 
@@ -314,36 +259,40 @@ export default function BeastScreen({
         {isAlive && (
           <>
             <>
-              <div className="sm:hidden flex flex-row sm:flex-col gap-5 items-center justify-center sm:justify-start w-full h-3/4 sm:h-1/4">
-                <div className="flex flex-col items-center w-1/2 sm:w-full h-1/2 sm:h-full">
+              <div className="sm:hidden flex items-center justify-center w-full h-3/4">
+                <div className="flex flex-col gap-2 items-center w-3/4 h-3/4 sm:h-full">
                   <ActionMenu
                     buttonsData={attackButtonsData}
                     size={"fill"}
-                    title="Attack"
+                    title="Battle"
                   />
-                </div>
-                <div className="flex flex-col items-center w-1/2 sm:w-full h-1/2 sm:h-full">
-                  <ActionMenu
-                    buttonsData={fleeButtonsData}
-                    size={"fill"}
-                    title={buttonText}
-                  />
+                  <div className="flex flex-row gap-2 items-center text-xs text-terminal-green">
+                    <span
+                      onClick={() => setTillDeath(!tillDeath)}
+                      className="border border-terminal-green w-6 h-6 cursor-pointer"
+                    >
+                      {tillDeath && <CompleteIcon />}
+                    </span>
+                    <span className="uppercase">Till Death</span>
+                  </div>
                 </div>
               </div>
-              <div className="hidden sm:flex flex-row gap-2 sm:flex-col items-center justify-center h-1/3 w-3/4">
-                <div className="flex flex-col items-center justify-center h-1/2 w-full">
+              <div className="hidden sm:flex flex-col gap-5 items-center h-1/3 w-3/4">
+                <div className="h-1/2 w-full">
                   <ActionMenu
                     buttonsData={attackButtonsData}
                     size={"fill"}
-                    title="Attack"
+                    title="Battle"
                   />
                 </div>
-                <div className="flex flex-col items-center justify-center h-1/2 w-full">
-                  <ActionMenu
-                    buttonsData={fleeButtonsData}
-                    size={"fill"}
-                    title="Flee"
-                  />
+                <div className="flex flex-row gap-2 items-center text-xs text-terminal-green">
+                  <span
+                    onClick={() => setTillDeath(!tillDeath)}
+                    className="border border-terminal-green w-10 h-10 cursor-pointer"
+                  >
+                    {tillDeath && <CompleteIcon />}
+                  </span>
+                  <span className="uppercase text-xl">Till Death</span>
                 </div>
               </div>
             </>
