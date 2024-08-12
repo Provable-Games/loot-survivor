@@ -18,17 +18,19 @@ export STARKLI_NO_PLAIN_KEY_WARNING="true"
 export STARKNET_ACCOUNT="/katana/starkli_account"
 
 # we don't need any of these contracts for core functionality on katana
-lords_address=0
-eth_address=0
 dao_address=0
 pg_address=0
+lords_contract=0
 beasts_address=0
 golden_token_address=0
 terminal_timestamp=0
 randomness_contract=0
-randomness_rotation_interval=1
 oracle_address=0
 renderer_address=0
+golden_token_id="0 0"
+eth_contract=0
+qualifying_collections=0
+launch_promotion_end_timestamp=0
 
 # extract account details from katana logs
 output=$(head -n 1 ~/katana.log | jq -r '.fields.message | fromjson | .accounts[0] | .[0], .[-1].private_key')
@@ -43,8 +45,8 @@ starkli account fetch --force --output /katana/starkli_account $account_address
 # declare contract
 game_class_hash=$(starkli declare --watch /root/loot-survivor/target/dev/game_Game.contract_class.json --private-key $private_key --compiler-version 2.6.2 2>/dev/null)
 
-# deploy contract
-game_contract=$(starkli deploy --watch $game_class_hash $lords_address $eth_address $dao_address $pg_address $beasts_address $golden_token_address $terminal_timestamp $randomness_contract $randomness_rotation_interval $oracle_address $renderer_address --private-key $private_key --max-fee 0.01 2>/dev/null)
+# deploy game
+game_contract=$(starkli deploy --watch $game_class_hash $lords_contract $eth_contract $dao_address $pg_address $beasts_address $golden_token_address $terminal_timestamp $randomness_contract $oracle_address $renderer_contract $qualifying_collections $launch_promotion_end_timestamp --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null)
 
 # Export game_contract and private key and publish to .bashrc
 export game_contract
