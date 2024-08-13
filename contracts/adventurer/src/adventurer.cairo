@@ -1341,6 +1341,18 @@ impl ImplAdventurer of IAdventurer {
         }
         items_leveled_up
     }
+
+    #[inline(always)]
+    fn apply_health_boost_from_vitality_unlock(ref self: Adventurer, item_specials: SpecialPowers) {
+        // get the vitality boost for the special
+        let vit_boost = ImplAdventurer::get_vitality_item_boost(item_specials.special1);
+        // if the special provides a vitality boost
+        if (vit_boost != 0) {
+            // adventurer gains health
+            let health_amount = vit_boost.into() * VITALITY_INSTANT_HEALTH_BONUS.into();
+            self.increase_health(health_amount);
+        }
+    }
 }
 
 const TWO_POW_4_NZ: NonZero<u256> = 0x10;
@@ -1382,7 +1394,7 @@ mod tests {
     };
     use array::ArrayTrait;
     use beasts::{beast::{ImplBeast, Beast}, constants::{BeastSettings, BeastId}};
-    use combat::{constants::CombatEnums::{Slot, Type}};
+    use combat::{constants::CombatEnums::{Slot, Type}, combat::SpecialPowers};
     use core::result::ResultTrait;
     use integer::{u8_overflowing_add, u16_overflowing_add, u16_overflowing_sub};
     use loot::{
@@ -4894,5 +4906,66 @@ mod tests {
         // extreme/overflow case
         adventurer.stats.vitality = 255;
         assert(adventurer.stats.get_max_health() == MAX_ADVENTURER_HEALTH, 'wrong max health');
+    }
+
+    #[test]
+    fn test_apply_health_boost_from_vitality_unlock_gas() {
+        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
+        let no_boost_specials = SpecialPowers { special1: of_Power, special2: 0, special3: 0 };
+        adventurer.apply_health_boost_from_vitality_unlock(no_boost_specials);
+        assert(adventurer.health == 100, 'health should not change');
+    }
+
+    #[test]
+    fn test_apply_health_boost_from_vitality_unlock() {
+        // Create a new adventurer
+        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
+
+        // Set initial health to a known value
+        let starting_health = 10;
+        adventurer.health = starting_health;
+
+        // Test case 1: No vitality boost
+        let no_boost_specials = SpecialPowers { special1: of_Power, special2: 0, special3: 0 };
+        let mut previous_health = adventurer.health;
+        adventurer.apply_health_boost_from_vitality_unlock(no_boost_specials);
+        assert(adventurer.health == previous_health, 'Health should not change');
+
+        // Test case 2: Vitality boost from of_Giant (3 vitality)
+        let giant_specials = SpecialPowers { special1: of_Giant, special2: 0, special3: 0 };
+        previous_health = adventurer.health;
+        adventurer.apply_health_boost_from_vitality_unlock(giant_specials);
+        let health_increase = 3 * HEALTH_INCREASE_PER_VITALITY;
+        assert(adventurer.health == previous_health + health_increase.into(), 'of giants, wrong hp increase');
+
+        // Test case 3: Vitality boost from of_Protection (2 vitality)
+        let protection_specials = SpecialPowers {
+            special1: of_Protection, special2: 0, special3: 0
+        };
+        previous_health = adventurer.health;
+        adventurer.apply_health_boost_from_vitality_unlock(protection_specials);
+        let health_increase = 2 * HEALTH_INCREASE_PER_VITALITY;
+        assert(
+            adventurer.health == previous_health + health_increase.into(),
+            'of protection, wrong hp'
+        );
+
+        // Test case 4: Vitality boost from of_Perfection (1 vitality)
+        let perfection_specials = SpecialPowers {
+            special1: of_Perfection, special2: 0, special3: 0
+        };
+        previous_health = adventurer.health;
+        adventurer.apply_health_boost_from_vitality_unlock(perfection_specials);
+        let health_increase = HEALTH_INCREASE_PER_VITALITY;
+        assert(
+            adventurer.health == previous_health + health_increase.into(),
+            'of perfection, wrong hp'
+        );
+
+        // Test case 5: No additional boost when at max health
+        adventurer.health = adventurer.stats.get_max_health();
+        previous_health = adventurer.health;
+        adventurer.apply_health_boost_from_vitality_unlock(giant_specials);
+        assert(adventurer.health == previous_health, 'Health should not exceed max');
     }
 }

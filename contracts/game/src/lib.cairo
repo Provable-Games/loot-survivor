@@ -907,7 +907,7 @@ mod Game {
 
             // emit claimed free game event
             __event_ClaimedFreeGame(ref self, adventurer_id, nft_address, token_id);
-            
+
             adventurer_id
         }
 
@@ -2077,9 +2077,9 @@ mod Game {
         // init specials with no specials
         let mut specials = SpecialPowers { special1: 0, special2: 0, special3: 0 };
 
-        // check if item reached greatness 20
+        // if item reached max greatness level
         if (new_level == ITEM_MAX_GREATNESS) {
-            // if so, adventurer gets a stat point as a reward
+            // adventurer receives a bonus stat upgrade point
             adventurer.increase_stat_upgrades_available(MAX_GREATNESS_STAT_BONUS);
         }
 
@@ -2090,40 +2090,58 @@ mod Game {
 
         // if specials were unlocked
         if (suffix_unlocked || prefixes_unlocked) {
-            // if item received a suffix as part of the level up
-            if (suffix_unlocked) {
-                // get item specials seed
-                let item_specials_seed = _get_item_specials_seed(@self, adventurer_id);
+            // get item specials seed
+            let item_specials_seed = _get_item_specials_seed(@self, adventurer_id);
 
-                // if we don't have item specials seed yet
-                if item_specials_seed == 0 {
-                    // we need to request it but only once and it's possible multiple items are
-                    // reaching g15+ at the same time so we use a flag to ensure we only request for first item
-                    if !adventurer.awaiting_item_specials {
-                        adventurer.awaiting_item_specials = true;
+            // check if we already have the vrf seed for the item specials
+            if item_specials_seed != 0 {
+                // if we do, get item specials
+                specials =
+                    ImplLoot::get_specials(item.id, item.get_greatness(), item_specials_seed);
 
-                        _event_RequestedItemSpecialsSeed(
-                            ref self, adventurer_id, self._randomness_contract_address.read()
+                // if suffix was unlocked, apply stat boosts for suffix special to adventurer
+                if suffix_unlocked {
+                    // apply stat boosts for suffix special to adventurer
+                    adventurer.stats.apply_suffix_boost(specials.special1);
+                    // apply health boost for any vitality gained (one time event)
+                    adventurer.apply_health_boost_from_vitality_unlock(specials);
+                }
+            } else {
+                // if the contract doesn't have an item specials seed from vrf yet
+                // we need to request one but only once so we use a flag to ensure we only request for first item
+                if !adventurer.awaiting_item_specials {
+                    adventurer.awaiting_item_specials = true;
+
+                    _event_RequestedItemSpecialsSeed(
+                        ref self, adventurer_id, self._randomness_contract_address.read()
+                    );
+
+                    if _network_supports_vrf() {
+                        _request_randomness(
+                            ref self, adventurer_id.try_into().unwrap(), adventurer_id, 1
                         );
+                    } else {
+                        // if we are running on a network that doesn't support vrf
+                        // we generate a basic seed using item.xp + item.id
+                        let item_specials_seed = item.xp + item.id.into();
 
-                        if _network_supports_vrf() {
-                            _request_randomness(
-                                ref self, adventurer_id.try_into().unwrap(), adventurer_id, 1
+                        // set the seed in the contract
+                        _set_item_specials_seed(ref self, adventurer_id, item_specials_seed);
+
+                        // get specials for the item
+                        specials =
+                            ImplLoot::get_specials(
+                                item.id, item.get_greatness(), item_specials_seed
                             );
-                        } else {
-                            // on katana we simply use item.xp + item.id as a simple seed
-                            // that will always fit in a u16
-                            let item_specials_seed = item.xp + item.id.into();
-                            _set_item_specials_seed(ref self, adventurer_id, item_specials_seed);
-                            _get_and_apply_item_specials(
-                                ref adventurer, ref specials, item, item_specials_seed
-                            );
+
+                        // if suffix was unlocked, apply stat boosts for suffix special to adventurer
+                        if suffix_unlocked {
+                            // apply stat boosts for suffix special to adventurer
+                            adventurer.stats.apply_suffix_boost(specials.special1);
+                            // apply health boost for any vitality gained (one time event)
+                            adventurer.apply_health_boost_from_vitality_unlock(specials);
                         }
                     }
-                } else { // apply them and record the new specials so we can include them in event
-                    _get_and_apply_item_specials(
-                        ref adventurer, ref specials, item, item_specials_seed
-                    );
                 }
             }
         }

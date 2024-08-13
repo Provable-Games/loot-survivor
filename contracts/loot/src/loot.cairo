@@ -81,10 +81,10 @@ impl ImplLoot of ILoot {
             .unwrap()
     }
 
-    // @notice gets the specials of an item
+    // @notice gets the specials of an item based on a seed
     // @param id the id of the item to get specials for
-    // @param greatness the greatness of the item
-    // @param start_entropy the entropy to use for randomness
+    // @param greatness the greatness level of the item
+    // @param seed the seed to use for generating the specials
     // @return the specials of the item
     fn get_specials(id: u8, greatness: u8, seed: u16) -> SpecialPowers {
         if greatness < SUFFIX_UNLOCK_GREATNESS {

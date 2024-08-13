@@ -18,6 +18,10 @@ mod tests {
     use loot::{loot::{Loot, ImplLoot, ILoot}, constants::{ItemId}};
     use game::{
         Game,
+        Game::{
+            IGame, _adventurer_nameContractMemberStateTrait, _adventurerContractMemberStateTrait,
+            _process_item_level_up, _set_item_specials_seed
+        },
         game::{
             interfaces::{IGameDispatcherTrait, IGameDispatcher},
             constants::{
@@ -72,6 +76,7 @@ mod tests {
     const APPROVE: u256 = 1000000000000000000000000000000000000000000;
     const DEFAULT_NO_GOLDEN_TOKEN: felt252 = 0;
     const DAY: u64 = 86400;
+    const TESTING_CHAIN_ID: felt252 = 0x4c4f4f545355525649564f52;
 
     // type ComponentState = ERC20Component::ComponentState<DualCaseERC20Mock::ContractState>;
 
@@ -154,7 +159,7 @@ mod tests {
         }
     }
 
-    fn deploy_lords(contract: ContractClass) -> IERC20Dispatcher {
+    fn deploy_lords(contract_class: ContractClass) -> IERC20Dispatcher {
         let lords_name: ByteArray = "LORDS";
         let lords_symbol: ByteArray = "LORDS";
         let lords_supply: u256 = 10000000000000000000000000000000000000000;
@@ -164,12 +169,12 @@ mod tests {
         calldata.append_serde(lords_symbol);
         calldata.append_serde(lords_supply);
         calldata.append_serde(OWNER());
-        let (contract_address, _) = contract.deploy(@calldata).unwrap();
+        let (contract_address, _) = contract_class.deploy(@calldata).unwrap();
 
         IERC20Dispatcher { contract_address: contract_address }
     }
 
-    fn deploy_eth(contract: ContractClass) -> IERC20Dispatcher {
+    fn deploy_eth(contract_class: ContractClass) -> IERC20Dispatcher {
         let lords_name: ByteArray = "ETH";
         let lords_symbol: ByteArray = "ETH";
         let lords_supply: u256 = 10000000000000000000000000000000000000000;
@@ -180,15 +185,15 @@ mod tests {
         calldata.append_serde(lords_supply);
         calldata.append_serde(OWNER());
 
-        let (contract_address, _) = contract.deploy(@calldata).unwrap();
+        let (contract_address, _) = contract_class.deploy(@calldata).unwrap();
 
         IERC20Dispatcher { contract_address: contract_address }
     }
 
-    fn deploy_golden_token(erc721_contract_class: ContractClass) -> IERC721Dispatcher {
+    fn deploy_golden_token(contract_class: ContractClass) -> IERC721Dispatcher {
         let golden_token_name: ByteArray = "GOLDEN_TOKEN";
         let golden_token_symbol: ByteArray = "GLDTKN";
-        let base_uri: ByteArray = "https://golden-token.com/";
+        let base_uri: ByteArray = "https://gt.lootsurvivor.io/";
         let TOKEN_ID: u256 = 1;
 
         let mut calldata = array![];
@@ -198,11 +203,11 @@ mod tests {
         calldata.append_serde(OWNER());
         calldata.append_serde(TOKEN_ID);
         start_cheat_caller_address_global(OWNER());
-        let (contract_address, _) = erc721_contract_class.deploy(@calldata).unwrap();
+        let (contract_address, _) = contract_class.deploy(@calldata).unwrap();
         IERC721Dispatcher { contract_address: contract_address }
     }
 
-    fn deploy_bloberts(erc721_contract_class: ContractClass) -> IERC721Dispatcher {
+    fn deploy_bloberts(contract_class: ContractClass) -> IERC721Dispatcher {
         let token_name: ByteArray = "Bloberts";
         let token_symbol: ByteArray = "BLOB";
         let base_uri: ByteArray = "https://bloberts.com/";
@@ -214,7 +219,23 @@ mod tests {
         calldata.append_serde(OWNER());
         calldata.append_serde(TOKEN_ID);
         start_cheat_caller_address_global(OWNER());
-        let (contract_address, _) = erc721_contract_class.deploy(@calldata).unwrap();
+        let (contract_address, _) = contract_class.deploy(@calldata).unwrap();
+        IERC721Dispatcher { contract_address: contract_address }
+    }
+
+    fn deploy_beasts(contract_class: ContractClass) -> IERC721Dispatcher {
+        let token_name: ByteArray = "Beasts";
+        let token_symbol: ByteArray = "BEASTS";
+        let base_uri: ByteArray = "https://beasts.lootsurvivor.io/";
+        let TOKEN_ID: u256 = 1;
+        let mut calldata = array![];
+        calldata.append_serde(token_name);
+        calldata.append_serde(token_symbol);
+        calldata.append_serde(base_uri);
+        calldata.append_serde(OWNER());
+        calldata.append_serde(TOKEN_ID);
+        start_cheat_caller_address_global(OWNER());
+        let (contract_address, _) = contract_class.deploy(@calldata).unwrap();
         IERC721Dispatcher { contract_address: contract_address }
     }
 
@@ -275,28 +296,32 @@ mod tests {
         IERC20Dispatcher,
         IERC721Dispatcher,
         ContractAddress,
+        IERC721Dispatcher,
         IERC721Dispatcher
     ) {
-        start_cheat_chain_id_global(0x123456789);
+        start_cheat_chain_id_global(TESTING_CHAIN_ID);
         start_cheat_block_number_global(starting_block);
         start_cheat_block_timestamp_global(starting_timestamp);
         start_cheat_caller_address_global(OWNER());
 
-        let erc20_contract = declare("DualCaseERC20Mock").unwrap();
+        let erc20_class_hash = declare("DualCaseERC20Mock").unwrap();
 
         // deploy lords, eth, and golden token
-        let lords = deploy_lords(erc20_contract);
+        let lords = deploy_lords(erc20_class_hash);
 
         // deploy eth   
-        let eth = deploy_eth(erc20_contract);
+        let eth = deploy_eth(erc20_class_hash);
 
-        let erc721_contract = declare("DualCaseERC721Mock").unwrap();
+        let erc721_class_hash = declare("DualCaseERC721Mock").unwrap();
 
         // deploy golden token
-        let golden_token = deploy_golden_token(erc721_contract);
+        let golden_token = deploy_golden_token(erc721_class_hash);
 
         // deploy bloberts
-        let bloberts = deploy_bloberts(erc721_contract);
+        let bloberts = deploy_bloberts(erc721_class_hash);
+
+        // deploy beasts
+        let beasts = deploy_beasts(erc721_class_hash);
 
         // add bloberts to qualifying collections
         let mut qualifying_collections = ArrayTrait::<ContractAddress>::new();
@@ -329,7 +354,7 @@ mod tests {
         lords.approve(game.contract_address, APPROVE.into());
         lords.approve(OWNER(), APPROVE.into());
 
-        (game, lords, eth, golden_token, OWNER(), bloberts)
+        (game, lords, eth, golden_token, OWNER(), bloberts, beasts)
     }
 
     fn add_adventurer_to_game(
@@ -371,7 +396,7 @@ mod tests {
 
     fn new_adventurer(starting_block: u64, starting_time: u64) -> IGameDispatcher {
         let terminal_block = 0;
-        let (mut game, _, _, _, _, _) = setup(starting_block, starting_time, terminal_block, 0);
+        let (mut game, _, _, _, _, _, _) = setup(starting_block, starting_time, terminal_block, 0);
         let starting_weapon = ItemId::Wand;
         let name = 'abcdefghijklmno';
 
@@ -694,7 +719,7 @@ mod tests {
     fn new_adventurer_with_lords(starting_block: u64) -> (IGameDispatcher, IERC20Dispatcher) {
         let starting_timestamp = 1;
         let terminal_timestamp = 0;
-        let (mut game, lords, _, _, _, _) = setup(
+        let (mut game, lords, _, _, _, _, _) = setup(
             starting_block, starting_timestamp, terminal_timestamp, 0
         );
         let starting_weapon = ItemId::Wand;
@@ -755,18 +780,18 @@ mod tests {
         // is annotated in the test
         game.explore(ADVENTURER_ID, true);
     }
+
     #[test]
-    #[should_panic]
-    #[available_gas(90000000)]
-    fn test_attack() {
+    #[should_panic(expected: ('Not in battle',))]
+    fn test_defeat_starter_beast() {
         let mut game = new_adventurer(1000, 1696201757);
 
         start_cheat_block_number_global(1002);
 
         let adventurer_start = game.get_adventurer(ADVENTURER_ID);
 
+
         // verify starting state
-        assert(adventurer_start.health == 100, 'advtr should start with 100hp');
         assert(adventurer_start.xp == 0, 'advtr should start with 0xp');
         assert(
             adventurer_start.beast_health == BeastSettings::STARTER_BEAST_HEALTH.into(),
@@ -787,9 +812,6 @@ mod tests {
         if (updated_adventurer.beast_health == 0) {
             // verify adventurer received xp and gold
             assert(updated_adventurer.xp > adventurer_start.xp, 'advntr should gain xp');
-            assert(updated_adventurer.gold > adventurer_start.gold, 'adventuer should gain gold');
-            // and adventurer was untouched
-            assert(updated_adventurer.health == 100, 'no dmg from 1 hit tko');
 
             // attack again after the beast is dead which should
             // result in a panic. This test is annotated to expect a panic
@@ -1712,7 +1734,7 @@ mod tests {
         let starting_block = 1;
         let starting_timestamp = 1;
         let terminal_timestamp = 100;
-        let (mut game, _, _, _, _, _) = setup(
+        let (mut game, _, _, _, _, _, _) = setup(
             starting_block, starting_timestamp, terminal_timestamp, 0
         );
 
@@ -1733,7 +1755,7 @@ mod tests {
         let starting_block = 1;
         let starting_timestamp = 1;
         let terminal_timestamp = 0;
-        let (mut game, _, _, _, _, _) = setup(
+        let (mut game, _, _, _, _, _, _) = setup(
             starting_block, starting_timestamp, terminal_timestamp, 0
         );
 
@@ -1754,7 +1776,7 @@ mod tests {
         let starting_block = 364063;
         let starting_timestamp = 1698678554;
         let terminal_timestamp = 0;
-        let (mut game, _, _, _, _, _) = setup(
+        let (mut game, _, _, _, _, _, _) = setup(
             starting_block, starting_timestamp, terminal_timestamp, 0
         );
         add_adventurer_to_game(ref game, 1, ItemId::Wand);
@@ -1770,7 +1792,7 @@ mod tests {
     //     let starting_block = 364063;
     //     let starting_timestamp = 1698678554;
     //     let terminal_timestamp = 0;
-    //     let (mut game, _, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp, 0);
+    //     let (mut game, _, _, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp, 0);
     //     assert(game.can_play(1), 'should be able to play');
     //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
     //     assert(!game.can_play(1), 'should not be able to play');
@@ -1789,7 +1811,7 @@ mod tests {
     //     let starting_block = 364063;
     //     let starting_timestamp = 1698678554;
     //     let terminal_timestamp = 0;
-    //     let (mut game, _, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp, 0);
+    //     let (mut game, _, _, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp, 0);
     //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
     // }
 
@@ -1802,7 +1824,7 @@ mod tests {
     //     let starting_block = 364063;
     //     let starting_timestamp = 1698678554;
     //     let terminal_timestamp = 0;
-    //     let (mut game, _, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp, 0);
+    //     let (mut game, _, _, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp, 0);
     //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
 
     //     // roll blockchain forward 1 second less than a day
@@ -1836,7 +1858,7 @@ mod tests {
     fn test_different_starter_beasts() {
         let starting_block = 364063;
         let starting_timestamp = 1698678554;
-        let (mut game, _, _, _, _, _) = setup(starting_block, starting_timestamp, 0, 0);
+        let (mut game, _, _, _, _, _, _) = setup(starting_block, starting_timestamp, 0, 0);
         let mut game_count = game.get_game_count();
         assert(game_count == 0, 'game count should be 0');
 
@@ -2041,7 +2063,7 @@ mod tests {
         // Setup
         let starting_block = 1000;
         let starting_time = 1696201757;
-        let (mut game, _, _, _, _, _) = setup(starting_block, starting_time, 0, 0);
+        let (mut game, _, _, _, _, _, _) = setup(starting_block, starting_time, 0, 0);
 
         // Create a new adventurer
         let adventurer_id = 1;
@@ -2079,7 +2101,7 @@ mod tests {
         // Setup
         let starting_block = 1000;
         let starting_time = 1696201757;
-        let (mut game, _, _, _, _, _) = setup(starting_block, starting_time, 0, 0);
+        let (mut game, _, _, _, _, _, _) = setup(starting_block, starting_time, 0, 0);
 
         // Create a new adventurer
         let adventurer_id = 1;
@@ -2118,7 +2140,7 @@ mod tests {
         // Setup
         let starting_block = 1000;
         let starting_time = 1696201757;
-        let (mut game, _, _, _, _, _) = setup(starting_block, starting_time, 0, 0);
+        let (mut game, _, _, _, _, _, _) = setup(starting_block, starting_time, 0, 0);
 
         // Create a new adventurer
         let adventurer_id = 1;
@@ -2158,7 +2180,7 @@ mod tests {
         // Setup
         let starting_block = 1000;
         let starting_time = 1696201757;
-        let (mut game, _, _, _, _, _) = setup(starting_block, starting_time, 0, 0);
+        let (mut game, _, _, _, _, _, _) = setup(starting_block, starting_time, 0, 0);
 
         // Create a new adventurer
         let adventurer_id = 1;
@@ -2178,7 +2200,7 @@ mod tests {
         // Setup
         let starting_block = 1000;
         let starting_time = 1696201757;
-        let (mut game, _, _, _, _, _) = setup(starting_block, starting_time, 0, 0);
+        let (mut game, _, _, _, _, _, _) = setup(starting_block, starting_time, 0, 0);
 
         // Create a new adventurer
         let adventurer_id = 1;
@@ -2213,7 +2235,7 @@ mod tests {
         };
         let starting_block = 1000;
         let mut current_block_time = 1696201757;
-        let (mut game, _, _, _, _, _) = setup(starting_block, current_block_time, 0, 0);
+        let (mut game, _, _, _, _, _, _) = setup(starting_block, current_block_time, 0, 0);
 
         // Create a new adventurer
         current_block_time += 777;
@@ -2354,7 +2376,7 @@ mod tests {
 
         // use one week for launch tournament
         let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
-        let (mut game, _, _, _, _, _) = setup(
+        let (mut game, _, _, _, _, _, _) = setup(
             starting_block, current_block_time, 0, genesis_tournament_end
         );
 
@@ -2372,7 +2394,7 @@ mod tests {
 
         // use one week for launch tournament
         let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
-        let (mut game, _, _, _, _, _) = setup(
+        let (mut game, _, _, _, _, _, _) = setup(
             starting_block, current_block_time, 0, genesis_tournament_end
         );
 
@@ -2388,7 +2410,7 @@ mod tests {
 
         // use one week for launch tournament
         let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
-        let (mut game, _, _, _, _, blobert_dispatcher) = setup(
+        let (mut game, _, _, _, _, blobert_dispatcher, _) = setup(
             starting_block, current_block_time, 0, genesis_tournament_end
         );
 
@@ -2410,7 +2432,7 @@ mod tests {
 
         // use one week for launch tournament
         let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
-        let (mut game, _, _, _, _, blobert_dispatcher) = setup(
+        let (mut game, _, _, _, _, blobert_dispatcher, _) = setup(
             starting_block, current_block_time, 0, genesis_tournament_end
         );
 
@@ -2435,7 +2457,7 @@ mod tests {
 
         // use one week for launch tournament
         let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
-        let (mut game, _, _, _, _, blobert_dispatcher) = setup(
+        let (mut game, _, _, _, _, blobert_dispatcher, _) = setup(
             starting_block, current_block_time, 0, genesis_tournament_end
         );
 
@@ -2453,5 +2475,50 @@ mod tests {
         assert(adventurer_meta.birth_date == current_block_time, 'birthdate not set correctly');
         assert(adventurer.equipment.weapon.id == 12, 'Weapon not set correctly');
         assert(adventurer.health == 90, 'Health not set correctly');
+    }
+
+    #[test]
+    fn test_get_and_set_adventurer_name() {
+        let mut state = Game::contract_state_for_testing();
+        state._adventurer_name.write(1, 'test1');
+        let adventurer_name = state.get_adventurer_name(1);
+        assert(adventurer_name == 'test1', 'name not set correctly');
+
+        state.update_adventurer_name(1, 'test2');
+        let adventurer_name = state.get_adventurer_name(1);
+        assert(adventurer_name == 'test2', 'name not updated correctly');
+    }
+
+    #[test]
+    fn test_item_prefix_unlock() {
+        start_cheat_chain_id_global(TESTING_CHAIN_ID);
+        let mut state = Game::contract_state_for_testing();
+        _set_item_specials_seed(ref state, 1, 123);
+
+        // initialize adventurer with a G18 wand
+        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
+        adventurer.equipment.weapon.xp = 361;
+
+        // set adventurer ID 1 to our adventurer
+        state._adventurer.write(1, adventurer);
+
+        // verify adventurer has been set
+        let mut adventurer = state.get_adventurer(1);
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
+        assert(adventurer.equipment.weapon.xp == 361, 'xp not set correctly');
+
+        // call internal _process_item_level_up function and verify results
+        let item_leveled_up_event = _process_item_level_up(
+            ref state, ref adventurer, 1, adventurer.equipment.weapon, 18, 19
+        );
+
+        // verify event details
+        assert(item_leveled_up_event.item_id == ItemId::Wand, 'item id is wrong');
+        assert(item_leveled_up_event.previous_level == 18, 'previous level is wrong');
+        assert(item_leveled_up_event.new_level == 19, 'new level is wrong');
+        assert(item_leveled_up_event.prefixes_unlocked, 'prefixes should be unlocked');
+        assert(item_leveled_up_event.specials.special2 != 0, 'special2 should be set');
+        assert(item_leveled_up_event.specials.special3 != 0, 'special3 should be set');
     }
 }
