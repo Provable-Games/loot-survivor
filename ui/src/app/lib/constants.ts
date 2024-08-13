@@ -36,7 +36,7 @@ export const vitalityIncrease = 15;
 
 // UI PARAMS
 export const getWaitRetryInterval = (network: string) =>
-  network === "mainnet" || network === "sepolia" ? 2200 : 10; // 6 seconds on sepolia + mainnet, 10ms on katana
+  network === "mainnet" || network === "sepolia" ? 1000 : 10; // 6 seconds on sepolia + mainnet, 10ms on katana
 export const ETH_INCREMENT = 0.001;
 export const LORDS_INCREMENT = 5;
 export const getMaxFee = (network: string) =>
