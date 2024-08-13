@@ -2074,9 +2074,6 @@ mod Game {
         previous_level: u8,
         new_level: u8,
     ) -> ItemLeveledUp {
-        // init specials with no specials
-        let mut specials = SpecialPowers { special1: 0, special2: 0, special3: 0 };
-
         // if item reached max greatness level
         if (new_level == ITEM_MAX_GREATNESS) {
             // adventurer receives a bonus stat upgrade point
@@ -2088,17 +2085,18 @@ mod Game {
             previous_level, new_level
         );
 
+        // get item specials seed
+        let item_specials_seed = _get_item_specials_seed(@self, adventurer_id);
+        let specials = if item_specials_seed != 0 {
+            ImplLoot::get_specials(item.id, item.get_greatness(), item_specials_seed)
+        } else {
+            SpecialPowers { special1: 0, special2: 0, special3: 0 }
+        };
+
         // if specials were unlocked
         if (suffix_unlocked || prefixes_unlocked) {
-            // get item specials seed
-            let item_specials_seed = _get_item_specials_seed(@self, adventurer_id);
-
             // check if we already have the vrf seed for the item specials
             if item_specials_seed != 0 {
-                // if we do, get item specials
-                specials =
-                    ImplLoot::get_specials(item.id, item.get_greatness(), item_specials_seed);
-
                 // if suffix was unlocked, apply stat boosts for suffix special to adventurer
                 if suffix_unlocked {
                     // apply stat boosts for suffix special to adventurer
@@ -2129,10 +2127,9 @@ mod Game {
                         _set_item_specials_seed(ref self, adventurer_id, item_specials_seed);
 
                         // get specials for the item
-                        specials =
-                            ImplLoot::get_specials(
-                                item.id, item.get_greatness(), item_specials_seed
-                            );
+                        let specials = ImplLoot::get_specials(
+                            item.id, item.get_greatness(), item_specials_seed
+                        );
 
                         // if suffix was unlocked, apply stat boosts for suffix special to adventurer
                         if suffix_unlocked {

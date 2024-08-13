@@ -2490,12 +2490,12 @@ mod tests {
     }
 
     #[test]
-    fn test_item_prefix_unlock() {
+    fn test_process_item_level_up_item_prefix_unlock() {
         start_cheat_chain_id_global(TESTING_CHAIN_ID);
         let mut state = Game::contract_state_for_testing();
         _set_item_specials_seed(ref state, 1, 123);
 
-        // initialize adventurer with a G18 wand
+        // init adventurer with g19 wand
         let mut adventurer = ImplAdventurer::new(ItemId::Wand);
         assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
         adventurer.equipment.weapon.xp = 361;
@@ -2505,6 +2505,7 @@ mod tests {
 
         // verify adventurer has been set
         let mut adventurer = state.get_adventurer(1);
+        let prev_stat_upgrades_available = adventurer.stat_upgrades_available;
         assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
         assert(adventurer.equipment.weapon.xp == 361, 'xp not set correctly');
 
@@ -2517,8 +2518,122 @@ mod tests {
         assert(item_leveled_up_event.item_id == ItemId::Wand, 'item id is wrong');
         assert(item_leveled_up_event.previous_level == 18, 'previous level is wrong');
         assert(item_leveled_up_event.new_level == 19, 'new level is wrong');
+        assert(!item_leveled_up_event.suffix_unlocked, 'suffix should not be unlocked');
         assert(item_leveled_up_event.prefixes_unlocked, 'prefixes should be unlocked');
+        assert(item_leveled_up_event.specials.special1 != 0, 'special1 should be set');
         assert(item_leveled_up_event.specials.special2 != 0, 'special2 should be set');
         assert(item_leveled_up_event.specials.special3 != 0, 'special3 should be set');
+        assert(adventurer.stat_upgrades_available == prev_stat_upgrades_available, 'wrong stats available');
+    }
+
+    #[test]
+    fn test_process_item_level_up_item_suffix_unlock() {
+        start_cheat_chain_id_global(TESTING_CHAIN_ID);
+        let mut state = Game::contract_state_for_testing();
+        _set_item_specials_seed(ref state, 1, 123);
+
+        // init adventurer with g15 wand
+        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
+        adventurer.equipment.weapon.xp = 225;
+
+        // set adventurer ID 1 to our adventurer
+        state._adventurer.write(1, adventurer);
+
+        // verify adventurer has been set
+        let mut adventurer = state.get_adventurer(1);
+        let prev_stat_upgrades_available = adventurer.stat_upgrades_available;
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
+        assert(adventurer.equipment.weapon.xp == 225, 'xp not set correctly');
+
+        // call internal _process_item_level_up function and verify results
+        let item_leveled_up_event = _process_item_level_up(
+            ref state, ref adventurer, 1, adventurer.equipment.weapon, 14, 15
+        );
+
+        // verify event details
+        assert(item_leveled_up_event.item_id == ItemId::Wand, 'item id is wrong');
+        assert(item_leveled_up_event.previous_level == 14, 'previous level is wrong');
+        assert(item_leveled_up_event.new_level == 15, 'new level is wrong');
+        assert(item_leveled_up_event.suffix_unlocked, 'suffix should be unlocked');
+        assert(!item_leveled_up_event.prefixes_unlocked, 'prefix should not be unlocked');
+        assert(item_leveled_up_event.specials.special1 != 0, 'special1 should be set');
+        assert(item_leveled_up_event.specials.special2 == 0, 'special2 should be set');
+        assert(item_leveled_up_event.specials.special3 == 0, 'special3 should be set');
+        assert(adventurer.stat_upgrades_available == prev_stat_upgrades_available, 'wrong stats available');
+    }
+
+    #[test]
+    fn test_process_item_level_up_no_specials_unlock() {
+        start_cheat_chain_id_global(TESTING_CHAIN_ID);
+        let mut state = Game::contract_state_for_testing();
+        _set_item_specials_seed(ref state, 1, 123);
+
+        // init adventurer with g14 wand
+        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
+        adventurer.equipment.weapon.xp = 200;
+
+        // set adventurer ID 1 to our adventurer
+        state._adventurer.write(1, adventurer);
+
+        // verify adventurer has been set
+        let mut adventurer = state.get_adventurer(1);
+        let prev_stat_upgrades_available = adventurer.stat_upgrades_available;
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
+        assert(adventurer.equipment.weapon.xp == 200, 'xp not set correctly');
+
+        // call internal _process_item_level_up function and verify results
+        let item_leveled_up_event = _process_item_level_up(
+            ref state, ref adventurer, 1, adventurer.equipment.weapon, 13, 14
+        );
+
+        // verify event details
+        assert(item_leveled_up_event.item_id == ItemId::Wand, 'item id is wrong');
+        assert(item_leveled_up_event.previous_level == 13, 'previous level is wrong');
+        assert(item_leveled_up_event.new_level == 14, 'new level is wrong');
+        assert(!item_leveled_up_event.suffix_unlocked, 'suffix should not be unlocked');
+        assert(!item_leveled_up_event.prefixes_unlocked, 'prefix should not be unlocked');
+        assert(item_leveled_up_event.specials.special1 == 0, 'special1 should not be set');
+        assert(item_leveled_up_event.specials.special2 == 0, 'special2 should not be set');
+        assert(item_leveled_up_event.specials.special3 == 0, 'special3 should not be set');
+        assert(adventurer.stat_upgrades_available == prev_stat_upgrades_available, 'wrong stats available');
+    }
+
+    #[test]
+    fn test_process_item_level_up_greatness_20() {
+        start_cheat_chain_id_global(TESTING_CHAIN_ID);
+        let mut state = Game::contract_state_for_testing();
+        _set_item_specials_seed(ref state, 1, 123);
+
+        // initialize adventurer with a G18 wand
+        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
+        adventurer.equipment.weapon.xp = 400;
+
+        // set adventurer ID 1 to our adventurer
+        state._adventurer.write(1, adventurer);
+
+        // verify adventurer has been set
+        let mut adventurer = state.get_adventurer(1);
+        let prev_stat_upgrades_available = adventurer.stat_upgrades_available;
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
+        assert(adventurer.equipment.weapon.xp == 400, 'xp not set correctly');
+
+        // call internal _process_item_level_up function and verify results
+        let item_leveled_up_event = _process_item_level_up(
+            ref state, ref adventurer, 1, adventurer.equipment.weapon, 19, 20
+        );
+
+        // verify event details
+        assert(item_leveled_up_event.item_id == ItemId::Wand, 'item id is wrong');
+        assert(item_leveled_up_event.previous_level == 19, 'previous level is wrong');
+        assert(item_leveled_up_event.new_level == 20, 'new level is wrong');
+        assert(!item_leveled_up_event.suffix_unlocked, 'suffix should not be unlocked');
+        assert(!item_leveled_up_event.prefixes_unlocked, 'prefix should not be unlocked');
+        assert(item_leveled_up_event.specials.special1 != 0, 'special1 should be set');
+        assert(item_leveled_up_event.specials.special2 != 0, 'special2 should be set');
+        assert(item_leveled_up_event.specials.special3 != 0, 'special3 should be set');
+        assert(adventurer.stat_upgrades_available == prev_stat_upgrades_available + 1, 'wrong stats available');
     }
 }
