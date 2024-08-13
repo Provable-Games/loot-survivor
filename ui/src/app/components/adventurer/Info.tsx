@@ -239,14 +239,16 @@ export default function Info({
         <div className="flex flex-col w-full uppercase h-full p-2 border border-terminal-green">
           <div className="relative flex justify-between w-full text-xl sm:text-2xl lg:text-3xl">
             {formatAdventurer.name}
-            <span className="flex items-center text-terminal-yellow">
+            <span className="relative flex items-center text-terminal-yellow">
               <CoinIcon className="self-center mt-1 w-5 h-5 fill-current" />{" "}
               {formatAdventurer.gold
                 ? formatAdventurer.gold - (upgradeCost ?? 0)
                 : 0}
-              <span className="absolute top-0 right-[-20px] text-xs">
-                {formatAdventurer.gold === 511 ? "Full" : ""}
-              </span>
+              {upgradeCost! > 0 && (
+                <p className="absolute top-[-5px] sm:top-[-10px] right-[30px] sm:right-[-15px] text-xs sm:text-sm">
+                  -{upgradeCost}
+                </p>
+              )}
             </span>
             <span className="flex flex-row gap-1 items-center ">
               <HeartIcon className="self-center mt-1 w-5 h-5 fill-current" />{" "}
@@ -293,7 +295,8 @@ export default function Info({
           )}
 
           <div className="w-full flex flex-col gap-1 text-xs overflow-y-scroll default-scroll h-[500px]">
-            {!data.itemsByAdventurerQuery ? (
+            {(profileExists && !data.itemsByProfileQuery) ||
+            (!profileExists && !data.itemsByAdventurerQuery) ? (
               <div>
                 <LootIconLoader className="m-auto" size="w-10" />
               </div>

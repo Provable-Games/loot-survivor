@@ -243,7 +243,7 @@ const useUIStore = create<State>((set) => ({
   setControllerAdmin: (value) => set({ controllerAdmin: value }),
   fetchUnlocksEntropy: false,
   setFetchUnlocksEntropy: (value) => set({ fetchUnlocksEntropy: value }),
-  tillDeath: false,
+  tillDeath: true,
   setTillDeath: (value) => set({ tillDeath: value }),
 }));
 

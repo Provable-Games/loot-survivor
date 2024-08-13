@@ -7,7 +7,6 @@ import {
   getPotionPrice,
 } from "@/app/lib/utils";
 import { GameData } from "@/app/lib/data/GameData";
-import ButtonMenu from "@/app/components/menu/ButtonMenu";
 import useLoadingStore from "@/app/hooks/useLoadingStore";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
 import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
@@ -16,26 +15,23 @@ import { Button } from "@/app/components/buttons/Button";
 import {
   ArrowTargetIcon,
   CatIcon,
-  CoinIcon,
   CoinCharismaIcon,
   HeartVitalityIcon,
   LightbulbIcon,
   ScrollIcon,
-  HeartIcon,
 } from "@/app/components/icons/Icons";
 import PurchaseHealth from "@/app/components/upgrade/PurchaseHealth";
 import MarketplaceScreen from "@/app/containers/MarketplaceScreen";
 import { UpgradeNav } from "@/app/components/upgrade/UpgradeNav";
-import { StatAttribute } from "@/app/components/upgrade/StatAttribute";
 import useUIStore from "@/app/hooks/useUIStore";
 import {
   UpgradeStats,
   ZeroUpgrade,
   UpgradeSummary,
   ItemPurchase,
+  Attribute,
 } from "@/app/types";
 import Summary from "@/app/components/upgrade/Summary";
-import { HealthCountDown } from "@/app/components/CountDown";
 import {
   calculateVitBoostRemoved,
   calculateChaBoostRemoved,
@@ -44,6 +40,7 @@ import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import { useController } from "@/app/context/ControllerContext";
 import { useUiSounds, soundSelector } from "@/app/hooks/useUiSound";
 import { vitalityIncrease } from "@/app/lib/constants";
+import StatCard from "@/app/components/upgrade/StatCard";
 
 interface UpgradeScreenProps {
   upgrade: (
@@ -77,7 +74,6 @@ export default function UpgradeScreen({
   const hasStatUpgrades = useAdventurerStore(
     (state) => state.computed.hasStatUpgrades
   );
-  const [selected, setSelected] = useState("");
   const [nonBoostedStats, setNonBoostedStats] = useState<any | null>(null);
   const upgradeScreen = useUIStore((state) => state.upgradeScreen);
   const setUpgradeScreen = useUIStore((state) => state.setUpgradeScreen);
@@ -163,146 +159,68 @@ export default function UpgradeScreen({
     typeof pendingMessage === "string" &&
     (pendingMessage as string).startsWith("Upgrading");
 
-  const attributes = [
+  const attributes: Attribute[] = [
     {
+      key: 1,
       name: "Strength",
       icon: <ArrowTargetIcon />,
       description: "Strength increases attack damage by 10%",
       buttonText: "Upgrade Strength",
       abbrev: "STR",
       nonBoostedStat: nonBoostedStats?.strength,
+      upgrades: upgrades["Strength"] ?? 0,
     },
     {
+      key: 2,
       name: "Dexterity",
       icon: <CatIcon />,
       description: "Dexterity increases chance of fleeing Beasts",
       buttonText: "Upgrade Dexterity",
       abbrev: "DEX",
       nonBoostedStat: nonBoostedStats?.dexterity,
+      upgrades: upgrades["Dexterity"] ?? 0,
     },
     {
+      key: 3,
       name: "Vitality",
-      id: 3,
       icon: <HeartVitalityIcon />,
       description: `Vitality increases max health and gives +${vitalityIncrease}hp per point`,
       buttonText: "Upgrade Vitality",
       abbrev: "VIT",
       nonBoostedStat: nonBoostedStats?.vitality,
+      upgrades: upgrades["Vitality"] ?? 0,
     },
     {
+      key: 4,
       name: "Intelligence",
       icon: <LightbulbIcon />,
       description: "Intelligence increases chance of avoiding Obstacles",
       buttonText: "Upgrade Intelligence",
       abbrev: "INT",
       nonBoostedStat: nonBoostedStats?.intelligence,
+      upgrades: upgrades["Intelligence"] ?? 0,
     },
     {
+      key: 5,
       name: "Wisdom",
       icon: <ScrollIcon />,
       description: "Wisdom increases chance of avoiding a Beast ambush",
       buttonText: "Upgrade Wisdom",
       abbrev: "WIS",
       nonBoostedStat: nonBoostedStats?.wisdom,
+      upgrades: upgrades["Wisdom"] ?? 0,
     },
     {
+      key: 6,
       name: "Charisma",
       icon: <CoinCharismaIcon />,
       description: "Charisma provides discounts on the marketplace and potions",
       buttonText: "Upgrade Charisma",
       abbrev: "CHA",
       nonBoostedStat: nonBoostedStats?.charisma,
+      upgrades: upgrades["Charisma"] ?? 0,
     },
   ];
-
-  function renderContent() {
-    const attribute = attributes.find((attr) => attr.name === selected);
-    return (
-      <div className="order-1 sm:order-2 flex sm:w-2/3 h-24 sm:h-full items-center justify-center p-auto">
-        {attribute && (
-          <StatAttribute upgradeHandler={handleAddUpgradeTx} {...attribute} />
-        )}
-      </div>
-    );
-  }
-
-  function renderButtonMenu() {
-    const upgradeMenu = [
-      {
-        id: 1,
-        label: `Strength - ${adventurer?.strength! + upgrades["Strength"]} ${
-          upgrades["Strength"] > 0 ? ` (+${upgrades["Strength"]})` : ""
-        }`,
-        icon: <ArrowTargetIcon />,
-        value: "Strength",
-        action: async () => setSelected("Strength"),
-        disabled: false,
-      },
-      {
-        id: 2,
-        label: `Dexterity - ${adventurer?.dexterity! + upgrades["Dexterity"]} ${
-          upgrades["Dexterity"] > 0 ? ` (+${upgrades["Dexterity"]})` : ""
-        }`,
-        icon: <CatIcon />,
-        value: "Dexterity",
-        action: async () => setSelected("Dexterity"),
-        disabled: false,
-      },
-      {
-        id: 3,
-        label: `Vitality - ${adventurer?.vitality! + upgrades["Vitality"]} ${
-          upgrades["Vitality"] > 0 ? ` (+${upgrades["Vitality"]})` : ""
-        }`,
-        icon: <HeartVitalityIcon />,
-        value: "Vitality",
-        action: async () => setSelected("Vitality"),
-        disabled: false,
-      },
-      {
-        id: 4,
-        label: `Intelligence - ${
-          adventurer?.intelligence! + upgrades["Intelligence"]
-        } ${
-          upgrades["Intelligence"] > 0 ? ` (+${upgrades["Intelligence"]})` : ""
-        }`,
-        icon: <LightbulbIcon />,
-        value: "Intelligence",
-        action: async () => setSelected("Intelligence"),
-        disabled: false,
-      },
-      {
-        id: 5,
-        label: `Wisdom - ${adventurer?.wisdom! + upgrades["Wisdom"]} ${
-          upgrades["Wisdom"] > 0 ? ` (+${upgrades["Wisdom"]})` : ""
-        }`,
-        icon: <ScrollIcon />,
-        value: "Wisdom",
-        action: async () => setSelected("Wisdom"),
-        disabled: false,
-      },
-      {
-        id: 6,
-        label: `Charisma - ${adventurer?.charisma! + upgrades["Charisma"]} ${
-          upgrades["Charisma"] > 0 ? ` (+${upgrades["Charisma"]})` : ""
-        }`,
-        icon: <CoinCharismaIcon />,
-        value: "Charisma",
-        action: async () => setSelected("Charisma"),
-        disabled: false,
-      },
-    ];
-    return (
-      <div className="order-2 sm:order-1 sm:w-1/3 sm:border-r sm:border-terminal-green h-full">
-        <ButtonMenu
-          buttonsData={upgradeMenu}
-          onSelected={setSelected}
-          onEnterAction={true}
-          className="flex-col items-center justify-center h-full"
-          size="lg"
-        />
-      </div>
-    );
-  }
 
   const selectedCharisma = upgrades["Charisma"] ?? 0;
   const selectedVitality = upgrades["Vitality"] ?? 0;
@@ -467,18 +385,6 @@ export default function UpgradeScreen({
 
   const totalStatUpgrades = (adventurer?.statUpgrades ?? 0) - upgradesTotal;
 
-  const healthPlus = Math.min(
-    selectedVitality * vitalityIncrease + potionAmount * 10,
-    maxHealth - (adventurer?.health ?? 0)
-  );
-
-  const maxHealthPlus = selectedVitality * vitalityIncrease;
-
-  const totalHealth = Math.min(
-    (adventurer?.health ?? 0) + healthPlus,
-    maxHealth
-  );
-
   const getNoBoostedStats = async () => {
     const baseAdventurer = (await gameContract?.call(
       "get_adventurer_no_boosts",
@@ -511,165 +417,102 @@ export default function UpgradeScreen({
             />
           </div>
           {!checkTransacting ? (
-            <div className="w-full sm:w-2/3 h-full">
-              <div className="flex flex-col h-full">
-                <div className="flex flex-col sm:justify-center text-terminal-green sm:h-1/4">
-                  <div className="w-full flex flex-row gap-2 mx-auto border border-terminal-green justify-between">
-                    <Button
-                      className="h-10 w-16 sm:h-auto sm:w-auto"
-                      variant={"outline"}
-                      onClick={() => setUpgradeScreen(upgradeScreen - 1)}
-                      disabled={upgradeScreen == 1}
-                    >
-                      {"<"} Back
-                    </Button>
+            <div className="flex flex-col sm:gap-3 w-full sm:w-2/3 h-full">
+              <div className="w-full flex flex-row items-center justify-between px-2 h-8">
+                <div className="flex flex-row items-center gap-5">
+                  <div className="uppercase sm:text-2xl animate-pulse">
+                    Level up!
+                  </div>
 
-                    {upgradeScreen != 3 && (
-                      <div className="sm:hidden flex-grow text-center uppercase text-2xl self-center">
-                        Level up!
-                      </div>
-                    )}
+                  <span className="uppercase sm:text-2xl">{`${totalStatUpgrades} SP Available`}</span>
+                </div>
 
-                    {upgradeScreen != 3 && upgradeScreen != 2 && (
-                      <div className=" flex-grow text-center uppercase text-2xl self-center hidden sm:block">
-                        Level up!
-                      </div>
-                    )}
-
-                    <Button
-                      className={` ${
-                        upgradeScreen == 2
-                          ? "hidden sm:block"
-                          : upgradeScreen == 3
-                          ? "sm:hidden"
-                          : "hidden"
-                      } w-11/12`}
-                      onClick={() => {
+                <Button
+                  className="hidden sm:block w-1/2 sm:w-2/3"
+                  onClick={() => {
+                    handleSubmitUpgradeTx();
+                    setUpgradeScreen(1);
+                  }}
+                  disabled={
+                    nextDisabled || loading || estimatingFee || bankrupt
+                  }
+                >
+                  {loading ? (
+                    <span>Upgrading...</span>
+                  ) : (
+                    <span>{bankrupt ? "Bankrupt" : "Next Level"}</span>
+                  )}
+                </Button>
+                <div className="sm:hidden flex flex-row gap-2 w-1/2 sm:w-2/3">
+                  <Button
+                    onClick={() => {
+                      setUpgradeScreen(1);
+                    }}
+                    className={upgradeScreen == 1 ? "hidden" : ""}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    className="w-full"
+                    onClick={() => {
+                      if (upgradeScreen === 2) {
                         handleSubmitUpgradeTx();
                         setUpgradeScreen(1);
-                      }}
-                      disabled={
-                        nextDisabled || loading || estimatingFee || bankrupt
+                      } else {
+                        setUpgradeScreen(2);
                       }
-                    >
-                      {loading ? (
-                        <span>Upgrading...</span>
-                      ) : (
-                        <span>{bankrupt ? "Bankrupt" : "Upgrade"}</span>
-                      )}
-                    </Button>
-                    <Button
-                      className={` ${
-                        upgradeScreen == 2
-                          ? "sm:hidden"
-                          : upgradeScreen == 3
-                          ? "hidden"
-                          : ""
-                      } h-10 w-16 sm:h-auto sm:w-auto`}
-                      onClick={() => {
-                        setUpgradeScreen(upgradeScreen + 1);
-                      }}
-                      disabled={nextDisabled || loading || estimatingFee}
-                    >
-                      <span>Next {">"}</span>
-                    </Button>
-                  </div>
-
-                  <div className="flex flex-row gap-2 xl:gap-0 justify-center text-lg 2xl:text-2xl text-shadow-none">
-                    <span>
-                      {totalStatUpgrades > 0
-                        ? `Stat Upgrades Available ${totalStatUpgrades}`
-                        : "All Stats Chosen!"}
-                    </span>
-                  </div>
-                  <UpgradeNav activeSection={upgradeScreen} />
-                  <div className="flex flex-col text-sm sm:text-base items-center justify-center border border-terminal-green">
-                    <div className="flex flex-row gap-3 border-b border-terminal-green w-full justify-center">
-                      <span className="flex flex-row gap-1 items-center">
-                        <p>Cost:</p>
-                        <span className="flex flex-row items-center text-xl">
-                          <CoinIcon className="self-center w-5 h-5 fill-current text-terminal-yellow self-center ml-1" />
-                          <p
-                            className={
-                              bankrupt ? "text-red-600" : "text-terminal-yellow"
-                            }
-                          >
-                            {upgradeTotalCost}
-                          </p>
-                        </span>
+                    }}
+                    disabled={
+                      (upgradeScreen == 2 && nextDisabled) ||
+                      loading ||
+                      estimatingFee ||
+                      bankrupt
+                    }
+                  >
+                    {loading ? (
+                      <span>Upgrading...</span>
+                    ) : (
+                      <span>
+                        {bankrupt
+                          ? "Bankrupt"
+                          : upgradeScreen == 2
+                          ? "Next Level"
+                          : "Next"}
                       </span>
-                      <span className="flex flex-row gap-1 items-center">
-                        <p>Potions:</p>
-                        <span className="flex text-xl text-terminal-yellow">
-                          {potionAmount?.toString() ?? 0}
-                        </span>
-                      </span>
-                      <span className="flex flex-row gap-1 items-center">
-                        <p>Items:</p>
-                        <span className="flex text-xl text-terminal-yellow">
-                          {purchaseItems?.length}
-                        </span>
-                      </span>
-                    </div>
-                    <div className="sm:hidden flex flex-row gap-3 py-2 items-center text-lg">
-                      <span className="flex flex-row">
-                        Gold:{" "}
-                        <span className="flex flex-row text-terminal-yellow">
-                          <CoinIcon className="self-center mt-1 w-5 h-5 fill-current" />{" "}
-                          {(adventurer?.gold ?? 0) - upgradeTotalCost}
-                        </span>
-                      </span>
-                      <span className="relative flex flex-row items-center">
-                        <span className="flex items-center ">
-                          <HeartIcon className="self-center mt-1 w-5 h-5 fill-current" />{" "}
-                          <HealthCountDown health={totalHealth || 0} />
-                          {`/${maxHealth}`}
-                        </span>
-                        {(potionAmount > 0 || selectedVitality > 0) && (
-                          <p className="absolute top-[-5px] sm:top-[-10px] right-[30px] sm:right-[40px] text-xs sm:text-sm">
-                            +{healthPlus}
-                          </p>
-                        )}
-                        {selectedVitality > 0 && (
-                          <p className="absolute top-[-5px] sm:top-[-10px] right-0 text-xs sm:text-sm">
-                            +{maxHealthPlus}
-                          </p>
-                        )}
-                      </span>
-                    </div>
-                  </div>
+                    )}
+                  </Button>
                 </div>
+              </div>
+              <UpgradeNav activeSection={upgradeScreen} />
 
-                <div className="flex flex-col h-2/3 sm:h-3/4">
-                  {upgradeScreen === 1 && (
-                    <div className="flex flex-col sm:gap-2 items-center w-full h-full">
-                      <div className="flex flex-col gap-0 sm:flex-row w-full border-terminal-green border sm:items-center h-full">
-                        {renderContent()}
-                        {renderButtonMenu()}
-                      </div>
+              <div className="flex flex-col gap-2 sm:gap-0 items-center h-full">
+                {upgradeScreen === 1 && (
+                  <>
+                    <div className="grid grid-cols-2 sm:flex sm:flex-row items-center justify-between p-2 h-3/4 sm:h-[100px] w-full">
+                      {attributes.map((attribute) => (
+                        <StatCard
+                          key={attribute.key}
+                          min={0}
+                          amount={upgrades[attribute.name]}
+                          setAmount={(value) => {
+                            upgrades[attribute.name] = value;
+                            setUpgrades(upgrades);
+                          }}
+                          attribute={attribute}
+                          upgradeHandler={handleAddUpgradeTx}
+                        />
+                      ))}
                     </div>
-                  )}
-
-                  {upgradeScreen === 2 && (
-                    <div
-                      className="flex
-                     sm:flex-row items-center justify-center flex-wrap border border-terminal-green p-2 h-full sm:h-1/6"
-                    >
-                      {/* <h4>Potions</h4> */}
-                      <PurchaseHealth
-                        upgradeTotalCost={upgradeTotalCost}
-                        potionAmount={potionAmount}
-                        setPotionAmount={setPotionAmount}
-                        totalCharisma={totalCharisma}
-                        upgradeHandler={handleAddUpgradeTx}
-                        totalVitality={totalVitality}
-                        vitBoostRemoved={vitBoostRemoved}
-                      />
-                    </div>
-                  )}
-
-                  {upgradeScreen === 2 && (
-                    <div className="hidden sm:flex items-center w-full h-5/6">
+                    <PurchaseHealth
+                      upgradeTotalCost={upgradeTotalCost}
+                      potionAmount={potionAmount}
+                      setPotionAmount={setPotionAmount}
+                      totalCharisma={totalCharisma}
+                      upgradeHandler={handleAddUpgradeTx}
+                      totalVitality={totalVitality}
+                      vitBoostRemoved={vitBoostRemoved}
+                    />
+                    <div className="hidden sm:flex items-center w-full h-[400px]">
                       <MarketplaceScreen
                         upgradeTotalCost={upgradeTotalCost}
                         purchaseItems={purchaseItems}
@@ -680,21 +523,22 @@ export default function UpgradeScreen({
                         dropItems={dropItems}
                       />
                     </div>
-                  )}
-                  {upgradeScreen === 3 && (
-                    <div className="sm:hidden flex-col items-center sm:gap-2 w-full h-full">
-                      <MarketplaceScreen
-                        upgradeTotalCost={upgradeTotalCost}
-                        purchaseItems={purchaseItems}
-                        setPurchaseItems={setPurchaseItems}
-                        upgradeHandler={handleAddUpgradeTx}
-                        totalCharisma={totalCharisma}
-                        adventurerItems={adventurerItems}
-                        dropItems={dropItems}
-                      />
-                    </div>
-                  )}
-                </div>
+                  </>
+                )}
+
+                {upgradeScreen === 2 && (
+                  <div className="flex items-center w-full h-5/6">
+                    <MarketplaceScreen
+                      upgradeTotalCost={upgradeTotalCost}
+                      purchaseItems={purchaseItems}
+                      setPurchaseItems={setPurchaseItems}
+                      upgradeHandler={handleAddUpgradeTx}
+                      totalCharisma={totalCharisma}
+                      adventurerItems={adventurerItems}
+                      dropItems={dropItems}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           ) : (

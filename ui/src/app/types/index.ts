@@ -519,3 +519,14 @@ export type PragmaPrice = {
   num_sources_aggregated: bigint;
   price: bigint;
 };
+
+export type Attribute = {
+  key: number;
+  name: string;
+  icon: ReactElement;
+  description: string;
+  buttonText: string;
+  abbrev: string;
+  nonBoostedStat: bigint;
+  upgrades: number;
+};

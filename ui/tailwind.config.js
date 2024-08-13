@@ -70,14 +70,30 @@ module.exports = {
     },
   },
   plugins: [
-    function({ addUtilities }) {
+    function({ addUtilities, theme }) {
       const newUtilities = {
-        '.text-shadow-none': {
-          textShadow: 'none',
+        '.custom-range-input': {
+          '&::-webkit-slider-thumb': {
+            '-webkit-appearance': 'none',
+            'appearance': 'none',
+            'width': '20px',
+            'height': '20px',
+            'background-color': 'rgba(74, 246, 38, 1)',
+            'cursor': 'pointer',
+          },
+          '&::-moz-range-thumb': {
+            'width': '20px',
+            'height': '20px',
+            'background-color': 'rgba(74, 246, 38, 1)',
+            'cursor': 'pointer',
+          },
+          '&::-webkit-slider-runnable-track': {
+            'background-color': 'rgba(0, 0, 0, 1)',
+            'border-radius': '0px',
+          },
         },
-        // You can add more custom text shadow utilities here...
-      }
-      addUtilities(newUtilities)
+      };
+      addUtilities(newUtilities);
     }
   ],
 }

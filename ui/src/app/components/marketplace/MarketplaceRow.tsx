@@ -115,7 +115,7 @@ const MarketplaceRow = ({
   const handlePurchase = () => {
     const newPurchase = {
       item: getKeyFromValue(gameData.ITEMS, item?.item ?? "") ?? "0",
-      equip: emptySlot && !slotEquipped ? "1" : "0",
+      equip: (emptySlot || slot === "Weapon") && !slotEquipped ? "1" : "0",
     };
     const newPurchases = [...purchaseItems, newPurchase];
     setPurchaseItems(newPurchases);
