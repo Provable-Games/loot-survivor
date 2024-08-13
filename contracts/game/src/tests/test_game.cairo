@@ -2669,8 +2669,8 @@ mod tests {
         assert(item_leveled_up_event.suffix_unlocked, 'suffix should be unlocked');
         assert(item_leveled_up_event.prefixes_unlocked, 'prefix should be unlocked');
         assert(item_leveled_up_event.specials.special1 != 0, 'special1 should be set');
-        assert(item_leveled_up_event.specials.special2 == 0, 'special2 should be set');
-        assert(item_leveled_up_event.specials.special3 == 0, 'special3 should be set');
+        assert(item_leveled_up_event.specials.special2 != 0, 'special2 should be set');
+        assert(item_leveled_up_event.specials.special3 != 0, 'special3 should be set');
         assert(adventurer.stat_upgrades_available == prev_stat_upgrades_available, 'wrong stats available');
     }
 }
