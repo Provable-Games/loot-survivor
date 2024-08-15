@@ -122,6 +122,7 @@ trait IGame<TContractState> {
     fn uses_custom_renderer(self: @TContractState, adventurer_id: felt252) -> bool;
     fn get_custom_renderer(self: @TContractState, adventurer_id: felt252) -> ContractAddress;
     fn get_player_vrf_allowance(self: @TContractState, adventurer_id: felt252) -> u128;
+    fn get_vrf_premiums_address(self: @TContractState) -> ContractAddress;
 }
 
 #[starknet::interface]

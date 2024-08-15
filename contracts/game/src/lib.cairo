@@ -131,6 +131,7 @@ mod Game {
         _player_vrf_allowance: LegacyMap::<felt252, u128>,
         _qualifying_collections: LegacyMap::<ContractAddress, bool>,
         _claimed_tokens: LegacyMap::<felt252, bool>,
+        _vrf_premiums_address: ContractAddress,
     }
 
     #[event]
@@ -203,7 +204,8 @@ mod Game {
         oracle_address: ContractAddress,
         render_contract: ContractAddress,
         qualifying_collections: Array<ContractAddress>,
-        launch_promotion_end_timestamp: u64
+        launch_promotion_end_timestamp: u64,
+        vrf_premiums_address: ContractAddress
     ) {
         // init storage
         self._lords.write(lords);
@@ -238,6 +240,9 @@ mod Game {
         // set the cost to play
         self._cost_to_play.write(COST_TO_PLAY);
 
+        // set the vrf premiums address
+        self._vrf_premiums_address.write(vrf_premiums_address);
+
         // set qualifying nft collections
         let mut qualifying_collections_span = qualifying_collections.span();
         _save_qualifying_nft_collections(ref self, ref qualifying_collections_span);
@@ -247,6 +252,7 @@ mod Game {
         if _network_supports_vrf() {
             let eth_dispatcher = IERC20Dispatcher { contract_address: eth_address };
             eth_dispatcher.approve(randomness_contract_address, BoundedInt::max());
+            eth_dispatcher.approve(vrf_premiums_address, BoundedInt::max());
         }
     }
 
@@ -959,6 +965,9 @@ mod Game {
         }
         fn get_player_vrf_allowance(self: @ContractState, adventurer_id: felt252) -> u128 {
             self._player_vrf_allowance.read(adventurer_id)
+        }
+        fn get_vrf_premiums_address(self: @ContractState) -> ContractAddress {
+            self._vrf_premiums_address.read()
         }
         fn get_adventurer_no_boosts(self: @ContractState, adventurer_id: felt252) -> Adventurer {
             _load_adventurer_no_boosts(self, adventurer_id)
