@@ -117,8 +117,8 @@ export const AdventurersList = ({
   return (
     <div className="flex flex-col items-center h-full">
       {formatAdventurersCount > 0 ? (
-        <div className="flex flex-col gap-2 sm:flex-row w-full h-full items-center sm:items-start">
-          <div className="flex flex-col w-full sm:w-1/3 overflow-y-auto default-scroll mx-2 border border-terminal-green sm:border-none h-[350px] xl:h-[500px] 2xl:h-[625px] p-1">
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-0 w-full h-full items-center sm:items-start">
+          <div className="flex flex-col w-full sm:w-1/3 overflow-y-auto default-scroll mx-2 sm:mx-0 border border-terminal-green sm:border-none h-[350px] xl:h-[500px] 2xl:h-[625px] p-1">
             {adventurers.map((adventurer, index) => (
               <Button
                 key={index}
@@ -132,8 +132,8 @@ export const AdventurersList = ({
                   selectedIndex === index && isActive ? "default" : "ghost"
                 }
                 onClick={async () => {
-                  setAdventurer(adventurer);
-                  await handleSwitchAdventurer(adventurer.id!);
+                  // setAdventurer(adventurer);
+                  // await handleSwitchAdventurer(adventurer.id!);
                   setSelectedIndex(index);
                 }}
                 disabled={adventurer?.health === 0}
@@ -146,6 +146,15 @@ export const AdventurersList = ({
                 </div>
               </Button>
             ))}
+            {formatAdventurersCount > 0 && (
+              <Button
+                className="w-full h-full"
+                size={"xs"}
+                onClick={() => setShowZeroHealth(!showZeroHealth)}
+              >
+                {showZeroHealth ? "Hide" : "Show"} dead
+              </Button>
+            )}
             {formatAdventurersCount > 10 && (
               <div className="flex justify-center mt-8">
                 <Button
@@ -168,17 +177,6 @@ export const AdventurersList = ({
                   next
                 </Button>
               </div>
-            )}
-          </div>
-          <div>
-            {formatAdventurersCount > 0 && (
-              <Button
-                className="w-full h-full"
-                size={"xs"}
-                onClick={() => setShowZeroHealth(!showZeroHealth)}
-              >
-                {showZeroHealth ? "Hide" : "Show"} dead
-              </Button>
             )}
           </div>
           {adventurers.length > 0 && (
