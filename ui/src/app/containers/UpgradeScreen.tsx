@@ -41,14 +41,9 @@ import { useController } from "@/app/context/ControllerContext";
 import { useUiSounds, soundSelector } from "@/app/hooks/useUiSound";
 import { vitalityIncrease } from "@/app/lib/constants";
 import StatCard from "@/app/components/upgrade/StatCard";
+import { useGameSyscalls } from "@/app/hooks/useGameSyscalls";
 
 interface UpgradeScreenProps {
-  upgrade: (
-    upgrades: UpgradeStats,
-    purchaseItems: ItemPurchase[],
-    potionAmount: number,
-    upgradeTx?: any
-  ) => Promise<void>;
   gameContract: Contract;
 }
 
@@ -56,10 +51,7 @@ interface UpgradeScreenProps {
  * @container
  * @description Provides the upgrade screen for the adventurer.
  */
-export default function UpgradeScreen({
-  upgrade,
-  gameContract,
-}: UpgradeScreenProps) {
+export default function UpgradeScreen({ gameContract }: UpgradeScreenProps) {
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const updateAdventurerStats = useAdventurerStore(
     (state) => state.updateAdventurerStats
@@ -97,6 +89,8 @@ export default function UpgradeScreen({
     Items: [],
     Potions: 0,
   });
+
+  const { upgrade } = useGameSyscalls();
 
   const { play: clickPlay } = useUiSounds(soundSelector.click);
 

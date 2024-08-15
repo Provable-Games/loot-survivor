@@ -5,6 +5,7 @@ import { Button } from "@/app/components/buttons/Button";
 import { Section } from "@/app/containers/Onboarding";
 import { Network } from "@/app/hooks/useUIStore";
 import { networkConfig } from "@/app/lib/networkConfig";
+import { useGameSyscalls } from "@/app/hooks/useGameSyscalls";
 
 interface LordsSectionProps {
   step: number;
@@ -12,7 +13,6 @@ interface LordsSectionProps {
   onMainnet: boolean;
   network: Network;
   setSection: (section: Section) => void;
-  mintLords: (lordsAmount: number) => Promise<void>;
   setMintingLords: (value: boolean) => void;
   lordsGameCost: number;
 }
@@ -23,10 +23,10 @@ const LordsSection = ({
   onMainnet,
   network,
   setSection,
-  mintLords,
   setMintingLords,
   lordsGameCost,
 }: LordsSectionProps) => {
+  const { mintLords } = useGameSyscalls();
   // const checkEnoughLords = lords > lordsGameCost;
   return (
     <>
@@ -85,7 +85,7 @@ const LordsSection = ({
                 window.open(avnuLords, "_blank");
               } else {
                 setMintingLords(true);
-                await mintLords(50);
+                await mintLords();
                 setMintingLords(false);
               }
             }}

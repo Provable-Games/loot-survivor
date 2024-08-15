@@ -44,34 +44,22 @@ import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 import useLoadingStore from "@/app/hooks/useLoadingStore";
 import { useController } from "@/app/context/ControllerContext";
 import { vitalityIncrease } from "@/app/lib/constants";
+import { useGameSyscalls } from "@/app/hooks/useGameSyscalls";
 
 export interface HeaderProps {
-  multicall: (
-    loadingMessage: string[],
-    notification: string[],
-    upgradeTx?: any
-  ) => Promise<void>;
-  mintLords: (lordsAmount: number) => Promise<void>;
-  ethBalance: bigint;
-  lordsBalance: bigint;
   gameContract: Contract;
   costToPlay: bigint;
 }
 
-export default function Header({
-  multicall,
-  mintLords,
-  ethBalance,
-  lordsBalance,
-  gameContract,
-  costToPlay,
-}: HeaderProps) {
+export default function Header({ gameContract, costToPlay }: HeaderProps) {
   const { account } = useNetworkAccount();
   const { disconnect } = useDisconnect();
   const resetData = useQueriesStore((state) => state.resetData);
   const { connector } = useConnect();
   const [apibaraStatus, setApibaraStatus] = useState();
   const username = useUIStore((state) => state.username);
+
+  const { multicall, mintLords, ethBalance, lordsBalance } = useGameSyscalls();
 
   const isMuted = useUIStore((state) => state.isMuted);
   const setIsMuted = useUIStore((state) => state.setIsMuted);
@@ -400,7 +388,7 @@ export default function Header({
                   )}&amount=0.001`;
                   window.open(avnuLords, "_blank");
                 } else {
-                  await mintLords(lordsGameCost * 25);
+                  await mintLords();
                 }
               }}
               onMouseEnter={() => setShowLordsBuy(true)}

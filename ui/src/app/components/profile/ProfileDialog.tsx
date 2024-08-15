@@ -8,29 +8,18 @@ import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import { NullAdventurer } from "@/app/types";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 import { displayAddress, padAddress, copyToClipboard } from "@/app/lib/utils";
-import { AccountInterface } from "starknet";
 import Eth from "public/icons/eth.svg";
 import Lords from "public/icons/lords.svg";
 import { CartridgeIcon } from "@/app/components/icons/Icons";
 import { checkCartridgeConnector } from "@/app/lib/connectors";
+import { useGameSyscalls } from "@/app/hooks/useGameSyscalls";
 
 interface ProfileDialogprops {
-  withdraw: (
-    adminAccountAddress: string,
-    account: AccountInterface,
-    ethBalance: bigint,
-    lordsBalance: bigint
-  ) => Promise<void>;
-  ethBalance: bigint;
-  lordsBalance: bigint;
   ethContractAddress: string;
   lordsContractAddress: string;
 }
 
 export const ProfileDialog = ({
-  withdraw,
-  ethBalance,
-  lordsBalance,
   ethContractAddress,
   lordsContractAddress,
 }: ProfileDialogprops) => {
@@ -46,6 +35,8 @@ export const ProfileDialog = ({
   const controllerAdmin = useUIStore((state) => state.controllerAdmin);
   const handleOffboarded = useUIStore((state) => state.handleOffboarded);
   const { connector } = useConnect();
+
+  const { withdraw, ethBalance, lordsBalance } = useGameSyscalls();
 
   const handleCopy = () => {
     copyToClipboard(padAddress(address!));

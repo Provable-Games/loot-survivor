@@ -1,5 +1,5 @@
 "use client";
-import { useConnect, useContract, useProvider } from "@starknet-react/core";
+import { useConnect, useContract } from "@starknet-react/core";
 import { sepolia } from "@starknet-react/chains";
 import { constants } from "starknet";
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -41,20 +41,17 @@ import {
   getGoldenTokensByOwner,
 } from "@/app/hooks/graphql/queries";
 import NetworkSwitchError from "@/app/components/navigation/NetworkSwitchError";
-import { useSyscalls } from "@/app/lib/utils/syscalls";
+import { useGameSyscalls } from "@/app/hooks/useGameSyscalls";
 import Game from "@/app/abi/Game.json";
 import Lords from "@/app/abi/Lords.json";
 import EthBalanceFragment from "@/app/abi/EthBalanceFragment.json";
 import Beasts from "@/app/abi/Beasts.json";
-import Pragma from "@/app/abi/Pragma.json";
 import ScreenMenu from "@/app/components/menu/ScreenMenu";
 import { checkArcadeConnector } from "@/app/lib/connectors";
 import Header from "@/app/components/navigation/Header";
-import { fetchBalances, fetchEthBalance } from "@/app/lib/balances";
-import useTransactionManager from "@/app/hooks/useTransactionManager";
 import { SpecialBeast } from "@/app/components/notifications/SpecialBeast";
 import Storage from "@/app/lib/storage";
-import Onboarding from "./containers/Onboarding";
+import Onboarding from "@/app/containers/Onboarding";
 import useControls from "@/app/hooks/useControls";
 import { networkConfig } from "@/app/lib/networkConfig";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
@@ -100,14 +97,12 @@ function Home() {
   const network = useUIStore((state) => state.network);
   const onKatana = useUIStore((state) => state.onKatana);
   const { account, address, isConnected } = useNetworkAccount();
-  const { provider } = useProvider();
   const isMuted = useUIStore((state) => state.isMuted);
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
   const updateAdventurerStats = useAdventurerStore(
     (state) => state.updateAdventurerStats
   );
-  const calls = useTransactionCartStore((state) => state.calls);
   const screen = useUIStore((state) => state.screen);
   const setScreen = useUIStore((state) => state.setScreen);
   const deathDialog = useUIStore((state) => state.deathDialog);
@@ -118,21 +113,13 @@ function Home() {
   const owner = account?.address ? padAddress(account.address) : "";
   const isWrongNetwork = useUIStore((state) => state.isWrongNetwork);
   const setIsWrongNetwork = useUIStore((state) => state.setIsWrongNetwork);
-  const showTopUpDialog = useUIStore((state) => state.showTopUpDialog);
-  const setTopUpAccount = useUIStore((state) => state.setTopUpAccount);
-  const setSpecialBeast = useUIStore((state) => state.setSpecialBeast);
   const isMintingLords = useUIStore((state) => state.isMintingLords);
   const isWithdrawing = useUIStore((state) => state.isWithdrawing);
-  const setIsMintingLords = useUIStore((state) => state.setIsMintingLords);
-  const setIsWithdrawing = useUIStore((state) => state.setIsWithdrawing);
   const hash = useLoadingStore((state) => state.hash);
   const specialBeastDefeated = useUIStore(
     (state) => state.specialBeastDefeated
   );
   const onboarded = useUIStore((state) => state.onboarded);
-  const setSpecialBeastDefeated = useUIStore(
-    (state) => state.setSpecialBeastDefeated
-  );
   const encounterTable = useUIStore((state) => state.encounterTable);
   const setAdventurerEntropy = useUIStore(
     (state) => state.setAdventurerEntropy
@@ -157,29 +144,14 @@ function Home() {
     address: networkConfig[network!].beastsAddress,
     abi: Beasts,
   });
-  const { contract: pragmaContract } = useContract({
-    address: networkConfig[network!].pragmaAddress,
-    abi: Pragma,
-  });
 
-  const { addTransaction } = useTransactionManager();
-  const addToCalls = useTransactionCartStore((state) => state.addToCalls);
   const resetCalls = useTransactionCartStore((state) => state.resetCalls);
-  const handleSubmitCalls = useTransactionCartStore(
-    (state) => state.handleSubmitCalls
-  );
-  const startLoading = useLoadingStore((state) => state.startLoading);
-  const stopLoading = useLoadingStore((state) => state.stopLoading);
   const pendingMessage = useLoadingStore((state) => state.pendingMessage);
-  const setTxHash = useLoadingStore((state) => state.setTxHash);
   const setEquipItems = useUIStore((state) => state.setEquipItems);
   const setDropItems = useUIStore((state) => state.setDropItems);
   const setPotionAmount = useUIStore((state) => state.setPotionAmount);
   const setUpgrades = useUIStore((state) => state.setUpgrades);
   const setPurchaseItems = useUIStore((state) => state.setPurchaseItems);
-  const setDeathMessage = useLoadingStore((state) => state.setDeathMessage);
-  const showDeathDialog = useUIStore((state) => state.showDeathDialog);
-  const setStartOption = useUIStore((state) => state.setStartOption);
   const entropyReady = useUIStore((state) => state.entropyReady);
   const setEntropyReady = useUIStore((state) => state.setEntropyReady);
   const fetchUnlocksEntropy = useUIStore((state) => state.fetchUnlocksEntropy);
@@ -215,24 +187,7 @@ function Home() {
     }
   }, [connector]);
 
-  const [ethBalance, setEthBalance] = useState(BigInt(0));
-  const [lordsBalance, setLordsBalance] = useState(BigInt(0));
-
-  const getBalances = async () => {
-    const balances = await fetchBalances(
-      address ?? "0x0",
-      ethContract,
-      lordsContract,
-      gameContract
-    );
-    setEthBalance(balances[0]);
-    setLordsBalance(balances[1]);
-  };
-
-  const getEthBalance = async () => {
-    const ethBalance = await fetchEthBalance(address ?? "0x0", ethContract);
-    setEthBalance(ethBalance);
-  };
+  const { getBalances } = useGameSyscalls();
 
   useEffect(() => {
     if (!onKatana) {
@@ -240,59 +195,7 @@ function Home() {
     }
   }, [account]);
 
-  const { data, refetch, resetData, setData, setIsLoading, setNotLoading } =
-    useQueriesStore();
-
-  const {
-    spawn,
-    explore,
-    attack,
-    flee,
-    upgrade,
-    multicall,
-    mintLords,
-    withdraw,
-  } = useSyscalls({
-    gameContract: gameContract!,
-    ethContract: ethContract!,
-    lordsContract: lordsContract!,
-    beastsContract: beastsContract!,
-    pragmaContract: pragmaContract!,
-    rendererContractAddress: networkConfig[network!].rendererAddress,
-    addTransaction,
-    queryData: data,
-    resetData,
-    setData,
-    adventurer: adventurer!,
-    addToCalls,
-    calls,
-    handleSubmitCalls,
-    startLoading,
-    stopLoading,
-    setTxHash,
-    setEquipItems,
-    setDropItems,
-    setDeathMessage,
-    showDeathDialog,
-    setScreen,
-    setAdventurer,
-    setStartOption,
-    ethBalance,
-    showTopUpDialog,
-    setTopUpAccount,
-    account: account!,
-    setSpecialBeastDefeated,
-    setSpecialBeast,
-    connector,
-    getEthBalance,
-    getBalances,
-    setIsMintingLords,
-    setIsWithdrawing,
-    setEntropyReady,
-    setFetchUnlocksEntropy,
-    provider,
-    network,
-  });
+  const { refetch, setData, setIsLoading, setNotLoading } = useQueriesStore();
 
   const playState = useMemo(
     () => ({
@@ -660,13 +563,7 @@ function Home() {
       {isMintingLords && <TokenLoader isToppingUpLords={isMintingLords} />}
       {isWithdrawing && <TokenLoader isWithdrawing={isWithdrawing} />}
       {screen === "onboarding" ? (
-        <Onboarding
-          ethBalance={ethBalance}
-          lordsBalance={lordsBalance}
-          costToPlay={costToPlay}
-          mintLords={mintLords}
-          getBalances={getBalances}
-        />
+        <Onboarding costToPlay={costToPlay} />
       ) : (
         <>
           <div className="flex flex-col w-full">
@@ -678,14 +575,7 @@ function Home() {
                 <TxActivity />
               </div>
             )}
-            <Header
-              multicall={multicall}
-              mintLords={mintLords}
-              ethBalance={ethBalance}
-              lordsBalance={lordsBalance}
-              gameContract={gameContract!}
-              costToPlay={costToPlay}
-            />
+            <Header gameContract={gameContract!} costToPlay={costToPlay} />
           </div>
           <div className="w-full h-1 sm:h-6 sm:my-2 bg-terminal-green text-terminal-black px-4">
             {!spawnLoader && hash && (
@@ -727,21 +617,14 @@ function Home() {
               <div className="h-[550px] xl:h-[500px] 2xl:h-[580px]">
                 {screen === "start" && (
                   <AdventurerScreen
-                    spawn={spawn}
                     handleSwitchAdventurer={handleSwitchAdventurer}
-                    lordsBalance={lordsBalance}
                     gameContract={gameContract!}
                     goldenTokenData={goldenTokenData}
-                    getBalances={getBalances}
-                    mintLords={mintLords}
                     costToPlay={costToPlay}
                   />
                 )}
                 {screen === "play" && (
                   <ActionsScreen
-                    explore={explore}
-                    attack={attack}
-                    flee={flee}
                     gameContract={gameContract!}
                     beastsContract={beastsContract!}
                   />
@@ -751,10 +634,7 @@ function Home() {
                 )}
                 {screen === "leaderboard" && <LeaderboardScreen />}
                 {screen === "upgrade" && (
-                  <UpgradeScreen
-                    upgrade={upgrade}
-                    gameContract={gameContract!}
-                  />
+                  <UpgradeScreen gameContract={gameContract!} />
                 )}
                 {screen === "profile" && (
                   <Profile gameContract={gameContract!} />
@@ -775,9 +655,6 @@ function Home() {
                   <div className="absolute flex items-center justify-center top-0 right-0 left-0 w-full h-full bg-black/50">
                     <span className="w-full h-full bg-black/50" />
                     <ProfileDialog
-                      withdraw={withdraw}
-                      ethBalance={ethBalance}
-                      lordsBalance={lordsBalance}
                       ethContractAddress={ethContract!.address}
                       lordsContractAddress={lordsContract!.address}
                     />

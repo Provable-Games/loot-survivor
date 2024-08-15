@@ -10,16 +10,15 @@ import { ETH_PREFUND_AMOUNT } from "@/app/lib/constants";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 import { checkCartridgeConnector } from "@/app/lib/connectors";
 import { useConnect } from "@starknet-react/core";
+import { useGameSyscalls } from "@/app/hooks/useGameSyscalls";
 
 interface LoginProps {
   eth: number;
   lords: number;
   lordsGameCost: number;
   setMintingLords: (value: boolean) => void;
-  mintLords: (lordsAmount: number) => Promise<void>;
   setScreen: (value: ScreenPage) => void;
   setSection: (value: Section) => void;
-  getBalances: () => Promise<void>;
 }
 
 const Login = ({
@@ -27,16 +26,15 @@ const Login = ({
   lords,
   lordsGameCost,
   setMintingLords,
-  mintLords,
   setScreen,
   setSection,
-  getBalances,
 }: LoginProps) => {
   const { account } = useNetworkAccount();
   const [step, setStep] = useState(1);
   const { connector } = useConnect();
 
   const { handleOnboarded, network, onMainnet } = useUIStore();
+  const { getBalances } = useGameSyscalls();
 
   const checkEnoughEth = eth >= parseInt(ETH_PREFUND_AMOUNT(network!)) - 1;
   const checkEnoughLords = lords > lordsGameCost;
@@ -98,7 +96,6 @@ const Login = ({
               network={network!}
               setSection={setSection}
               setMintingLords={setMintingLords}
-              mintLords={mintLords}
               lordsGameCost={lordsGameCost}
             />
           </div>
@@ -123,7 +120,6 @@ const Login = ({
             network={network!}
             setSection={setSection}
             setMintingLords={setMintingLords}
-            mintLords={mintLords}
             lordsGameCost={lordsGameCost}
           />
         )}

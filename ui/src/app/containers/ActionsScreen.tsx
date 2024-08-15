@@ -27,11 +27,9 @@ import { useUiSounds, soundSelector } from "@/app/hooks/useUiSound";
 import { GameData } from "../lib/data/GameData";
 import { Button } from "../components/buttons/Button";
 import { useMemo } from "react";
+import { useGameSyscalls } from "@/app/hooks/useGameSyscalls";
 
 interface ActionsScreenProps {
-  explore: (till_beast: boolean) => Promise<void>;
-  attack: (tillDeath: boolean, beastData: Beast) => Promise<void>;
-  flee: (tillDeath: boolean, beastData: Beast) => Promise<void>;
   gameContract: Contract;
   beastsContract: Contract;
 }
@@ -41,9 +39,6 @@ interface ActionsScreenProps {
  * @description Provides the actions screen for the adventurer.
  */
 export default function ActionsScreen({
-  explore,
-  attack,
-  flee,
   gameContract,
   beastsContract,
 }: ActionsScreenProps) {
@@ -61,6 +56,8 @@ export default function ActionsScreen({
       ? state.data.latestDiscoveriesQuery.discoveries
       : []
   );
+
+  const { explore, attack, flee } = useGameSyscalls();
 
   const adventurerEntropy = useUIStore((state) => state.adventurerEntropy);
 

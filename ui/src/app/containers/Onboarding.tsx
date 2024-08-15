@@ -7,24 +7,15 @@ import TokenLoader from "@/app/components/animations/TokenLoader";
 import Intro from "@/app/components/onboarding/Intro";
 import Login from "@/app/components/onboarding/Login";
 import InfoBox from "@/app/components/onboarding/InfoBox";
+import { useGameSyscalls } from "@/app/hooks/useGameSyscalls";
 
 export type Section = "connect" | "eth" | "lords" | "arcade";
 
 interface OnboardingProps {
-  ethBalance: bigint;
-  lordsBalance: bigint;
   costToPlay: bigint;
-  mintLords: (lordsAmount: number) => Promise<void>;
-  getBalances: () => Promise<void>;
 }
 
-const Onboarding = ({
-  ethBalance,
-  lordsBalance,
-  costToPlay,
-  mintLords,
-  getBalances,
-}: OnboardingProps) => {
+const Onboarding = ({ costToPlay }: OnboardingProps) => {
   const isMuted = useUIStore((state) => state.isMuted);
   const setIsMuted = useUIStore((state) => state.setIsMuted);
 
@@ -35,6 +26,8 @@ const Onboarding = ({
   const [mintingLords, setMintingLords] = useState(false);
 
   const setScreen = useUIStore((state) => state.setScreen);
+
+  const { ethBalance, lordsBalance } = useGameSyscalls();
 
   const eth = Number(ethBalance);
   const lords = Number(lordsBalance);
@@ -78,10 +71,8 @@ const Onboarding = ({
             lords={lords}
             lordsGameCost={lordsGameCost}
             setMintingLords={setMintingLords}
-            mintLords={mintLords}
             setScreen={setScreen}
             setSection={setSection}
-            getBalances={getBalances}
           />
         )}
       </div>

@@ -5,7 +5,7 @@ import { CreateAdventurer } from "@/app/components/start/CreateAdventurer";
 import ButtonMenu from "@/app/components/menu/ButtonMenu";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
-import { NullAdventurer, FormData } from "@/app/types";
+import { NullAdventurer } from "@/app/types";
 import useUIStore from "@/app/hooks/useUIStore";
 import useCustomQuery from "@/app/hooks/useCustomQuery";
 import {
@@ -14,19 +14,12 @@ import {
 } from "@/app/hooks/graphql/queries";
 import { indexAddress, padAddress } from "@/app/lib/utils";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
+import { useGameSyscalls } from "@/app/hooks/useGameSyscalls";
 
 interface AdventurerScreenProps {
-  spawn: (
-    formData: FormData,
-    goldenTokenId: string,
-    revenueAddress: string
-  ) => Promise<void>;
   handleSwitchAdventurer: (adventurerId: number) => Promise<void>;
-  lordsBalance?: bigint;
   gameContract: Contract;
   goldenTokenData: any;
-  getBalances: () => Promise<void>;
-  mintLords: (lordsAmount: number) => Promise<void>;
   costToPlay: bigint;
 }
 
@@ -35,13 +28,9 @@ interface AdventurerScreenProps {
  * @description Provides the start screen for the adventurer.
  */
 export default function AdventurerScreen({
-  spawn,
   handleSwitchAdventurer,
-  lordsBalance,
   gameContract,
   goldenTokenData,
-  getBalances,
-  mintLords,
   costToPlay,
 }: AdventurerScreenProps) {
   const [activeMenu, setActiveMenu] = useState(0);
@@ -52,6 +41,8 @@ export default function AdventurerScreen({
   const network = useUIStore((state) => state.network);
   const { account } = useNetworkAccount();
   const owner = account?.address ? padAddress(account.address) : "";
+
+  const { spawn, mintLords, getBalances, lordsBalance } = useGameSyscalls();
 
   const adventurersByOwnerCountData = useCustomQuery(
     network,
