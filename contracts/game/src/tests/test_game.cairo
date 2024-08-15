@@ -79,20 +79,6 @@ mod tests {
     const DAY: u64 = 86400;
     const TESTING_CHAIN_ID: felt252 = 0x4c4f4f545355525649564f52;
 
-    // type ComponentState = ERC20Component::ComponentState<DualCaseERC20Mock::ContractState>;
-
-    // fn COMPONENT_STATE() -> ComponentState {
-    //     ERC20Component::component_state_for_testing()
-    // }
-
-    // fn oz_erc20_deploy_game() -> ComponentState {
-    //     let mut state = COMPONENT_STATE();
-    //     state.initializer(NAME(), SYMBOL());
-    //     state.mint(OWNER(), SUPPLY);
-    //     utils::drop_event(ZERO());
-    //     state
-    // }
-
     fn INTERFACE_ID() -> ContractAddress {
         contract_address_const::<1>()
     }
