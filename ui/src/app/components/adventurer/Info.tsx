@@ -240,7 +240,7 @@ export default function Info({
     <>
       {adventurer?.id ? (
         <div className="flex flex-col w-full uppercase h-full p-2 border border-terminal-green">
-          <div className="relative flex justify-between w-full text-xl sm:text-2xl lg:text-3xl">
+          <div className="relative flex gap-2 w-full text-xl sm:text-2xl lg:text-3xl">
             <span className="w-3/4 overflow-hidden" ref={scrollableRef}>
               {formatAdventurer.name}
             </span>
