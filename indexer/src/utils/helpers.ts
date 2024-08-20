@@ -632,10 +632,14 @@ export function updateTokenOwner({ token, tokenId, timestamp, newOwner }: any) {
   };
 }
 
-export function insertClaimedFreeGame({ adventurerId, token, tokenId }: any) {
+export function insertClaimedFreeGame({
+  adventurerId,
+  token,
+  tokenId,
+  revealed,
+}: any) {
   const entity = {
-    token: checkExistsInt(BigInt(token).toString(16)),
-    tokenId: checkExistsInt(parseInt(tokenId)),
+    adventurerId: checkExistsInt(parseInt(adventurerId)),
   };
 
   return {
@@ -643,7 +647,25 @@ export function insertClaimedFreeGame({ adventurerId, token, tokenId }: any) {
     update: {
       $set: {
         ...entity,
-        adventurerId: checkExistsInt(parseInt(adventurerId)),
+        token: checkExistsInt(BigInt(token).toString(16)),
+        tokenId: checkExistsInt(parseInt(tokenId)),
+        revealed,
+      },
+    },
+  };
+}
+
+export function updateRevealedFreeGame({ adventurerId, revealed }: any) {
+  const entity = {
+    adventurerId: checkExistsInt(parseInt(adventurerId)),
+  };
+
+  return {
+    entity,
+    update: {
+      $set: {
+        ...entity,
+        revealed,
       },
     },
   };

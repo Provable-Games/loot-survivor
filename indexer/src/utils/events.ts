@@ -46,7 +46,7 @@ export const EQUIPMENT_CHANGED = eventKey("EquipmentChanged");
 
 export const NEW_HIGH_SCORE = eventKey("NewHighScore");
 export const REWARD_DISTRIBUTION = eventKey("RewardDistribution");
-export const GAME_ENTROPY_ROTATED = eventKey("GameEntropyRotatedEvent");
+export const RECEIVED_LEVEL_SEED = eventKey("ReceivedLevelSeed");
 
 // Tokens
 export const TRANSFER = eventKey("Transfer");
@@ -355,16 +355,11 @@ export const parseNewHighScore = combineParsers({
   rank: { index: 1, parser: parseU8 },
 });
 
-export const parseGameEntropyRotated = combineParsers({
-  prevHash: { index: 0, parser: parseFelt252 },
-  prevBlockNumber: { index: 1, parser: parseU64 },
-  prevBlockTimestamp: { index: 2, parser: parseU64 },
-  prevNextRotationBlock: { index: 3, parser: parseU64 },
-  newHash: { index: 4, parser: parseFelt252 },
-  newBlockNumber: { index: 5, parser: parseU64 },
-  newBlockTimestamp: { index: 6, parser: parseU64 },
-  newNextRotationBlock: { index: 7, parser: parseU64 },
-  blocksPerHour: { index: 8, parser: parseU64 },
+export const parseReceivedLevelSeed = combineParsers({
+  adventurerId: { index: 0, parser: parseFelt252 },
+  vrfAddress: { index: 1, parser: parseFelt252 },
+  seed: { index: 2, parser: parseU64 },
+  requestId: { index: 3, parser: parseU64 },
 });
 
 export const parseTransfer = combineParsers({

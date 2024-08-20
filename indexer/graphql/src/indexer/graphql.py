@@ -1322,12 +1322,14 @@ class ClaimedFreeGamesFilter:
     token: Optional[HexValueFilter] = None
     tokenId: Optional[FeltValueFilter] = None
     adventurerId: Optional[FeltValueFilter] = None
+    revealed: Optional[BooleanFilter] = None
 
     def to_dict(self):
         return {
             "token": self.token.to_dict() if self.token else None,
             "tokenId": self.tokenId.to_dict() if self.tokenId else None,
             "adventurerId": self.adventurerId.to_dict() if self.adventurerId else None,
+            "revealed": self.revealed.to_dict() if self.revealed else None,
         }
 
 
@@ -1658,12 +1660,14 @@ class ClaimedFreeGamesOrderByInput:
     token: Optional[OrderByInput] = None
     tokenId: Optional[OrderByInput] = None
     adventurerId: Optional[OrderByInput] = None
+    revealed: Optional[OrderByInput] = None
 
     def to_dict(self):
         return {
             "token": self.token.to_dict() if self.token else None,
             "tokenId": self.tokenId.to_dict() if self.tokenId else None,
             "adventurerId": self.adventurerId.to_dict() if self.adventurerId else None,
+            "revealed": self.revealed.to_dict() if self.revealed else None,
         }
 
 
@@ -1985,6 +1989,7 @@ class ClaimedFreeGame:
     token: Optional[HexValue]
     tokenId: Optional[FeltValue]
     adventurerId: Optional[FeltValue]
+    revealed: Optional[bool]
 
     @classmethod
     def from_mongo(cls, data):
@@ -1992,6 +1997,7 @@ class ClaimedFreeGame:
             token=data["token"],
             tokenId=data["tokenId"],
             adventurerId=data["adventurerId"],
+            revealed=data["revealed"],
         )
 
 
@@ -2001,6 +2007,7 @@ class TokenWithFreeGameStatus:
     tokenId: Optional[FeltValue]
     ownerAddress: Optional[HexValue]
     freeGameUsed: bool
+    freeGameRevealed: bool
 
     @classmethod
     def from_mongo(cls, token_data, claimed_free_game_data):
@@ -2009,6 +2016,9 @@ class TokenWithFreeGameStatus:
             tokenId=token_data["tokenId"],
             ownerAddress=token_data["ownerAddress"],
             claimedFreeGameUsed=claimed_free_game_data is not None,
+            freeGameRevealed=(
+                claimed_free_game_data["revealed"] if claimed_free_game_data else False
+            ),
         )
 
 
