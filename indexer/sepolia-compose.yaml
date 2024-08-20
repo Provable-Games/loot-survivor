@@ -156,7 +156,7 @@ services:
     networks:
       - indexer
 
-  free_games_indexer:
+  claimed_free_games_indexer:
     image: quay.io/apibara/sink-mongo:0.9.1
     depends_on:
       - etcd
@@ -165,7 +165,7 @@ services:
     command:
       - run
       - --allow-env=/data/env-sepolia
-      - /data/src/freeGames.ts
+      - /data/src/claimedFreeGames.ts
     volumes:
       - ./:/data/
     environment:

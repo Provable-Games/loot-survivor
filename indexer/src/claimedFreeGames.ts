@@ -26,7 +26,7 @@ export const config: Config<Starknet, Mongo | Console> = {
   sinkOptions: {
     connectionString: MONGO_CONNECTION_STRING,
     database: MONGO_DB,
-    collectionName: "free_games",
+    collectionName: "claimed_free_games",
     // @ts-ignore - indexer package not updated
     entityMode: true,
   },
@@ -42,7 +42,6 @@ export default function transform({ header, events }: Block) {
           adventurerId: value.adventurerId,
           token: value.tokenAddress,
           tokenId: value.tokenId,
-          used: true,
         });
       }
 
