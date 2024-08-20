@@ -27,7 +27,7 @@ mod tests {
             interfaces::{IGameDispatcherTrait, IGameDispatcher},
             constants::{
                 COST_TO_PLAY, Rewards, REWARD_DISTRIBUTIONS_BP, messages::{STAT_UPGRADES_AVAILABLE},
-                STARTER_BEAST_ATTACK_DAMAGE,
+                STARTER_BEAST_ATTACK_DAMAGE, GAME_EXPIRY_DAYS, SECONDS_IN_DAY
             },
         }
     };
@@ -2769,5 +2769,78 @@ mod tests {
         assert(player1_meta.golden_token_id == 0, 'golden token id should be 0');
         assert(player2_meta.golden_token_id == 1, 'golden token id should be 1');
         assert(player3_meta.golden_token_id == 160, 'golden token id should be 160');
+    }
+
+    #[test]
+    fn test_update_adventurer_name() {
+        // Deploy the game
+        let starting_block = 1000;
+        let starting_time = 1696201757;
+        let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_time, 0, 0);
+
+        // Create a new adventurer
+        let adventurer_id = add_adventurer_to_game(ref game, 0, ItemId::Wand);
+
+        // Get the initial name
+        let initial_name = game.get_adventurer_name(adventurer_id);
+
+        // Update the adventurer's name
+        let new_name: felt252 = 'New Adventurer Name';
+        game.update_adventurer_name(adventurer_id, new_name);
+
+        // Get the updated name
+        let updated_name = game.get_adventurer_name(adventurer_id);
+
+        // Assert that the name has been updated correctly
+        assert(initial_name != new_name, 'Name did not change');
+        assert(updated_name == new_name, 'Name not updated correctly');
+    }
+
+    #[test]
+    #[should_panic(expected: ('Adventurer is dead',))]
+    fn test_update_adventurer_name_dead() {
+        start_cheat_chain_id_global(TESTING_CHAIN_ID);
+        let mut state = Game::contract_state_for_testing();
+        let new_adventurer = ImplAdventurer::new(ItemId::Wand);
+        // save adventurer to state
+        state._adventurer.write(1, new_adventurer);
+        // verify adventurer state
+        let mut adventurer = state.get_adventurer(1);
+        assert(adventurer.health == 100, 'health should be 100');
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon id should be wand');
+        // try to update adventurer name, should panic
+        state.update_adventurer_name(1, 'New Name');
+    }
+
+    #[test]
+    #[should_panic(expected: ('Not authorized to act',))]
+    fn test_update_adventurer_name_not_owner() {
+        let (mut game, _, _, _, _, _, _) = deploy_game(0, 0, 0, 0);
+        let adventurer_id = add_adventurer_to_game(ref game, 0, ItemId::Wand);
+
+        // change caller to a different address
+        start_cheat_caller_address_global(ARBITRARY_ADDRESS());
+
+        // try to change adventurer's name, should panic
+        game.update_adventurer_name(adventurer_id, 'New Name');
+    }
+
+    #[test]
+    #[should_panic(expected: ('Game has expired',))]
+    fn test_update_adventurer_name_game_expired() {
+        // deploy_game
+        let starting_block = 1000;
+        let starting_time = 1696201757;
+        let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_time, 0, 0);
+
+        // Create a new adventurer
+        let adventurer_id = 1;
+        add_adventurer_to_game(ref game, 0, ItemId::Wand);
+
+        let beyond_expiry_date = starting_time
+            + (GAME_EXPIRY_DAYS.into() * SECONDS_IN_DAY.into())
+            + 1;
+        start_cheat_block_timestamp_global(beyond_expiry_date);
+        game.update_adventurer_name(adventurer_id, 'New Name');
     }
 }

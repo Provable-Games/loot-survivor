@@ -828,8 +828,19 @@ mod Game {
         /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
         /// @param name A felt252 representing the new name of the adventurer.
         fn update_adventurer_name(ref self: ContractState, adventurer_id: felt252, name: felt252) {
+            // verify caller owns adventurer
             _assert_ownership(@self, adventurer_id);
+
+            // load adventurer (save gas by not loading boosts)
+            let adventurer = _load_adventurer_no_boosts(@self, adventurer_id);
+            // no name changes for dead or expired adventurers
+            _assert_not_dead(adventurer);
+            assert(!_is_expired(@self, adventurer_id), messages::GAME_EXPIRED);
+
+            // update adventurer name
             self._adventurer_name.write(adventurer_id, name);
+
+            // emit updated name event
             self.emit(UpdatedAdventurerName { adventurer_id, name });
         }
 
