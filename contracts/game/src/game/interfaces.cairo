@@ -68,6 +68,7 @@ trait IGame<TContractState> {
     fn get_adventurer_obituary(self: @TContractState, adventurer_id: felt252) -> ByteArray;
     fn get_adventurer_no_boosts(self: @TContractState, adventurer_id: felt252) -> Adventurer;
     fn get_adventurer_meta(self: @TContractState, adventurer_id: felt252) -> AdventurerMetadata;
+    fn get_client_provider(self: @TContractState, adventurer_id: felt252) -> ContractAddress;
 
     // fn equipment_stat_boosts(self: @TContractState, adventurer_id: felt252) -> Stats;
 

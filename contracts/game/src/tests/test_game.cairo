@@ -2746,4 +2746,28 @@ mod tests {
                 game.contract_address, VRF_PREMIUMS_ADDRESS(), 10000000000000000000000000000000
             );
     }
+
+    #[test]
+    fn test_record_client_provider_address() {
+        let (mut game, _, _, _, _, _, _) = deploy_game(0, 0, 0, 0);
+        let player1 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
+        // get adventurer metadata
+        let client_provider_address = game.get_client_provider(player1);
+        assert(client_provider_address == INTERFACE_ID(), 'wrong client provider address');
+    }
+
+    #[test]
+    fn test_golden_token_id_is_set() {
+        let (mut game, _, _, _, _, _, _) = deploy_game(0, 0, 0, 0);
+        let player1 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
+        let player2 = add_adventurer_to_game(ref game, 1, ItemId::Wand);
+        let player3 = add_adventurer_to_game(ref game, 160, ItemId::Wand);
+        let player1_meta = game.get_adventurer_meta(player1);
+        let player2_meta = game.get_adventurer_meta(player2);
+        let player3_meta = game.get_adventurer_meta(player3);
+
+        assert(player1_meta.golden_token_id == 0, 'golden token id should be 0');
+        assert(player2_meta.golden_token_id == 1, 'golden token id should be 1');
+        assert(player3_meta.golden_token_id == 160, 'golden token id should be 160');
+    }
 }

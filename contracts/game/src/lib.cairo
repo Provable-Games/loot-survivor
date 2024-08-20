@@ -107,6 +107,7 @@ mod Game {
         _adventurer_obituary: LegacyMap::<felt252, ByteArray>,
         _bag: LegacyMap::<felt252, Bag>,
         _collectible_beasts: ContractAddress,
+        _client_provider_address: LegacyMap::<felt252, ContractAddress>,
         _dao: ContractAddress,
         _pg_address: ContractAddress,
         _game_count: felt252,
@@ -344,7 +345,15 @@ mod Game {
             }
 
             // start the game
-            _start_game(ref self, weapon, name, custom_renderer, delay_reveal, golden_token_id)
+            let adventurer_id = _start_game(
+                ref self, weapon, name, custom_renderer, delay_reveal, golden_token_id
+            );
+
+            // store client provider address
+            self._client_provider_address.write(adventurer_id, client_reward_address);
+
+            // return adventurer id
+            adventurer_id
         }
 
         /// @title Explore Function
@@ -975,6 +984,9 @@ mod Game {
         fn get_adventurer_meta(self: @ContractState, adventurer_id: felt252) -> AdventurerMetadata {
             _load_adventurer_metadata(self, adventurer_id)
         }
+        fn get_client_provider(self: @ContractState, adventurer_id: felt252) -> ContractAddress {
+            self._client_provider_address.read(adventurer_id)
+        }
         fn get_bag(self: @ContractState, adventurer_id: felt252) -> Bag {
             _load_bag(self, adventurer_id)
         }
@@ -1559,6 +1571,8 @@ mod Game {
     /// @param weapon A u8 representing the weapon for the adventurer.
     /// @param name A felt252 representing the name of the adventurer.
     /// @param custom_renderer A ContractAddress representing the address of the custom renderer.
+    /// @param delay_stat_reveal A bool representing whether to delay the stat reveal until the starter beast is defeated.
+    /// @param golden_token_id A u256 representing the golden token id of the adventurer.
     /// @return A felt252 representing the adventurer id.
     fn _start_game(
         ref self: ContractState,
@@ -1582,7 +1596,7 @@ mod Game {
 
         // create meta data for the adventurer
         let adventurer_meta = ImplAdventurerMetadata::new(
-            get_block_timestamp().into(), delay_stat_reveal
+            get_block_timestamp().into(), delay_stat_reveal, golden_token_id.try_into().unwrap()
         );
 
         let beast_battle_details = _starter_beast_ambush(ref adventurer, adventurer_id, weapon);

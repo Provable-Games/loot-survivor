@@ -92,7 +92,7 @@ fn create_text(
     baseline: ByteArray,
     text_anchor: ByteArray,
 ) -> ByteArray {
-        "<text x='"
+    "<text x='"
         + x
         + "' y='"
         + y
@@ -108,7 +108,7 @@ fn create_text(
 }
 
 fn create_item_element(x: ByteArray, y: ByteArray, item: ByteArray) -> ByteArray {
-        "<g transform='translate(" + x + "," + y + ") scale(1.5)'>" + item + "</g>"
+    "<g transform='translate(" + x + "," + y + ") scale(1.5)'>" + item + "</g>"
 }
 
 // @notice Combines elements into a single string
@@ -136,7 +136,9 @@ fn combine_elements(ref elements: Span<ByteArray>) -> ByteArray {
 // @param internals The internals of the SVG
 // @return The generated SVG string
 fn create_svg(internals: ByteArray) -> ByteArray {
-    "<svg xmlns='http://www.w3.org/2000/svg' width='600' height='900'><style>text{text-transform: uppercase;font-family: Courier, monospace;fill: #3DEC00;}g{fill: #3DEC00;}</style>" + internals + "</svg>"
+    "<svg xmlns='http://www.w3.org/2000/svg' width='600' height='900'><style>text{text-transform: uppercase;font-family: Courier, monospace;fill: #3DEC00;}g{fill: #3DEC00;}</style>"
+        + internals
+        + "</svg>"
 }
 
 // @notice Generates a suffix boost string for adventurer token uri
@@ -277,19 +279,48 @@ fn create_metadata(
     let _current_rank = format!("{}", current_rank);
 
     let _gold = format!("{}", adventurer.gold);
-    let _str = if adventurer.get_level() == 1 { "?" } else { format!("{}", adventurer.stats.strength) };
-    let _dex = if adventurer.get_level() == 1 { "?" } else { format!("{}", adventurer.stats.dexterity) };
-    let _int = if adventurer.get_level() == 1 { "?" } else { format!("{}", adventurer.stats.intelligence) };
-    let _vit = if adventurer.get_level() == 1 { "?" } else { format!("{}", adventurer.stats.vitality) };
-    let _wis = if adventurer.get_level() == 1 { "?" } else { format!("{}", adventurer.stats.wisdom) };
-    let _cha = if adventurer.get_level() == 1 { "?" } else { format!("{}", adventurer.stats.charisma) };
+    let _str = if adventurer.get_level() == 1 {
+        "?"
+    } else {
+        format!("{}", adventurer.stats.strength)
+    };
+    let _dex = if adventurer.get_level() == 1 {
+        "?"
+    } else {
+        format!("{}", adventurer.stats.dexterity)
+    };
+    let _int = if adventurer.get_level() == 1 {
+        "?"
+    } else {
+        format!("{}", adventurer.stats.intelligence)
+    };
+    let _vit = if adventurer.get_level() == 1 {
+        "?"
+    } else {
+        format!("{}", adventurer.stats.vitality)
+    };
+    let _wis = if adventurer.get_level() == 1 {
+        "?"
+    } else {
+        format!("{}", adventurer.stats.wisdom)
+    };
+    let _cha = if adventurer.get_level() == 1 {
+        "?"
+    } else {
+        format!("{}", adventurer.stats.charisma)
+    };
     let _luck = format!("{}", adventurer.stats.luck);
 
     let _timestamp = starknet::get_block_info().unbox().block_timestamp;
     let _game_expiry_days: u8 = 10;
     let _seconds_in_day: u32 = 86400;
-    let _game_expiry_seconds = adventurerMetadata.birth_date + (_game_expiry_days.into() * _seconds_in_day.into());
-    let _seconds_left = if _timestamp > _game_expiry_seconds { 0 } else { _game_expiry_seconds - _timestamp };
+    let _game_expiry_seconds = adventurerMetadata.birth_date
+        + (_game_expiry_days.into() * _seconds_in_day.into());
+    let _seconds_left = if _timestamp > _game_expiry_seconds {
+        0
+    } else {
+        _game_expiry_seconds - _timestamp
+    };
     let _hours_left = format!("{}", _seconds_left / 3600);
 
     // Equipped items
@@ -404,7 +435,10 @@ fn create_metadata(
     let wis: ByteArray = JsonImpl::new().add("trait", "Wisdom").add("value", _wis).build();
     let cha: ByteArray = JsonImpl::new().add("trait", "Charisma").add("value", _cha).build();
     let luck: ByteArray = JsonImpl::new().add("trait", "Luck").add("value", _luck).build();
-    let hours_left: ByteArray = JsonImpl::new().add("trait", "Hours Left").add("value", _hours_left).build();
+    let hours_left: ByteArray = JsonImpl::new()
+        .add("trait", "Hours Left")
+        .add("value", _hours_left)
+        .build();
 
     let equipped_weapon: ByteArray = JsonImpl::new()
         .add("trait", "Weapon")
@@ -493,14 +527,19 @@ mod tests {
     use snforge_std::{start_cheat_block_timestamp_global};
 
 
-
     #[test]
     fn test_metadata() {
         let adventurer = Adventurer {
             health: 1023,
             xp: 10000,
             stats: Stats {
-                strength: 10, dexterity: 50, vitality: 50, intelligence: 50, wisdom: 50, charisma: 50, luck: 100
+                strength: 10,
+                dexterity: 50,
+                vitality: 50,
+                intelligence: 50,
+                wisdom: 50,
+                charisma: 50,
+                luck: 100
             },
             gold: 1023,
             equipment: Equipment {
@@ -542,23 +581,86 @@ mod tests {
         let birth_date = 1421807737;
         let delay_stat_reveal = false;
 
-        let adventurer_metadata = ImplAdventurerMetadata::new(birth_date, delay_stat_reveal);
+        let adventurer_metadata = ImplAdventurerMetadata::new(birth_date, delay_stat_reveal, 0);
 
         start_cheat_block_timestamp_global(1721860860);
 
-        let current_1 = create_metadata(1000000, adventurer, 'thisisareallyreallyreallongname', adventurer_metadata, bag, 10, 1, 1);
+        let current_1 = create_metadata(
+            1000000,
+            adventurer,
+            'thisisareallyreallyreallongname',
+            adventurer_metadata,
+            bag,
+            10,
+            1,
+            1
+        );
 
-        let current_2 = create_metadata(1000000, adventurer, 'thisisareallyreallyreallongname', adventurer_metadata, bag, 10, 2, 2);
+        let current_2 = create_metadata(
+            1000000,
+            adventurer,
+            'thisisareallyreallyreallongname',
+            adventurer_metadata,
+            bag,
+            10,
+            2,
+            2
+        );
 
-        let current_3 = create_metadata(1000000, adventurer, 'thisisareallyreallyreallongname', adventurer_metadata, bag, 10, 3, 3);
+        let current_3 = create_metadata(
+            1000000,
+            adventurer,
+            'thisisareallyreallyreallongname',
+            adventurer_metadata,
+            bag,
+            10,
+            3,
+            3
+        );
 
-        let historical_1 = create_metadata(1000000, adventurer, 'thisisareallyreallyreallongname', adventurer_metadata, bag, 10, 1, 0);
+        let historical_1 = create_metadata(
+            1000000,
+            adventurer,
+            'thisisareallyreallyreallongname',
+            adventurer_metadata,
+            bag,
+            10,
+            1,
+            0
+        );
 
-        let historical_2 = create_metadata(1000000, adventurer, 'thisisareallyreallyreallongname', adventurer_metadata, bag, 10, 2, 0);
+        let historical_2 = create_metadata(
+            1000000,
+            adventurer,
+            'thisisareallyreallyreallongname',
+            adventurer_metadata,
+            bag,
+            10,
+            2,
+            0
+        );
 
-        let historical_3 = create_metadata(1000000, adventurer, 'thisisareallyreallyreallongname', adventurer_metadata, bag, 10, 3, 0);
+        let historical_3 = create_metadata(
+            1000000,
+            adventurer,
+            'thisisareallyreallyreallongname',
+            adventurer_metadata,
+            bag,
+            10,
+            3,
+            0
+        );
 
-        let plain = create_metadata(1000000, adventurer, 'thisisareallyreallyreallongname', adventurer_metadata, bag, 10, 0, 0);
+        let plain = create_metadata(
+            1000000,
+            adventurer,
+            'thisisareallyreallyreallongname',
+            adventurer_metadata,
+            bag,
+            10,
+            0,
+            0
+        );
 
         println!("Current 1: {}", current_1);
         println!("Current 2: {}", current_2);
