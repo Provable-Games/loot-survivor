@@ -1318,16 +1318,16 @@ class TokensFilter:
 
 
 @strawberry.input
-class FreeGamesFilter:
+class ClaimedFreeGamesFilter:
     token: Optional[HexValueFilter] = None
     tokenId: Optional[FeltValueFilter] = None
-    used: Optional[BooleanFilter] = None
+    adventurerId: Optional[FeltValueFilter] = None
 
     def to_dict(self):
         return {
             "token": self.token.to_dict() if self.token else None,
             "tokenId": self.tokenId.to_dict() if self.tokenId else None,
-            "used": self.used.to_dict() if self.used else None,
+            "adventurerId": self.adventurerId.to_dict() if self.adventurerId else None,
         }
 
 
@@ -1654,16 +1654,16 @@ class TokensOrderByInput:
 
 
 @strawberry.input
-class FreeGamesOrderByInput:
+class ClaimedFreeGamesOrderByInput:
     token: Optional[OrderByInput] = None
     tokenId: Optional[OrderByInput] = None
-    used: Optional[OrderByInput] = None
+    adventurerId: Optional[OrderByInput] = None
 
     def to_dict(self):
         return {
             "token": self.token.to_dict() if self.token else None,
             "tokenId": self.tokenId.to_dict() if self.tokenId else None,
-            "used": self.used.to_dict() if self.used else None,
+            "adventurerId": self.adventurerId.to_dict() if self.adventurerId else None,
         }
 
 
@@ -1981,17 +1981,17 @@ class Token:
 
 
 @strawberry.type
-class FreeGame:
+class ClaimedFreeGame:
     token: Optional[HexValue]
     tokenId: Optional[FeltValue]
-    used: Optional[bool]
+    adventurerId: Optional[FeltValue]
 
     @classmethod
     def from_mongo(cls, data):
         return cls(
             token=data["token"],
             tokenId=data["tokenId"],
-            used=data["used"],
+            adventurerId=data["adventurerId"],
         )
 
 
@@ -2003,13 +2003,12 @@ class TokenWithFreeGameStatus:
     freeGameUsed: bool
 
     @classmethod
-    def from_mongo(cls, token_data, free_game_data):
+    def from_mongo(cls, token_data, claimed_free_game_data):
         return cls(
             token=token_data["token"],
             tokenId=token_data["tokenId"],
             ownerAddress=token_data["ownerAddress"],
-            freeGameUsed=free_game_data is not None
-            and free_game_data.get("used", False),
+            claimedFreeGameUsed=claimed_free_game_data is not None,
         )
 
 
@@ -2600,11 +2599,11 @@ async def get_tokens(
 
 async def get_free_games(
     info,
-    where: Optional[FreeGamesFilter] = {},
+    where: Optional[ClaimedFreeGamesFilter] = {},
     limit: Optional[int] = 10,
     skip: Optional[int] = 0,
-    orderBy: Optional[FreeGamesOrderByInput] = {},
-) -> List[FreeGame]:
+    orderBy: Optional[ClaimedFreeGamesOrderByInput] = {},
+) -> List[ClaimedFreeGame]:
     db = info.context["db"]
     redis = info.context["redis"]
 
@@ -2620,7 +2619,7 @@ async def get_free_games(
 
     if cached_result:
         cached_result = cached_result.decode("utf-8")  # Decode the byte string
-        return [FreeGame.from_mongo(item) for item in json.loads(cached_result)]
+        return [ClaimedFreeGame.from_mongo(item) for item in json.loads(cached_result)]
 
     filter = {"_cursor.to": None}
 
@@ -2657,7 +2656,7 @@ async def get_free_games(
         db["free_games"].find(filter).skip(skip).limit(limit).sort(sort_var, sort_dir)
     )
 
-    result = [FreeGame.from_mongo(t) for t in query]
+    result = [ClaimedFreeGame.from_mongo(t) for t in query]
 
     # Cache the result
     await redis.set(cache_key, json.dumps([item.__dict__ for item in result]), ex=60)
@@ -2686,7 +2685,7 @@ async def get_tokens_with_free_game_status(
         ]
 
     # Query tokens
-    token_filter = {"ownerAddress": ownerAddress, "_cursor.to": None}
+    token_filter = {"_cursor.to": None}
     if where:
         processed_filters = process_filters(where)
         for key, value in processed_filters.items():
@@ -2713,7 +2712,7 @@ async def get_tokens_with_free_game_status(
     token_ids = [token["tokenId"] for token in tokens]
     free_games = {
         fg["tokenId"]: fg
-        for fg in db["free_games"].find({"tokenId": {"$in": token_ids}})
+        for fg in db["claimed_free_games"].find({"tokenId": {"$in": token_ids}})
     }
 
     # Combine token and free game information
@@ -3000,7 +2999,7 @@ class Query:
     discoveries: List[Discovery] = strawberry.field(resolver=get_discoveries)
     battles: List[Battle] = strawberry.field(resolver=get_battles)
     tokens: List[Token] = strawberry.field(resolver=get_tokens)
-    freeGames: List[FreeGame] = strawberry.field(resolver=get_free_games)
+    claimedFreeGames: List[ClaimedFreeGame] = strawberry.field(resolver=get_free_games)
     tokensWithFreeGameStatus: List[TokenWithFreeGameStatus] = strawberry.field(
         resolver=get_tokens_with_free_game_status
     )
