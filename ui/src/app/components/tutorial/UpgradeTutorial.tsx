@@ -5,9 +5,9 @@ export const UpgradeTutorial = () => {
     <div className="flex flex-col gap-5 items-center text-center h-full">
       <h3 className="mt-0 uppercase">Leveling Up</h3>
       <p className="sm:text-2xl">
-        Every level up you get a stat upgrade and a chance to purchase items.
+        Every level up you get a stat upgrade and a chance to purchase gear.
       </p>
-      <div className="flex flex-col items-center justify-center gap-10">
+      <div className="flex flex-col items-center justify-center gap-5">
         <div className="flex flex-col items-center justify-center gap-2">
           <div className="flex flex-row gap-2">
             <p className="text-lg sm:text-4xl text-terminal-yellow uppercase">

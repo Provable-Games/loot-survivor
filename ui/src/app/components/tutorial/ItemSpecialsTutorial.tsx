@@ -4,7 +4,7 @@ export const UnlocksTutorial = () => {
       <h3 className="mt-0 uppercase">Item Specials</h3>
 
       <p className="sm:text-2xl">
-        Items receive special abilities as they progress.
+        Items receive special abilities as they level up.
       </p>
       <ul>
         <li className="sm:text-2xl mb-2">
@@ -12,17 +12,17 @@ export const UnlocksTutorial = () => {
             Greatness 15:
           </span>{" "}
           Items receive a name suffix{" "}
-          <span className="uppercase">(&quot;Of Power&quot;)</span> granting
-          boosted stats on an Adventurer.
+          <span className="uppercase">(&quot;Of Power&quot;)</span> providing a
+          stat boost to the Adventurer.
         </li>
 
         <li className="sm:text-2xl mb-2">
           <span className="uppercase text-2xl text-terminal-yellow">
             Greatness 19:
-          </span>
-          : Items receive a two part name prefix{" "}
-          <span className="uppercase">(&quot;Agony Bane&quot;)</span>. Provides
-          a powerful damage boost if matched to a beast name.
+          </span>{" "}
+          Items receive a name prefix{" "}
+          <span className="uppercase">(&quot;Agony Bane&quot;)</span>. Providing
+          a powerful damage boost if it matches a beast name.
         </li>
 
         <li className="sm:text-2xl">
@@ -30,15 +30,9 @@ export const UnlocksTutorial = () => {
             Greatness 20:
           </span>{" "}
           Items receive <span className="uppercase">(+1)</span> modifier which
-          grants the player a stat upgrade for their Adventurer.
+          provides a permanent stat upgrade for the Adventurer.
         </li>
       </ul>
-      <p className="text-2xl">
-        Example fully unlocked item:{" "}
-        <span className="text-4xl">
-          "Sorrow Peak" Hard Leather Belt of Titans +1
-        </span>
-      </p>
     </div>
   );
 };

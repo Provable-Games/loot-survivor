@@ -326,7 +326,13 @@ body::-webkit-scrollbar-thumb,
 }
 
 .notification-sprite {
-  background-image : url("/adventurer-sprites.png");
+  background-image : url("/adventurer-sprites-new.png");
+  display          : inline-block;
+  background-repeat: no-repeat;
+}
+
+.level-up-sprite {
+  background-image : url("/victory.png");
   display          : inline-block;
   background-repeat: no-repeat;
 }

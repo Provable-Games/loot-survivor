@@ -10,12 +10,9 @@ export const PrescienceTutorial = () => {
           <EyeIcon />
         </span>
       </div>
-      <p className="sm:text-2xl">
-        Adventurers can see all outcomes of a single level.
-      </p>
+      <p className="sm:text-2xl">Levels in Loot Survivor are deterministic.</p>
       <p className="sm:text-lg">
-        Prescience can be viewed by the player at any time and is an essential
-        tool for planning your path to survival.
+        Use Prescience during an upgrade to increase your chance of survival.
       </p>
       <p className="sm:text-lg">
         Follow the rows in the table to see the future outcomes based on your

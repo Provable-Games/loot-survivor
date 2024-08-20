@@ -25,15 +25,17 @@ export const ItemsTutorial = () => {
       <p className="sm:text-lg">There are 101 different items in the game.</p>
 
       <p className="sm:text-xl sm:text-lg">
-        Items range from Tier 1 - 5 (
-        <span className="text-terminal-yellow">strongest</span> to{" "}
-        <span className="text-red-500">weakest</span>)
+        Items range from Tier 1 (
+        <span className="text-terminal-yellow">strongest</span>) - 5 (
+        <span className="text-terminal-yellow">weakest</span>)
       </p>
-      <div className="flex flex-col items-center gap-2">
+      {/* <div className="flex flex-col items-center gap-2">
         <p className="sm:text-xl sm:text-lg">
           Items are split into different types.
         </p>
-        <p className="sm:text-xl sm:text-lg uppercase">Weapons:</p>
+        <p className="sm:text-xl sm:text-xl uppercase text-terminal-yellow">
+          Weapons:
+        </p>
         <p className="sm:text-xl sm:text-lg">
           <div className="flex flex-row gap-2">
             <span className="flex flex-row gap-2">
@@ -52,7 +54,9 @@ export const ItemsTutorial = () => {
             </span>
           </div>
         </p>
-        <p className="sm:text-xl sm:text-lg uppercase">Armor:</p>
+        <p className="sm:text-xl sm:text-xl uppercase text-terminal-yellow">
+          Armor:
+        </p>
         <p className="sm:text-xl sm:text-lg">
           <div className="flex flex-row gap-2">
             <span className="flex flex-row gap-2">
@@ -71,7 +75,7 @@ export const ItemsTutorial = () => {
             </span>
           </div>
         </p>
-      </div>
+      </div> */}
     </div>
   );
 };

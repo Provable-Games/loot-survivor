@@ -1,19 +1,24 @@
 import { useEffect, useState } from "react";
 import Hints from "@/app/components/interlude/Hints";
-import { EntropyCountDown } from "@/app/components/CountDown";
-import useAdventurerStore from "../hooks/useAdventurerStore";
 import RandomnessLoader from "../components/animations/RandomnessLoader";
-import RowLoader from "@/app/components/animations/RowLoader";
+import SpriteAnimation from "@/app/components/animations/SpriteAnimation";
+import { notificationAnimations } from "@/app/lib/constants";
+import { Button } from "@/app/components/buttons/Button";
+import { ItemsTutorial } from "@/app/components/tutorial/ItemsTutorial";
+import { UpgradeTutorial } from "@/app/components/tutorial/UpgradeTutorial";
+import { ElementalTutorial } from "@/app/components/tutorial/ElementalTutorial";
+import { UnlocksTutorial } from "@/app/components/tutorial/ItemSpecialsTutorial";
+import { ExploreTutorial } from "@/app/components/tutorial/ExploreTutorial";
+import { StrategyTutorial } from "@/app/components/tutorial/StrategyTutorial";
+import { PrescienceTutorial } from "@/app/components/tutorial/PrescienceTutorial";
 
 interface InterludeScreenProps {
   type: string;
 }
 
 export default function InterludeScreen({ type }: InterludeScreenProps) {
-  const [countDownExpired, setCountDownExpired] = useState(false);
-  const [nextEntropyTime, setNextEntropyTime] = useState<number | null>(null);
-  const adventurer = useAdventurerStore((state) => state.adventurer);
   const [loadingMessage, setLoadingMessage] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const loadingMessages = [
     "Summoning ancient dragons...",
@@ -28,45 +33,106 @@ export default function InterludeScreen({ type }: InterludeScreenProps) {
     "Polishing rare artifacts...",
     "Spawning venomous spiders...",
     "Assembling skeletal warriors...",
+    "Forging legendary weapons...",
+    "Scattering gold coins in dark corners...",
+    "Summoning ethereal wisps...",
+    "Crafting intricate puzzle rooms...",
+    "Awakening ancient golems...",
+    "Inscribing magical runes...",
+    "Unleashing packs of dire wolves...",
+    "Concealing secret doors...",
+    "Mixing volatile alchemical concoctions...",
+    "Raising undead minions...",
+    "Weaving illusions of grandeur...",
+    "Sharpening guillotine blades...",
+    "Summoning eldritch horrors...",
+    "Enchanting rings of power...",
+    "Brewing potions of invisibility...",
+    "Scattering mimics throughout the dungeon...",
+    "Polishing crystal balls...",
+    "Unleashing swarms of bats...",
+    "Placing cursed idols...",
+    "Summoning spectral guardians...",
+    "Crafting ornate lockboxes...",
+    "Awakening slumbering liches...",
+    "Arranging spike traps...",
+    "Summoning will-o'-the-wisps...",
+    "Crafting scrolls of teleportation...",
+    "Unleashing hordes of kobolds...",
+    "Hiding rare spell tomes...",
+    "Summoning mischievous imps...",
+    "Placing magical wardstones...",
+    "Crafting amulets of protection...",
+    "Unleashing gelatinous cubes...",
+    "Scattering magical mushrooms...",
+    "Summoning elemental spirits...",
+    "Placing unstable portal rifts...",
+    "Crafting wands of wonder...",
+    "Unleashing packs of hellhounds...",
+    "Hiding powerful artifacts...",
+    "Summoning chaos elementals...",
+    "Arranging falling boulder traps...",
   ];
 
-  useEffect(() => {
-    const currentTime = new Date().getTime();
-    setNextEntropyTime(currentTime + 15 * 1000);
-  }, []);
+  const [currentIndex, setCurrentIndex] = useState(6);
+
+  const tutorials = [
+    <ElementalTutorial key={0} />,
+    <ItemsTutorial key={1} />,
+    <UnlocksTutorial key={2} />,
+    <UpgradeTutorial key={3} />,
+    <ExploreTutorial key={4} />,
+    <StrategyTutorial key={5} />,
+    <PrescienceTutorial key={6} />,
+  ];
 
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * loadingMessages.length);
     setLoadingMessage(loadingMessages[randomIndex]);
+
+    // Set a timer to change loading to false after 15 seconds
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 15000);
+
+    // Clean up the timer when the component unmounts
+    return () => clearTimeout(timer);
   }, []);
 
   return (
     <>
       <div className="fixed inset-0 left-0 right-0 bottom-0 bg-terminal-black z-40 sm:m-2 w-full h-full" />
-      <div className="fixed inset-0 z-40 w-full h-full flex flex-col justify-between items-center sm:py-8">
+      <div className="fixed inset-0 z-40 w-full h-full flex flex-col items-center sm:py-8">
         <h1 className="text-6xl animate-pulse">LEVEL COMPLETE</h1>
-        <div className="flex items-center justify-center">
-          <span className="flex flex-col gap-1 items-center justify-center">
+        <SpriteAnimation
+          frameWidth={308}
+          frameHeight={200}
+          columns={5}
+          rows={1}
+          frameRate={4}
+          animations={notificationAnimations}
+          className="level-up-sprite"
+          adjustment={0}
+        />
+        <div className="flex justify-center items-center h-1/2 w-full">
+          <div className="flex flex-col px-2 py-5 sm:p-6 2xl:px-12 2xl:py-6 w-full sm:w-3/4 gap-5">
+            <div className="w-full">{tutorials[currentIndex]}</div>
+          </div>
+        </div>
+        {loading ? (
+          <div className="flex flex-col">
             <p className="text-2xl">
               {type === "level"
                 ? loadingMessage
                 : "Loading Randomness for Item Unlocks"}
             </p>
-            {!countDownExpired ? (
-              <RandomnessLoader loadingSeconds={15} />
-            ) : (
-              <p className="text-6xl animate-pulse text-terminal-yellow">
-                Please wait
-              </p>
-            )}
-          </span>
-        </div>
-        <div className="flex justify-center items-center h-1/2 w-full">
-          <Hints />
-        </div>
-        <div className="w-full h-1/8 2xl:h-1/6">
-          <RowLoader />
-        </div>
+            <RandomnessLoader loadingSeconds={15} />
+          </div>
+        ) : (
+          <Button size={"lg"} className="text-2xl animate-pulse">
+            Proceed to next level
+          </Button>
+        )}
       </div>
     </>
   );

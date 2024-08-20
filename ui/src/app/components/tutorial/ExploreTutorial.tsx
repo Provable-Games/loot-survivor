@@ -32,19 +32,15 @@ export const ExploreTutorial = () => {
         <div className="flex flex-col items-center justify-center gap-2">
           <div className="flex flex-row items-center justify-center gap-2">
             <p className="text-lg sm:text-4xl text-terminal-yellow uppercase">
-              Items
+              Discoveries
             </p>
             <GiBattleGearIcon className="w-10 h-10 text-terminal-yellow" />
           </div>
           <span className="flex flex-col justify-center items-center text-2xl">
             <span>
-              Discovering items will aid your quest for survival. Items include:
+              Discoveries aid your quest for survival. They include Health, Gold
+              and Loot Items.
             </span>
-            <ul className="list-[square] pl-5 space-y-1 w-1/3">
-              <li>Health</li>
-              <li>Gold</li>
-              <li>Loot Items</li>
-            </ul>
           </span>
         </div>
       </div>
