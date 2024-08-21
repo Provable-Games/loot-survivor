@@ -105,6 +105,7 @@ mod Game {
         _adventurer_meta: LegacyMap::<felt252, AdventurerMetadata>,
         _adventurer_name: LegacyMap::<felt252, felt252>,
         _adventurer_obituary: LegacyMap::<felt252, ByteArray>,
+        _adventurer_nft_allegiance: LegacyMap::<felt252, ContractAddress>,
         _bag: LegacyMap::<felt252, Bag>,
         _collectible_beasts: ContractAddress,
         _client_provider_address: LegacyMap::<felt252, ContractAddress>,
@@ -130,9 +131,9 @@ mod Game {
         _default_renderer: ContractAddress,
         _custom_renderer: LegacyMap::<felt252, ContractAddress>,
         _player_vrf_allowance: LegacyMap::<felt252, u128>,
-        _qualifying_collections: LegacyMap::<ContractAddress, bool>,
         _claimed_tokens: LegacyMap::<felt252, bool>,
         _vrf_premiums_address: ContractAddress,
+        _genesis_tournament_scores: LegacyMap::<ContractAddress, u32>,
     }
 
     #[event]
@@ -245,8 +246,7 @@ mod Game {
         self._vrf_premiums_address.write(vrf_premiums_address);
 
         // set qualifying nft collections
-        let mut qualifying_collections_span = qualifying_collections.span();
-        _save_qualifying_nft_collections(ref self, ref qualifying_collections_span);
+        _initialize_genesis_tournament(ref self, qualifying_collections.span());
 
         // give VRF provider approval for all ETH in the contract since the only
         // reason ETH will be in the contract is to cover VRF costs
@@ -932,6 +932,9 @@ mod Game {
                 ref self, weapon, name, custom_renderer, delay_stat_reveal, 0
             );
 
+            // record adventurer allegiance
+            self._adventurer_nft_allegiance.write(adventurer_id, nft_address);
+
             // emit claimed free game event
             __event_ClaimedFreeGame(ref self, adventurer_id, nft_address, token_id);
 
@@ -1389,6 +1392,17 @@ mod Game {
         if _is_top_score(@self, adventurer.xp) {
             // update the leaderboard
             _update_leaderboard(ref self, adventurer_id, adventurer);
+        }
+
+        // if adventurer has an nft allegiance, update the score
+        let nft_address = self._adventurer_nft_allegiance.read(adventurer_id);
+        if nft_address.is_non_zero() {
+            // get previous score for the collection
+            let previous_score = self._genesis_tournament_scores.read(nft_address);
+            // add the adventurer's xp to the collection's score
+            self
+                ._genesis_tournament_scores
+                .write(nft_address, previous_score + adventurer.xp.into());
         }
     }
 
@@ -3168,23 +3182,33 @@ mod Game {
         );
     }
 
-    fn _save_qualifying_nft_collections(
-        ref self: ContractState, ref qualifying_collections: Span<ContractAddress>
+    fn _initialize_genesis_tournament(
+        ref self: ContractState, qualifying_collections: Span<ContractAddress>
     ) {
+        let mut collection_index = 0;
+
         loop {
-            match qualifying_collections.pop_front() {
-                Option::Some(collection_address) => {
-                    self._qualifying_collections.write(*collection_address, true);
-                },
-                Option::None(_) => { break; }
+            if collection_index >= qualifying_collections.len() {
+                break;
             }
+            let collection_address = *qualifying_collections.at(collection_index);
+
+            // initialize the qualifying collection scores to 1 so we can use zero to check if the collection is eligible
+            self._genesis_tournament_scores.write(collection_address, 1);
+            collection_index += 1;
         }
+    }
+
+    fn _is_qualifying_collection(
+        self: @ContractState, nft_collection_address: ContractAddress
+    ) -> bool {
+        self._genesis_tournament_scores.read(nft_collection_address) > 0
     }
 
     fn _assert_is_qualifying_nft(self: @ContractState, nft_collection_address: ContractAddress) {
         assert(
-            self._qualifying_collections.read(nft_collection_address),
-            messages::NFT_COLLECTION_NOT_ELIGIBLE
+            _is_qualifying_collection(self, nft_collection_address),
+            messages::COLLECTION_NOT_ELIGIBLE
         );
     }
 
