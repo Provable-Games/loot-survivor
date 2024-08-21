@@ -2494,6 +2494,8 @@ mod tests {
     #[test]
     fn test_get_and_set_adventurer_name() {
         let mut state = Game::contract_state_for_testing();
+        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
+        state._adventurer.write(1, adventurer);
         state._adventurer_name.write(1, 'test1');
         let adventurer_name = state.get_adventurer_name(1);
         assert(adventurer_name == 'test1', 'name not set correctly');
