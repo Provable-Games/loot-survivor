@@ -2770,7 +2770,6 @@ mod tests {
         assert(player2_meta.golden_token_id == 1, 'golden token id should be 1');
         assert(player3_meta.golden_token_id == 160, 'golden token id should be 160');
     }
-
     #[test]
     fn test_update_adventurer_name() {
         // Deploy the game
