@@ -27,7 +27,7 @@ export const ElementalTutorial = () => {
 
   return (
     <div className="flex flex-col gap-2 uppercase items-center text-center h-full w-full">
-      <h3 className="mt-0 uppercase">Element Boosts</h3>
+      <h3 className="mt-0 uppercase text-terminal-yellow">Element Boosts</h3>
       <div className="flex flex-col gap-5 w-1/2">
         <table className="uppercase whitespace-nowrap border border-terminal-green text-sm">
           <thead>

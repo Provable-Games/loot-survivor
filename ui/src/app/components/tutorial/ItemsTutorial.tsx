@@ -1,16 +1,9 @@
 import LootIcon from "../icons/LootIcon";
-import {
-  BladeIcon,
-  BludgeonIcon,
-  MagicIcon,
-  HideIcon,
-  MetalIcon,
-  ClothIcon,
-} from "@/app/components/icons/Icons";
 
 export const ItemsTutorial = () => {
   return (
-    <div className="flex flex-col gap-5 uppercase items-center text-center h-full">
+    <div className="flex flex-col gap-5 uppercase items-center text-center h-full p-10">
+      <h3 className="mt-0 uppercase text-terminal-yellow">Items</h3>
       <div className="flex flex-row gap-2">
         <LootIcon type="weapon" size="w-8" />
         <LootIcon type="chest" size="w-8" />
@@ -29,53 +22,6 @@ export const ItemsTutorial = () => {
         <span className="text-terminal-yellow">strongest</span>) - 5 (
         <span className="text-terminal-yellow">weakest</span>)
       </p>
-      {/* <div className="flex flex-col items-center gap-2">
-        <p className="sm:text-xl sm:text-lg">
-          Items are split into different types.
-        </p>
-        <p className="sm:text-xl sm:text-xl uppercase text-terminal-yellow">
-          Weapons:
-        </p>
-        <p className="sm:text-xl sm:text-lg">
-          <div className="flex flex-row gap-2">
-            <span className="flex flex-row gap-2">
-              <BladeIcon className="w-6 h-6" />
-              Blade
-            </span>
-            ,
-            <span className="flex flex-row gap-2">
-              <BludgeonIcon className="w-6 h-6" />
-              Bludgeon
-            </span>
-            and
-            <span className="flex flex-row gap-2">
-              <MagicIcon className="w-6 h-6" />
-              Magic
-            </span>
-          </div>
-        </p>
-        <p className="sm:text-xl sm:text-xl uppercase text-terminal-yellow">
-          Armor:
-        </p>
-        <p className="sm:text-xl sm:text-lg">
-          <div className="flex flex-row gap-2">
-            <span className="flex flex-row gap-2">
-              <HideIcon className="w-6 h-6" />
-              Hide
-            </span>
-            ,
-            <span className="flex flex-row gap-2">
-              <MetalIcon className="w-6 h-6" />
-              Metal
-            </span>
-            and
-            <span className="flex flex-row gap-2">
-              <ClothIcon className="w-6 h-6" />
-              Cloth
-            </span>
-          </div>
-        </p>
-      </div> */}
     </div>
   );
 };

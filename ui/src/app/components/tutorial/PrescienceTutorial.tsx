@@ -1,32 +1,26 @@
 import { EyeIcon } from "../icons/Icons";
-import Image from "next/image";
+import { HintDisplay } from "../animations/Hint";
 
 export const PrescienceTutorial = () => {
+  const points = [
+    <p className="sm:text-2xl uppercase">
+      Each level in Loot Survivor is deterministic based on a verfiably random
+      level seed.
+    </p>,
+    <p className="text-2xl uppercase">
+      Use Prescience to strategically upgrade your adventurer's stats and gear.
+    </p>,
+  ];
   return (
-    <div className="flex flex-col gap-5 uppercase items-center text-center h-full">
-      <div className="flex flex-row gap-2">
-        <h3 className="mt-0">Prescience</h3>
+    <div className="flex flex-col gap-5 uppercase items-center text-center h-full p-20">
+      <div className="flex flex-row gap-2 text-terminal-yellow">
         <span className="w-10 h-10">
           <EyeIcon />
         </span>
+        <h3 className="mt-0">Prescience</h3>
+        <h3 className="mt-0">1</h3>
       </div>
-      <p className="sm:text-2xl">Levels in Loot Survivor are deterministic.</p>
-      <p className="sm:text-lg">
-        Use Prescience during an upgrade to increase your chance of survival.
-      </p>
-      <p className="sm:text-lg">
-        Follow the rows in the table to see the future outcomes based on your
-        xp. It will be worth working out the optimal paths, fleeing from a beast
-        will result in 1xp gain.
-      </p>
-      <span className="relative w-full h-40">
-        <Image
-          src="/tutorial/prescience.png"
-          alt="Prescience"
-          fill={true}
-          className="object-contain"
-        />
-      </span>
+      <HintDisplay points={points} displaySeconds={4} />
     </div>
   );
 };

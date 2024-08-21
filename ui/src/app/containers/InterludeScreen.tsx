@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
-import Hints from "@/app/components/interlude/Hints";
 import RandomnessLoader from "../components/animations/RandomnessLoader";
 import SpriteAnimation from "@/app/components/animations/SpriteAnimation";
 import { notificationAnimations } from "@/app/lib/constants";
 import { Button } from "@/app/components/buttons/Button";
 import { ItemsTutorial } from "@/app/components/tutorial/ItemsTutorial";
-import { UpgradeTutorial } from "@/app/components/tutorial/UpgradeTutorial";
+import { UpgradeTutorialPotions } from "@/app/components/tutorial/UpgradeTutorialPotions";
+import { UpgradeTutorialItems } from "@/app/components/tutorial/UpgradeTutorialItems";
 import { ElementalTutorial } from "@/app/components/tutorial/ElementalTutorial";
 import { UnlocksTutorial } from "@/app/components/tutorial/ItemSpecialsTutorial";
 import { ExploreTutorial } from "@/app/components/tutorial/ExploreTutorial";
 import { StrategyTutorial } from "@/app/components/tutorial/StrategyTutorial";
 import { PrescienceTutorial } from "@/app/components/tutorial/PrescienceTutorial";
+import { Prescience2Tutorial } from "@/app/components/tutorial/Prescience2Tutorial";
 
 interface InterludeScreenProps {
   type: string;
@@ -74,16 +75,18 @@ export default function InterludeScreen({ type }: InterludeScreenProps) {
     "Arranging falling boulder traps...",
   ];
 
-  const [currentIndex, setCurrentIndex] = useState(6);
+  const [currentIndex, setCurrentIndex] = useState(1);
 
   const tutorials = [
     <ElementalTutorial key={0} />,
     <ItemsTutorial key={1} />,
     <UnlocksTutorial key={2} />,
-    <UpgradeTutorial key={3} />,
-    <ExploreTutorial key={4} />,
-    <StrategyTutorial key={5} />,
-    <PrescienceTutorial key={6} />,
+    <UpgradeTutorialPotions key={3} />,
+    <UpgradeTutorialItems key={4} />,
+    <ExploreTutorial key={5} />,
+    <StrategyTutorial key={6} />,
+    <PrescienceTutorial key={7} />,
+    <Prescience2Tutorial key={8} />,
   ];
 
   useEffect(() => {
@@ -114,10 +117,8 @@ export default function InterludeScreen({ type }: InterludeScreenProps) {
           className="level-up-sprite"
           adjustment={0}
         />
-        <div className="flex justify-center items-center h-1/2 w-full">
-          <div className="flex flex-col px-2 py-5 sm:p-6 2xl:px-12 2xl:py-6 w-full sm:w-3/4 gap-5">
-            <div className="w-full">{tutorials[currentIndex]}</div>
-          </div>
+        <div className="flex justify-center items-center h-1/2 px-2 py-5 sm:p-6 2xl:px-12 2xl:py-6 w-full sm:w-3/4 gap-5">
+          {tutorials[currentIndex]}
         </div>
         {loading ? (
           <div className="flex flex-col">

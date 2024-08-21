@@ -324,8 +324,8 @@ export default function Info({
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-center border border-terminal-green xl:h-[500px]">
-          <QuestionMarkIcon className="w-1/2 h-1/2" />
+        <div className="flex items-center justify-center border border-terminal-green h-full">
+          <QuestionMarkIcon className="h-full" />
         </div>
       )}
     </>

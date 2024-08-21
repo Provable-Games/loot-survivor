@@ -1484,6 +1484,7 @@ export function createSyscalls({
       throw error;
     }
   };
+
   return {
     spawn,
     explore,
