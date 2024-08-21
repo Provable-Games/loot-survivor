@@ -833,6 +833,7 @@ mod Game {
 
             // load adventurer (save gas by not loading boosts)
             let adventurer = _load_adventurer_no_boosts(@self, adventurer_id);
+
             // no name changes for dead or expired adventurers
             _assert_not_dead(adventurer);
             assert(!_is_expired(@self, adventurer_id), messages::GAME_EXPIRED);

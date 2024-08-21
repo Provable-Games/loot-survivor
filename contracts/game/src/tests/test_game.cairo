@@ -2808,6 +2808,11 @@ mod tests {
         let mut adventurer = state.get_adventurer(1);
         assert(adventurer.health == 100, 'health should be 100');
         assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon id should be wand');
+
+        // kill adventurer
+        adventurer.health = 0;
+        state._adventurer.write(1, adventurer); 
+
         // try to update adventurer name, should panic
         state.update_adventurer_name(1, 'New Name');
     }
