@@ -7,9 +7,10 @@ import {
   MetalIcon,
   HeartVitalityIcon,
   CoinIcon,
+  InfoIcon,
 } from "@/app/components/icons/Icons";
 import LootIcon from "@/app/components/icons/LootIcon";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { listAllEncounters } from "@/app/lib/utils/processFutures";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
@@ -23,6 +24,8 @@ const EncounterTable = () => {
   const adventurerEntropy = useUIStore((state) => state.adventurerEntropy);
   const showEncounterTable = useUIStore((state) => state.showEncounterTable);
   const hasBeast = useAdventurerStore((state) => state.computed.hasBeast);
+
+  const [hoveredBeast, setHoveredBeast] = useState<number | null>(null);
 
   const formattedAdventurerEntropy = BigInt(adventurerEntropy);
 
@@ -73,16 +76,13 @@ const EncounterTable = () => {
           >
             <tr className="border border-terminal-green">
               <th className="py-2 px-1 sm:pr-3 border-b border-terminal-green">
-                XP (lvl)
+                XP
+              </th>
+              <th className="py-2 px-1 sm:pr-3 border-b border-terminal-green">
+                Type
               </th>
               <th className="py-2 px-1 sm:pr-3 border-b border-terminal-green">
                 Encounter
-              </th>
-              <th className="py-2 px-1 sm:pr-3 border-b border-terminal-green">
-                Tier
-              </th>
-              <th className="py-2 px-1 sm:pr-3 border-b border-terminal-green">
-                Lvl
               </th>
               <th className="py-2 px-1 sm:pr-3 border-b border-terminal-green">
                 HP
@@ -107,7 +107,7 @@ const EncounterTable = () => {
           <tbody>
             {adventurerEntropy ? (
               React.Children.toArray(
-                encounters.map((encounter: any) => {
+                encounters.map((encounter: any, index: number) => {
                   let [special2, special3] = encounter.specialName?.split(
                     " "
                   ) || ["no", "no"];
@@ -129,11 +129,9 @@ const EncounterTable = () => {
                       : false;
 
                   return (
-                    <tr className="">
+                    <tr>
                       <td className="py-2 border-b border-terminal-green">
-                        <span className="flex">
-                          {encounter.xp}. ({encounter.adventurerLevel})
-                        </span>
+                        <span className="flex">{encounter.xp}</span>
                       </td>
                       <td
                         className={`py-2 border-b border-terminal-green tooltip flex flex-row gap-1 ${
@@ -154,20 +152,24 @@ const EncounterTable = () => {
                       </td>
                       <td className="py-2 border-b border-terminal-green">
                         <span className="flex justify-center">
-                          {encounter.encounter !== "Discovery" &&
-                            encounter.tier}
+                          {encounter.encounter !== "Discovery" && (
+                            <div className="relative flex flex-row gap-1 items-center justify-center w-full">
+                              <span className="text-xs">PWR:</span>
+                              <span>{encounter.power}</span>
+                            </div>
+                          )}
                           {encounter.type === "Health" && (
                             <div className="flex items-center">
                               {" "}
-                              {encounter.tier}{" "}
                               <HeartVitalityIcon className="h-3 pl-0.5" />
+                              {encounter.tier}{" "}
                             </div>
                           )}
                           {encounter.type === "Gold" && (
                             <div className="flex items-center">
                               {" "}
-                              {encounter.tier}{" "}
                               <CoinIcon className="pl-0.5 mt-0.5 self-center h-4 fill-current text-terminal-yellow" />
+                              {encounter.tier}{" "}
                             </div>
                           )}
                           {encounter.type === "Loot" && (
@@ -192,44 +194,69 @@ const EncounterTable = () => {
                       </td>
                       <td className="py-2 border-b border-terminal-green">
                         <span className="flex justify-center">
-                          {encounter.level}
-                        </span>
-                      </td>
-                      <td className="py-2 border-b border-terminal-green">
-                        <span className="flex justify-center">
                           {encounter.health}
                         </span>
                       </td>
                       <td className="py-2 border-b border-terminal-green">
-                        <span className="flex justify-center gap-1 items-center">
-                          {encounter.type === "Blade" && (
-                            <BladeIcon className="h-4" />
-                          )}
-                          {encounter.type === "Bludgeon" && (
-                            <BludgeonIcon className="h-4" />
-                          )}
-                          {encounter.type === "Magic" && (
-                            <MagicIcon className="h-4" />
-                          )}
-
+                        <span className="relative flex justify-center gap-1 items-center uppercase">
                           {encounter.encounter === "Beast" && (
+                            <span
+                              className="absolute top-[-8px] right-[-5px] w-3 h-3 cursor-pointer"
+                              onMouseEnter={() => setHoveredBeast(index)}
+                              onMouseLeave={() => setHoveredBeast(null)}
+                            >
+                              <InfoIcon />
+                              {hoveredBeast === index && (
+                                <span className="absolute flex flex-row items-center gap-1 p-2 border border-terminal-green bg-terminal-black">
+                                  {encounter.type === "Blade" && (
+                                    <BladeIcon className="h-4" />
+                                  )}
+                                  {encounter.type === "Bludgeon" && (
+                                    <BludgeonIcon className="h-4" />
+                                  )}
+                                  {encounter.type === "Magic" && (
+                                    <MagicIcon className="h-4" />
+                                  )}
+
+                                  {encounter.encounter === "Beast" && (
+                                    <>
+                                      <span>/</span>
+                                      {encounter.type === "Blade" && (
+                                        <HideIcon className="h-4" />
+                                      )}
+                                      {encounter.type === "Bludgeon" && (
+                                        <MetalIcon className="h-4" />
+                                      )}
+                                      {encounter.type === "Magic" && (
+                                        <ClothIcon className="h-4" />
+                                      )}
+                                    </>
+                                  )}
+                                </span>
+                              )}
+                            </span>
+                          )}
+                          {encounter.encounter === "Beast" ? (
+                            (encounter.type === "Blade" && "Hunter") ||
+                            (encounter.type === "Bludgeon" && "Brute") ||
+                            (encounter.type === "Magic" && "Magical")
+                          ) : (
                             <>
-                              <span>/</span>
                               {encounter.type === "Blade" && (
-                                <HideIcon className="h-4" />
+                                <BladeIcon className="h-4" />
                               )}
                               {encounter.type === "Bludgeon" && (
-                                <MetalIcon className="h-4" />
+                                <BludgeonIcon className="h-4" />
                               )}
                               {encounter.type === "Magic" && (
-                                <ClothIcon className="h-4" />
+                                <MagicIcon className="h-4" />
                               )}
                             </>
                           )}
                         </span>
                       </td>
                       <td className="py-2 border-b border-terminal-green">
-                        <span className="flex justify-center">
+                        <span className="flex justify-center uppercase">
                           {encounter.location}
                         </span>
                       </td>
@@ -250,7 +277,7 @@ const EncounterTable = () => {
                         </span>
                       </td>
                       <td
-                        className={`py-2 border-b border-terminal-green ${
+                        className={`py-2 border-b border-terminal-green uppercase ${
                           encounter.isCritical ? "text-red-500" : ""
                         }`}
                       >
@@ -261,9 +288,11 @@ const EncounterTable = () => {
                         )}
                       </td>
                       <td className="py-2 border-b border-terminal-green">
-                        <span className="flex justify-center text-terminal-yellow">
-                          {encounter.nextXp} ({calculateLevel(encounter.nextXp)}
-                          )
+                        <span className="flex flex-row gap-1 justify-center">
+                          {encounter.nextXp}{" "}
+                          <span className={`${"text-terminal-yellow"}`}>
+                            ({calculateLevel(encounter.nextXp)})
+                          </span>
                         </span>
                       </td>
                     </tr>

@@ -1,24 +1,22 @@
-import { HintDisplay } from "../animations/Hint";
+import { HintDisplay } from "@/app/components/animations/Hint";
 import { ReactNode } from "react";
 
 export const UnlocksTutorial = () => {
   const points: ReactNode[] = [
-    <span className="text-2xl">
-      <span className="uppercase text-terminal-yellow">Greatness 15:</span>{" "}
-      Items receive a name suffix{" "}
-      <span className="uppercase">(&quot;Of Power&quot;)</span> providing a stat
+    <span className="sm:text-2xl uppercase" key={0}>
+      <span className="text-terminal-yellow">Greatness 15:</span> Items receive
+      a name suffix <span>(&quot;Of Power&quot;)</span> providing a unique stat
       boost to the Adventurer.
     </span>,
-    <span className="text-2xl">
-      <span className="uppercase text-terminal-yellow">Greatness 19:</span>{" "}
-      Items receive a name prefix{" "}
-      <span className="uppercase">(&quot;Agony Bane&quot;)</span>. Providing a
-      powerful damage boost if it matches a beast name.
+    <span className="sm:text-2xl uppercase" key={1}>
+      <span className="text-terminal-yellow">Greatness 19:</span> Items receive
+      a name prefix <span>(&quot;Agony Bane&quot;)</span>. Providing a powerful
+      damage boost if it matches a beast name.
     </span>,
-    <span className="text-2xl">
-      <span className="uppercase text-terminal-yellow">Greatness 20:</span>{" "}
-      Items receive <span className="uppercase">(+1)</span> modifier which
-      provides a permanent stat upgrade for the Adventurer.
+    <span className="sm:text-2xl uppercase" key={2}>
+      <span className="text-terminal-yellow">Greatness 20:</span> Items receive{" "}
+      <span>(+1)</span> modifier which provides a permanent stat upgrade for the
+      Adventurer.
     </span>,
   ];
   return (

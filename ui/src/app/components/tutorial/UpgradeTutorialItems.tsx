@@ -1,23 +1,23 @@
-import { GiBattleGearIcon } from "../icons/Icons";
-import { HintDisplay } from "../animations/Hint";
+import { GiBattleGearIcon } from "@/app/components/icons/Icons";
+import { HintDisplay } from "@/app/components/animations/Hint";
 import { ReactNode } from "react";
 
 export const UpgradeTutorialItems = () => {
   const points: ReactNode[] = [
-    <p className="text-2xl uppercase">
+    <p className="sm:text-2xl uppercase" key={0}>
       New items are available for purchase at the start of each level.
     </p>,
-    <p className="text-2xl uppercase">
-      The price of the items is based on the their tier.
+    <p className="sm:text-2xl uppercase" key={1}>
+      The price of the items is based on their tier.
     </p>,
-    <p className="text-2xl uppercase">
+    <p className="sm:text-2xl uppercase" key={2}>
       Charisma provides a discount on items.
     </p>,
   ];
 
   return (
     <div className="flex flex-col gap-5 items-center text-center h-full p-20">
-      <div className="flex flex-row gap-2">
+      <div className="flex flex-row items-center gap-2">
         <h3 className="text-lg sm:text-4xl text-terminal-yellow uppercase">
           Items
         </h3>

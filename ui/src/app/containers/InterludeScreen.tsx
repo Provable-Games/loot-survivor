@@ -8,10 +8,15 @@ import { UpgradeTutorialPotions } from "@/app/components/tutorial/UpgradeTutoria
 import { UpgradeTutorialItems } from "@/app/components/tutorial/UpgradeTutorialItems";
 import { ElementalTutorial } from "@/app/components/tutorial/ElementalTutorial";
 import { UnlocksTutorial } from "@/app/components/tutorial/ItemSpecialsTutorial";
-import { ExploreTutorial } from "@/app/components/tutorial/ExploreTutorial";
-import { StrategyTutorial } from "@/app/components/tutorial/StrategyTutorial";
+import { BeastsTutorial } from "@/app/components/tutorial/BeastsTutorial";
+import { CharismaTutorial } from "@/app/components/tutorial/CharismaTutorial";
 import { PrescienceTutorial } from "@/app/components/tutorial/PrescienceTutorial";
 import { Prescience2Tutorial } from "@/app/components/tutorial/Prescience2Tutorial";
+import { JewelryTutorial } from "@/app/components/tutorial/JewelryTutorial";
+import { TopTipsTutorial } from "@/app/components/tutorial/TopTipsTutorial";
+import { ObstaclesTutorial } from "@/app/components/tutorial/ObstaclesTutorial";
+import { DiscoveriesTutorial } from "@/app/components/tutorial/DiscoveriesTutorial";
+import { CollectibleBeastsTutorial } from "@/app/components/tutorial/CollectibleBeatsTutorial";
 
 interface InterludeScreenProps {
   type: string;
@@ -75,7 +80,7 @@ export default function InterludeScreen({ type }: InterludeScreenProps) {
     "Arranging falling boulder traps...",
   ];
 
-  const [currentIndex, setCurrentIndex] = useState(1);
+  const [currentHintIndex, setCurrentHintIndex] = useState(13);
 
   const tutorials = [
     <ElementalTutorial key={0} />,
@@ -83,15 +88,25 @@ export default function InterludeScreen({ type }: InterludeScreenProps) {
     <UnlocksTutorial key={2} />,
     <UpgradeTutorialPotions key={3} />,
     <UpgradeTutorialItems key={4} />,
-    <ExploreTutorial key={5} />,
-    <StrategyTutorial key={6} />,
-    <PrescienceTutorial key={7} />,
-    <Prescience2Tutorial key={8} />,
+    <BeastsTutorial key={5} />,
+    <ObstaclesTutorial key={6} />,
+    <DiscoveriesTutorial key={7} />,
+    <CharismaTutorial key={8} />,
+    <PrescienceTutorial key={9} />,
+    <Prescience2Tutorial key={10} />,
+    <JewelryTutorial key={11} />,
+    <TopTipsTutorial key={12} />,
+    <CollectibleBeastsTutorial key={13} />,
   ];
 
   useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * loadingMessages.length);
-    setLoadingMessage(loadingMessages[randomIndex]);
+    const randomLoadingMessageIndex = Math.floor(
+      Math.random() * loadingMessages.length
+    );
+    setLoadingMessage(loadingMessages[randomLoadingMessageIndex]);
+
+    const randomHintIndex = Math.floor(Math.random() * tutorials.length);
+    setCurrentHintIndex(randomHintIndex);
 
     // Set a timer to change loading to false after 15 seconds
     const timer = setTimeout(() => {
@@ -117,11 +132,11 @@ export default function InterludeScreen({ type }: InterludeScreenProps) {
           className="level-up-sprite"
           adjustment={0}
         />
-        <div className="flex justify-center items-center h-1/2 px-2 py-5 sm:p-6 2xl:px-12 2xl:py-6 w-full sm:w-3/4 gap-5">
-          {tutorials[currentIndex]}
+        <div className="flex justify-center items-center h-1/2 sm:px-12 2xl:py-6 w-full sm:w-3/4 gap-5">
+          {tutorials[currentHintIndex]}
         </div>
         {loading ? (
-          <div className="flex flex-col">
+          <div className="flex flex-col w-full p-2 sm:w-[600px] sm:p-0">
             <p className="text-2xl">
               {type === "level"
                 ? loadingMessage
