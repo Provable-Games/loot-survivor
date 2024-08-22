@@ -375,7 +375,7 @@ mod tests {
     ) -> felt252 {
         let adventurer_id = game
             .new_game(
-                INTERFACE_ID(), starting_weapon, 'loothero', golden_token_id, false, ZERO_ADDRESS()
+                INTERFACE_ID(), starting_weapon, 'loothero', golden_token_id, false, ZERO_ADDRESS(), 0
             );
 
         let new_adventurer = game.get_adventurer(adventurer_id);
@@ -393,7 +393,7 @@ mod tests {
     ) -> felt252 {
         let adventurer_id = game
             .new_game(
-                INTERFACE_ID(), starting_weapon, 'loothero', golden_token_id, false, ZERO_ADDRESS()
+                INTERFACE_ID(), starting_weapon, 'loothero', golden_token_id, false, ZERO_ADDRESS(), 0
             );
 
         let new_adventurer = game.get_adventurer(adventurer_id);
@@ -423,7 +423,7 @@ mod tests {
                 name,
                 DEFAULT_NO_GOLDEN_TOKEN.into(),
                 false,
-                ZERO_ADDRESS()
+                ZERO_ADDRESS(), 0
             );
 
         // get adventurer state
@@ -748,7 +748,8 @@ mod tests {
                 name,
                 DEFAULT_NO_GOLDEN_TOKEN.into(),
                 false,
-                ZERO_ADDRESS()
+                ZERO_ADDRESS(),
+                0
             );
 
         // get adventurer state

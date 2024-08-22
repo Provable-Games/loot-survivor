@@ -69,6 +69,8 @@ mod messages {
     const NOT_TOKEN_OWNER: felt252 = 'not token owner';
     const TOKEN_ALREADY_REGISTERED: felt252 = 'token already registered';
     const ITEM_SPECIALS_UNAVAILABLE: felt252 = 'item specials unavailable';
+    const TOURNAMENT_STILL_ACTIVE: felt252 = 'tournament still active';
+    const TOURNAMENT_WINNER_ALREADY_SET: felt252 = 'tournament winner already set';
 }
 
 #[derive(Drop, Copy)]

@@ -105,7 +105,8 @@ mod Game {
         _adventurer_meta: LegacyMap::<felt252, AdventurerMetadata>,
         _adventurer_name: LegacyMap::<felt252, felt252>,
         _adventurer_obituary: LegacyMap::<felt252, ByteArray>,
-        _adventurer_nft_allegiance: LegacyMap::<felt252, ContractAddress>,
+        _adventurer_launch_tournament_collection: LegacyMap::<felt252, ContractAddress>,
+        _launch_tournament_participants: Array<felt252>,
         _bag: LegacyMap::<felt252, Bag>,
         _collectible_beasts: ContractAddress,
         _client_provider_address: LegacyMap::<felt252, ContractAddress>,
@@ -133,7 +134,9 @@ mod Game {
         _player_vrf_allowance: LegacyMap::<felt252, u128>,
         _claimed_tokens: LegacyMap::<felt252, bool>,
         _vrf_premiums_address: ContractAddress,
-        _genesis_tournament_scores: LegacyMap::<ContractAddress, u32>,
+        _launch_tournament_scores: LegacyMap::<ContractAddress, u64>,
+        _qualifying_collections: Array<felt252>,
+        _launch_tournament_winner: ContractAddress,
     }
 
     #[event]
@@ -246,7 +249,8 @@ mod Game {
         self._vrf_premiums_address.write(vrf_premiums_address);
 
         // set qualifying nft collections
-        _initialize_genesis_tournament(ref self, qualifying_collections.span());
+        _initialize_tournament_scores(ref self, qualifying_collections.span());
+        self._qualifying_collections.write(qualifying_collections);
 
         // give VRF provider approval for all ETH in the contract since the only
         // reason ETH will be in the contract is to cover VRF costs
@@ -324,7 +328,8 @@ mod Game {
             name: felt252,
             golden_token_id: u256,
             delay_reveal: bool,
-            custom_renderer: ContractAddress
+            custom_renderer: ContractAddress,
+            launch_tournament_winner_token_id: u256,
         ) -> felt252 {
             // don't process payment distributions on Katana
             if _network_supports_vrf() {
@@ -933,12 +938,50 @@ mod Game {
             );
 
             // record adventurer allegiance
-            self._adventurer_nft_allegiance.write(adventurer_id, nft_address);
+            self._adventurer_launch_tournament_collection.write(adventurer_id, nft_address);
 
             // emit claimed free game event
             __event_ClaimedFreeGame(ref self, adventurer_id, nft_address, token_id);
 
             adventurer_id
+        }
+
+        /// @title Set Tournament Winner
+        /// @notice Allows anyone to settle the result of the launch tournament
+        /// @dev this can only be called after the tournament end time has passed
+        fn settle_tournament_winner(ref self: ContractState) {
+            // assert the tournament is over
+            assert(
+                get_block_timestamp() > self._launch_promotion_end_timestamp.read(),
+                messages::TOURNAMENT_STILL_ACTIVE
+            );
+
+            // assert tournament winner is not already set
+            assert(
+                self._launch_tournament_winner.read().is_non_zero(),
+                messages::TOURNAMENT_WINNER_ALREADY_SET
+            );
+
+            // iterate over _launch_tournament_scores and find top score
+            let mut top_score = 0;
+            let mut top_score_address = contract_address_const::<0>();
+            let mut qualifying_collections = self._qualifying_collections.read().span();
+
+            loop {
+                match qualifying_collections.pop_front() {
+                    Option::Some(collection_address) => {
+                        let collection_score = self
+                            ._launch_tournament_scores
+                            .read(*collection_address);
+                        if collection_score > top_score {
+                            top_score = collection_score;
+                            top_score_address = *collection_address;
+                        }
+                    },
+                    Option::None(_) => { break; }
+                };
+            };
+            self._launch_tournament_winner.write(top_score_address);
         }
 
 
@@ -1395,13 +1438,13 @@ mod Game {
         }
 
         // if adventurer has an nft allegiance, update the score
-        let nft_address = self._adventurer_nft_allegiance.read(adventurer_id);
+        let nft_address = self._adventurer_launch_tournament_collection.read(adventurer_id);
         if nft_address.is_non_zero() {
             // get previous score for the collection
-            let previous_score = self._genesis_tournament_scores.read(nft_address);
+            let previous_score = self._launch_tournament_scores.read(nft_address);
             // add the adventurer's xp to the collection's score
             self
-                ._genesis_tournament_scores
+                ._launch_tournament_scores
                 .write(nft_address, previous_score + adventurer.xp.into());
         }
     }
@@ -3182,7 +3225,7 @@ mod Game {
         );
     }
 
-    fn _initialize_genesis_tournament(
+    fn _initialize_tournament_scores(
         ref self: ContractState, qualifying_collections: Span<ContractAddress>
     ) {
         let mut collection_index = 0;
@@ -3194,7 +3237,7 @@ mod Game {
             let collection_address = *qualifying_collections.at(collection_index);
 
             // initialize the qualifying collection scores to 1 so we can use zero to check if the collection is eligible
-            self._genesis_tournament_scores.write(collection_address, 1);
+            self._launch_tournament_scores.write(collection_address, 1);
             collection_index += 1;
         }
     }
@@ -3202,7 +3245,7 @@ mod Game {
     fn _is_qualifying_collection(
         self: @ContractState, nft_collection_address: ContractAddress
     ) -> bool {
-        self._genesis_tournament_scores.read(nft_collection_address) > 0
+        self._launch_tournament_scores.read(nft_collection_address) > 0
     }
 
     fn _assert_is_qualifying_nft(self: @ContractState, nft_collection_address: ContractAddress) {
@@ -3231,6 +3274,10 @@ mod Game {
         hash_span.append(collection_address.into());
         hash_span.append(token_id.try_into().unwrap());
         poseidon_hash_span(hash_span.span())
+    }
+
+    fn _get_tournament_winner(self: @ContractState) -> ContractAddress {
+        self._launch_tournament_winner.read()
     }
 
     fn _assert_token_not_claimed(self: @ContractState, token_hash: felt252) {
