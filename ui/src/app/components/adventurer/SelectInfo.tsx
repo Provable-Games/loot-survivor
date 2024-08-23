@@ -20,19 +20,19 @@ import { vitalityIncrease } from "@/app/lib/constants";
 import LootIconLoader from "@/app/components/icons/Loader";
 import AutoScrolling from "@/app/components/animations/AutoScrolling";
 
-interface InfoProps {
+interface SelectInfoProps {
   adventurer: Adventurer | undefined;
   gameContract: Contract;
   profileExists?: boolean;
   upgradeCost?: number;
 }
 
-export default function Info({
+export default function SelectInfo({
   adventurer,
   gameContract,
   profileExists,
   upgradeCost,
-}: InfoProps) {
+}: SelectInfoProps) {
   const formatAdventurer = adventurer ? adventurer : NullAdventurer;
   const { data } = useQueriesStore();
   const dropItems = useUIStore((state) => state.dropItems);
@@ -240,7 +240,7 @@ export default function Info({
     <>
       {adventurer?.id ? (
         <div className="flex flex-col w-full uppercase h-full p-2 border border-terminal-green">
-          <div className="relative flex gap-2 w-full text-xl sm:text-2xl lg:text-3xl">
+          <div className="relative flex justify-between w-full text-xl sm:text-2xl lg:text-3xl">
             <span className="w-3/4 overflow-hidden" ref={scrollableRef}>
               {formatAdventurer.name}
             </span>
@@ -324,8 +324,8 @@ export default function Info({
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-center border border-terminal-green h-full">
-          <QuestionMarkIcon className="h-full" />
+        <div className="flex items-center justify-center border border-terminal-green xl:h-[500px]">
+          <QuestionMarkIcon className="w-1/2 h-1/2" />
         </div>
       )}
     </>

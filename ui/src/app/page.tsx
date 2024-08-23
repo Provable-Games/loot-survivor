@@ -252,6 +252,7 @@ function Home() {
     multicall,
     mintLords,
     withdraw,
+    transferAdventurer,
   } = useSyscalls({
     gameContract: gameContract!,
     ethContract: ethContract!,
@@ -735,6 +736,7 @@ function Home() {
                     getBalances={getBalances}
                     mintLords={mintLords}
                     costToPlay={costToPlay}
+                    transferAdventurer={transferAdventurer}
                   />
                 )}
                 {screen === "play" && (

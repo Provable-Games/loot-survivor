@@ -133,6 +133,8 @@ type State = {
   setControllerAdmin: (value: string) => void;
   tillDeath: boolean;
   setTillDeath: (value: boolean) => void;
+  transferredAdventurerIds: number[];
+  setTransferredAdventurerIds: (value: number[]) => void;
 };
 
 const useUIStore = create<State>((set) => ({
@@ -245,6 +247,9 @@ const useUIStore = create<State>((set) => ({
   setFetchUnlocksEntropy: (value) => set({ fetchUnlocksEntropy: value }),
   tillDeath: true,
   setTillDeath: (value) => set({ tillDeath: value }),
+  transferredAdventurerIds: [],
+  setTransferredAdventurerIds: (value) =>
+    set({ transferredAdventurerIds: value }),
 }));
 
 export default useUIStore;
