@@ -75,6 +75,12 @@ const allMenuItems: Menu[] = [
   { id: 5, label: "Leaderboard", screen: "leaderboard", disabled: false },
   { id: 6, label: "Encounters", screen: "encounters", disabled: false },
   { id: 7, label: "Guide", screen: "guide", disabled: false },
+  {
+    id: 8,
+    label: "Collections",
+    screen: "collections leaderboard",
+    disabled: false,
+  },
 ];
 
 const mobileMenuItems: Menu[] = [
@@ -84,6 +90,12 @@ const mobileMenuItems: Menu[] = [
   { id: 4, label: "Upgrade", screen: "upgrade", disabled: false },
   { id: 5, label: "Encounters", screen: "encounters", disabled: false },
   { id: 6, label: "Guide", screen: "guide", disabled: false },
+  {
+    id: 7,
+    label: "Collections",
+    screen: "collections leaderboard",
+    disabled: false,
+  },
 ];
 
 export default function Main() {
@@ -651,8 +663,6 @@ function Home() {
 
     return () => clearInterval(interval); // Cleanup on component unmount
   }, [fetchUnlocksEntropy]);
-
-  setScreen("collections leaderboard");
 
   return (
     <>
