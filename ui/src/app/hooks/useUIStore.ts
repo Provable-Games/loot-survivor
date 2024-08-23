@@ -23,7 +23,8 @@ export type ScreenPage =
   | "tutorial"
   | "onboarding"
   | "create adventurer"
-  | "future";
+  | "future"
+  | "collections leaderboard";
 
 export type Network =
   | "mainnet"

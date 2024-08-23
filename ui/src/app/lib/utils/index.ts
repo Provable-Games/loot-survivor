@@ -26,6 +26,16 @@ export function formatNumber(num: number): string {
   }
 }
 
+export function formatXP(xp: number): string {
+  if (Math.abs(xp) >= 1000000) {
+    return parseFloat((xp / 1000000).toFixed(2)) + "m";
+  } else if (Math.abs(xp) >= 1000) {
+    return parseFloat((xp / 1000).toFixed(2)) + "k";
+  } else {
+    return xp.toString();
+  }
+}
+
 export function indexAddress(address: string) {
   const newHex =
     address.substring(0, 2) + address.substring(3).replace(/^0+/, "");

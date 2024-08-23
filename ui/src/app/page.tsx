@@ -65,6 +65,7 @@ import TokenLoader from "@/app/components/animations/TokenLoader";
 import CartridgeConnector from "@cartridge/connector";
 import { VRF_WAIT_TIME } from "@/app/lib/constants";
 import InterludeScreen from "@/app/containers/InterludeScreen";
+import CollectionsLeaderboardScreen from "./containers/CollectionsLeaderboardScreen";
 
 const allMenuItems: Menu[] = [
   { id: 1, label: "Start", screen: "start", disabled: false },
@@ -651,6 +652,8 @@ function Home() {
     return () => clearInterval(interval); // Cleanup on component unmount
   }, [fetchUnlocksEntropy]);
 
+  setScreen("collections leaderboard");
+
   return (
     <>
       {((!entropyReady && hasStatUpgrades) || fetchUnlocksEntropy) &&
@@ -763,6 +766,9 @@ function Home() {
                 )}
                 {screen === "encounters" && <EncountersScreen />}
                 {screen === "guide" && <GuideScreen />}
+                {screen === "collections leaderboard" && (
+                  <CollectionsLeaderboardScreen />
+                )}
                 {screen === "settings" && <Settings />}
                 {screen === "player" && <Player gameContract={gameContract!} />}
                 {screen === "wallet" && <WalletSelect />}
