@@ -530,3 +530,10 @@ export type Attribute = {
   nonBoostedStat: bigint;
   upgrades: number;
 };
+
+export type CollectionScore = {
+  name: string;
+  avatar: string;
+  totalXP: number;
+  gamesPlayed: number;
+};

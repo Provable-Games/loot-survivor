@@ -1,11 +1,12 @@
 import { formatXP } from "@/app/lib/utils";
+import { CollectionScore } from "@/app/types";
 
 /**
  * @container
  * @description Provides the collections leaderboard screen.
  */
 export default function CollectionsLeaderboardScreen() {
-  const sampleScores = [
+  const sampleScores: CollectionScore[] = [
     {
       avatar: "/collections/Blobert.png",
       totalXP: 300,
@@ -149,9 +150,9 @@ const ScoreGraph: React.FC<ScoreGraphProps> = ({
         ))}
       </div>
       {/* X-axis */}
-      <span className="absolute left-[-40px] bottom-[-10px] w-[105%] bg-terminal-green-50 h-2" />
+      <span className="absolute left-[-20px] bottom-[-20px] w-[105%] bg-terminal-green-50 h-2" />
       {/* Y-axis */}
-      <span className="absolute left-[-40px] bottom-[-10px] w-2 bg-terminal-green-50 h-[105%]" />
+      <span className="absolute left-[-20px] bottom-[-20px] w-2 bg-terminal-green-50 h-[105%]" />
       {/* Top 3 */}
       <div className="absolute top-0 flex flex-col left-1/2 transform -translate-x-1/2 uppercase text-center text-2xl">
         <span>1. {scores[0].name}</span>
