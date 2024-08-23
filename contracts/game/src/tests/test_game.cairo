@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod tests {
+    use starknet::storage::MutableVecTrait;
+    use starknet::storage_access::storage_address_from_base;
     use array::ArrayTrait;
     use core::{result::ResultTrait, traits::Into, array::SpanTrait, serde::Serde, clone::Clone};
     use option::OptionTrait;
@@ -14,14 +16,14 @@ mod tests {
         declare, ContractClassTrait, start_cheat_block_timestamp_global,
         start_cheat_block_number_global, start_cheat_caller_address_global,
         stop_cheat_caller_address_global, cheatcodes::contract_class::ContractClass,
-        start_cheat_chain_id_global
+        start_cheat_chain_id_global, store, load, map_entry_address
     };
     use loot::{loot::{Loot, ImplLoot, ILoot}, constants::{ItemId}};
     use game::{
         Game,
         Game::{
-            IGame, _adventurer_nameContractMemberStateTrait, _adventurerContractMemberStateTrait,
-            _process_item_level_up, _set_item_specials_seed
+            IGame,
+            _process_item_level_up, _set_item_specials_seed, _initialize_launch_tournament
         },
         game::{
             interfaces::{IGameDispatcherTrait, IGameDispatcher},
@@ -54,7 +56,6 @@ mod tests {
 
     use game::tests::mocks::erc20_mocks::DualCaseERC20Mock;
     use game::tests::mocks::erc721_mocks::DualCaseERC721Mock;
-    use openzeppelin::tests::utils;
     use openzeppelin::token::erc20::dual20::{DualCaseERC20, DualCaseERC20Trait};
     use openzeppelin::token::erc20::interface::{IERC20CamelDispatcher, IERC20CamelDispatcherTrait};
     use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
@@ -292,7 +293,8 @@ mod tests {
     /// @param starting_timestamp The timestamp at which the game will start
     /// @param terminal_block The block number at which the game will terminate
     /// @param launch_promotion_end_timestamp The timestamp at which the launch promotion ends
-    /// @return The game contract, the lords token, the eth token, the golden token, the bloberts contract, the beasts contract
+    /// @return The game contract, the lords token, the eth token, the golden token, the bloberts
+    /// contract, the beasts contract
     fn deploy_game(
         starting_block: u64,
         starting_timestamp: u64,
@@ -317,7 +319,7 @@ mod tests {
         // deploy lords, eth, and golden token
         let lords = deploy_lords(erc20_class_hash);
 
-        // deploy eth   
+        // deploy eth
         let eth = deploy_eth(erc20_class_hash);
 
         // declare erc721 class hash
@@ -350,7 +352,7 @@ mod tests {
             launch_promotion_end_timestamp
         );
 
-        // transfer lords to caller address and approve 
+        // transfer lords to caller address and approve
         lords.transfer(OWNER(), 100000000000000000000000000000000);
         eth.transfer(OWNER(), 100000000000000000000000000000000);
         eth.transfer(game.contract_address, 100000000000000000000000000000000);
@@ -375,7 +377,13 @@ mod tests {
     ) -> felt252 {
         let adventurer_id = game
             .new_game(
-                INTERFACE_ID(), starting_weapon, 'loothero', golden_token_id, false, ZERO_ADDRESS(), 0
+                INTERFACE_ID(),
+                starting_weapon,
+                'loothero',
+                golden_token_id,
+                false,
+                ZERO_ADDRESS(),
+                0
             );
 
         let new_adventurer = game.get_adventurer(adventurer_id);
@@ -393,7 +401,13 @@ mod tests {
     ) -> felt252 {
         let adventurer_id = game
             .new_game(
-                INTERFACE_ID(), starting_weapon, 'loothero', golden_token_id, false, ZERO_ADDRESS(), 0
+                INTERFACE_ID(),
+                starting_weapon,
+                'loothero',
+                golden_token_id,
+                false,
+                ZERO_ADDRESS(),
+                0
             );
 
         let new_adventurer = game.get_adventurer(adventurer_id);
@@ -423,7 +437,8 @@ mod tests {
                 name,
                 DEFAULT_NO_GOLDEN_TOKEN.into(),
                 false,
-                ZERO_ADDRESS(), 0
+                ZERO_ADDRESS(),
+                0
             );
 
         // get adventurer state
@@ -581,9 +596,11 @@ mod tests {
     //     assert(
     //         adventurer.equipment.weapon.id == purchase_weapon_id, 'new weapon should be equipped'
     //     );
-    //     assert(adventurer.equipment.chest.id == purchase_chest_id, 'new chest should be equipped');
+    //     assert(adventurer.equipment.chest.id == purchase_chest_id, 'new chest should be
+    //     equipped');
     //     assert(adventurer.equipment.head.id == purchase_head_id, 'new head should be equipped');
-    //     assert(adventurer.equipment.waist.id == purchase_waist_id, 'new waist should be equipped');
+    //     assert(adventurer.equipment.waist.id == purchase_waist_id, 'new waist should be
+    //     equipped');
     //     assert(adventurer.equipment.foot.id == purchase_foot_id, 'new foot should be equipped');
     //     assert(adventurer.equipment.hand.id == purchase_hand_id, 'new hand should be equipped');
     //     assert(adventurer.gold < STARTING_GOLD, 'items should not be free');
@@ -838,7 +855,8 @@ mod tests {
             assert(updated_adventurer.gold == adventurer_start.gold, 'should have same gold');
             assert(updated_adventurer.health != 100, 'should have taken dmg');
 
-            // attack again (will take out starter beast with current settings regardless of critical hit)
+            // attack again (will take out starter beast with current settings regardless of
+            // critical hit)
             game.attack(ADVENTURER_ID, false);
 
             // recheck adventurer stats
@@ -1015,7 +1033,8 @@ mod tests {
         let mut shopping_cart = ArrayTrait::<ItemPurchase>::new();
         shopping_cart.append(ItemPurchase { item_id: item_id, equip: true });
 
-        // attempt to buy item during battle - should_panic with message 'Action not allowed in battle'
+        // attempt to buy item during battle - should_panic with message 'Action not allowed in
+        // battle'
         // this test is annotated to expect a panic so if it doesn't, this test will fail
         let stat_upgrades = Stats {
             strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 1, luck: 0
@@ -1555,7 +1574,8 @@ mod tests {
         let (contains, _) = bag.contains(purchased_item_id);
         assert(contains, 'item should be in bag');
 
-        // create drop list consisting of adventurers equipped weapon and purchased item that is in bag
+        // create drop list consisting of adventurers equipped weapon and purchased item that is in
+        // bag
         let mut drop_list = ArrayTrait::<u8>::new();
         drop_list.append(adventurer.equipment.weapon.id);
         drop_list.append(purchased_item_id);
@@ -1807,7 +1827,8 @@ mod tests {
     //     let starting_block = 364063;
     //     let starting_timestamp = 1698678554;
     //     let terminal_timestamp = 0;
-    //     let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_timestamp, terminal_timestamp, 0);
+    //     let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_timestamp,
+    //     terminal_timestamp, 0);
     //     assert(game.can_play(1), 'should be able to play');
     //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
     //     assert(!game.can_play(1), 'should not be able to play');
@@ -1826,7 +1847,8 @@ mod tests {
     //     let starting_block = 364063;
     //     let starting_timestamp = 1698678554;
     //     let terminal_timestamp = 0;
-    //     let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_timestamp, terminal_timestamp, 0);
+    //     let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_timestamp,
+    //     terminal_timestamp, 0);
     //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
     // }
 
@@ -1839,7 +1861,8 @@ mod tests {
     //     let starting_block = 364063;
     //     let starting_timestamp = 1698678554;
     //     let terminal_timestamp = 0;
-    //     let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_timestamp, terminal_timestamp, 0);
+    //     let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_timestamp,
+    //     terminal_timestamp, 0);
     //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
 
     //     // roll blockchain forward 1 second less than a day
@@ -1973,7 +1996,8 @@ mod tests {
     }
 
     fn transfer_ownership(mut game: IGameDispatcher, from: ContractAddress, to: ContractAddress) {
-        // Some weird conflict when using the game interface ?? using direct ERC721Dispatcher for now. This is not a problem in blockexplorers, I suspect issue in Scarb compiler.
+        // Some weird conflict when using the game interface ?? using direct ERC721Dispatcher for
+        // now. This is not a problem in blockexplorers, I suspect issue in Scarb compiler.
         IERC721Dispatcher { contract_address: game.contract_address }
             .transfer_from(from, to, ADVENTURER_ID.into());
     }
@@ -2813,7 +2837,7 @@ mod tests {
 
         // kill adventurer
         adventurer.health = 0;
-        state._adventurer.write(1, adventurer); 
+        state._adventurer.write(1, adventurer);
 
         // try to update adventurer name, should panic
         state.update_adventurer_name(1, 'New Name');
@@ -2849,5 +2873,59 @@ mod tests {
             + 1;
         start_cheat_block_timestamp_global(beyond_expiry_date);
         game.update_adventurer_name(adventurer_id, 'New Name');
+    }
+
+    #[test]
+    fn test_initialize_launch_tournament() {
+        // Initialize the contract state for testing
+        let mut state = Game::contract_state_for_testing();
+
+        // Create a span of qualifying collections
+        let mut qualifying_collections = ArrayTrait::<ContractAddress>::new();
+        qualifying_collections.append(contract_address_const::<1>());
+        qualifying_collections.append(contract_address_const::<2>());
+        qualifying_collections.append(contract_address_const::<3>());
+        let qualifying_collections_span = qualifying_collections.span();
+
+        // Call the internal function
+        _initialize_launch_tournament(ref state, qualifying_collections_span);
+
+        // Verify the results
+        let collections_len = state._launch_tournament_collections.len();
+        assert(collections_len == 3, 'Wrong number of collections');
+
+        // Check each collection is properly stored
+        assert(
+            state._launch_tournament_collections.at(0).read() == contract_address_const::<1>(),
+            'Wrong collection at index 0'
+        );
+        assert(
+            state._launch_tournament_collections.at(1).read() == contract_address_const::<2>(),
+            'Wrong collection at index 1'
+        );
+        assert(
+            state._launch_tournament_collections.at(2).read() == contract_address_const::<3>(),
+            'Wrong collection at index 2'
+        );
+
+        // Verify scores are initialized to 1
+        assert(
+            state._launch_tournament_scores.read(contract_address_const::<1>()) == 1,
+            'Wrong score for collection 1'
+        );
+        assert(
+            state._launch_tournament_scores.read(contract_address_const::<2>()) == 1,
+            'Wrong score for collection 2'
+        );
+        assert(
+            state._launch_tournament_scores.read(contract_address_const::<3>()) == 1,
+            'Wrong score for collection 3'
+        );
+
+        // Verify a non-qualifying collection has a score of 0
+        assert(
+            state._launch_tournament_scores.read(contract_address_const::<4>()) == 0,
+            'collection should have 0 score'
+        );
     }
 }

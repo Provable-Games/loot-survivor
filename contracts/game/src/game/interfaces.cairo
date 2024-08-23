@@ -61,7 +61,7 @@ trait IGame<TContractState> {
         nft_address: ContractAddress,
         token_id: u256
     ) -> felt252;
-    fn settle_tournament_winner(ref self: TContractState);
+    fn settle_launch_tournament(ref self: TContractState);
     // ------ View Functions ------
 
     // adventurer details

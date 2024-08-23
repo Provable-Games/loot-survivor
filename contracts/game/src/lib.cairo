@@ -20,14 +20,17 @@ mod Game {
     use alexandria_math::pow;
     use openzeppelin::token::erc721::erc721::ERC721Component::InternalTrait;
     use core::starknet::SyscallResultTrait;
-    use core::integer::BoundedInt;
+    use core::num::traits::Bounded;
     use core::{
         array::{SpanTrait, ArrayTrait}, clone::Clone,
         starknet::{
             get_caller_address, ContractAddress, ContractAddressIntoFelt252, contract_address_const,
-            get_block_timestamp, get_tx_info, info::BlockInfo
+            get_block_timestamp, get_tx_info, info::BlockInfo, storage::{Map, Vec}
         },
     };
+    use core::starknet::storage::StoragePointerReadAccess;
+    use core::starknet::storage::MutableVecTrait;
+    use core::starknet::storage::StoragePathEntry;
 
     use openzeppelin::token::erc20::interface::{
         IERC20Camel, IERC20Dispatcher, IERC20DispatcherTrait, IERC20CamelLibraryDispatcher
@@ -97,19 +100,18 @@ mod Game {
     impl ERC721Impl = ERC721Component::ERC721Impl<ContractState>;
     #[abi(embed_v0)]
     impl ERC721CamelOnly = ERC721Component::ERC721CamelOnlyImpl<ContractState>;
+    #[abi(embed_v0)]
     impl ERC721InternalImpl = ERC721Component::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
-        _adventurer: LegacyMap::<felt252, Adventurer>,
-        _adventurer_meta: LegacyMap::<felt252, AdventurerMetadata>,
-        _adventurer_name: LegacyMap::<felt252, felt252>,
-        _adventurer_obituary: LegacyMap::<felt252, ByteArray>,
-        _adventurer_launch_tournament_collection: LegacyMap::<felt252, ContractAddress>,
-        _launch_tournament_participants: Array<felt252>,
-        _bag: LegacyMap::<felt252, Bag>,
-        _collectible_beasts: ContractAddress,
-        _client_provider_address: LegacyMap::<felt252, ContractAddress>,
+        _adventurer: Map::<felt252, Adventurer>,
+        _adventurer_meta: Map::<felt252, AdventurerMetadata>,
+        _adventurer_name: Map::<felt252, felt252>,
+        _adventurer_obituary: Map::<felt252, ByteArray>,
+        _bag: Map::<felt252, Bag>,
+        _collectible_beasts_address: ContractAddress,
+        _client_provider_address: Map::<felt252, ContractAddress>,
         _dao: ContractAddress,
         _pg_address: ContractAddress,
         _game_count: felt252,
@@ -118,7 +120,7 @@ mod Game {
         _leaderboard: Leaderboard,
         _lords: ContractAddress,
         _eth_address: ContractAddress,
-        _golden_token_last_use: LegacyMap::<felt252, felt252>,
+        _golden_token_last_use: Map::<felt252, felt252>,
         _golden_token: ContractAddress,
         _cost_to_play: u128,
         _terminal_timestamp: u64,
@@ -130,12 +132,13 @@ mod Game {
         #[substorage(v0)]
         src5: SRC5Component::Storage,
         _default_renderer: ContractAddress,
-        _custom_renderer: LegacyMap::<felt252, ContractAddress>,
-        _player_vrf_allowance: LegacyMap::<felt252, u128>,
-        _claimed_tokens: LegacyMap::<felt252, bool>,
+        _custom_renderer: Map::<felt252, ContractAddress>,
+        _player_vrf_allowance: Map::<felt252, u128>,
+        _claimed_tokens: Map::<felt252, bool>,
         _vrf_premiums_address: ContractAddress,
-        _launch_tournament_scores: LegacyMap::<ContractAddress, u64>,
-        _qualifying_collections: Array<felt252>,
+        _launch_tournament_collections: Vec<ContractAddress>,
+        _launch_tournament_participants: Map::<felt252, ContractAddress>,
+        _launch_tournament_scores: Map::<ContractAddress, u32>,
         _launch_tournament_winner: ContractAddress,
     }
 
@@ -217,7 +220,7 @@ mod Game {
         self._eth_address.write(eth_address);
         self._dao.write(dao);
         self._pg_address.write(pg_address);
-        self._collectible_beasts.write(collectible_beasts);
+        self._collectible_beasts_address.write(collectible_beasts);
         self._terminal_timestamp.write(terminal_timestamp);
         self._genesis_block.write(starknet::get_block_info().unbox().block_number.into());
         self._randomness_contract_address.write(randomness_contract_address);
@@ -228,16 +231,9 @@ mod Game {
         // @dev base uri isn't used in the current implementation
         self.erc721.initializer("Loot Survivor", "LSVR", "https://token.lootsurvivor.io/");
 
-        // On mainnet, set genesis timestamp to LSV1.0 genesis to preserve same reward distribution schedule for V1.1 
-        let chain_id = get_tx_info().unbox().chain_id;
-        if chain_id == MAINNET_CHAIN_ID {
-            self._genesis_timestamp.write(1699552291);
-        } else {
-            // on non-mainnet, use the current block timestamp so tests run correctly
-            self
-                ._genesis_timestamp
-                .write(starknet::get_block_info().unbox().block_timestamp.into());
-        };
+        // set genesis timestamp
+        let current_timestamp = starknet::get_block_info().unbox().block_timestamp.into();
+        self._genesis_timestamp.write(current_timestamp);
 
         // set the golden token address
         self._golden_token.write(golden_token_address);
@@ -248,16 +244,15 @@ mod Game {
         // set the vrf premiums address
         self._vrf_premiums_address.write(vrf_premiums_address);
 
-        // set qualifying nft collections
-        _initialize_tournament_scores(ref self, qualifying_collections.span());
-        self._qualifying_collections.write(qualifying_collections);
+        // initialize launch tournament
+        _initialize_launch_tournament(ref self, qualifying_collections.span());
 
         // give VRF provider approval for all ETH in the contract since the only
         // reason ETH will be in the contract is to cover VRF costs
         if _network_supports_vrf() {
             let eth_dispatcher = IERC20Dispatcher { contract_address: eth_address };
-            eth_dispatcher.approve(randomness_contract_address, BoundedInt::max());
-            eth_dispatcher.approve(vrf_premiums_address, BoundedInt::max());
+            eth_dispatcher.approve(randomness_contract_address, Bounded::<u256>::MAX);
+            eth_dispatcher.approve(vrf_premiums_address, Bounded::<u256>::MAX);
         }
     }
 
@@ -312,14 +307,18 @@ mod Game {
         /// @title New Game
         ///
         /// @notice Creates a new game of Loot Survivor
-        /// @dev Starts a new game of Loot Survivor with the provided weapon and name. If Golden Token ID is provided, attempts to process payment with the token. Otherwise, processes payment with $lords
+        /// @dev Starts a new game of Loot Survivor with the provided weapon and name. If Golden
+        /// Token ID is provided, attempts to process payment with the token. Otherwise, processes
+        /// payment with $lords
         ///
         /// @param client_reward_address Address where client rewards should be sent.
-        /// @param weapon A u8 representing the weapon to start the game with. Valid options are: {wand: 12, book: 17, short sword: 46, club: 76}
+        /// @param weapon A u8 representing the weapon to start the game with. Valid options are:
+        /// {wand: 12, book: 17, short sword: 46, club: 76}
         /// @param name A u128 value representing the player's name.
         /// @param golden_token_id A u256 representing the ID of the golden token.
-        /// @param delay_reveal Whether the game should wait to reveal starting stats till after starter beast is defeated
-        /// @param custom_renderer A ContractAddress to use for rendering the NFT. Provide 0 to use the default renderer.
+        /// @param delay_reveal Whether the game should wait to reveal starting stats till after
+        /// starter beast is defeated @param custom_renderer A ContractAddress to use for rendering
+        /// the NFT. Provide 0 to use the default renderer.
         /// @return A felt252 representing the adventurer id.
         fn new_game(
             ref self: ContractState,
@@ -366,7 +365,8 @@ mod Game {
         /// @notice Allows an adventurer to explore
         ///
         /// @param adventurer_id A u256 representing the ID of the adventurer.
-        /// @param till_beast A boolean flag indicating if the exploration continues until encountering a beast.
+        /// @param till_beast A boolean flag indicating if the exploration continues until
+        /// encountering a beast.
         fn explore(
             ref self: ContractState, adventurer_id: felt252, till_beast: bool
         ) -> Array<ExploreResult> {
@@ -389,7 +389,7 @@ mod Game {
             );
             assert(!_is_expired(@self, adventurer_id), messages::GAME_EXPIRED);
 
-            // go explore 
+            // go explore
             let mut explore_results = ArrayTrait::<ExploreResult>::new();
             _explore(
                 ref self,
@@ -412,10 +412,11 @@ mod Game {
 
         /// @title Attack Function
         ///
-        /// @notice Allows an adventurer to attack a beast 
+        /// @notice Allows an adventurer to attack a beast
         ///
         /// @param adventurer_id A u256 representing the ID of the adventurer.
-        /// @param to_the_death A boolean flag indicating if the attack should continue until either the adventurer or the beast is defeated.
+        /// @param to_the_death A boolean flag indicating if the attack should continue until either
+        /// the adventurer or the beast is defeated.
         fn attack(ref self: ContractState, adventurer_id: felt252, to_the_death: bool) {
             // load player assets
             let (mut adventurer, level_seed, _) = _load_player_assets(@self, adventurer_id);
@@ -498,7 +499,8 @@ mod Game {
         /// @notice Allows an adventurer to flee from a beast
         ///
         /// @param adventurer_id A u256 representing the unique ID of the adventurer.
-        /// @param to_the_death A boolean flag indicating if the flee attempt should continue until either the adventurer escapes or is defeated.
+        /// @param to_the_death A boolean flag indicating if the flee attempt should continue until
+        /// either the adventurer escapes or is defeated.
         fn flee(ref self: ContractState, adventurer_id: felt252, to_the_death: bool) {
             // load player assets
             let (mut adventurer, level_seed, _) = _load_player_assets(@self, adventurer_id);
@@ -643,7 +645,7 @@ mod Game {
                 }
             }
 
-            // save adventurer 
+            // save adventurer
             _save_adventurer(ref self, ref adventurer, adventurer_id);
 
             // if the bag was mutated, pack and save it
@@ -662,7 +664,8 @@ mod Game {
             // load player assets
             let (mut adventurer, _, mut bag) = _load_player_assets(@self, adventurer_id);
 
-            // assert action is valid (ownership of item is handled in internal function when we iterate over items)
+            // assert action is valid (ownership of item is handled in internal function when we
+            // iterate over items)
             _assert_ownership(@self, adventurer_id);
             _assert_not_dead(adventurer);
             assert(items.len() != 0, messages::NO_ITEMS);
@@ -688,12 +691,15 @@ mod Game {
 
         /// @title Upgrade Function
         ///
-        /// @notice Allows an adventurer to upgrade their stats, purchase potions, and buy new items.
+        /// @notice Allows an adventurer to upgrade their stats, purchase potions, and buy new
+        /// items.
         ///
         /// @param adventurer_id A u256 representing the unique ID of the adventurer.
         /// @param potions A u8 representing the number of potions to purchase
-        /// @param stat_upgrades A Stats struct detailing the upgrades the adventurer wants to apply to their stats.
-        /// @param items An array of ItemPurchase detailing the items the adventurer wishes to purchase during the upgrade.
+        /// @param stat_upgrades A Stats struct detailing the upgrades the adventurer wants to apply
+        /// to their stats.
+        /// @param items An array of ItemPurchase detailing the items the adventurer wishes to
+        /// purchase during the upgrade.
         fn upgrade(
             ref self: ContractState,
             adventurer_id: felt252,
@@ -756,7 +762,8 @@ mod Game {
             }
 
             // if the player is buying potions as part of the upgrade, process purchase
-            // @dev process potion purchase after items in case item purchases changes item stat boosts
+            // @dev process potion purchase after items in case item purchases changes item stat
+            // boosts
             if potions != 0 {
                 _buy_potions(ref self, ref adventurer, adventurer_id, potions);
             }
@@ -773,7 +780,8 @@ mod Game {
         }
         /// @title Update Cost to Play
         /// @notice Updates the cost to play the game based on the current price of LORDS.
-        /// @dev This function fetches the current price of LORDS from the oracle and recalculates the cost to play the game.
+        /// @dev This function fetches the current price of LORDS from the oracle and recalculates
+        /// the cost to play the game.
         /// @return The new cost to play the game in u128.
         fn update_cost_to_play(ref self: ContractState) -> u128 {
             let previous_price = self._cost_to_play.read();
@@ -782,10 +790,12 @@ mod Game {
                 oracle_address, DataType::SpotEntry(PRAGMA_LORDS_KEY)
             );
 
-            // target price is the target price in cents * 10^8 because pragma uses 8 decimals for LORDS price
+            // target price is the target price in cents * 10^8 because pragma uses 8 decimals for
+            // LORDS price
             let target_price = TARGET_PRICE_USD_CENTS.into() * 100000000;
 
-            // new price is the target price (in cents) divided by the current lords price (in cents)
+            // new price is the target price (in cents) divided by the current lords price (in
+            // cents)
             let new_price = (target_price / (lords_price * 100)) * 1000000000000000000;
 
             self._cost_to_play.write(new_price);
@@ -804,7 +814,8 @@ mod Game {
         /// @notice Allows an adventurer to set a custom renderer for their NFT.
         ///
         /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
-        /// @param render_contract A ContractAddress to use for rendering the NFT. Provide 0 to switch back to default renderer.
+        /// @param render_contract A ContractAddress to use for rendering the NFT. Provide 0 to
+        /// switch back to default renderer.
         fn set_custom_renderer(
             ref self: ContractState, adventurer_id: felt252, render_contract: ContractAddress
         ) {
@@ -901,7 +912,8 @@ mod Game {
         /// @notice Allows an adventurer to enter the genesis tournament.
         /// @param weapon A u8 representing the weapon to use in the game.
         /// @param name A felt252 representing the name of the adventurer.
-        /// @param custom_renderer A ContractAddress representing the custom renderer to use for the adventurer.
+        /// @param custom_renderer A ContractAddress representing the custom renderer to use for the
+        /// adventurer.
         /// @param delay_stat_reveal A bool representing whether to delay the stat reveal.
         /// @param nft_address A ContractAddress representing the address of the NFT collection.
         /// @param token_id A u256 representing the token ID of the NFT.
@@ -938,7 +950,7 @@ mod Game {
             );
 
             // record adventurer allegiance
-            self._adventurer_launch_tournament_collection.write(adventurer_id, nft_address);
+            self._launch_tournament_participants.write(adventurer_id, nft_address);
 
             // emit claimed free game event
             __event_ClaimedFreeGame(ref self, adventurer_id, nft_address, token_id);
@@ -949,7 +961,9 @@ mod Game {
         /// @title Set Tournament Winner
         /// @notice Allows anyone to settle the result of the launch tournament
         /// @dev this can only be called after the tournament end time has passed
-        fn settle_tournament_winner(ref self: ContractState) {
+        /// @dev iterates over the collection scores to find the top score
+        /// @dev stores the top score collection in the contract state for easy retrieval
+        fn settle_launch_tournament(ref self: ContractState) {
             // assert the tournament is over
             assert(
                 get_block_timestamp() > self._launch_promotion_end_timestamp.read(),
@@ -965,21 +979,23 @@ mod Game {
             // iterate over _launch_tournament_scores and find top score
             let mut top_score = 0;
             let mut top_score_address = contract_address_const::<0>();
-            let mut qualifying_collections = self._qualifying_collections.read().span();
 
+            let num_collections = self._launch_tournament_collections.len();
+            let mut collection_index = 0;
             loop {
-                match qualifying_collections.pop_front() {
-                    Option::Some(collection_address) => {
-                        let collection_score = self
-                            ._launch_tournament_scores
-                            .read(*collection_address);
-                        if collection_score > top_score {
-                            top_score = collection_score;
-                            top_score_address = *collection_address;
-                        }
-                    },
-                    Option::None(_) => { break; }
-                };
+                if collection_index == num_collections {
+                    break;
+                }
+                let collection_address = self
+                    ._launch_tournament_collections
+                    .at(collection_index)
+                    .read();
+                let collection_score = self._launch_tournament_scores.read(collection_address);
+                if collection_score > top_score {
+                    top_score = collection_score;
+                    top_score_address = collection_address;
+                }
+                collection_index += 1;
             };
             self._launch_tournament_winner.write(top_score_address);
         }
@@ -1160,7 +1176,8 @@ mod Game {
         request_id: u64
     ) {
         // downscale the felt252 to a u16 as that's adaquate amount of entropy for item specials
-        // and will make processing the item specials significantly more eficient than using a felt252
+        // and will make processing the item specials significantly more eficient than using a
+        // felt252
         let item_specials_seed_u256: u256 = item_specials_seed.into();
         let item_specials_seed_u16: u16 = (item_specials_seed_u256 % TWO_POW_16.into())
             .try_into()
@@ -1201,12 +1218,13 @@ mod Game {
 
         let adventurer_level = adventurer.get_level();
 
-        // If the adventurer is on level 2, they are waiting on this entropy to come in for the market to be available
+        // If the adventurer is on level 2, they are waiting on this entropy to come in for the
+        // market to be available
         if adventurer_level == 2 {
             reveal_starting_stats(ref adventurer, adventurer_id, level_seed_u64);
             __event_UpgradesAvailable(ref self, adventurer, adventurer_id);
         } else if adventurer_level > 2 {
-            // emit upgrades available event 
+            // emit upgrades available event
             __event_UpgradesAvailable(ref self, adventurer, adventurer_id);
         }
     }
@@ -1379,7 +1397,7 @@ mod Game {
     /// @param to_address A ContractAddress representing the address to mint the beast to.
     fn _mint_beast(self: @ContractState, beast: Beast, to_address: ContractAddress) {
         let collectible_beasts_contract = ILeetLootDispatcher {
-            contract_address: self._collectible_beasts.read()
+            contract_address: self._collectible_beasts_address.read()
         };
 
         let is_beast_minted = collectible_beasts_contract
@@ -1438,7 +1456,7 @@ mod Game {
         }
 
         // if adventurer has an nft allegiance, update the score
-        let nft_address = self._adventurer_launch_tournament_collection.read(adventurer_id);
+        let nft_address = self._launch_tournament_participants.read(adventurer_id);
         if nft_address.is_non_zero() {
             // get previous score for the collection
             let previous_score = self._launch_tournament_scores.read(nft_address);
@@ -1494,7 +1512,8 @@ mod Game {
 
     /// @title Get Reward Distribution
     /// @notice Retrieves the reward distribution for the game and emits an event.
-    /// @dev This function calculates the reward distribution based on the cost to play and the game count.
+    /// @dev This function calculates the reward distribution based on the cost to play and the game
+    /// count.
     /// @param self A reference to the ContractState object.
     /// @return Rewards The reward distribution for the game.
     fn _get_reward_distribution(self: @ContractState) -> Rewards {
@@ -1535,13 +1554,15 @@ mod Game {
 
     /// @title Pay for VRF
     /// @notice Pays for VRF and emits an event.
-    /// @dev This function transfers $1 worth of ETH from the caller to the game contract to cover VRF premiums and gas for callbacks.
+    /// @dev This function transfers $1 worth of ETH from the caller to the game contract to cover
+    /// VRF premiums and gas for callbacks.
     /// @param self A reference to the ContractState object.
     fn _pay_for_vrf(self: @ContractState) {
         let eth_dispatcher = IERC20Dispatcher { contract_address: self._eth_address.read() };
         let one_dollar_wei = _dollar_to_wei(self, VRF_COST_PER_GAME.into());
 
-        // transfer $1 worth of ETH from user to game contract to cover VRF premiums and gas for callbacks
+        // transfer $1 worth of ETH from user to game contract to cover VRF premiums and gas for
+        // callbacks
         eth_dispatcher
             .transfer_from(
                 get_caller_address(), starknet::get_contract_address(), one_dollar_wei.into()
@@ -1550,7 +1571,8 @@ mod Game {
 
     /// @title Convert Dollar to Wei
     /// @notice Converts a dollar amount to Wei based on the current price of ETH.
-    /// @dev This function fetches the current price of ETH from the Pragma Oracle and converts the dollar amount to Wei.
+    /// @dev This function fetches the current price of ETH from the Pragma Oracle and converts the
+    /// dollar amount to Wei.
     /// @param self A reference to the ContractState object.
     /// @param usd A u128 representing the dollar amount to convert to Wei.
     /// @return A u128 representing the converted Wei amount.
@@ -1640,7 +1662,8 @@ mod Game {
     /// @param weapon A u8 representing the weapon for the adventurer.
     /// @param name A felt252 representing the name of the adventurer.
     /// @param custom_renderer A ContractAddress representing the address of the custom renderer.
-    /// @param delay_stat_reveal A bool representing whether to delay the stat reveal until the starter beast is defeated.
+    /// @param delay_stat_reveal A bool representing whether to delay the stat reveal until the
+    /// starter beast is defeated.
     /// @param golden_token_id A u256 representing the golden token id of the adventurer.
     /// @return A felt252 representing the adventurer id.
     fn _start_game(
@@ -1685,7 +1708,7 @@ mod Game {
 
         self.erc721.mint(get_caller_address(), adventurer_id.into());
 
-        // emit events 
+        // emit events
         __event_StartGame(
             ref self,
             adventurer,
@@ -1708,7 +1731,8 @@ mod Game {
 
     /// @title Starter Beast Ambush
     /// @notice Simulates a beast ambush for the adventurer and returns the battle details.
-    /// @dev This function simulates a beast ambush for the adventurer and returns the battle details.
+    /// @dev This function simulates a beast ambush for the adventurer and returns the battle
+    /// details.
     /// @param adventurer A reference to the adventurer.
     /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
     /// @param starting_weapon A u8 representing the starting weapon for the adventurer.
@@ -1742,13 +1766,15 @@ mod Game {
     }
 
     /// @title Explore
-    /// @notice Allows the adventurer to explore the world and encounter beasts, obstacles, or discoveries.
+    /// @notice Allows the adventurer to explore the world and encounter beasts, obstacles, or
+    /// discoveries.
     /// @dev This function is called when the adventurer explores the world.
     /// @param self A reference to the ContractState object.
     /// @param adventurer A reference to the adventurer.
     /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
     /// @param level_seed A felt252 representing the entropy for the adventurer.
-    /// @param explore_till_beast A bool representing whether to explore until a beast is encountered.
+    /// @param explore_till_beast A bool representing whether to explore until a beast is
+    /// encountered.
     fn _explore(
         ref self: ContractState,
         ref adventurer: Adventurer,
@@ -1884,7 +1910,8 @@ mod Game {
                     }
                     adventurer.increase_gold(amount);
                     __event_DiscoveredGold(ref self, adventurer, adventurer_id, amount);
-                // if the item is not already owned or equipped and the adventurer has space for it
+                    // if the item is not already owned or equipped and the adventurer has space for
+                // it
                 } else {
                     // no items will be dropped as part of discovery
                     let dropped_items = ArrayTrait::<u8>::new();
@@ -2095,11 +2122,13 @@ mod Game {
         }
     }
 
-    // @notice Grants XP to items currently equipped by an adventurer, and processes any level ups.// 
+    // @notice Grants XP to items currently equipped by an adventurer, and processes any level
+    // ups.//
     // @dev This function does three main things:
     //   1. Iterates through each of the equipped items for the given adventurer.
-    //   2. Increases the XP for the equipped item. If the item levels up, it processes the level up and updates the item.
-    //   3. If any items have leveled up, emits an `ItemsLeveledUp` event.// 
+    //   2. Increases the XP for the equipped item. If the item levels up, it processes the level up
+    //   and updates the item.
+    //   3. If any items have leveled up, emits an `ItemsLeveledUp` event.//
     // @param self The contract's state reference.
     // @param adventurer Reference to the adventurer's state.
     // @param adventurer_id Unique identifier for the adventurer.
@@ -2198,7 +2227,8 @@ mod Game {
                 }
             } else {
                 // if the contract doesn't have an item specials seed from vrf yet
-                // we need to request one but only once so we use a flag to ensure we only request for first item
+                // we need to request one but only once so we use a flag to ensure we only request
+                // for first item
                 if !adventurer.awaiting_item_specials {
                     adventurer.awaiting_item_specials = true;
 
@@ -2223,7 +2253,8 @@ mod Game {
                             item.id, item.get_greatness(), item_specials_seed
                         );
 
-                        // if suffix was unlocked, apply stat boosts for suffix special to adventurer
+                        // if suffix was unlocked, apply stat boosts for suffix special to
+                        // adventurer
                         if suffix_unlocked {
                             // apply stat boosts for suffix special to adventurer
                             adventurer.stats.apply_suffix_boost(specials.special1);
@@ -2266,16 +2297,19 @@ mod Game {
         }
     }
 
-    /// @notice Executes an adventurer's attack on a beast and manages the consequences of the combat
-    /// @dev This function covers the entire combat process between an adventurer and a beast, including generating randomness for combat, handling the aftermath of the attack, and any subsequent counter-attacks by the beast.
+    /// @notice Executes an adventurer's attack on a beast and manages the consequences of the
+    /// combat @dev This function covers the entire combat process between an adventurer and a
+    /// beast, including generating randomness for combat, handling the aftermath of the attack, and
+    /// any subsequent counter-attacks by the beast.
     /// @param self The current contract state
     /// @param adventurer The attacking adventurer
     /// @param weapon_combat_spec The combat specifications of the adventurer's weapon
     /// @param adventurer_id The unique identifier of the adventurer
-    /// @param level_seed A random value tied to the adventurer to aid in determining certain random aspects of the combat
-    /// @param beast The defending beast
+    /// @param level_seed A random value tied to the adventurer to aid in determining certain random
+    /// aspects of the combat @param beast The defending beast
     /// @param beast_seed The seed associated with the beast
-    /// @param fight_to_the_death Flag to indicate whether the adventurer should continue attacking until either they or the beast is defeated
+    /// @param fight_to_the_death Flag to indicate whether the adventurer should continue attacking
+    /// until either they or the beast is defeated
     fn _attack(
         ref self: ContractState,
         ref adventurer: Adventurer,
@@ -2372,14 +2406,18 @@ mod Game {
 
     /// @title Beast Attack (Internal)
     /// @notice Handles attacks by a beast on an adventurer
-    /// @dev This function determines a random attack location on the adventurer, retrieves armor and specials from that location, processes the beast attack, and deducts the damage from the adventurer's health.
+    /// @dev This function determines a random attack location on the adventurer, retrieves armor
+    /// and specials from that location, processes the beast attack, and deducts the damage from the
+    /// adventurer's health.
     /// @param self The current contract state
     /// @param adventurer The adventurer being attacked
     /// @param adventurer_id The unique identifier of the adventurer
     /// @param beast The beast that is attacking
     /// @param beast_seed The seed associated with the beast
     /// @param critical_hit_rnd A random value used to determine whether a critical hit was made
-    /// @return Returns a BattleDetails object containing details of the beast's attack, including the seed, beast ID, combat specifications of the beast, total damage dealt, whether a critical hit was made, and the location of the attack on the adventurer.
+    /// @return Returns a BattleDetails object containing details of the beast's attack, including
+    /// the seed, beast ID, combat specifications of the beast, total damage dealt, whether a
+    /// critical hit was made, and the location of the attack on the adventurer.
     fn _beast_attack(
         ref self: ContractState,
         ref adventurer: Adventurer,
@@ -2421,7 +2459,8 @@ mod Game {
 
     /// @title Flee
     /// @notice Handles an attempt by the adventurer to flee from a battle with a beast.
-    /// @dev This function is called when the adventurer attempts to flee from a battle with a beast.
+    /// @dev This function is called when the adventurer attempts to flee from a battle with a
+    /// beast.
     /// @param self A reference to the ContractState object.
     /// @param adventurer A reference to the adventurer.
     /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
@@ -2497,7 +2536,8 @@ mod Game {
     }
 
     /// @title Equip Item
-    /// @notice Equips a specific item to the adventurer, and if there's an item already equipped in that slot, it's moved to the bag.
+    /// @notice Equips a specific item to the adventurer, and if there's an item already equipped in
+    /// that slot, it's moved to the bag.
     /// @dev This function is called when an item is equipped to the adventurer.
     /// @param self A reference to the ContractState object.
     /// @param adventurer A reference to the adventurer.
@@ -2539,7 +2579,8 @@ mod Game {
     }
 
     /// @title Equip Items
-    /// @notice Equips items to the adventurer and returns the items that were unequipped as a result.
+    /// @notice Equips items to the adventurer and returns the items that were unequipped as a
+    /// result.
     /// @dev This function is called when items are equipped to the adventurer.
     /// @param contract_state A reference to the ContractState object.
     /// @param adventurer A reference to the adventurer.
@@ -2547,7 +2588,8 @@ mod Game {
     /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
     /// @param items_to_equip An array of u8 representing the items to be equipped.
     /// @param is_newly_purchased A bool representing whether the items are newly purchased.
-    /// @return An array of u8 representing the items that were unequipped as a result of equipping the items.
+    /// @return An array of u8 representing the items that were unequipped as a result of equipping
+    /// the items.
     fn _equip_items(
         contract_state: @ContractState,
         ref adventurer: Adventurer,
@@ -2556,7 +2598,8 @@ mod Game {
         items_to_equip: Array<u8>,
         is_newly_purchased: bool
     ) -> Array<u8> {
-        // mutable array from returning items that were unequipped as a result of equipping the items
+        // mutable array from returning items that were unequipped as a result of equipping the
+        // items
         let mut unequipped_items = ArrayTrait::<u8>::new();
 
         // get a clone of our items to equip to keep ownership for event
@@ -2610,14 +2653,16 @@ mod Game {
     }
 
     /// @title Drop Items
-    /// @notice Drops multiple items from the adventurer's possessions, either from equipment or bag.
+    /// @notice Drops multiple items from the adventurer's possessions, either from equipment or
+    /// bag.
     /// @dev This function is called when items are dropped from the adventurer's possessions.
     /// @param self A reference to the ContractState object.
     /// @param adventurer A reference to the adventurer.
     /// @param bag A reference to the bag.
     /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
     /// @param items An array of u8 representing the items to be dropped.
-    /// @return A tuple containing two boolean values. The first indicates if the adventurer was mutated, the second indicates if the bag was mutated.
+    /// @return A tuple containing two boolean values. The first indicates if the adventurer was
+    /// mutated, the second indicates if the bag was mutated.
     fn _drop(
         self: @ContractState,
         ref adventurer: Adventurer,
@@ -2658,15 +2703,19 @@ mod Game {
     }
 
     /// @title Buy Items
-    /// @notice Facilitates the purchase of multiple items and returns the items that were purchased, equipped, and unequipped.
+    /// @notice Facilitates the purchase of multiple items and returns the items that were
+    /// purchased, equipped, and unequipped.
     /// @dev This function is called when the adventurer purchases items.
     /// @param contract_state A reference to the ContractState object.
     /// @param adventurer A reference to the adventurer.
     /// @param bag A reference to the bag.
     /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
-    /// @param stat_upgrades_available A u8 representing the number of stat points available to the adventurer.
+    /// @param stat_upgrades_available A u8 representing the number of stat points available to the
+    /// adventurer.
     /// @param items_to_purchase An array of ItemPurchase representing the items to be purchased.
-    /// @return A tuple containing three arrays: the first contains the items purchased, the second contains the items that were equipped as part of the purchase, and the third contains the items that were unequipped as a result of equipping the newly purchased items.
+    /// @return A tuple containing three arrays: the first contains the items purchased, the second
+    /// contains the items that were equipped as part of the purchase, and the third contains the
+    /// items that were unequipped as a result of equipping the newly purchased items.
     fn _buy_items(
         self: @ContractState,
         ref adventurer: Adventurer,
@@ -2702,7 +2751,7 @@ mod Game {
             // buy it and store result in our purchases array for event
             purchases.append(_buy_item(ref adventurer, ref bag, item.item_id));
 
-            // if item is being equipped as part of the purchase 
+            // if item is being equipped as part of the purchase
             if item.equip {
                 // add it to our array of items to equip
                 items_to_equip.append(item.item_id);
@@ -2961,7 +3010,7 @@ mod Game {
         // if the adventurer's health is now above the max health due to a change in Vitality
         let max_health = adventurer.stats.get_max_health();
         if adventurer.health > max_health {
-            // lower adventurer's health to max health 
+            // lower adventurer's health to max health
             adventurer.health = max_health;
         }
     }
@@ -3051,13 +3100,15 @@ mod Game {
             if _network_supports_vrf() {
                 // check to see if we have vrf seed for the next level
                 if (current_level_seed != 0) {
-                    // process initial entropy which will reveal starting stats and emit starting market
+                    // process initial entropy which will reveal starting stats and emit starting
+                    // market
                     reveal_starting_stats(ref adventurer, adventurer_id, current_level_seed);
                     // emit UpgradesAvailable event
                     __event_UpgradesAvailable(ref self, adventurer, adventurer_id);
                 } else {
-                    // if we're leveling up from the starter beast and we don't have starting entropy yet
-                    // it may be because we didn't request it due to the player setting the delay_stat_reveal option
+                    // if we're leveling up from the starter beast and we don't have starting
+                    // entropy yet it may be because we didn't request it due to the player setting
+                    // the delay_stat_reveal option
                     let delay_stat_reveal = _load_adventurer_metadata(@self, adventurer_id)
                         .delay_stat_reveal;
                     if delay_stat_reveal {
@@ -3087,10 +3138,12 @@ mod Game {
                 // request new entropy
                 _request_randomness(ref self, current_level_seed, adventurer_id, 0);
 
-                // emit RequestedLevelSeed event to let clients know the contract is fetching new entropy
+                // emit RequestedLevelSeed event to let clients know the contract is fetching new
+                // entropy
                 __event_RequestedLevelSeed(ref self, adventurer_id, current_level_seed);
             } else {
-                // if contract is running on katana, we don't do full vrf, and instead use basic entropy which is hash of adventurer id and xp
+                // if contract is running on katana, we don't do full vrf, and instead use basic
+                // entropy which is hash of adventurer id and xp
                 process_new_level_seed(
                     ref self,
                     starknet::get_contract_address(),
@@ -3225,19 +3278,28 @@ mod Game {
         );
     }
 
-    fn _initialize_tournament_scores(
+    fn _initialize_launch_tournament(
         ref self: ContractState, qualifying_collections: Span<ContractAddress>
     ) {
         let mut collection_index = 0;
 
+        // iterate over qualifying collections
         loop {
             if collection_index >= qualifying_collections.len() {
                 break;
             }
+            // save each collection in vector storage so we can easily iterate over scores at end of
+            // the tournament @dev launch tournament scores are stored in a Map<ContractAddress,
+            // u32>
+            // @dev this vector storage provides an easy way to iterate over the collections at the
+            // end of the tournament
             let collection_address = *qualifying_collections.at(collection_index);
+            self._launch_tournament_collections.append().write(collection_address);
 
-            // initialize the qualifying collection scores to 1 so we can use zero to check if the collection is eligible
+            // initialize qualifying collection scores to 1 so we can use 0 to check if the
+            // collection is ineligible
             self._launch_tournament_scores.write(collection_address, 1);
+
             collection_index += 1;
         }
     }
@@ -3343,7 +3405,8 @@ mod Game {
         } else {
             let level_seed_u256: u256 = adventurer_id.try_into().unwrap();
             let beast_seed = (level_seed_u256 % TWO_POW_32.into()).try_into().unwrap();
-            // generate starter beast which will have weak armor against the adventurers starter weapon
+            // generate starter beast which will have weak armor against the adventurers starter
+            // weapon
             ImplBeast::get_starter_beast(
                 ImplLoot::get_type(adventurer.equipment.weapon.id), beast_seed
             )

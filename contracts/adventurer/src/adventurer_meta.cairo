@@ -56,7 +56,13 @@ impl PackingAdventurerMetadata of StorePacking<AdventurerMetadata, felt252> {
         let golden_token_id = golden_token_id.try_into().unwrap();
 
         AdventurerMetadata {
-            birth_date, death_date, level_seed, item_specials_seed, rank_at_death, delay_stat_reveal, golden_token_id
+            birth_date,
+            death_date,
+            level_seed,
+            item_specials_seed,
+            rank_at_death,
+            delay_stat_reveal,
+            golden_token_id
         }
     }
 }

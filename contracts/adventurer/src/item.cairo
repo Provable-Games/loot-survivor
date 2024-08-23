@@ -1,5 +1,4 @@
-use core::{option::OptionTrait, starknet::StorePacking, traits::{TryInto, Into}};
-use integer::{u16_sqrt};
+use core::{option::OptionTrait, starknet::StorePacking, traits::{TryInto, Into}, num::traits::Sqrt};
 use loot::loot::{ItemId};
 
 #[derive(Drop, Copy, PartialEq, Serde)]
@@ -90,7 +89,7 @@ impl ImplItem of IItemPrimitive {
         if self.xp == 0 {
             1
         } else {
-            let level = u16_sqrt(self.xp);
+            let level = self.xp.sqrt();
             if (level > MAX_GREATNESS) {
                 MAX_GREATNESS
             } else {

@@ -26,13 +26,13 @@ impl ImplObstacle of IObstacle {
     /// @param id: u8 - the obstacle id
     /// @return u8 - the obstacle tier
     fn get_tier(id: u8) -> Tier {
-        if ImplObstacle::is_t1(id) {
+        if Self::is_t1(id) {
             Tier::T1
-        } else if ImplObstacle::is_t2(id) {
+        } else if Self::is_t2(id) {
             Tier::T2
-        } else if ImplObstacle::is_t3(id) {
+        } else if Self::is_t3(id) {
             Tier::T3
-        } else if ImplObstacle::is_t4(id) {
+        } else if Self::is_t4(id) {
             Tier::T4
         } else {
             Tier::T5
@@ -106,7 +106,8 @@ mod tests {
                 break ();
             }
 
-            // no need to assert something, get_tier will throw a 'unknown obstacle id' if an obstacle is undefined
+            // no need to assert something, get_tier will throw a 'unknown obstacle id' if an
+            // obstacle is undefined
             ImplObstacle::get_tier(obstacle_id);
             obstacle_id += 1;
         }
@@ -121,7 +122,8 @@ mod tests {
             if obstacle_id > ObstacleId::MAX_ID {
                 break ();
             }
-            // no need to assert something, get_tier will throw a 'unknown obstacle id' if an obstacle is undefined
+            // no need to assert something, get_tier will throw a 'unknown obstacle id' if an
+            // obstacle is undefined
             ImplObstacle::get_type(obstacle_id);
             obstacle_id += 1;
         }

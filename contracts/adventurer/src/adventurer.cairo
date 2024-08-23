@@ -5,7 +5,7 @@ use combat::{
 };
 
 use core::{
-    array::ArrayTrait, integer::{u8_overflowing_add, u16_overflowing_sub}, option::OptionTrait,
+    array::ArrayTrait, option::OptionTrait, num::traits::{OverflowingAdd, OverflowingSub},
     poseidon::poseidon_hash_span, result::ResultTrait, starknet::{StorePacking},
 };
 use loot::{
@@ -165,14 +165,16 @@ impl ImplAdventurer of IAdventurer {
         }
     }
 
-    /// @notice Calculates the charisma potion discount for the adventurer based on their charisma stat.
+    /// @notice Calculates the charisma potion discount for the adventurer based on their charisma
+    /// stat.
     /// @return The charisma potion discount.
     #[inline(always)]
     fn charisma_potion_discount(self: Stats) -> u16 {
         CHARISMA_POTION_DISCOUNT.into() * self.charisma.into()
     }
 
-    /// @notice Calculates the charisma item discount for the adventurer based on their charisma stat.
+    /// @notice Calculates the charisma item discount for the adventurer based on their charisma
+    /// stat.
     /// @return The charisma item discount.
     #[inline(always)]
     fn charisma_item_discount(self: Stats) -> u16 {
@@ -370,15 +372,13 @@ impl ImplAdventurer of IAdventurer {
     fn get_discovery(
         adventurer_level: u8, discovery_type_rnd: u8, amount_rnd1: u8, amount_rnd2: u8
     ) -> DiscoveryType {
-        let discovery_type = ImplAdventurer::scale_u8_to_percent(discovery_type_rnd);
+        let discovery_type = Self::scale_u8_to_percent(discovery_type_rnd);
         if discovery_type < 45 {
-            DiscoveryType::Gold(ImplAdventurer::get_gold_discovery(adventurer_level, amount_rnd1))
+            DiscoveryType::Gold(Self::get_gold_discovery(adventurer_level, amount_rnd1))
         } else if discovery_type < 90 {
-            DiscoveryType::Health(
-                ImplAdventurer::get_health_discovery(adventurer_level, amount_rnd1)
-            )
+            DiscoveryType::Health(Self::get_health_discovery(adventurer_level, amount_rnd1))
         } else {
-            DiscoveryType::Loot(ImplAdventurer::get_loot_discovery(amount_rnd1, amount_rnd2))
+            DiscoveryType::Loot(Self::get_loot_discovery(amount_rnd1, amount_rnd2))
         }
     }
 
@@ -411,28 +411,28 @@ impl ImplAdventurer of IAdventurer {
     /// @param item_rnd: Random value used to determine the item item
     /// @return The id of the item discovered
     fn get_loot_discovery(tier_rnd: u8, item_rnd: u8) -> u8 {
-        let outcome = ImplAdventurer::scale_u8_to_percent(tier_rnd);
+        let outcome = Self::scale_u8_to_percent(tier_rnd);
         // 50% chance of T5
         if outcome < 50 {
             let t5_items = ItemUtils::get_t5_items();
             let item_index = (item_rnd.into() % t5_items.len()).try_into().unwrap();
             *t5_items.at(item_index)
-        // 30% chance of T4
+            // 30% chance of T4
         } else if outcome < 80 {
             let t4_items = ItemUtils::get_t4_items();
             let item_index = (item_rnd.into() % t4_items.len()).try_into().unwrap();
             *t4_items.at(item_index)
-        // 12% chance of T3
+            // 12% chance of T3
         } else if outcome < 92 {
             let t3_items = ItemUtils::get_t3_items();
             let item_index = (item_rnd.into() % t3_items.len()).try_into().unwrap();
             *t3_items.at(item_index)
-        // 6% chance of T2
+            // 6% chance of T2
         } else if outcome < 98 {
             let t2_items = ItemUtils::get_t2_items();
             let item_index = (item_rnd.into() % t2_items.len()).try_into().unwrap();
             *t2_items.at(item_index)
-        // 2% chance of T1
+            // 2% chance of T1
         } else {
             let t1_items = ItemUtils::get_t1_items();
             let item_index = (item_rnd.into() % t1_items.len()).try_into().unwrap();
@@ -536,8 +536,8 @@ impl ImplAdventurer of IAdventurer {
         }
     }
 
-    /// @notice Increases the adventurer's experience points by the given value and returns the previous and new level
-    /// @param self: Adventurer to add experience points to
+    /// @notice Increases the adventurer's experience points by the given value and returns the
+    /// previous and new level @param self: Adventurer to add experience points to
     /// @param amount: Amount of experience points to add to the adventurer
     /// @return A tuple containing the adventurer's level before and after the XP addition
     fn increase_adventurer_xp(ref self: Adventurer, amount: u16) -> (u8, u8) {
@@ -602,7 +602,8 @@ impl ImplAdventurer of IAdventurer {
     /// @notice Determines if a level up resulted in item specials being unlocked
     /// @param previous_level: the level of the item before the level up
     /// @param new_level: the level of the item after the level up
-    /// @return (bool, bool): a tuple containing a boolean indicating which item specials were unlocked
+    /// @return (bool, bool): a tuple containing a boolean indicating which item specials were
+    /// unlocked
     ///                            (suffix, prefixes)
     fn unlocked_specials(previous_level: u8, new_level: u8) -> (bool, bool) {
         if (previous_level < 15 && new_level >= 19) {
@@ -645,11 +646,12 @@ impl ImplAdventurer of IAdventurer {
         }
     }
 
-    /// @notice Calculates the bonus damage provided by the jewelry when the attacker's 
+    /// @notice Calculates the bonus damage provided by the jewelry when the attacker's
     /// weapon name matches the beast's name
     /// @param self: Item to calculate name match bonus damage for
     /// @param base_damage: Base damage amount before the jewelry bonus is applied
-    /// @return The amount of bonus damage, or 0 if the item does not provide a name match damage bonus
+    /// @return The amount of bonus damage, or 0 if the item does not provide a name match damage
+    /// bonus
     #[inline(always)]
     fn name_match_bonus_damage(self: Item, base_damage: u16) -> u16 {
         if (self.id == ItemId::PlatinumRing) {
@@ -665,7 +667,8 @@ impl ImplAdventurer of IAdventurer {
     /// @notice Calculates the bonus damage provided by the jewelry for critical hits
     /// @param self: Item to calculate critical hit bonus damage for
     /// @param base_damage: Base damage amount before the jewelry bonus is applied
-    /// @return The amount of bonus damage, or 0 if the item does not provide a critical hit damage bonus
+    /// @return The amount of bonus damage, or 0 if the item does not provide a critical hit damage
+    /// bonus
     #[inline(always)]
     fn critical_hit_bonus_damage(self: Item, base_damage: u16) -> u16 {
         if (self.id == ItemId::TitaniumRing) {
@@ -723,9 +726,9 @@ impl ImplAdventurer of IAdventurer {
 
 
     /// @notice Executes an attack from an Adventurer to a Beast.
-    /// 
-    /// @dev The function calculates the damage dealt to the Beast using a combination 
-    /// of the adventurer's weapon, stats, jewelry bonuses, and entropy to influence 
+    ///
+    /// @dev The function calculates the damage dealt to the Beast using a combination
+    /// of the adventurer's weapon, stats, jewelry bonuses, and entropy to influence
     /// critical hits. Note: Beasts do not have strength in this version.
     ///
     /// @param self The Adventurer executing the attack.
@@ -733,7 +736,7 @@ impl ImplAdventurer of IAdventurer {
     /// @param beast The Beast that is being attacked.
     /// @param crit_hit_rnd A u8 random value used to determine if attack is crit hit
     ///
-    /// @return Returns a CombatResult object containing the details of the attack's 
+    /// @return Returns a CombatResult object containing the details of the attack's
     /// outcome.
     fn attack(
         self: Adventurer, weapon_combat_spec: CombatSpec, beast: Beast, crit_hit_rnd: u8
@@ -866,7 +869,8 @@ impl ImplAdventurer of IAdventurer {
         // get armor details
         let armor_details = ImplLoot::get_item(armor.id);
 
-        // get combat spec for armor, no need to fetch armor specials since they don't apply to obstacles
+        // get combat spec for armor, no need to fetch armor specials since they don't apply to
+        // obstacles
         let armor_combat_spec = CombatSpec {
             tier: armor_details.tier,
             item_type: armor_details.item_type,
@@ -874,7 +878,7 @@ impl ImplAdventurer of IAdventurer {
             specials: SpecialPowers { special1: 0, special2: 0, special3: 0 }
         };
 
-        let critical_hit_chance = ImplAdventurer::get_dynamic_critical_hit_chance(self.get_level());
+        let critical_hit_chance = Self::get_dynamic_critical_hit_chance(self.get_level());
 
         // calculate damage
         let mut combat_result = ImplCombat::calculate_damage(
@@ -920,9 +924,9 @@ impl ImplAdventurer of IAdventurer {
     /// @title Jewelry Armor Bonus Calculation
     /// @notice Calculate the bonus provided by a jewelry item to a particular armor type.
     ///
-    /// @dev The function uses a matching system to determine if a particular jewelry item 
+    /// @dev The function uses a matching system to determine if a particular jewelry item
     /// (like an amulet, pendant, or necklace) provides a bonus to a given armor type.
-    /// The bonus is computed by multiplying the base armor value with the greatness of 
+    /// The bonus is computed by multiplying the base armor value with the greatness of
     /// the jewelry and a constant bonus factor.
     ///
     /// @param self The jewelry item under consideration.
@@ -977,8 +981,9 @@ impl ImplAdventurer of IAdventurer {
     /// @param self: The adventurer
     #[inline(always)]
     fn increment_battle_action_count(ref self: Adventurer) {
-        if (u8_overflowing_add(self.battle_action_count, 1).is_ok()) {
-            self.battle_action_count += 1;
+        let (result, overflow) = self.battle_action_count.overflowing_add(1);
+        if (!overflow) {
+            self.battle_action_count = result;
         } else {
             self.battle_action_count = 0;
         }
@@ -1078,8 +1083,8 @@ impl ImplAdventurer of IAdventurer {
         hash_span.append(level_seed.into());
         hash_span.append(battle_action_count.into());
         let poseidon = poseidon_hash_span(hash_span.span());
-        let rnd1_u64 = ImplAdventurer::felt_to_u32(poseidon);
-        ImplAdventurer::u32_to_u8s(rnd1_u64)
+        let rnd1_u64 = Self::felt_to_u32(poseidon);
+        Self::u32_to_u8s(rnd1_u64)
     }
 
     /// @title get_randomness
@@ -1092,14 +1097,10 @@ impl ImplAdventurer of IAdventurer {
         hash_span.append(adventurer_xp.into());
         hash_span.append(level_seed.into());
         let poseidon = poseidon_hash_span(hash_span.span());
-        let (rnd1_u64, rnd2_u64) = ImplAdventurer::felt_to_two_u64(poseidon);
-        let (rnd1_u32, rnd2_u32, rnd3_u32, rnd4_u32) = ImplAdventurer::split_two_u64(
-            rnd1_u64, rnd2_u64
-        );
-        let (rnd1_u16, rnd2_u16, rnd3_u16, rnd4_u16) = ImplAdventurer::split_u32s(
-            rnd3_u32, rnd4_u32
-        );
-        let (rnd1_u8, rnd2_u8, rnd3_u8, rnd4_u8) = ImplAdventurer::split_u16s(rnd3_u16, rnd4_u16);
+        let (rnd1_u64, rnd2_u64) = Self::felt_to_two_u64(poseidon);
+        let (rnd1_u32, rnd2_u32, rnd3_u32, rnd4_u32) = Self::split_two_u64(rnd1_u64, rnd2_u64);
+        let (rnd1_u16, rnd2_u16, rnd3_u16, rnd4_u16) = Self::split_u32s(rnd3_u32, rnd4_u32);
+        let (rnd1_u8, rnd2_u8, rnd3_u8, rnd4_u8) = Self::split_u16s(rnd3_u16, rnd4_u16);
         (rnd1_u32, rnd2_u32, rnd1_u16, rnd2_u16, rnd1_u8, rnd2_u8, rnd3_u8, rnd4_u8)
     }
 
@@ -1199,7 +1200,8 @@ impl ImplAdventurer of IAdventurer {
     /// @param equipment: adventurer equipment
     /// @param seed: seed for randomness
     /// @return Array<ItemSpecial>: array of item specials
-    /// @dev this function is used immediately after receiving item specials entropy from VRF to let the client know the specials of the items that triggered the specials
+    /// @dev this function is used immediately after receiving item specials entropy from VRF to let
+    /// the client know the specials of the items that triggered the specials
     fn get_items_leveled_up(equipment: Equipment, seed: u16,) -> Array<ItemLeveledUp> {
         let mut items_leveled_up = ArrayTrait::<ItemLeveledUp>::new();
         let weapon_level = ImplCombat::get_level_from_xp(equipment.weapon.xp);
@@ -1345,7 +1347,7 @@ impl ImplAdventurer of IAdventurer {
     #[inline(always)]
     fn apply_health_boost_from_vitality_unlock(ref self: Adventurer, item_specials: SpecialPowers) {
         // get the vitality boost for the special
-        let vit_boost = ImplAdventurer::get_vitality_item_boost(item_specials.special1);
+        let vit_boost = Self::get_vitality_item_boost(item_specials.special1);
         // if the special provides a vitality boost
         if (vit_boost != 0) {
             // adventurer gains health
@@ -1396,7 +1398,6 @@ mod tests {
     use beasts::{beast::{ImplBeast, Beast}, constants::{BeastSettings, BeastId}};
     use combat::{constants::CombatEnums::{Slot, Type}, combat::SpecialPowers};
     use core::result::ResultTrait;
-    use integer::{u8_overflowing_add, u16_overflowing_add, u16_overflowing_sub};
     use loot::{
         loot::{Loot, ILoot, ImplLoot},
         constants::{
@@ -2309,7 +2310,7 @@ mod tests {
 
         let skeleton_percentage = (skeleton_count * 1000) / total_beasts;
         assert(skeleton_percentage >= 4 && skeleton_percentage <= 23, 'skeleton distribution');
-    // println!("warlock percentage: {}", warlock_percentage);
+        // println!("warlock percentage: {}", warlock_percentage);
     // println!("typhon percentage: {}", typhon_percentage);
     // println!("jiangshi percentage: {}", jiangshi_percentage);
     // println!("anansi percentage: {}", anansi_percentage);
@@ -2895,7 +2896,7 @@ mod tests {
 
         let skeleton_percentage = (skeleton_count * 1000) / total_beasts;
         assert(skeleton_percentage >= 4 && skeleton_percentage <= 23, 'skeleton distribution');
-    // println!("warlock percentage: {}", warlock_percentage);
+        // println!("warlock percentage: {}", warlock_percentage);
     // println!("typhon percentage: {}", typhon_percentage);
     // println!("jiangshi percentage: {}", jiangshi_percentage);
     // println!("anansi percentage: {}", anansi_percentage);
@@ -4936,7 +4937,10 @@ mod tests {
         previous_health = adventurer.health;
         adventurer.apply_health_boost_from_vitality_unlock(giant_specials);
         let health_increase = 3 * HEALTH_INCREASE_PER_VITALITY;
-        assert(adventurer.health == previous_health + health_increase.into(), 'of giants, wrong hp increase');
+        assert(
+            adventurer.health == previous_health + health_increase.into(),
+            'of giants, wrong hp increase'
+        );
 
         // Test case 3: Vitality boost from of_Protection (2 vitality)
         let protection_specials = SpecialPowers {
@@ -4946,8 +4950,7 @@ mod tests {
         adventurer.apply_health_boost_from_vitality_unlock(protection_specials);
         let health_increase = 2 * HEALTH_INCREASE_PER_VITALITY;
         assert(
-            adventurer.health == previous_health + health_increase.into(),
-            'of protection, wrong hp'
+            adventurer.health == previous_health + health_increase.into(), 'of protection, wrong hp'
         );
 
         // Test case 4: Vitality boost from of_Perfection (1 vitality)
@@ -4958,8 +4961,7 @@ mod tests {
         adventurer.apply_health_boost_from_vitality_unlock(perfection_specials);
         let health_increase = HEALTH_INCREASE_PER_VITALITY;
         assert(
-            adventurer.health == previous_health + health_increase.into(),
-            'of perfection, wrong hp'
+            adventurer.health == previous_health + health_increase.into(), 'of perfection, wrong hp'
         );
 
         // Test case 5: No additional boost when at max health

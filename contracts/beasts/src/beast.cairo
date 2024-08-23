@@ -53,8 +53,8 @@ impl ImplBeast of IBeast {
             id: beast_id,
             starting_health: STARTER_BEAST_HEALTH.into(),
             combat_spec: CombatSpec {
-                tier: ImplBeast::get_tier(beast_id),
-                item_type: ImplBeast::get_type(beast_id),
+                tier: Self::get_tier(beast_id),
+                item_type: Self::get_type(beast_id),
                 level: 1,
                 specials: SpecialPowers { special1: 0, special2: 0, special3: 0 }
             }
@@ -167,13 +167,13 @@ impl ImplBeast of IBeast {
     /// @param id: the id of the beast
     /// @return: the tier of the beast
     fn get_tier(id: u8) -> Tier {
-        if ImplBeast::is_t1(id) {
+        if Self::is_t1(id) {
             Tier::T1
-        } else if ImplBeast::is_t2(id) {
+        } else if Self::is_t2(id) {
             Tier::T2
-        } else if ImplBeast::is_t3(id) {
+        } else if Self::is_t3(id) {
             Tier::T3
-        } else if ImplBeast::is_t4(id) {
+        } else if Self::is_t4(id) {
             Tier::T4
         } else {
             Tier::T5
