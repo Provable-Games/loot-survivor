@@ -77,7 +77,7 @@ const allMenuItems: Menu[] = [
   { id: 7, label: "Guide", screen: "guide", disabled: false },
   {
     id: 8,
-    label: "Collections",
+    label: "Tournament",
     screen: "collections leaderboard",
     disabled: false,
   },

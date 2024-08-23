@@ -100,8 +100,8 @@ const ScoreGraph: React.FC<ScoreGraphProps> = ({
   maxTotalXP,
 }) => {
   return (
-    <div className="relative flex flex-col h-full">
-      <div className="flex items-end h-full justify-between">
+    <div className="relative flex flex-col sm:h-full">
+      <div className="hidden sm:flex items-end h-full justify-between">
         {scores.map((score, index) => (
           <div
             key={index}
@@ -140,6 +140,60 @@ const ScoreGraph: React.FC<ScoreGraphProps> = ({
                   </div>
                   {score.totalXP > 0 && (
                     <span className="text-xl absolute top-0 left-0 right-0">
+                      {formatXP(score.totalXP)} XP
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-col gap-2 sm:hidden items-end h-full w-full justify-between">
+        {scores.map((score, index) => (
+          <div
+            key={index}
+            className="flex flex-row items-center justify-end w-full h-12"
+          >
+            <div className="w-5/6 flex flex-row items-center justify-end h-full">
+              <div className="flex flex-grow flex-row text-terminal-black text-center h-full">
+                <div
+                  className="relative bg-terminal-green h-full relative"
+                  style={{ width: `${(score.totalXP / maxTotalXP) * 100}%` }}
+                >
+                  <img
+                    src={score.avatar}
+                    alt="Avatar"
+                    className="absolute w-10 h-10 z-10 left-[-50px] top-1/2 transform -translate-y-1/2 min-w-[40px]"
+                  />
+                  <div
+                    className="bg-terminal-yellow h-full absolute bottom-0"
+                    style={{
+                      width: `${(score.gamesPlayed / maxGamesPlayable) * 100}%`,
+                    }}
+                  >
+                    {score.gamesPlayed > 0 && (
+                      <span
+                        className={`text-xl absolute top-1/2 transform -translate-y-1/2 ${
+                          (score.totalXP / maxTotalXP) * 100 <= 10 && "hidden"
+                        } ${
+                          (score.gamesPlayed / maxGamesPlayable) * 100 <= 50
+                            ? "left-full"
+                            : "right-0"
+                        }`}
+                      >{`${Math.round(
+                        (score.gamesPlayed / maxGamesPlayable) * 100
+                      )}%`}</span>
+                    )}
+                  </div>
+                  {score.totalXP > 0 && (
+                    <span
+                      className={`text-xl absolute right-1 top-1/2 transform -translate-y-1/2 ${
+                        (score.totalXP / maxTotalXP) * 100 <= 90
+                          ? "right-[-20px] text-terminal-green"
+                          : ""
+                      }`}
+                    >
                       {formatXP(score.totalXP)}
                     </span>
                   )}
@@ -150,16 +204,11 @@ const ScoreGraph: React.FC<ScoreGraphProps> = ({
         ))}
       </div>
       {/* X-axis */}
-      <span className="absolute left-[-20px] bottom-[-20px] w-[105%] bg-terminal-green-50 h-2" />
+      <span className="hidden sm:block absolute left-[-20px] bottom-[-20px] w-[105%] bg-terminal-green-50 h-2" />
       {/* Y-axis */}
-      <span className="absolute left-[-20px] bottom-[-20px] w-2 bg-terminal-green-50 h-[105%]" />
+      <span className="hidden sm:block absolute left-[-20px] bottom-[-20px] w-2 bg-terminal-green-50 h-[105%]" />
       {/* Top 3 */}
-      <div className="absolute top-0 flex flex-col left-1/2 transform -translate-x-1/2 uppercase text-center text-2xl">
-        <span>1. {scores[0].name}</span>
-        <span>2. {scores[1].name}</span>
-        <span>3. {scores[2].name}</span>
-      </div>
-      <div className="absolute flex justify-end top-[-50px] border border-terminal-green p-2">
+      <div className="absolute hidden sm:flex justify-end top-[-50px] border border-terminal-green p-2">
         <div className="flex items-center mr-4">
           <div className="w-8 h-4 bg-terminal-green mr-2"></div>
           <span>TOTAL XP</span>
