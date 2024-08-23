@@ -1485,6 +1485,39 @@ export function createSyscalls({
     }
   };
 
+  const transferAdventurer = async (
+    account: AccountInterface,
+    adventurerId: number,
+    from: string,
+    recipient: string
+  ) => {
+    try {
+      const transferTx = {
+        contractAddress: gameContract?.address ?? "",
+        entrypoint: "transfer_from",
+        calldata: [from, recipient, adventurerId.toString() ?? "", "0"],
+      };
+
+      const { transaction_hash } = await account.execute([
+        ...calls,
+        transferTx,
+      ]);
+
+      const result = await provider.waitForTransaction(transaction_hash, {
+        retryInterval: getWaitRetryInterval(network!),
+      });
+
+      if (!result) {
+        throw new Error("Transaction did not complete successfully.");
+      }
+
+      getBalances();
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  };
+
   return {
     spawn,
     explore,
@@ -1494,6 +1527,7 @@ export function createSyscalls({
     multicall,
     mintLords,
     withdraw,
+    transferAdventurer,
   };
 }
 
