@@ -49,8 +49,7 @@ mod Game {
 
     use super::game::{
         interfaces::{
-            IGame, IERC721Metadata, IERC721MetadataCamelOnly, ILeetLoot, ILeetLootDispatcher,
-            ILeetLootDispatcherTrait,
+            IGame, IERC721Mixin, ILeetLoot, ILeetLootDispatcher, ILeetLootDispatcherTrait,
         },
         constants::{
             messages, Rewards, REWARD_DISTRIBUTIONS_BP, COST_TO_PLAY, STARTER_BEAST_ATTACK_DAMAGE,
@@ -93,10 +92,11 @@ mod Game {
     };
     use beasts::beast::{Beast, IBeast, ImplBeast};
 
-    #[abi(embed_v0)]
-    impl ERC721Impl = ERC721Component::ERC721Impl<ContractState>;
-    #[abi(embed_v0)]
+    impl SRC5 = SRC5Component::SRC5Impl<ContractState>;
+    impl ERC721 = ERC721Component::ERC721MixinImpl<ContractState>;
+    impl ERC721Metadata = ERC721Component::ERC721MetadataImpl<ContractState>;
     impl ERC721CamelOnly = ERC721Component::ERC721CamelOnlyImpl<ContractState>;
+    impl ERC721MetadataCamelOnly = ERC721Component::ERC721MetadataCamelOnlyImpl<ContractState>;
     impl ERC721InternalImpl = ERC721Component::InternalImpl<ContractState>;
 
     #[storage]
@@ -263,48 +263,6 @@ mod Game {
 
     #[abi(embed_v0)]
     impl Game of IGame<ContractState> {
-        fn receive_random_words(
-            ref self: ContractState,
-            requestor_address: ContractAddress,
-            request_id: u64,
-            random_words: Span<felt252>,
-            calldata: Array<felt252>
-        ) {
-            // verify caller is the vrf contract
-            assert(
-                get_caller_address() == self._randomness_contract_address.read(),
-                'caller not vrf contract'
-            );
-
-            if _network_supports_vrf() {
-                assert(
-                    requestor_address == starknet::get_contract_address(),
-                    'vrf requestor is not self'
-                );
-            }
-
-            let rnd = *random_words.at(0);
-            let adventurer_id = *calldata.at(0);
-            let is_specials_entropy = *calldata.at(1);
-
-            // get adventurer
-            let mut adventurer = _load_adventurer(@self, adventurer_id);
-
-            if is_specials_entropy == 0 {
-                process_new_level_seed(
-                    ref self, requestor_address, ref adventurer, adventurer_id, rnd, request_id
-                );
-            } else {
-                process_item_specials_seed(
-                    ref self, adventurer, requestor_address, adventurer_id, rnd, request_id
-                );
-            }
-
-            if adventurer.mutated {
-                _save_adventurer(ref self, ref adventurer, adventurer_id);
-            }
-        }
-
         /// @title New Game
         ///
         /// @notice Creates a new game of Loot Survivor
@@ -355,7 +313,6 @@ mod Game {
             // return adventurer id
             adventurer_id
         }
-
         /// @title Explore Function
         ///
         /// @notice Allows an adventurer to explore
@@ -938,6 +895,47 @@ mod Game {
             adventurer_id
         }
 
+        fn receive_random_words(
+            ref self: ContractState,
+            requestor_address: ContractAddress,
+            request_id: u64,
+            random_words: Span<felt252>,
+            calldata: Array<felt252>
+        ) {
+            // verify caller is the vrf contract
+            assert(
+                get_caller_address() == self._randomness_contract_address.read(),
+                'caller not vrf contract'
+            );
+
+            if _network_supports_vrf() {
+                assert(
+                    requestor_address == starknet::get_contract_address(),
+                    'vrf requestor is not self'
+                );
+            }
+
+            let rnd = *random_words.at(0);
+            let adventurer_id = *calldata.at(0);
+            let is_specials_entropy = *calldata.at(1);
+
+            // get adventurer
+            let mut adventurer = _load_adventurer(@self, adventurer_id);
+
+            if is_specials_entropy == 0 {
+                process_new_level_seed(
+                    ref self, requestor_address, ref adventurer, adventurer_id, rnd, request_id
+                );
+            } else {
+                process_item_specials_seed(
+                    ref self, adventurer, requestor_address, adventurer_id, rnd, request_id
+                );
+            }
+
+            if adventurer.mutated {
+                _save_adventurer(ref self, ref adventurer, adventurer_id);
+            }
+        }
 
         // ------------------------------------------ //
         // ------------ View Functions -------------- //
@@ -4097,36 +4095,82 @@ mod Game {
     }
 
     #[abi(embed_v0)]
-    impl ERC721Metadata of IERC721Metadata<ContractState> {
+    impl ERC721Mixin of IERC721Mixin<ContractState> {
+        // IERC721
+        fn balance_of(self: @ContractState, account: ContractAddress) -> u256 {
+            ERC721::balance_of(self, account)
+        }
+
+        fn owner_of(self: @ContractState, token_id: u256) -> ContractAddress {
+            ERC721::owner_of(self, token_id)
+        }
+
+        fn safe_transfer_from(
+            ref self: ContractState,
+            from: ContractAddress,
+            to: ContractAddress,
+            token_id: u256,
+            data: Span<felt252>
+        ) {
+            ERC721::safe_transfer_from(ref self, from, to, token_id, data);
+        }
+
+        fn transfer_from(
+            ref self: ContractState, from: ContractAddress, to: ContractAddress, token_id: u256
+        ) {
+            ERC721::transfer_from(ref self, from, to, token_id);
+        }
+
+        fn approve(ref self: ContractState, to: ContractAddress, token_id: u256) {
+            ERC721::approve(ref self, to, token_id);
+        }
+
+        fn set_approval_for_all(
+            ref self: ContractState, operator: ContractAddress, approved: bool
+        ) {
+            ERC721::set_approval_for_all(ref self, operator, approved);
+        }
+
+        fn get_approved(self: @ContractState, token_id: u256) -> ContractAddress {
+            ERC721::get_approved(self, token_id)
+        }
+
+        fn is_approved_for_all(
+            self: @ContractState, owner: ContractAddress, operator: ContractAddress
+        ) -> bool {
+            ERC721::is_approved_for_all(self, owner, operator)
+        }
+
+        // IERC721Metadata
         fn name(self: @ContractState) -> ByteArray {
-            self.erc721.ERC721_name.read()
+            ERC721Metadata::name(self)
         }
 
         fn symbol(self: @ContractState) -> ByteArray {
-            self.erc721.ERC721_symbol.read()
+            ERC721Metadata::symbol(self)
         }
 
-        fn token_uri(self: @ContractState, adventurer_id: u256) -> ByteArray {
-            self.erc721._require_owned(adventurer_id);
+        fn token_uri(self: @ContractState, token_id: u256) -> ByteArray {
+            self.erc721._require_owned(token_id);
 
-            let adventurer_id_felt = adventurer_id.try_into().unwrap();
+            let adventurer_id = token_id.try_into().unwrap();
 
             // use custom renderer if available
-            let mut renderer_contract = self._custom_renderer.read(adventurer_id_felt);
+            let mut renderer_contract = self._custom_renderer.read(adventurer_id);
             if renderer_contract.is_zero() {
                 renderer_contract = self._default_renderer.read();
             }
 
-            let adventurer = _load_adventurer(self, adventurer_id_felt);
-            let adventurer_name = _load_adventurer_name(self, adventurer_id_felt);
-            let adventurer_metadata = _load_adventurer_metadata(self, adventurer_id_felt);
-            let bag = _load_bag(self, adventurer_id_felt);
-            let item_specials_seed = _get_item_specials_seed(self, adventurer_id_felt);
-            let current_rank = _get_rank(self, adventurer_id_felt);
+            let adventurer = _load_adventurer(self, adventurer_id);
+            let adventurer_name = _load_adventurer_name(self, adventurer_id);
+            let adventurer_metadata = _load_adventurer_metadata(self, adventurer_id);
+            let bag = _load_bag(self, adventurer_id);
+            let item_specials_seed = _get_item_specials_seed(self, adventurer_id);
+            let current_rank = _get_rank(self, adventurer_id);
 
             IRenderContractDispatcher { contract_address: renderer_contract }
                 .token_uri(
-                    adventurer_id,
+                    token_id,
                     adventurer,
                     adventurer_name,
                     adventurer_metadata,
@@ -4135,6 +4179,60 @@ mod Game {
                     adventurer_metadata.rank_at_death,
                     current_rank,
                 )
+        }
+
+        // IERC721CamelOnly
+        fn balanceOf(self: @ContractState, account: ContractAddress) -> u256 {
+            ERC721CamelOnly::balanceOf(self, account)
+        }
+
+        fn ownerOf(self: @ContractState, tokenId: u256) -> ContractAddress {
+            ERC721CamelOnly::ownerOf(self, tokenId)
+        }
+
+        fn safeTransferFrom(
+            ref self: ContractState,
+            from: ContractAddress,
+            to: ContractAddress,
+            tokenId: u256,
+            data: Span<felt252>
+        ) {
+            ERC721CamelOnly::safeTransferFrom(ref self, from, to, tokenId, data);
+        }
+
+        fn transferFrom(
+            ref self: ContractState, from: ContractAddress, to: ContractAddress, tokenId: u256
+        ) {
+            ERC721CamelOnly::transferFrom(ref self, from, to, tokenId);
+        }
+
+        fn setApprovalForAll(ref self: ContractState, operator: ContractAddress, approved: bool) {
+            ERC721CamelOnly::setApprovalForAll(ref self, operator, approved);
+        }
+
+        fn getApproved(self: @ContractState, tokenId: u256) -> ContractAddress {
+            ERC721CamelOnly::getApproved(self, tokenId)
+        }
+
+        fn isApprovedForAll(
+            self: @ContractState, owner: ContractAddress, operator: ContractAddress
+        ) -> bool {
+            ERC721CamelOnly::isApprovedForAll(self, owner, operator)
+        }
+
+        // IERC721MetadataCamelOnly
+        fn tokenURI(self: @ContractState, tokenId: u256) -> ByteArray {
+            ERC721Mixin::token_uri(self, tokenId)
+        }
+
+        // ISRC5 snake case
+        fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
+            SRC5::supports_interface(self, interface_id)
+        }
+
+        // ISRC5 camel case
+        fn supportsInterface(self: @ContractState, interfaceId: felt252) -> bool {
+            SRC5::supports_interface(self, interfaceId)
         }
     }
 }
