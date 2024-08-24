@@ -31,8 +31,8 @@ export interface Adventurer {
   ring?: string; // Ring of the adventure
   beastHealth?: number; // Beast health adventurer is engaging
   statUpgrades?: number; // Stat upgrades adventurer has
-  birthDate?: number; // Birth date of the adventurer
-  deathDate?: number; // Death date of the adventurer
+  birthDate?: string; // Birth date of the adventurer
+  deathDate?: string; // Death date of the adventurer
   goldenTokenId?: number; // Golden token ID of the adventurer
   customRenderer?: string; // Custom renderer of the adventurer
   battleActionCount?: number; // Battle action count of the adventurer

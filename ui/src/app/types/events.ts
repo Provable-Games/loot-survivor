@@ -9,8 +9,8 @@ type u16 = number;
 type u8 = number;
 
 type AdventurerMetadata = {
-  birthDate: u64;
-  deathDate: u64;
+  birthDate: string;
+  deathDate: string;
   adventurerEntropy: u64;
   itemSpecialsSeed: u16;
   rankAtDeath: u8;
