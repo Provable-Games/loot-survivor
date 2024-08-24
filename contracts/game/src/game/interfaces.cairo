@@ -1,5 +1,6 @@
 use starknet::ContractAddress;
 
+use game::FreeGameTokenType;
 use beasts::beast::Beast;
 use market::market::{ItemPurchase};
 use adventurer::{
@@ -16,10 +17,10 @@ trait IGame<TContractState> {
         client_reward_address: ContractAddress,
         weapon: u8,
         name: felt252,
-        golden_token_id: u256,
+        golden_token_id: u8,
         delay_reveal: bool,
         custom_renderer: ContractAddress,
-        launch_tournament_winner_token_id: u256
+        launch_tournament_winner_token_id: u32
     ) -> felt252;
     fn explore(
         ref self: TContractState, adventurer_id: felt252, till_beast: bool
@@ -43,7 +44,7 @@ trait IGame<TContractState> {
         calldata: Array<felt252>
     );
     fn update_cost_to_play(ref self: TContractState) -> u128;
-    fn set_custom_renderer(
+    fn set_adventurer_renderer(
         ref self: TContractState, adventurer_id: felt252, render_contract: ContractAddress
     );
     fn increase_vrf_allowance(ref self: TContractState, adventurer_id: felt252, amount: u128);
@@ -52,14 +53,14 @@ trait IGame<TContractState> {
         ref self: TContractState, adventurer_id: felt252, obituary: ByteArray
     );
     fn slay_expired_adventurers(ref self: TContractState, adventurer_ids: Array<felt252>);
-    fn enter_genesis_tournament(
+    fn enter_launch_tournament(
         ref self: TContractState,
         weapon: u8,
         name: felt252,
         custom_renderer: ContractAddress,
         delay_stat_reveal: bool,
         nft_address: ContractAddress,
-        token_id: u256
+        token_id: u32
     ) -> felt252;
     fn settle_launch_tournament(ref self: TContractState);
     // ------ View Functions ------
@@ -115,16 +116,14 @@ trait IGame<TContractState> {
     // contract details
     // fn owner_of(self: @TContractState, adventurer_id: felt252) -> ContractAddress;
     fn get_game_count(self: @TContractState) -> felt252;
-    fn get_dao_address(self: @TContractState) -> ContractAddress;
-    fn get_pg_address(self: @TContractState) -> ContractAddress;
-    fn get_lords_address(self: @TContractState) -> ContractAddress;
     fn get_leaderboard(self: @TContractState) -> Leaderboard;
     fn get_cost_to_play(self: @TContractState) -> u128;
-    fn can_play(self: @TContractState, golden_token_id: u256) -> bool;
-    fn get_randomness_address(self: @TContractState) -> ContractAddress;
+    fn free_game_available(
+        self: @TContractState, token_type: FreeGameTokenType, token_id: u32
+    ) -> bool;
     fn uses_custom_renderer(self: @TContractState, adventurer_id: felt252) -> bool;
-    fn get_custom_renderer(self: @TContractState, adventurer_id: felt252) -> ContractAddress;
-    fn get_player_vrf_allowance(self: @TContractState, adventurer_id: felt252) -> u128;
+    fn get_adventurer_renderer(self: @TContractState, adventurer_id: felt252) -> ContractAddress;
+    fn get_adventurer_vrf_allowance(self: @TContractState, adventurer_id: felt252) -> u128;
     fn get_vrf_premiums_address(self: @TContractState) -> ContractAddress;
 }
 

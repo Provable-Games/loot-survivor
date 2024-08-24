@@ -3572,7 +3572,8 @@ mod tests {
             if item_index == 102 {
                 break;
             }
-            ImplLoot::get_item(item_index);
+            let item = ImplLoot::get_item(item_index);
+            assert(item.id != 0, 'item should exist');
             item_index += 1;
         }
     }
@@ -3580,7 +3581,7 @@ mod tests {
     #[test]
     #[available_gas(26100)]
     fn test_get_item_zero() {
-        let item = ImplLoot::get_item(102);
+        let item = ImplLoot::get_item(0);
         assert(item.id == 0, 'item id is 0');
         assert(item.tier == Tier::None(()), 'item is tier none');
         assert(item.slot == Slot::None(()), 'item is slot none');
@@ -3590,16 +3591,6 @@ mod tests {
     #[test]
     #[available_gas(26100)]
     fn test_get_item_out_of_bounds() {
-        let item = ImplLoot::get_item(102);
-        assert(item.id == 0, 'item id is 0');
-        assert(item.tier == Tier::None(()), 'item is tier none');
-        assert(item.slot == Slot::None(()), 'item is slot none');
-        assert(item.item_type == Type::None(()), 'item is type none');
-    }
-
-    #[test]
-    #[available_gas(26100)]
-    fn test_get_item_max_value() {
         let item = ImplLoot::get_item(102);
         assert(item.id == 0, 'item id is 0');
         assert(item.tier == Tier::None(()), 'item is tier none');

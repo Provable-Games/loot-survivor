@@ -15,6 +15,25 @@ mod tests {
     }
 }
 
+const SECONDS_IN_DAY: u64 = 86400;
+const SECONDS_IN_MONTH: u64 = 2592000;
+
+#[derive(Copy, Drop, PartialEq, Serde)]
+enum FreeGameTokenType {
+    GoldenToken,
+    LaunchTournamentChampion,
+}
+
+#[generate_trait]
+impl ImplFreeGameTokenType of IFreeGameTokenType {
+    fn get_cooldown(self: FreeGameTokenType) -> u64 {
+        match self {
+            FreeGameTokenType::GoldenToken => SECONDS_IN_DAY,
+            FreeGameTokenType::LaunchTournamentChampion => SECONDS_IN_MONTH,
+        }
+    }
+}
+
 #[starknet::contract]
 mod Game {
     use alexandria_math::pow;
@@ -50,6 +69,7 @@ mod Game {
     use pragma_lib::abi::{IPragmaABIDispatcher, IPragmaABIDispatcherTrait};
     use pragma_lib::types::{AggregationMode, DataType, PragmaPricesResponse};
 
+    use super::{FreeGameTokenType, ImplFreeGameTokenType};
     use super::game::{
         interfaces::{
             IGame, IERC721Mixin, ILeetLoot, ILeetLootDispatcher, ILeetLootDispatcherTrait,
@@ -105,40 +125,39 @@ mod Game {
     #[storage]
     struct Storage {
         _adventurer: Map::<felt252, Adventurer>,
+        _adventurer_client_provider: Map::<felt252, ContractAddress>,
         _adventurer_meta: Map::<felt252, AdventurerMetadata>,
         _adventurer_name: Map::<felt252, felt252>,
         _adventurer_obituary: Map::<felt252, ByteArray>,
+        _adventurer_renderer: Map::<felt252, ContractAddress>,
+        _adventurer_vrf_allowance: Map::<felt252, u128>,
         _bag: Map::<felt252, Bag>,
-        _collectible_beasts_address: ContractAddress,
-        _client_provider_address: Map::<felt252, ContractAddress>,
-        _dao: ContractAddress,
-        _pg_address: ContractAddress,
-        _game_count: felt252,
-        _genesis_block: u64,
-        _genesis_timestamp: u64,
-        _leaderboard: Leaderboard,
-        _lords: ContractAddress,
-        _eth_address: ContractAddress,
-        _golden_token_last_use: Map::<felt252, felt252>,
-        _golden_token: ContractAddress,
+        _beasts_dispatcher: ILeetLootDispatcher,
         _cost_to_play: u128,
+        _dao: ContractAddress,
+        _default_renderer: ContractAddress,
+        _eth_dispatcher: IERC20Dispatcher,
+        _game_count: felt252,
+        _golden_token_dispatcher: IERC721Dispatcher,
+        _golden_token_last_use: Map::<u32, u64>,
+        _launch_tournament_claimed_games: Map::<felt252, bool>,
+        _launch_tournament_collections: Vec<ContractAddress>,
+        _launch_tournament_end_time: u64,
+        _launch_tournament_participants: Map::<felt252, ContractAddress>,
+        _launch_tournament_scores: Map::<ContractAddress, u32>,
+        _launch_tournament_champions_dispatcher: IERC721Dispatcher,
+        _leaderboard: Leaderboard,
+        _lords_dispatcher: IERC20Dispatcher,
+        _oracle_dispatcher: IPragmaABIDispatcher,
+        _pg_address: ContractAddress,
+        _previous_free_game_timestamp: Map::<(ContractAddress, u32), u64>,
         _terminal_timestamp: u64,
-        _launch_promotion_end_timestamp: u64,
-        _randomness_contract_address: ContractAddress,
-        _oracle_address: ContractAddress,
+        _vrf_dispatcher: IRandomnessDispatcher,
+        _vrf_premiums_address: ContractAddress,
         #[substorage(v0)]
         erc721: ERC721Component::Storage,
         #[substorage(v0)]
         src5: SRC5Component::Storage,
-        _default_renderer: ContractAddress,
-        _custom_renderer: Map::<felt252, ContractAddress>,
-        _player_vrf_allowance: Map::<felt252, u128>,
-        _claimed_tokens: Map::<felt252, bool>,
-        _vrf_premiums_address: ContractAddress,
-        _launch_tournament_collections: Vec<ContractAddress>,
-        _launch_tournament_participants: Map::<felt252, ContractAddress>,
-        _launch_tournament_scores: Map::<ContractAddress, u32>,
-        _launch_tournament_winner: ContractAddress,
     }
 
     #[event]
@@ -200,42 +219,58 @@ mod Game {
     #[constructor]
     fn constructor(
         ref self: ContractState,
-        lords: ContractAddress,
+        lords_address: ContractAddress,
         eth_address: ContractAddress,
-        dao: ContractAddress,
+        dao_address: ContractAddress,
         pg_address: ContractAddress,
-        collectible_beasts: ContractAddress,
+        beasts_address: ContractAddress,
         golden_token_address: ContractAddress,
         terminal_timestamp: u64,
-        randomness_contract_address: ContractAddress,
+        vrf_address: ContractAddress,
         oracle_address: ContractAddress,
         render_contract: ContractAddress,
         qualifying_collections: Array<ContractAddress>,
         launch_promotion_end_timestamp: u64,
         vrf_premiums_address: ContractAddress
     ) {
-        // init storage
-        self._lords.write(lords);
-        self._eth_address.write(eth_address);
-        self._dao.write(dao);
+        // store lords dispatcher
+        let lords_dispatcher = IERC20Dispatcher { contract_address: lords_address };
+        self._lords_dispatcher.write(lords_dispatcher);
+
+        // store eth dispatcher
+        let eth_dispatcher = IERC20Dispatcher { contract_address: eth_address };
+        self._eth_dispatcher.write(eth_dispatcher);
+
+        // store dao and pg addresses for contract rewards
+        self._dao.write(dao_address);
         self._pg_address.write(pg_address);
-        self._collectible_beasts_address.write(collectible_beasts);
-        self._terminal_timestamp.write(terminal_timestamp);
-        self._genesis_block.write(starknet::get_block_info().unbox().block_number.into());
-        self._randomness_contract_address.write(randomness_contract_address);
-        self._oracle_address.write(oracle_address);
+
+        // store beasts dispatcher
+        let beasts_dispatcher = ILeetLootDispatcher { contract_address: beasts_address };
+        self._beasts_dispatcher.write(beasts_dispatcher);
+
+        // store terminal timestamp if it's not 0
+        if terminal_timestamp != 0 {
+            self._terminal_timestamp.write(terminal_timestamp);
+        }
+
+        // store vrf dispatcher
+        let vrf_dispatcher = IRandomnessDispatcher { contract_address: vrf_address };
+        self._vrf_dispatcher.write(vrf_dispatcher);
+
+        // store oracle dispatcher
+        let oracle_dispatcher = IPragmaABIDispatcher { contract_address: oracle_address };
+        self._oracle_dispatcher.write(oracle_dispatcher);
+
         self._default_renderer.write(render_contract);
-        self._launch_promotion_end_timestamp.write(launch_promotion_end_timestamp);
+        self._launch_tournament_end_time.write(launch_promotion_end_timestamp);
 
         // @dev base uri isn't used in the current implementation
         self.erc721.initializer("Loot Survivor", "LSVR", "https://token.lootsurvivor.io/");
 
-        // set genesis timestamp
-        let current_timestamp = starknet::get_block_info().unbox().block_timestamp.into();
-        self._genesis_timestamp.write(current_timestamp);
-
         // set the golden token address
-        self._golden_token.write(golden_token_address);
+        let golden_token_dispatcher = IERC721Dispatcher { contract_address: golden_token_address };
+        self._golden_token_dispatcher.write(golden_token_dispatcher);
 
         // set the cost to play
         self._cost_to_play.write(COST_TO_PLAY);
@@ -250,7 +285,8 @@ mod Game {
         // reason ETH will be in the contract is to cover VRF costs
         if _network_supports_vrf() {
             let eth_dispatcher = IERC20Dispatcher { contract_address: eth_address };
-            eth_dispatcher.approve(randomness_contract_address, Bounded::<u256>::MAX);
+            let vrf_address = self._vrf_dispatcher.read().contract_address;
+            eth_dispatcher.approve(vrf_address, Bounded::<u256>::MAX);
             eth_dispatcher.approve(vrf_premiums_address, Bounded::<u256>::MAX);
         }
     }
@@ -272,26 +308,37 @@ mod Game {
         /// @param weapon A u8 representing the weapon to start the game with. Valid options are:
         /// {wand: 12, book: 17, short sword: 46, club: 76}
         /// @param name A u128 value representing the player's name.
-        /// @param golden_token_id A u256 representing the ID of the golden token.
+        /// @param golden_token_id A u8 representing the ID of the golden token.
         /// @param delay_reveal Whether the game should wait to reveal starting stats till after
-        /// starter beast is defeated @param custom_renderer A ContractAddress to use for rendering
+        /// starter beast is defeated
+        /// @param custom_renderer A ContractAddress to use for rendering
         /// the NFT. Provide 0 to use the default renderer.
+        /// @param launch_tournament_winner_token_id A u32 representing the id of a token that won
+        /// the launch tournament
         /// @return A felt252 representing the adventurer id.
         fn new_game(
             ref self: ContractState,
             client_reward_address: ContractAddress,
             weapon: u8,
             name: felt252,
-            golden_token_id: u256,
+            golden_token_id: u8,
             delay_reveal: bool,
             custom_renderer: ContractAddress,
-            launch_tournament_winner_token_id: u256,
+            launch_tournament_winner_token_id: u32,
         ) -> felt252 {
             // don't process payment distributions on Katana
             if _network_supports_vrf() {
                 // process payment for game and distribute rewards
-                if (golden_token_id != 0) {
-                    _play_with_token(ref self, golden_token_id);
+                if golden_token_id != 0 {
+                    _pay_with_special_token(
+                        ref self, FreeGameTokenType::GoldenToken, golden_token_id.into()
+                    );
+                } else if launch_tournament_winner_token_id != 0 {
+                    _pay_with_special_token(
+                        ref self,
+                        FreeGameTokenType::LaunchTournamentChampion,
+                        launch_tournament_winner_token_id
+                    );
                 } else {
                     _process_payment_and_distribute_rewards(ref self, client_reward_address);
                 }
@@ -299,7 +346,7 @@ mod Game {
                 // get current timestamp
                 let current_timestamp = starknet::get_block_info().unbox().block_timestamp;
                 // check if timestamp is within launch promotion period
-                if current_timestamp > self._launch_promotion_end_timestamp.read() {
+                if current_timestamp > self._launch_tournament_end_time.read() {
                     // pay for vrf
                     _pay_for_vrf(@self);
                 }
@@ -311,7 +358,7 @@ mod Game {
             );
 
             // store client provider address
-            self._client_provider_address.write(adventurer_id, client_reward_address);
+            self._adventurer_client_provider.write(adventurer_id, client_reward_address);
 
             // return adventurer id
             adventurer_id
@@ -740,10 +787,9 @@ mod Game {
         /// the cost to play the game.
         /// @return The new cost to play the game in u128.
         fn update_cost_to_play(ref self: ContractState) -> u128 {
-            let previous_price = self._cost_to_play.read();
-            let oracle_address = self._oracle_address.read();
+            let oracle_dispatcher = self._oracle_dispatcher.read();
             let lords_price = get_asset_price_median(
-                oracle_address, DataType::SpotEntry(PRAGMA_LORDS_KEY)
+                oracle_dispatcher, DataType::SpotEntry(PRAGMA_LORDS_KEY)
             );
 
             // target price is the target price in cents * 10^8 because pragma uses 8 decimals for
@@ -754,29 +800,33 @@ mod Game {
             // cents)
             let new_price = (target_price / (lords_price * 100)) * 1000000000000000000;
 
+            // record previous price
+            let previous_price = self._cost_to_play.read();
+
+            // update cost to play
             self._cost_to_play.write(new_price);
-            self
-                .emit(
-                    PriceChangeEvent {
-                        previous_price, new_price, lords_price, changer: get_caller_address()
-                    }
-                );
+
+            // emit price change event
+            let price_change_event = PriceChangeEvent {
+                previous_price, new_price, lords_price, changer: get_caller_address()
+            };
+            self.emit(price_change_event);
 
             new_price
         }
 
-        /// @title Set Custom Renderer
+        /// @title Set a custom nft renderer for an Adventurer
         ///
-        /// @notice Allows an adventurer to set a custom renderer for their NFT.
+        /// @notice Allows the owner of an adventurer to set a custom renderer for their NFT.
         ///
         /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
         /// @param render_contract A ContractAddress to use for rendering the NFT. Provide 0 to
         /// switch back to default renderer.
-        fn set_custom_renderer(
+        fn set_adventurer_renderer(
             ref self: ContractState, adventurer_id: felt252, render_contract: ContractAddress
         ) {
             assert(_get_owner(@self, adventurer_id) == get_caller_address(), messages::NOT_OWNER);
-            self._custom_renderer.write(adventurer_id, render_contract);
+            self._adventurer_renderer.write(adventurer_id, render_contract);
         }
 
         // @title Increase VRF Allowance
@@ -786,13 +836,13 @@ mod Game {
         /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
         /// @param amount A u128 representing the amount of VRF allowance to increase.
         fn increase_vrf_allowance(ref self: ContractState, adventurer_id: felt252, amount: u128) {
-            let eth_dispatcher = IERC20Dispatcher { contract_address: self._eth_address.read() };
+            let eth_dispatcher = self._eth_dispatcher.read();
             eth_dispatcher
                 .transfer_from(
                     get_caller_address(), starknet::get_contract_address(), amount.into()
                 );
-            let current_allowance = self._player_vrf_allowance.read(adventurer_id);
-            self._player_vrf_allowance.write(adventurer_id, current_allowance + amount);
+            let current_allowance = self._adventurer_vrf_allowance.read(adventurer_id);
+            self._adventurer_vrf_allowance.write(adventurer_id, current_allowance + amount);
         }
 
         /// @title Update Adventurer Name
@@ -873,14 +923,14 @@ mod Game {
         /// @param delay_stat_reveal A bool representing whether to delay the stat reveal.
         /// @param nft_address A ContractAddress representing the address of the NFT collection.
         /// @param token_id A u256 representing the token ID of the NFT.
-        fn enter_genesis_tournament(
+        fn enter_launch_tournament(
             ref self: ContractState,
             weapon: u8,
             name: felt252,
             custom_renderer: ContractAddress,
             delay_stat_reveal: bool,
             nft_address: ContractAddress,
-            token_id: u256
+            token_id: u32
         ) -> felt252 {
             // assert game terminal time has not been reached
             _assert_genesis_tournament_active(@self);
@@ -898,7 +948,7 @@ mod Game {
             _assert_token_not_claimed(@self, token_hash);
 
             // set token as claimed
-            self._claimed_tokens.write(token_hash, true);
+            self._launch_tournament_claimed_games.write(token_hash, true);
 
             // start the game
             let adventurer_id = _start_game(
@@ -923,7 +973,7 @@ mod Game {
         ) {
             // verify caller is the vrf contract
             assert(
-                get_caller_address() == self._randomness_contract_address.read(),
+                get_caller_address() == self._vrf_dispatcher.read().contract_address,
                 'caller not vrf contract'
             );
 
@@ -962,14 +1012,11 @@ mod Game {
         /// @dev stores the top score collection in the contract state for easy retrieval
         fn settle_launch_tournament(ref self: ContractState) {
             // assert the tournament is over
-            assert(
-                get_block_timestamp() > self._launch_promotion_end_timestamp.read(),
-                messages::TOURNAMENT_STILL_ACTIVE
-            );
+            assert(_is_launch_tournament_active(@self), messages::TOURNAMENT_STILL_ACTIVE);
 
             // assert tournament winner is not already set
             assert(
-                self._launch_tournament_winner.read().is_non_zero(),
+                self._launch_tournament_champions_dispatcher.read().contract_address.is_non_zero(),
                 messages::TOURNAMENT_WINNER_ALREADY_SET
             );
 
@@ -994,7 +1041,9 @@ mod Game {
                 }
                 collection_index += 1;
             };
-            self._launch_tournament_winner.write(top_score_address);
+            let champions_dispatcher = IERC721Dispatcher { contract_address: top_score_address };
+
+            self._launch_tournament_champions_dispatcher.write(champions_dispatcher);
         }
 
 
@@ -1034,17 +1083,16 @@ mod Game {
             };
             item_specials
         }
-        fn get_randomness_address(self: @ContractState) -> ContractAddress {
-            self._randomness_contract_address.read()
-        }
         fn uses_custom_renderer(self: @ContractState, adventurer_id: felt252) -> bool {
-            !self._custom_renderer.read(adventurer_id).is_zero()
+            !self._adventurer_renderer.read(adventurer_id).is_zero()
         }
-        fn get_custom_renderer(self: @ContractState, adventurer_id: felt252) -> ContractAddress {
-            self._custom_renderer.read(adventurer_id)
+        fn get_adventurer_renderer(
+            self: @ContractState, adventurer_id: felt252
+        ) -> ContractAddress {
+            _get_adventurer_renderer(self, adventurer_id)
         }
-        fn get_player_vrf_allowance(self: @ContractState, adventurer_id: felt252) -> u128 {
-            self._player_vrf_allowance.read(adventurer_id)
+        fn get_adventurer_vrf_allowance(self: @ContractState, adventurer_id: felt252) -> u128 {
+            self._adventurer_vrf_allowance.read(adventurer_id)
         }
         fn get_vrf_premiums_address(self: @ContractState) -> ContractAddress {
             self._vrf_premiums_address.read()
@@ -1056,7 +1104,7 @@ mod Game {
             _load_adventurer_metadata(self, adventurer_id)
         }
         fn get_client_provider(self: @ContractState, adventurer_id: felt252) -> ContractAddress {
-            self._client_provider_address.read(adventurer_id)
+            self._adventurer_client_provider.read(adventurer_id)
         }
         fn get_bag(self: @ContractState, adventurer_id: felt252) -> Bag {
             _load_bag(self, adventurer_id)
@@ -1081,15 +1129,6 @@ mod Game {
         // fn get_beast_tier(self: @ContractState, beast_id: u8) -> u8 {
         //     ImplCombat::tier_to_u8(ImplBeast::get_tier(beast_id))
         // }
-        fn get_dao_address(self: @ContractState) -> ContractAddress {
-            self._dao.read()
-        }
-        fn get_lords_address(self: @ContractState) -> ContractAddress {
-            self._lords.read()
-        }
-        fn get_pg_address(self: @ContractState) -> ContractAddress {
-            self._pg_address.read()
-        }
         fn get_leaderboard(self: @ContractState) -> Leaderboard {
             self._leaderboard.read()
         }
@@ -1110,14 +1149,31 @@ mod Game {
             _get_cost_to_play(self)
         }
 
-        fn can_play(self: @ContractState, golden_token_id: u256) -> bool {
-            _can_play(self, golden_token_id)
+        fn free_game_available(
+            self: @ContractState, token_type: FreeGameTokenType, token_id: u32
+        ) -> bool {
+            _free_game_available(self, token_type, token_id)
         }
     }
 
     // ------------------------------------------ //
     // ------------ Internal Functions ---------- //
     // ------------------------------------------ //
+
+    /// @title Get Adventurer Renderer
+    /// @notice Retrieves the renderer for an adventurer.
+    /// @dev If the adventurer has a custom renderer, it returns that. Otherwise, it returns the
+    /// default renderer.
+    /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
+    /// @return A ContractAddress representing the renderer for the adventurer.
+    fn _get_adventurer_renderer(self: @ContractState, adventurer_id: felt252) -> ContractAddress {
+        let custom_renderer = self._adventurer_renderer.read(adventurer_id);
+        if custom_renderer.is_zero() {
+            self._default_renderer.read()
+        } else {
+            custom_renderer
+        }
+    }
 
     /// @title Set Adventurer Rank at Death (internal)
     /// @notice Allows an adventurer to set their rank at death.
@@ -1246,11 +1302,10 @@ mod Game {
     /// @title Get Asset Price Median
     /// @notice Retrieves the median price of an asset from the Pragma Oracle.
     /// @dev This function fetches the median price of an asset from the Pragma Oracle.
-    /// @param oracle_address A ContractAddress representing the address of the Pragma Oracle.
+    /// @param oracle_dispatcher A IPragmaABIDispatcher representing the Pragma Oracle dispatcher.
     /// @param asset A DataType representing the asset to retrieve the price for.
     /// @return A u128 representing the median price of the asset.
-    fn get_asset_price_median(oracle_address: ContractAddress, asset: DataType) -> u128 {
-        let oracle_dispatcher = IPragmaABIDispatcher { contract_address: oracle_address };
+    fn get_asset_price_median(oracle_dispatcher: IPragmaABIDispatcher, asset: DataType) -> u128 {
         let output: PragmaPricesResponse = oracle_dispatcher
             .get_data(asset, AggregationMode::Median(()));
         return output.price;
@@ -1266,23 +1321,23 @@ mod Game {
     fn _request_randomness(
         ref self: ContractState, seed: u64, adventurer_id: felt252, item_specials: u8
     ) {
-        let randomness_address = self._randomness_contract_address.read();
-
+        // pass adventurer id and item specials flag to vrf as calldata
+        // so when we receive the vrf callback, we know which adventurer to update
+        // and if the callback is for item specials or not
         let calldata = array![adventurer_id, item_specials.into()];
-
-        // Request the randomness
-        let randomness_dispatcher = IRandomnessDispatcher { contract_address: randomness_address };
 
         // Get base vrf callback fee
         let max_callback_fee_base = _get_vrf_max_callback_fee(@self);
 
         // Get adventurer specific vrf callback fee
-        let player_vrf_allowance = self._player_vrf_allowance.read(adventurer_id);
+        let player_vrf_allowance = self._adventurer_vrf_allowance.read(adventurer_id);
 
         // Calculate total callback fee
         let max_callback_fee_total = max_callback_fee_base + player_vrf_allowance;
 
-        randomness_dispatcher
+        // Request the randomness
+        let vrf_dispatcher = self._vrf_dispatcher.read();
+        vrf_dispatcher
             .request_random(
                 seed,
                 starknet::get_contract_address(),
@@ -1294,7 +1349,7 @@ mod Game {
 
         // zero out player vrf allowance
         if player_vrf_allowance != 0 {
-            self._player_vrf_allowance.write(adventurer_id, 0);
+            self._adventurer_vrf_allowance.write(adventurer_id, 0);
         }
     }
 
@@ -1393,19 +1448,17 @@ mod Game {
     /// @param beast A reference to the Beast object.
     /// @param to_address A ContractAddress representing the address to mint the beast to.
     fn _mint_beast(self: @ContractState, beast: Beast, to_address: ContractAddress) {
-        let collectible_beasts_contract = ILeetLootDispatcher {
-            contract_address: self._collectible_beasts_address.read()
-        };
+        let beasts_dispatcher = self._beasts_dispatcher.read();
 
-        let is_beast_minted = collectible_beasts_contract
+        let is_beast_minted = beasts_dispatcher
             .isMinted(
                 beast.id, beast.combat_spec.specials.special2, beast.combat_spec.specials.special3
             );
 
-        let beasts_minter = collectible_beasts_contract.getMinter();
+        let beasts_minter = beasts_dispatcher.getMinter();
 
         if !is_beast_minted && beasts_minter == starknet::get_contract_address() {
-            collectible_beasts_contract
+            beasts_dispatcher
                 .mint(
                     to_address,
                     beast.id,
@@ -1452,15 +1505,17 @@ mod Game {
             _update_leaderboard(ref self, adventurer_id, adventurer);
         }
 
-        // if adventurer has an nft allegiance, update the score
+        // if this game is part of the launch tournament and the tournament is still active
         let nft_address = self._launch_tournament_participants.read(adventurer_id);
-        if nft_address.is_non_zero() {
+        if nft_address.is_non_zero() && _is_launch_tournament_active(@self) {
             // get previous score for the collection
             let previous_score = self._launch_tournament_scores.read(nft_address);
-            // add the adventurer's xp to the collection's score
-            self
-                ._launch_tournament_scores
-                .write(nft_address, previous_score + adventurer.xp.into());
+
+            // calculate new score
+            let new_score = previous_score + adventurer.xp.into();
+
+            // update the score
+            self._launch_tournament_scores.write(nft_address, new_score);
         }
     }
 
@@ -1489,14 +1544,6 @@ mod Game {
         }
 
         self._adventurer_meta.write(adventurer_id, adventurer_meta);
-    }
-
-    fn _golden_token_dispatcher(ref self: ContractState) -> IERC721Dispatcher {
-        IERC721Dispatcher { contract_address: self._golden_token.read() }
-    }
-
-    fn _lords_dispatcher(ref self: ContractState) -> IERC20Dispatcher {
-        IERC20Dispatcher { contract_address: self._lords.read() }
     }
 
     fn _calculate_payout(bp: u256, price: u128) -> u256 {
@@ -1555,7 +1602,7 @@ mod Game {
     /// VRF premiums and gas for callbacks.
     /// @param self A reference to the ContractState object.
     fn _pay_for_vrf(self: @ContractState) {
-        let eth_dispatcher = IERC20Dispatcher { contract_address: self._eth_address.read() };
+        let eth_dispatcher = self._eth_dispatcher.read();
         let one_dollar_wei = _dollar_to_wei(self, VRF_COST_PER_GAME.into());
 
         // transfer $1 worth of ETH from user to game contract to cover VRF premiums and gas for
@@ -1574,9 +1621,7 @@ mod Game {
     /// @param usd A u128 representing the dollar amount to convert to Wei.
     /// @return A u128 representing the converted Wei amount.
     fn _dollar_to_wei(self: @ContractState, usd: u128) -> u128 {
-        let oracle_dispatcher = IPragmaABIDispatcher {
-            contract_address: self._oracle_address.read()
-        };
+        let oracle_dispatcher = self._oracle_dispatcher.read();
         let response = oracle_dispatcher.get_data_median(DataType::SpotEntry('ETH/USD'));
         assert(response.price > 0, messages::FETCHING_ETH_PRICE_ERROR);
         (usd * pow(10, response.decimals.into()) * 1000000000000000000)
@@ -1612,17 +1657,17 @@ mod Game {
             leaderboard.third.adventurer_id = 0;
         }
 
+        let lords_dispatcher = self._lords_dispatcher.read();
         if (rewards.BIBLIO != 0) {
-            _lords_dispatcher(ref self).transfer_from(caller, dao_address, rewards.BIBLIO);
+            lords_dispatcher.transfer_from(caller, dao_address, rewards.BIBLIO);
         } else {
-            _lords_dispatcher(ref self).transfer_from(caller, pg_address, rewards.PG);
+            lords_dispatcher.transfer_from(caller, pg_address, rewards.PG);
         }
 
-        _lords_dispatcher(ref self).transfer_from(caller, client_address, rewards.CLIENT_PROVIDER);
-        _lords_dispatcher(ref self).transfer_from(caller, first_place_address, rewards.FIRST_PLACE);
-        _lords_dispatcher(ref self)
-            .transfer_from(caller, second_place_address, rewards.SECOND_PLACE);
-        _lords_dispatcher(ref self).transfer_from(caller, third_place_address, rewards.THIRD_PLACE);
+        lords_dispatcher.transfer_from(caller, client_address, rewards.CLIENT_PROVIDER);
+        lords_dispatcher.transfer_from(caller, first_place_address, rewards.FIRST_PLACE);
+        lords_dispatcher.transfer_from(caller, second_place_address, rewards.SECOND_PLACE);
+        lords_dispatcher.transfer_from(caller, third_place_address, rewards.THIRD_PLACE);
 
         __event_RewardDistribution(
             ref self,
@@ -1661,7 +1706,7 @@ mod Game {
     /// @param custom_renderer A ContractAddress representing the address of the custom renderer.
     /// @param delay_stat_reveal A bool representing whether to delay the stat reveal until the
     /// starter beast is defeated.
-    /// @param golden_token_id A u256 representing the golden token id of the adventurer.
+    /// @param golden_token_id A u8 representing the golden token id of the adventurer.
     /// @return A felt252 representing the adventurer id.
     fn _start_game(
         ref self: ContractState,
@@ -1669,7 +1714,7 @@ mod Game {
         name: felt252,
         custom_renderer: ContractAddress,
         delay_stat_reveal: bool,
-        golden_token_id: u256
+        golden_token_id: u8
     ) -> felt252 {
         // assert game terminal time has not been reached
         _assert_terminal_time_not_reached(@self);
@@ -1685,7 +1730,7 @@ mod Game {
 
         // create meta data for the adventurer
         let adventurer_meta = ImplAdventurerMetadata::new(
-            get_block_timestamp().into(), delay_stat_reveal, golden_token_id.try_into().unwrap()
+            get_block_timestamp().into(), delay_stat_reveal, golden_token_id
         );
 
         let beast_battle_details = _starter_beast_ambush(ref adventurer, adventurer_id, weapon);
@@ -1698,9 +1743,10 @@ mod Game {
         // increment the adventurer id counter
         self._game_count.write(adventurer_id);
 
-        // set custom renderer if provided
-        if !custom_renderer.is_zero() {
-            self._custom_renderer.write(adventurer_id, custom_renderer);
+        // if a custom renderer was provided
+        if custom_renderer.is_non_zero() {
+            // store it
+            self._adventurer_renderer.write(adventurer_id, custom_renderer);
         }
 
         self.erc721.mint(get_caller_address(), adventurer_id.into());
@@ -2229,9 +2275,7 @@ mod Game {
                 if !adventurer.awaiting_item_specials {
                     adventurer.awaiting_item_specials = true;
 
-                    _event_RequestedItemSpecialsSeed(
-                        ref self, adventurer_id, self._randomness_contract_address.read()
-                    );
+                    _event_RequestedItemSpecialsSeed(ref self, adventurer_id);
 
                     if _network_supports_vrf() {
                         _request_randomness(
@@ -2276,7 +2320,7 @@ mod Game {
         let chain_id = get_tx_info().unbox().chain_id;
         chain_id == MAINNET_CHAIN_ID || chain_id == SEPOLIA_CHAIN_ID
     }
- 
+
     fn _get_and_apply_item_specials(
         ref adventurer: Adventurer, ref specials: SpecialPowers, item: Item, item_specials_seed: u16
     ) {
@@ -3268,11 +3312,13 @@ mod Game {
     }
 
     fn _assert_genesis_tournament_active(self: @ContractState) {
+        assert(_is_launch_tournament_active(self), messages::LAUNCH_TOURNAMENT_ENDED);
+    }
+
+    fn _is_launch_tournament_active(self: @ContractState) -> bool {
         let current_timestamp = starknet::get_block_info().unbox().block_timestamp;
-        let launch_promotion_end_timestamp = self._launch_promotion_end_timestamp.read();
-        assert(
-            current_timestamp <= launch_promotion_end_timestamp, messages::LAUNCH_TOURNAMENT_ENDED
-        );
+        let launch_promotion_end_timestamp = self._launch_tournament_end_time.read();
+        current_timestamp <= launch_promotion_end_timestamp
     }
 
     fn _initialize_launch_tournament(
@@ -3304,7 +3350,7 @@ mod Game {
     fn _is_qualifying_collection(
         self: @ContractState, nft_collection_address: ContractAddress
     ) -> bool {
-        self._launch_tournament_scores.read(nft_collection_address) > 0
+        self._launch_tournament_scores.read(nft_collection_address) != 0
     }
 
     fn _assert_is_qualifying_nft(self: @ContractState, nft_collection_address: ContractAddress) {
@@ -3315,33 +3361,36 @@ mod Game {
     }
 
     fn _assert_nft_ownership(
-        self: @ContractState, nft_collection_address: ContractAddress, token_id: u256
+        self: @ContractState, nft_collection_address: ContractAddress, token_id: u32
     ) {
-        let nft_collection_dispatcher = IERC721Dispatcher {
-            contract_address: nft_collection_address
-        };
-        let owner = nft_collection_dispatcher.owner_of(token_id);
+        let erc721_dispatcher = IERC721Dispatcher { contract_address: nft_collection_address };
+        let owner = erc721_dispatcher.owner_of(token_id.into());
 
         // TODO: add support for delegate address
         assert(owner == get_caller_address(), messages::NOT_TOKEN_OWNER);
     }
 
     fn _get_token_hash(
-        self: @ContractState, collection_address: ContractAddress, token_id: u256
+        self: @ContractState, collection_address: ContractAddress, token_id: u32
     ) -> felt252 {
         let mut hash_span = ArrayTrait::<felt252>::new();
         hash_span.append(collection_address.into());
-        hash_span.append(token_id.try_into().unwrap());
+        hash_span.append(token_id.into());
         poseidon_hash_span(hash_span.span())
     }
 
     fn _get_tournament_winner(self: @ContractState) -> ContractAddress {
-        self._launch_tournament_winner.read()
+        self._launch_tournament_champions_dispatcher.read().contract_address
     }
 
     fn _assert_token_not_claimed(self: @ContractState, token_hash: felt252) {
-        let token_hashed = self._claimed_tokens.read(token_hash);
+        let token_hashed = self._launch_tournament_claimed_games.read(token_hash);
         assert(!token_hashed, messages::TOKEN_ALREADY_REGISTERED);
+    }
+
+    fn _assert_participated_in_tournament(self: @ContractState, token_hash: felt252) {
+        let token_hash_exists = self._launch_tournament_claimed_games.read(token_hash);
+        assert(token_hash_exists, messages::NOT_PARTICIPATED_IN_TOURNAMENT);
     }
 
     fn _get_market(
@@ -3525,7 +3574,7 @@ mod Game {
         adventurer_state: AdventurerState,
         adventurer_meta: AdventurerMetadata,
         adventurer_name: felt252,
-        golden_token_id: u256,
+        golden_token_id: u8,
         custom_renderer: ContractAddress
     }
 
@@ -3787,7 +3836,7 @@ mod Game {
     struct ClaimedFreeGame {
         adventurer_id: felt252,
         collection_address: ContractAddress,
-        token_id: u256
+        token_id: u32
     }
 
     #[derive(Drop, Serde)]
@@ -3808,7 +3857,7 @@ mod Game {
         self.emit(event);
     }
     fn __event_RequestedLevelSeed(ref self: ContractState, adventurer_id: felt252, seed: u64) {
-        let vrf_address = self._randomness_contract_address.read();
+        let vrf_address = self._vrf_dispatcher.read().contract_address;
         self.emit(RequestedLevelSeed { adventurer_id, vrf_address, seed });
     }
     fn __event_ReceivedLevelSeed(
@@ -3820,9 +3869,8 @@ mod Game {
         let seed = _get_level_seed(@self, adventurer_id);
         self.emit(ReceivedLevelSeed { adventurer_id, vrf_address, seed, request_id });
     }
-    fn _event_RequestedItemSpecialsSeed(
-        ref self: ContractState, adventurer_id: felt252, vrf_address: ContractAddress
-    ) {
+    fn _event_RequestedItemSpecialsSeed(ref self: ContractState, adventurer_id: felt252) {
+        let vrf_address = self._vrf_dispatcher.read().contract_address;
         self.emit(RequestedItemSpecialsSeed { adventurer_id, vrf_address });
     }
     fn _event_ReceivedItemSpecialsSeed(
@@ -3866,7 +3914,7 @@ mod Game {
         adventurer_id: felt252,
         adventurer_meta: AdventurerMetadata,
         adventurer_name: felt252,
-        golden_token_id: u256,
+        golden_token_id: u8,
         custom_renderer: ContractAddress
     ) {
         let level_seed = _get_level_seed(@self, adventurer_id);
@@ -4201,30 +4249,85 @@ mod Game {
         ref self: ContractState,
         adventurer_id: felt252,
         collection_address: ContractAddress,
-        token_id: u256
+        token_id: u32
     ) {
         self.emit(ClaimedFreeGame { adventurer_id, collection_address, token_id });
     }
 
-
-    fn _can_play(self: @ContractState, token_id: u256) -> bool {
-        _last_usage(self, token_id) + SECONDS_IN_DAY.into() <= get_block_timestamp().into()
+    fn _free_game_available(
+        self: @ContractState, token_type: FreeGameTokenType, token_id: u32
+    ) -> bool {
+        _last_usage(self, token_type, token_id) + token_type.get_cooldown() <= get_block_timestamp()
     }
 
-    fn _play_with_token(ref self: ContractState, token_id: u256) {
-        assert(_can_play(@self, token_id), messages::CANNOT_PLAY_WITH_TOKEN);
-        // we use caller here because we don't have an adventurer id yet
-        let golden_token = _golden_token_dispatcher(ref self);
-        let golden_token_owner = golden_token.owner_of(token_id);
-        assert(golden_token_owner == get_caller_address(), messages::NOT_OWNER_OF_TOKEN);
+    /// @title Pay With Special Token
+    /// @notice Play with the token for the given token type
+    /// @param token_type The type of the token
+    /// @param token_id The ID of the token
+    fn _pay_with_special_token(
+        ref self: ContractState, token_type: FreeGameTokenType, token_id: u32
+    ) {
+        // assert caller owns token
+        // TODO: support Delegate Address
+        let token_dispatcher = _get_token_dispatcher(@self, token_type);
+        let token_owner = token_dispatcher.owner_of(token_id.into());
+        assert(token_owner == get_caller_address(), messages::NOT_OWNER_OF_TOKEN);
 
+        // assert token has a free game available
+        assert(_free_game_available(@self, token_type, token_id), messages::FREE_GAME_UNAVAILABLE);
+
+        // if this is a token for the launch tournament, verify it participated in the tournament
+        if token_type == FreeGameTokenType::LaunchTournamentChampion {
+            // get hash of collection and token id
+            let token_hash = _get_token_hash(@self, token_dispatcher.contract_address, token_id);
+
+            // assert token participated in the launch tournament
+            _assert_participated_in_tournament(@self, token_hash);
+        }
+
+        // save last usage timestamp
         self
-            ._golden_token_last_use
-            .write(token_id.try_into().unwrap(), get_block_timestamp().into());
+            ._previous_free_game_timestamp
+            .write((token_dispatcher.contract_address, token_id), get_block_timestamp());
     }
 
-    fn _last_usage(self: @ContractState, token_id: u256) -> u256 {
-        self._golden_token_last_use.read(token_id.try_into().unwrap()).into()
+    /// @title Get Token Dispatcher
+    /// @notice Get the token dispatcher for the given token type
+    /// @param token_type The type of the token
+    /// @return The token dispatcher
+    fn _get_token_dispatcher(
+        self: @ContractState, token_type: FreeGameTokenType
+    ) -> IERC721Dispatcher {
+        match token_type {
+            FreeGameTokenType::GoldenToken => self._golden_token_dispatcher.read(),
+            FreeGameTokenType::LaunchTournamentChampion => self
+                ._launch_tournament_champions_dispatcher
+                .read(),
+        }
+    }
+
+    /// @title Get Token Address
+    /// @notice Get the address of the token for the given token type
+    /// @param token_type The type of the token
+    /// @return The address of the token
+    fn _get_token_address(self: @ContractState, token_type: FreeGameTokenType) -> ContractAddress {
+        match token_type {
+            FreeGameTokenType::GoldenToken => self._golden_token_dispatcher.read().contract_address,
+            FreeGameTokenType::LaunchTournamentChampion => self
+                ._launch_tournament_champions_dispatcher
+                .read()
+                .contract_address,
+        }
+    }
+
+    /// @title Get Last Usage
+    /// @notice Get the last usage timestamp of the token for the given token type
+    /// @param token_type The type of the token
+    /// @param token_id The ID of the token
+    /// @return The last usage timestamp
+    fn _last_usage(self: @ContractState, token_type: FreeGameTokenType, token_id: u32) -> u64 {
+        let token_address = _get_token_address(self, token_type);
+        self._previous_free_game_timestamp.read((token_address, token_id))
     }
 
     #[abi(embed_v0)]
@@ -4289,10 +4392,7 @@ mod Game {
             let adventurer_id = token_id.try_into().unwrap();
 
             // use custom renderer if available
-            let mut renderer_contract = self._custom_renderer.read(adventurer_id);
-            if renderer_contract.is_zero() {
-                renderer_contract = self._default_renderer.read();
-            }
+            let renderer_address = _get_adventurer_renderer(self, adventurer_id);
 
             let adventurer = _load_adventurer(self, adventurer_id);
             let adventurer_name = _load_adventurer_name(self, adventurer_id);
@@ -4301,7 +4401,7 @@ mod Game {
             let item_specials_seed = _get_item_specials_seed(self, adventurer_id);
             let current_rank = _get_rank(self, adventurer_id);
 
-            IRenderContractDispatcher { contract_address: renderer_contract }
+            IRenderContractDispatcher { contract_address: renderer_address }
                 .token_uri(
                     token_id,
                     adventurer,

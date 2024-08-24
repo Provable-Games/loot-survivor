@@ -180,7 +180,7 @@ impl USizeBytesUsedTraitImpl of BytesUsedTrait<usize> {
 
 impl U64BytesUsedTraitImpl of BytesUsedTrait<u64> {
     fn bytes_used(self: u64) -> u8 {
-        if self <= Bounded::<u64>::MAX { // 256^4
+        if self <= Bounded::<u32>::MAX.into() { // 256^4
             return BytesUsedTrait::<u32>::bytes_used(self.try_into().unwrap());
         } else {
             if self < 0x1000000000000 { // 256^6

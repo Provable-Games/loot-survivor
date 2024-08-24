@@ -76,7 +76,8 @@ mod tests {
 
     const ADVENTURER_ID: felt252 = 1;
     const APPROVE: u256 = 1000000000000000000000000000000000000000000;
-    const DEFAULT_NO_GOLDEN_TOKEN: felt252 = 0;
+    const DEFAULT_NO_GOLDEN_TOKEN: u8 = 0;
+    const NO_WINNING_COLLECTION_TOKEN_ID: u32 = 0;
     const DAY: u64 = 86400;
     const TESTING_CHAIN_ID: felt252 = 0x4c4f4f545355525649564f52;
 
@@ -373,7 +374,7 @@ mod tests {
     }
 
     fn add_adventurer_to_game(
-        ref game: IGameDispatcher, golden_token_id: u256, starting_weapon: u8
+        ref game: IGameDispatcher, golden_token_id: u8, starting_weapon: u8
     ) -> felt252 {
         let adventurer_id = game
             .new_game(
@@ -383,7 +384,7 @@ mod tests {
                 golden_token_id,
                 false,
                 ZERO_ADDRESS(),
-                0
+                NO_WINNING_COLLECTION_TOKEN_ID
             );
 
         let new_adventurer = game.get_adventurer(adventurer_id);
@@ -397,7 +398,7 @@ mod tests {
     }
 
     fn add_level_2_adventurer_to_game(
-        ref game: IGameDispatcher, golden_token_id: u256, starting_weapon: u8
+        ref game: IGameDispatcher, golden_token_id: u8, starting_weapon: u8
     ) -> felt252 {
         let adventurer_id = game
             .new_game(
@@ -407,7 +408,7 @@ mod tests {
                 golden_token_id,
                 false,
                 ZERO_ADDRESS(),
-                0
+                NO_WINNING_COLLECTION_TOKEN_ID
             );
 
         let new_adventurer = game.get_adventurer(adventurer_id);
@@ -438,7 +439,7 @@ mod tests {
                 DEFAULT_NO_GOLDEN_TOKEN.into(),
                 false,
                 ZERO_ADDRESS(),
-                0
+                NO_WINNING_COLLECTION_TOKEN_ID
             );
 
         // get adventurer state
@@ -766,7 +767,7 @@ mod tests {
                 DEFAULT_NO_GOLDEN_TOKEN.into(),
                 false,
                 ZERO_ADDRESS(),
-                0
+                NO_WINNING_COLLECTION_TOKEN_ID
             );
 
         // get adventurer state
@@ -1929,17 +1930,17 @@ mod tests {
         );
         assert(
             starter_beast_game_three >= BeastId::Troll
-                && starter_beast_game_one <= BeastId::Skeleton,
+                && starter_beast_game_three <= BeastId::Skeleton,
             'wrong starter beast game 3'
         );
         assert(
             starter_beast_game_four >= BeastId::Troll
-                && starter_beast_game_one <= BeastId::Skeleton,
+                && starter_beast_game_four <= BeastId::Skeleton,
             'wrong starter beast game 4'
         );
         assert(
             starter_beast_game_five >= BeastId::Troll
-                && starter_beast_game_one <= BeastId::Skeleton,
+                && starter_beast_game_five <= BeastId::Skeleton,
             'wrong starter beast game 5'
         );
 
@@ -2422,7 +2423,7 @@ mod tests {
         // set block timestamp to one second after the launch tournament end
         start_cheat_block_timestamp_global(genesis_tournament_end + 1);
         // try to enter launch tournament should panic
-        game.enter_genesis_tournament(12, 123, ZERO_ADDRESS(), false, ZERO_ADDRESS(), 0);
+        game.enter_launch_tournament(12, 123, ZERO_ADDRESS(), false, ZERO_ADDRESS(), 0);
     }
 
     #[test]
@@ -2438,7 +2439,7 @@ mod tests {
         );
 
         // try to enter launch tournament should panic
-        game.enter_genesis_tournament(12, 123, ZERO_ADDRESS(), false, ZERO_ADDRESS(), 0);
+        game.enter_launch_tournament(12, 123, ZERO_ADDRESS(), false, ZERO_ADDRESS(), 0);
     }
 
     #[test]
@@ -2458,7 +2459,7 @@ mod tests {
 
         // try to enter tournament with a wallet that doesn't own the qualifying token
         game
-            .enter_genesis_tournament(
+            .enter_launch_tournament(
                 12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1
             );
     }
@@ -2477,14 +2478,14 @@ mod tests {
 
         // Enter genesis tournament using token id 1
         game
-            .enter_genesis_tournament(
+            .enter_launch_tournament(
                 12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1
             );
 
         // try to enter tournament with the same token id again
         // should panic
         game
-            .enter_genesis_tournament(
+            .enter_launch_tournament(
                 12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1
             );
     }
@@ -2502,7 +2503,7 @@ mod tests {
 
         // Enter genesis tournament using token id 1
         let adventurer_id = game
-            .enter_genesis_tournament(
+            .enter_launch_tournament(
                 12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1
             );
 

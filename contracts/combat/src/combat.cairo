@@ -66,21 +66,20 @@ impl ImplCombat of ICombat {
         let base_attack = Self::get_attack_hp(weapon);
         let base_armor = Self::get_armor_hp(armor);
 
-        // get damage adjusted for elemental
+        // adjust base damage for elemental effectiveness
         let elemental_adjusted_damage = Self::elemental_adjusted_damage(
             base_attack, weapon.item_type, armor.item_type
         );
 
-        // get strength bonus
+        // get strength bonus using elemental adjusted damage
         let strength_bonus = Self::strength_bonus(elemental_adjusted_damage, attacker_strength);
 
-        // get critical hit bonus using strength adjusted elemental damage
+        // get critical hit bonus using elemental adjusted damage
         let critical_hit_bonus = Self::critical_hit_bonus(
             elemental_adjusted_damage, critical_hit_chance, critical_hit_rnd
         );
 
-        // get weapon special damage bonus using strength adjusted elemental damage
-        // @dev this is a name prefix match for Loot Survivor
+        // get weapon special bonus using elemental adjusted damage
         let weapon_special_bonus = Self::weapon_special_bonus(
             elemental_adjusted_damage, weapon.specials, armor.specials
         );

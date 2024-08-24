@@ -71,6 +71,8 @@ mod messages {
     const ITEM_SPECIALS_UNAVAILABLE: felt252 = 'item specials unavailable';
     const TOURNAMENT_STILL_ACTIVE: felt252 = 'tournament still active';
     const TOURNAMENT_WINNER_ALREADY_SET: felt252 = 'tournament winner already set';
+    const FREE_GAME_UNAVAILABLE: felt252 = 'free game not yet available';
+    const NOT_PARTICIPATED_IN_TOURNAMENT: felt252 = 'not tournament participant';
 }
 
 #[derive(Drop, Copy)]
