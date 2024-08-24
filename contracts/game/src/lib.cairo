@@ -2276,7 +2276,7 @@ mod Game {
         let chain_id = get_tx_info().unbox().chain_id;
         chain_id == MAINNET_CHAIN_ID || chain_id == SEPOLIA_CHAIN_ID
     }
-
+ 
     fn _get_and_apply_item_specials(
         ref adventurer: Adventurer, ref specials: SpecialPowers, item: Item, item_specials_seed: u16
     ) {
@@ -4355,7 +4355,7 @@ mod Game {
 
         // IERC721MetadataCamelOnly
         fn tokenURI(self: @ContractState, tokenId: u256) -> ByteArray {
-            ERC721Mixin::token_uri(self, tokenId)
+            Self::token_uri(self, tokenId)
         }
 
         // ISRC5 snake case
