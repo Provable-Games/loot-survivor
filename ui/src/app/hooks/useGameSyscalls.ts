@@ -65,8 +65,10 @@ export function useGameSyscalls() {
     abi: Pragma,
   });
 
-  const [ethBalance, setEthBalance] = useState(BigInt(0));
-  const [lordsBalance, setLordsBalance] = useState(BigInt(0));
+  const ethBalance = useUIStore((state) => state.ethBalance);
+  const lordsBalance = useUIStore((state) => state.lordsBalance);
+  const setEthBalance = useUIStore((state) => state.setEthBalance);
+  const setLordsBalance = useUIStore((state) => state.setLordsBalance);
 
   const getBalances = useCallback(async () => {
     const balances = await fetchBalances(
@@ -75,6 +77,7 @@ export function useGameSyscalls() {
       lordsContract,
       gameContract
     );
+    console.log(balances);
     setEthBalance(balances[0]);
     setLordsBalance(balances[1]);
   }, [address, ethContract, lordsContract, gameContract]);

@@ -27,7 +27,8 @@ const Onboarding = ({ costToPlay }: OnboardingProps) => {
 
   const setScreen = useUIStore((state) => state.setScreen);
 
-  const { ethBalance, lordsBalance } = useGameSyscalls();
+  const ethBalance = useUIStore((state) => state.ethBalance);
+  const lordsBalance = useUIStore((state) => state.lordsBalance);
 
   const eth = Number(ethBalance);
   const lords = Number(lordsBalance);

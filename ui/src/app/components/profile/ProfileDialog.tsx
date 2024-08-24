@@ -36,7 +36,10 @@ export const ProfileDialog = ({
   const handleOffboarded = useUIStore((state) => state.handleOffboarded);
   const { connector } = useConnect();
 
-  const { withdraw, ethBalance, lordsBalance } = useGameSyscalls();
+  const { withdraw } = useGameSyscalls();
+
+  const ethBalance = useUIStore((state) => state.ethBalance);
+  const lordsBalance = useUIStore((state) => state.lordsBalance);
 
   const handleCopy = () => {
     copyToClipboard(padAddress(address!));

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Contract, AccountInterface, validateChecksumAddress } from "starknet";
+import { Contract, validateChecksumAddress } from "starknet";
 import { Button } from "@/app/components/buttons/Button";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
 import { CoinIcon, HeartIcon, SkullIcon } from "@/app/components/icons/Icons";
@@ -13,6 +13,7 @@ import { indexAddress, padAddress, calculateLevel } from "@/app/lib/utils";
 import { Adventurer } from "@/app/types";
 import { AdventurerListCard } from "@/app/components/start/AdventurerListCard";
 import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
+import { useGameSyscalls } from "@/app/hooks/useGameSyscalls";
 
 export interface AdventurerListProps {
   isActive: boolean;
@@ -21,12 +22,6 @@ export interface AdventurerListProps {
   gameContract: Contract;
   adventurersCount: number;
   aliveAdventurersCount: number;
-  transferAdventurer: (
-    account: AccountInterface,
-    adventurerId: number,
-    from: string,
-    recipient: string
-  ) => Promise<void>;
 }
 
 export const AdventurersList = ({
@@ -36,8 +31,8 @@ export const AdventurersList = ({
   gameContract,
   adventurersCount,
   aliveAdventurersCount,
-  transferAdventurer,
 }: AdventurerListProps) => {
+  const { transferAdventurer } = useGameSyscalls();
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showZeroHealth, setShowZeroHealth] = useState(true);
   const [isTransferOpen, setIsTransferOpen] = useState(false);

@@ -59,7 +59,9 @@ export default function Header({ gameContract, costToPlay }: HeaderProps) {
   const [apibaraStatus, setApibaraStatus] = useState();
   const username = useUIStore((state) => state.username);
 
-  const { multicall, mintLords, ethBalance, lordsBalance } = useGameSyscalls();
+  const { multicall, mintLords } = useGameSyscalls();
+  const ethBalance = useUIStore((state) => state.ethBalance);
+  const lordsBalance = useUIStore((state) => state.lordsBalance);
 
   const isMuted = useUIStore((state) => state.isMuted);
   const setIsMuted = useUIStore((state) => state.setIsMuted);

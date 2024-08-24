@@ -137,6 +137,10 @@ type State = {
   setTransferredAdventurerIds: (value: number[]) => void;
   openInterlude: boolean;
   setOpenInterlude: (value: boolean) => void;
+  ethBalance: bigint;
+  setEthBalance: (value: bigint) => void;
+  lordsBalance: bigint;
+  setLordsBalance: (value: bigint) => void;
 };
 
 const useUIStore = create<State>((set) => ({
@@ -254,6 +258,10 @@ const useUIStore = create<State>((set) => ({
     set({ transferredAdventurerIds: value }),
   openInterlude: false,
   setOpenInterlude: (value) => set({ openInterlude: value }),
+  ethBalance: BigInt(0),
+  setEthBalance: (value) => set({ ethBalance: value }),
+  lordsBalance: BigInt(0),
+  setLordsBalance: (value) => set({ lordsBalance: value }),
 }));
 
 export default useUIStore;

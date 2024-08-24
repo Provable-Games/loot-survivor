@@ -628,7 +628,6 @@ function Home() {
                     gameContract={gameContract!}
                     goldenTokenData={goldenTokenData}
                     costToPlay={costToPlay}
-                    transferAdventurer={transferAdventurer}
                   />
                 )}
                 {screen === "play" && (

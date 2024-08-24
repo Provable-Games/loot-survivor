@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AccountInterface, Contract } from "starknet";
+import { Contract } from "starknet";
 import { AdventurersList } from "@/app/components/start/AdventurersList";
 import { CreateAdventurer } from "@/app/components/start/CreateAdventurer";
 import ButtonMenu from "@/app/components/menu/ButtonMenu";
@@ -21,12 +21,6 @@ interface AdventurerScreenProps {
   gameContract: Contract;
   goldenTokenData: any;
   costToPlay: bigint;
-  transferAdventurer: (
-    account: AccountInterface,
-    adventurerId: number,
-    from: string,
-    recipient: string
-  ) => Promise<void>;
 }
 
 /**
@@ -38,7 +32,6 @@ export default function AdventurerScreen({
   gameContract,
   goldenTokenData,
   costToPlay,
-  transferAdventurer,
 }: AdventurerScreenProps) {
   const [activeMenu, setActiveMenu] = useState(0);
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
@@ -143,7 +136,6 @@ export default function AdventurerScreen({
             gameContract={gameContract}
             adventurersCount={adventurersByOwnerCount}
             aliveAdventurersCount={aliveAdventurersByOwnerCount}
-            transferAdventurer={transferAdventurer}
           />
         </div>
       )}
