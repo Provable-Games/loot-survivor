@@ -345,22 +345,18 @@ export default function BeastScreen({
                   </span>
                 )}
 
-                <span className="flex gap-1 items-center">
-                  {battleDetails.healthLeft} Health left
-                  <HeartIcon className="self-center w-4 h-4 fill-current" />
-                </span>
+                {battleDetails.healthLeft > 0 && (
+                  <span className="flex gap-1 items-center">
+                    {battleDetails.healthLeft} Health left
+                    <HeartIcon className="self-center w-4 h-4 fill-current" />
+                  </span>
+                )}
 
                 <Button
-                  variant={"link"}
-                  className="hidden sm:block sm:h-4 mt-1"
+                  className="hidden sm:flex bg-terminal-green-75"
                   onClick={() => showBattleDialog(true)}
                 >
-                  <span
-                    className="text-xs"
-                    style={{ color: "rgba(255, 255, 255, 0.4)" }}
-                  >
-                    Details
-                  </span>
+                  Details
                 </Button>
               </div>
 
@@ -388,22 +384,19 @@ export default function BeastScreen({
                   </span>
                 )}
 
-                <span className="flex gap-1 items-center">
-                  {fleeDetails.healthLeft} Health left
-                  <HeartIcon className="self-center w-4 h-4 fill-current" />
-                </span>
+                {battleDetails.healthLeft > 0 && (
+                  <span className="flex gap-1 items-center">
+                    {fleeDetails.healthLeft} Health left
+                    <HeartIcon className="self-center w-4 h-4 fill-current" />
+                  </span>
+                )}
 
                 <Button
                   variant={"link"}
-                  className="hidden sm:block sm:h-4 mt-1"
+                  className="hidden sm:flex bg-terminal-green-75"
                   onClick={() => showFleeDialog(true)}
                 >
-                  <span
-                    className="text-xs"
-                    style={{ color: "rgba(255, 255, 255, 0.4)" }}
-                  >
-                    Details
-                  </span>
+                  Details
                 </Button>
               </div>
             </div>
@@ -413,7 +406,7 @@ export default function BeastScreen({
         {isAlive && hasBeast && attackDetails && (
           <div className="hidden sm:flex px-2">
             <div className="flex gap-20 sm:gap-3 text-xs sm:text-sm h-full text-center uppercase">
-              <div className="border p-2 sm:px-10 border-terminal-green flex flex-col justify-center items-center gap-0.5 text-xs sm:text-sm">
+              <div className="border p-2 sm:px-10 border-terminal-green flex flex-col items-center gap-0.5 text-xs sm:text-sm">
                 <span className="hidden sm:block">Battle Result</span>
 
                 {battleDetails.success && (
@@ -425,31 +418,28 @@ export default function BeastScreen({
 
                 {!battleDetails.success && (
                   <span className="flex gap-1 items-center text-red-500">
-                    Failure!
+                    Death!
                     <SkullCrossedBonesIcon />
                   </span>
                 )}
 
-                <span className="flex gap-1 items-center">
-                  {battleDetails.healthLeft} Health left
-                  <HeartIcon className="self-center w-4 h-4 fill-current" />
-                </span>
+                {battleDetails.healthLeft > 0 && (
+                  <span className="flex gap-1 items-center">
+                    {battleDetails.healthLeft} Health left
+                    <HeartIcon className="self-center w-4 h-4 fill-current" />
+                  </span>
+                )}
 
                 <Button
-                  variant={"link"}
-                  className="hidden sm:block sm:h-4 mt-1"
+                  className="hidden sm:flex bg-terminal-green-75"
                   onClick={() => showBattleDialog(true)}
+                  size={"xxs"}
                 >
-                  <span
-                    className="text-xs"
-                    style={{ color: "rgba(255, 255, 255, 0.4)" }}
-                  >
-                    Details
-                  </span>
+                  Details
                 </Button>
               </div>
 
-              <div className="border p-2 sm:px-10 border-terminal-green flex flex-col justify-center items-center gap-0.5 text-xs sm:text-sm">
+              <div className="border p-2 sm:px-10 border-terminal-green flex flex-col items-center gap-0.5 text-xs sm:text-sm">
                 {adventurer?.dexterity !== 0 ? (
                   <>
                     <span className="hidden sm:block">Flee Result</span>
@@ -463,27 +453,24 @@ export default function BeastScreen({
 
                     {!fleeDetails.flee && (
                       <span className="flex gap-1 items-center text-red-500">
-                        Failure!
+                        Death!
                         <SkullCrossedBonesIcon />
                       </span>
                     )}
 
-                    <span className="flex gap-1 items-center">
-                      {fleeDetails.healthLeft} Health left
-                      <HeartIcon className="self-center w-4 h-4 fill-current" />
-                    </span>
+                    {fleeDetails.healthLeft > 0 && (
+                      <span className="flex gap-1 items-center">
+                        {fleeDetails.healthLeft} Health left
+                        <HeartIcon className="self-center w-4 h-4 fill-current" />
+                      </span>
+                    )}
 
                     <Button
-                      variant={"link"}
-                      className="hidden sm:block sm:h-4 mt-1"
-                      onClick={() => showFleeDialog(true)}
+                      className="hidden sm:flex bg-terminal-green-75"
+                      onClick={() => showBattleDialog(true)}
+                      size={"xxs"}
                     >
-                      <span
-                        className="text-xs"
-                        style={{ color: "rgba(255, 255, 255, 0.4)" }}
-                      >
-                        Details
-                      </span>
+                      Details
                     </Button>
                   </>
                 ) : (

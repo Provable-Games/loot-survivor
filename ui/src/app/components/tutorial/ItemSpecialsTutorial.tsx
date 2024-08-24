@@ -1,29 +1,28 @@
+import { HintDisplay } from "@/app/components/animations/Hint";
+import { ReactNode } from "react";
+
 export const UnlocksTutorial = () => {
+  const points: ReactNode[] = [
+    <span className="sm:text-2xl uppercase" key={0}>
+      <span className="text-terminal-yellow">Greatness 15:</span> Items receive
+      a name suffix <span>(&quot;Of Power&quot;)</span> providing a unique stat
+      boost to the Adventurer.
+    </span>,
+    <span className="sm:text-2xl uppercase" key={1}>
+      <span className="text-terminal-yellow">Greatness 19:</span> Items receive
+      a name prefix <span>(&quot;Agony Bane&quot;)</span>. Providing a powerful
+      damage boost if it matches a beast name.
+    </span>,
+    <span className="sm:text-2xl uppercase" key={2}>
+      <span className="text-terminal-yellow">Greatness 20:</span> Items receive{" "}
+      <span>(+1)</span> modifier which provides a permanent stat upgrade for the
+      Adventurer.
+    </span>,
+  ];
   return (
-    <div className="flex flex-col gap-5 uppercase items-center text-center h-full">
-      <h3 className="mt-0">Item Specials</h3>
-
-      <p className="sm:text-lg">
-        Loot items receive special abilities when they reach greatness 15, 19,
-        and 20.
-      </p>
-      <ul>
-        <li className="sm:text-lg mb-2">
-          G15: They receive a Special suffix such as &quot;Of Power&quot;. There
-          are sixteen suffixes, each providing a unique set of stat boosts.
-        </li>
-
-        <li className="sm:text-lg mb-2">
-          G19: They receive a two part name prefix such as &quot;Agony
-          Bane&quot; which if it matches a beast, provides a powerful damage
-          boost.
-        </li>
-
-        <li className="sm:text-lg">
-          G20: They receive a +1 modifier which grants the player a stat upgrade
-          for their Adventurer.
-        </li>
-      </ul>
+    <div className="flex flex-col gap-5 items-center text-center h-full p-20">
+      <h3 className="mt-0 uppercase text-terminal-yellow">Item Specials</h3>
+      <HintDisplay points={points} displaySeconds={8} />
     </div>
   );
 };
