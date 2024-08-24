@@ -60,16 +60,16 @@ const EncounterTable = () => {
 
   return (
     <div className="flex flex-col gap-5 sm:gap-0 sm:flex-row justify-between w-full bg-terminal-black max-h-[300px] border border-terminal-green text-xs sm:text-base">
-      <div className="flex flex-col w-full flex-grow-2">
+      <div className="flex flex-col w-full flex-grow-2 p-2">
         <div className="flex w-full justify-center h-8"></div>
         <button
-          className="absolute top-0 right-0"
+          className="absolute top-0 right-0 z-10"
           onClick={() => showEncounterTable(false)}
         >
           <MdClose className="w-10 h-10" />
         </button>
 
-        <table className="border-separate border-spacing-0 w-full sm:text-sm xl:text-sm 2xl:text-sm block overflow-x-scroll sm:overflow-y-scroll default-scroll p-2">
+        <table className="border-separate border-spacing-0 w-full sm:text-sm xl:text-sm 2xl:text-sm block overflow-x-scroll sm:overflow-y-scroll default-scroll">
           <thead
             className="border border-terminal-green sticky top-0 bg-terminal-black uppercase"
             style={{ zIndex: 8 }}
