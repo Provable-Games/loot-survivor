@@ -147,7 +147,7 @@ mod Game {
         _launch_tournament_scores: Map::<ContractAddress, u32>,
         _launch_tournament_champions_dispatcher: IERC721Dispatcher,
         _leaderboard: Leaderboard,
-        _lords_dispatcher: IERC20Dispatcher,
+        _payment_token_dispatcher: IERC20Dispatcher,
         _oracle_dispatcher: IPragmaABIDispatcher,
         _pg_address: ContractAddress,
         _previous_free_game_timestamp: Map::<(ContractAddress, u32), u64>,
@@ -219,76 +219,92 @@ mod Game {
     #[constructor]
     fn constructor(
         ref self: ContractState,
-        lords_address: ContractAddress,
+        payment_token: ContractAddress,
         eth_address: ContractAddress,
         dao_address: ContractAddress,
         pg_address: ContractAddress,
         beasts_address: ContractAddress,
         golden_token_address: ContractAddress,
         terminal_timestamp: u64,
-        vrf_address: ContractAddress,
+        vrf_provider_address: ContractAddress,
         oracle_address: ContractAddress,
         render_contract: ContractAddress,
         qualifying_collections: Array<ContractAddress>,
         launch_promotion_end_timestamp: u64,
-        vrf_premiums_address: ContractAddress
+        vrf_payments_address: ContractAddress
     ) {
-        // store lords dispatcher
-        let lords_dispatcher = IERC20Dispatcher { contract_address: lords_address };
-        self._lords_dispatcher.write(lords_dispatcher);
+        if payment_token.is_non_zero() {
+            let payment_dispatcher = IERC20Dispatcher { contract_address: payment_token };
+            self._payment_token_dispatcher.write(payment_dispatcher);
+        }
 
-        // store eth dispatcher
-        let eth_dispatcher = IERC20Dispatcher { contract_address: eth_address };
-        self._eth_dispatcher.write(eth_dispatcher);
+        if eth_address.is_non_zero() {
+            let eth_dispatcher = IERC20Dispatcher { contract_address: eth_address };
+            self._eth_dispatcher.write(eth_dispatcher);
+            // provider vrf provider with approval for all ETH in the contract
+            // @dev this is used by pragma to cover callback tx fees
+            eth_dispatcher.approve(vrf_provider_address, Bounded::<u256>::MAX);
+            // provider vrf payments with approval for all ETH in the contract
+            // @dev this is used by pragma to access their vrf premiums
+            eth_dispatcher.approve(vrf_payments_address, Bounded::<u256>::MAX);
+            // @dev the only reason ETH should be in the contract is to cover VRF costs
+        }
 
-        // store dao and pg addresses for contract rewards
-        self._dao.write(dao_address);
-        self._pg_address.write(pg_address);
+        if dao_address.is_non_zero() {
+            self._dao.write(dao_address);
+        }
 
-        // store beasts dispatcher
-        let beasts_dispatcher = ILeetLootDispatcher { contract_address: beasts_address };
-        self._beasts_dispatcher.write(beasts_dispatcher);
+        if pg_address.is_non_zero() {
+            self._pg_address.write(pg_address);
+        }
 
-        // store terminal timestamp if it's not 0
+        if beasts_address.is_non_zero() {
+            let beasts_dispatcher = ILeetLootDispatcher { contract_address: beasts_address };
+            self._beasts_dispatcher.write(beasts_dispatcher);
+        }
+
         if terminal_timestamp != 0 {
             self._terminal_timestamp.write(terminal_timestamp);
         }
 
-        // store vrf dispatcher
-        let vrf_dispatcher = IRandomnessDispatcher { contract_address: vrf_address };
-        self._vrf_dispatcher.write(vrf_dispatcher);
+        if vrf_provider_address.is_non_zero() {
+            let vrf_dispatcher = IRandomnessDispatcher { contract_address: vrf_provider_address };
+            self._vrf_dispatcher.write(vrf_dispatcher);
+        }
 
-        // store oracle dispatcher
-        let oracle_dispatcher = IPragmaABIDispatcher { contract_address: oracle_address };
-        self._oracle_dispatcher.write(oracle_dispatcher);
+        if oracle_address.is_non_zero() {
+            let oracle_dispatcher = IPragmaABIDispatcher { contract_address: oracle_address };
+            self._oracle_dispatcher.write(oracle_dispatcher);
+        }
 
-        self._default_renderer.write(render_contract);
-        self._launch_tournament_end_time.write(launch_promotion_end_timestamp);
+        if render_contract.is_non_zero() {
+            self._default_renderer.write(render_contract);
+        }
+
+        if launch_promotion_end_timestamp != 0 {
+            self._launch_tournament_end_time.write(launch_promotion_end_timestamp);
+        }
+
+        if golden_token_address.is_non_zero() {
+            let golden_token_dispatcher = IERC721Dispatcher {
+                contract_address: golden_token_address
+            };
+            self._golden_token_dispatcher.write(golden_token_dispatcher);
+        }
+
+        if COST_TO_PLAY != 0 {
+            self._cost_to_play.write(COST_TO_PLAY);
+        }
+
+        if vrf_payments_address.is_non_zero() {
+            self._vrf_premiums_address.write(vrf_payments_address);
+        }
 
         // @dev base uri isn't used in the current implementation
         self.erc721.initializer("Loot Survivor", "LSVR", "https://token.lootsurvivor.io/");
 
-        // set the golden token address
-        let golden_token_dispatcher = IERC721Dispatcher { contract_address: golden_token_address };
-        self._golden_token_dispatcher.write(golden_token_dispatcher);
-
-        // set the cost to play
-        self._cost_to_play.write(COST_TO_PLAY);
-
-        // set the vrf premiums address
-        self._vrf_premiums_address.write(vrf_premiums_address);
-
         // initialize launch tournament
         _initialize_launch_tournament(ref self, qualifying_collections.span());
-
-        // give VRF provider approval for all ETH in the contract since the only
-        // reason ETH will be in the contract is to cover VRF costs
-        if _network_supports_vrf() {
-            let eth_dispatcher = IERC20Dispatcher { contract_address: eth_address };
-            let vrf_address = self._vrf_dispatcher.read().contract_address;
-            eth_dispatcher.approve(vrf_address, Bounded::<u256>::MAX);
-            eth_dispatcher.approve(vrf_premiums_address, Bounded::<u256>::MAX);
-        }
     }
 
     // ------------------------------------------ //
@@ -360,7 +376,6 @@ mod Game {
             // store client provider address
             self._adventurer_client_provider.write(adventurer_id, client_reward_address);
 
-            // return adventurer id
             adventurer_id
         }
         /// @title Explore Function
@@ -1657,17 +1672,17 @@ mod Game {
             leaderboard.third.adventurer_id = 0;
         }
 
-        let lords_dispatcher = self._lords_dispatcher.read();
+        let payment_dispatcher = self._payment_token_dispatcher.read();
         if (rewards.BIBLIO != 0) {
-            lords_dispatcher.transfer_from(caller, dao_address, rewards.BIBLIO);
+            payment_dispatcher.transfer_from(caller, dao_address, rewards.BIBLIO);
         } else {
-            lords_dispatcher.transfer_from(caller, pg_address, rewards.PG);
+            payment_dispatcher.transfer_from(caller, pg_address, rewards.PG);
         }
 
-        lords_dispatcher.transfer_from(caller, client_address, rewards.CLIENT_PROVIDER);
-        lords_dispatcher.transfer_from(caller, first_place_address, rewards.FIRST_PLACE);
-        lords_dispatcher.transfer_from(caller, second_place_address, rewards.SECOND_PLACE);
-        lords_dispatcher.transfer_from(caller, third_place_address, rewards.THIRD_PLACE);
+        payment_dispatcher.transfer_from(caller, client_address, rewards.CLIENT_PROVIDER);
+        payment_dispatcher.transfer_from(caller, first_place_address, rewards.FIRST_PLACE);
+        payment_dispatcher.transfer_from(caller, second_place_address, rewards.SECOND_PLACE);
+        payment_dispatcher.transfer_from(caller, third_place_address, rewards.THIRD_PLACE);
 
         __event_RewardDistribution(
             ref self,
