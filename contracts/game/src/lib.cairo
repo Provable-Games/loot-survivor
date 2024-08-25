@@ -145,6 +145,7 @@ mod Game {
         _launch_tournament_end_time: u64,
         _launch_tournament_participants: Map::<felt252, ContractAddress>,
         _launch_tournament_scores: Map::<ContractAddress, u32>,
+        _launch_tournament_game_counts: Map::<ContractAddress, u16>,
         _launch_tournament_champions_dispatcher: IERC721Dispatcher,
         _leaderboard: Leaderboard,
         _payment_token_dispatcher: IERC20Dispatcher,
@@ -936,7 +937,7 @@ mod Game {
         /// @param custom_renderer A ContractAddress representing the custom renderer to use for the
         /// adventurer.
         /// @param delay_stat_reveal A bool representing whether to delay the stat reveal.
-        /// @param nft_address A ContractAddress representing the address of the NFT collection.
+        /// @param collection_address A ContractAddress representing the address of the NFT collection.
         /// @param token_id A u256 representing the token ID of the NFT.
         fn enter_launch_tournament(
             ref self: ContractState,
@@ -944,23 +945,30 @@ mod Game {
             name: felt252,
             custom_renderer: ContractAddress,
             delay_stat_reveal: bool,
-            nft_address: ContractAddress,
+            collection_address: ContractAddress,
             token_id: u32
         ) -> felt252 {
             // assert game terminal time has not been reached
             _assert_genesis_tournament_active(@self);
 
             // assert the nft collection is part of the set of free game nft collections
-            _assert_is_qualifying_nft(@self, nft_address);
+            _assert_is_qualifying_nft(@self, collection_address);
 
             // assert caller owns nft
-            _assert_nft_ownership(@self, nft_address, token_id);
+            _assert_nft_ownership(@self, collection_address, token_id);
 
             // get hash of collection and token id
-            let token_hash = _get_token_hash(@self, nft_address, token_id);
+            let token_hash = _get_token_hash(@self, collection_address, token_id);
 
             // assert token has not already claimed free game
             _assert_token_not_claimed(@self, token_hash);
+
+            // assert the total number of games for this collection is below the max limit
+            let total_games = self._launch_tournament_game_counts.read(collection_address);
+            assert(total_games < MAX_LAUNCH_GAMES, messages::MAX_LAUNCH_GAMES_REACHED);
+
+            // increment game count for this collection
+            self._launch_tournament_game_counts.write(collection_address, total_games + 1);
 
             // set token as claimed
             self._launch_tournament_claimed_games.write(token_hash, true);
@@ -971,10 +979,10 @@ mod Game {
             );
 
             // record adventurer allegiance
-            self._launch_tournament_participants.write(adventurer_id, nft_address);
+            self._launch_tournament_participants.write(adventurer_id, collection_address);
 
             // emit claimed free game event
-            __event_ClaimedFreeGame(ref self, adventurer_id, nft_address, token_id);
+            __event_ClaimedFreeGame(ref self, adventurer_id, collection_address, token_id);
 
             adventurer_id
         }
