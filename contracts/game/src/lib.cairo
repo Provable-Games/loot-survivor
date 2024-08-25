@@ -9,6 +9,10 @@ mod tests {
     mod test_game;
     mod mock_randomness;
     mod oz_constants;
+    mod mocks {
+        mod erc20_mocks;
+        mod erc721_mocks;
+    }
 }
 
 #[starknet::contract]
@@ -45,8 +49,7 @@ mod Game {
 
     use super::game::{
         interfaces::{
-            IGame, IERC721Metadata, IERC721MetadataCamelOnly, ILeetLoot, ILeetLootDispatcher,
-            ILeetLootDispatcherTrait,
+            IGame, IERC721Mixin, ILeetLoot, ILeetLootDispatcher, ILeetLootDispatcherTrait,
         },
         constants::{
             messages, Rewards, REWARD_DISTRIBUTIONS_BP, COST_TO_PLAY, STARTER_BEAST_ATTACK_DAMAGE,
@@ -62,9 +65,9 @@ mod Game {
 
     use loot::{loot::{ILoot, Loot, ImplLoot}, constants::{ItemId, SUFFIX_UNLOCK_GREATNESS}};
     use adventurer::{
-        adventurer::{Adventurer, ImplAdventurer, IAdventurer}, stats::{Stats, ImplStats},
-        item::{ImplItem, Item}, equipment::{Equipment, ImplEquipment}, bag::{Bag, IBag, ImplBag},
-        adventurer_meta::{AdventurerMetadata, ImplAdventurerMetadata},
+        adventurer::{Adventurer, ImplAdventurer, IAdventurer, ItemLeveledUp, ItemSpecial},
+        stats::{Stats, ImplStats}, item::{ImplItem, Item}, equipment::{Equipment, ImplEquipment},
+        bag::{Bag, IBag, ImplBag}, adventurer_meta::{AdventurerMetadata, ImplAdventurerMetadata},
         constants::{
             discovery_constants::DiscoveryEnums::{ExploreResult, DiscoveryType},
             adventurer_constants::{
@@ -89,10 +92,11 @@ mod Game {
     };
     use beasts::beast::{Beast, IBeast, ImplBeast};
 
-    #[abi(embed_v0)]
-    impl ERC721Impl = ERC721Component::ERC721Impl<ContractState>;
-    #[abi(embed_v0)]
+    impl SRC5 = SRC5Component::SRC5Impl<ContractState>;
+    impl ERC721 = ERC721Component::ERC721MixinImpl<ContractState>;
+    impl ERC721Metadata = ERC721Component::ERC721MetadataImpl<ContractState>;
     impl ERC721CamelOnly = ERC721Component::ERC721CamelOnlyImpl<ContractState>;
+    impl ERC721MetadataCamelOnly = ERC721Component::ERC721MetadataCamelOnlyImpl<ContractState>;
     impl ERC721InternalImpl = ERC721Component::InternalImpl<ContractState>;
 
     #[storage]
@@ -103,6 +107,7 @@ mod Game {
         _adventurer_obituary: LegacyMap::<felt252, ByteArray>,
         _bag: LegacyMap::<felt252, Bag>,
         _collectible_beasts: ContractAddress,
+        _client_provider_address: LegacyMap::<felt252, ContractAddress>,
         _dao: ContractAddress,
         _pg_address: ContractAddress,
         _game_count: felt252,
@@ -127,6 +132,7 @@ mod Game {
         _player_vrf_allowance: LegacyMap::<felt252, u128>,
         _qualifying_collections: LegacyMap::<ContractAddress, bool>,
         _claimed_tokens: LegacyMap::<felt252, bool>,
+        _vrf_premiums_address: ContractAddress,
     }
 
     #[event]
@@ -199,7 +205,8 @@ mod Game {
         oracle_address: ContractAddress,
         render_contract: ContractAddress,
         qualifying_collections: Array<ContractAddress>,
-        launch_promotion_end_timestamp: u64
+        launch_promotion_end_timestamp: u64,
+        vrf_premiums_address: ContractAddress
     ) {
         // init storage
         self._lords.write(lords);
@@ -234,6 +241,9 @@ mod Game {
         // set the cost to play
         self._cost_to_play.write(COST_TO_PLAY);
 
+        // set the vrf premiums address
+        self._vrf_premiums_address.write(vrf_premiums_address);
+
         // set qualifying nft collections
         let mut qualifying_collections_span = qualifying_collections.span();
         _save_qualifying_nft_collections(ref self, ref qualifying_collections_span);
@@ -243,6 +253,7 @@ mod Game {
         if _network_supports_vrf() {
             let eth_dispatcher = IERC20Dispatcher { contract_address: eth_address };
             eth_dispatcher.approve(randomness_contract_address, BoundedInt::max());
+            eth_dispatcher.approve(vrf_premiums_address, BoundedInt::max());
         }
     }
 
@@ -252,48 +263,6 @@ mod Game {
 
     #[abi(embed_v0)]
     impl Game of IGame<ContractState> {
-        fn receive_random_words(
-            ref self: ContractState,
-            requestor_address: ContractAddress,
-            request_id: u64,
-            random_words: Span<felt252>,
-            calldata: Array<felt252>
-        ) {
-            // verify caller is the vrf contract
-            assert(
-                get_caller_address() == self._randomness_contract_address.read(),
-                'caller not vrf contract'
-            );
-
-            if _network_supports_vrf() {
-                assert(
-                    requestor_address == starknet::get_contract_address(),
-                    'vrf requestor is not self'
-                );
-            }
-
-            let rnd = *random_words.at(0);
-            let adventurer_id = *calldata.at(0);
-            let is_specials_entropy = *calldata.at(1);
-
-            // get adventurer
-            let mut adventurer = _load_adventurer(@self, adventurer_id);
-
-            if is_specials_entropy == 0 {
-                process_new_level_seed(
-                    ref self, requestor_address, ref adventurer, adventurer_id, rnd, request_id
-                );
-            } else {
-                process_item_specials_seed(
-                    ref self, requestor_address, adventurer_id, rnd, request_id
-                );
-            }
-
-            if adventurer.mutated {
-                _save_adventurer(ref self, ref adventurer, adventurer_id);
-            }
-        }
-
         /// @title New Game
         ///
         /// @notice Creates a new game of Loot Survivor
@@ -334,9 +303,16 @@ mod Game {
             }
 
             // start the game
-            _start_game(ref self, weapon, name, custom_renderer, delay_reveal, golden_token_id)
-        }
+            let adventurer_id = _start_game(
+                ref self, weapon, name, custom_renderer, delay_reveal, golden_token_id
+            );
 
+            // store client provider address
+            self._client_provider_address.write(adventurer_id, client_reward_address);
+
+            // return adventurer id
+            adventurer_id
+        }
         /// @title Explore Function
         ///
         /// @notice Allows an adventurer to explore
@@ -809,8 +785,20 @@ mod Game {
         /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
         /// @param name A felt252 representing the new name of the adventurer.
         fn update_adventurer_name(ref self: ContractState, adventurer_id: felt252, name: felt252) {
+            // verify caller owns adventurer
             _assert_ownership(@self, adventurer_id);
+
+            // load adventurer (save gas by not loading boosts)
+            let adventurer = _load_adventurer_no_boosts(@self, adventurer_id);
+
+            // no name changes for dead or expired adventurers
+            _assert_not_dead(adventurer);
+            assert(!_is_expired(@self, adventurer_id), messages::GAME_EXPIRED);
+
+            // update adventurer name
             self._adventurer_name.write(adventurer_id, name);
+
+            // emit updated name event
             self.emit(UpdatedAdventurerName { adventurer_id, name });
         }
 
@@ -861,15 +849,15 @@ mod Game {
             }
         }
 
-        /// @title Claim Free Game
-        /// @notice Allows an adventurer to claim a free game.
+        /// @title Enter Genesis Tournament
+        /// @notice Allows an adventurer to enter the genesis tournament.
         /// @param weapon A u8 representing the weapon to use in the game.
         /// @param name A felt252 representing the name of the adventurer.
         /// @param custom_renderer A ContractAddress representing the custom renderer to use for the adventurer.
         /// @param delay_stat_reveal A bool representing whether to delay the stat reveal.
         /// @param nft_address A ContractAddress representing the address of the NFT collection.
         /// @param token_id A u256 representing the token ID of the NFT.
-        fn claim_free_game(
+        fn enter_genesis_tournament(
             ref self: ContractState,
             weapon: u8,
             name: felt252,
@@ -877,9 +865,9 @@ mod Game {
             delay_stat_reveal: bool,
             nft_address: ContractAddress,
             token_id: u256
-        ) {
+        ) -> felt252 {
             // assert game terminal time has not been reached
-            _assert_launch_promotion_open(@self);
+            _assert_genesis_tournament_active(@self);
 
             // assert the nft collection is part of the set of free game nft collections
             _assert_is_qualifying_nft(@self, nft_address);
@@ -903,8 +891,51 @@ mod Game {
 
             // emit claimed free game event
             __event_ClaimedFreeGame(ref self, adventurer_id, nft_address, token_id);
+
+            adventurer_id
         }
 
+        fn receive_random_words(
+            ref self: ContractState,
+            requestor_address: ContractAddress,
+            request_id: u64,
+            random_words: Span<felt252>,
+            calldata: Array<felt252>
+        ) {
+            // verify caller is the vrf contract
+            assert(
+                get_caller_address() == self._randomness_contract_address.read(),
+                'caller not vrf contract'
+            );
+
+            if _network_supports_vrf() {
+                assert(
+                    requestor_address == starknet::get_contract_address(),
+                    'vrf requestor is not self'
+                );
+            }
+
+            let rnd = *random_words.at(0);
+            let adventurer_id = *calldata.at(0);
+            let is_specials_entropy = *calldata.at(1);
+
+            // get adventurer
+            let mut adventurer = _load_adventurer(@self, adventurer_id);
+
+            if is_specials_entropy == 0 {
+                process_new_level_seed(
+                    ref self, requestor_address, ref adventurer, adventurer_id, rnd, request_id
+                );
+            } else {
+                process_item_specials_seed(
+                    ref self, adventurer, requestor_address, adventurer_id, rnd, request_id
+                );
+            }
+
+            if adventurer.mutated {
+                _save_adventurer(ref self, ref adventurer, adventurer_id);
+            }
+        }
 
         // ------------------------------------------ //
         // ------------ View Functions -------------- //
@@ -918,6 +949,30 @@ mod Game {
         fn get_adventurer_obituary(self: @ContractState, adventurer_id: felt252) -> ByteArray {
             self._adventurer_obituary.read(adventurer_id)
         }
+        fn get_item_specials(self: @ContractState, adventurer_id: felt252) -> Array<ItemSpecial> {
+            let mut item_specials: Array<ItemSpecial> = ArrayTrait::<ItemSpecial>::new();
+            let specials_seed = _load_adventurer_metadata(self, adventurer_id).item_specials_seed;
+
+            // assert specials seed is not 0
+            assert(specials_seed != 0, messages::ITEM_SPECIALS_UNAVAILABLE);
+
+            let mut item_id = 1;
+            loop {
+                if item_id > 101 {
+                    break;
+                }
+
+                let special_power = SpecialPowers {
+                    special1: ImplLoot::get_suffix(item_id, specials_seed),
+                    special2: ImplLoot::get_prefix1(item_id, specials_seed),
+                    special3: ImplLoot::get_prefix2(item_id, specials_seed),
+                };
+                item_specials.append(ItemSpecial { item_id, special_power, });
+
+                item_id += 1;
+            };
+            item_specials
+        }
         fn get_randomness_address(self: @ContractState) -> ContractAddress {
             self._randomness_contract_address.read()
         }
@@ -930,11 +985,17 @@ mod Game {
         fn get_player_vrf_allowance(self: @ContractState, adventurer_id: felt252) -> u128 {
             self._player_vrf_allowance.read(adventurer_id)
         }
+        fn get_vrf_premiums_address(self: @ContractState) -> ContractAddress {
+            self._vrf_premiums_address.read()
+        }
         fn get_adventurer_no_boosts(self: @ContractState, adventurer_id: felt252) -> Adventurer {
             _load_adventurer_no_boosts(self, adventurer_id)
         }
         fn get_adventurer_meta(self: @ContractState, adventurer_id: felt252) -> AdventurerMetadata {
             _load_adventurer_metadata(self, adventurer_id)
+        }
+        fn get_client_provider(self: @ContractState, adventurer_id: felt252) -> ContractAddress {
+            self._client_provider_address.read(adventurer_id)
         }
         fn get_bag(self: @ContractState, adventurer_id: felt252) -> Bag {
             _load_bag(self, adventurer_id)
@@ -1044,6 +1105,7 @@ mod Game {
     /// @param request_id A u64 representing the request ID.
     fn process_item_specials_seed(
         ref self: ContractState,
+        adventurer: Adventurer,
         requestor_address: ContractAddress,
         adventurer_id: felt252,
         item_specials_seed: felt252,
@@ -1059,6 +1121,12 @@ mod Game {
         _event_ReceivedItemSpecialsSeed(
             ref self, adventurer_id, requestor_address, item_specials_seed, request_id
         );
+        // get adventurer equipment
+
+        let items_leveled_up = ImplAdventurer::get_items_leveled_up(
+            adventurer.equipment, item_specials_seed_u16
+        );
+        __event_ItemsLeveledUp(ref self, adventurer, adventurer_id, items_leveled_up);
     }
 
     /// @title Process VRF Randomness
@@ -1338,7 +1406,14 @@ mod Game {
         ref self: ContractState, adventurer_id: felt252, item_specials_seed: u16
     ) {
         let mut adventurer_meta = self._adventurer_meta.read(adventurer_id);
-        adventurer_meta.item_specials_seed = item_specials_seed;
+
+        // reserve zero for unset item specials
+        if item_specials_seed == 0 {
+            adventurer_meta.item_specials_seed = item_specials_seed + 1;
+        } else {
+            adventurer_meta.item_specials_seed = item_specials_seed;
+        }
+
         self._adventurer_meta.write(adventurer_id, adventurer_meta);
     }
 
@@ -1506,6 +1581,8 @@ mod Game {
     /// @param weapon A u8 representing the weapon for the adventurer.
     /// @param name A felt252 representing the name of the adventurer.
     /// @param custom_renderer A ContractAddress representing the address of the custom renderer.
+    /// @param delay_stat_reveal A bool representing whether to delay the stat reveal until the starter beast is defeated.
+    /// @param golden_token_id A u256 representing the golden token id of the adventurer.
     /// @return A felt252 representing the adventurer id.
     fn _start_game(
         ref self: ContractState,
@@ -1529,7 +1606,7 @@ mod Game {
 
         // create meta data for the adventurer
         let adventurer_meta = ImplAdventurerMetadata::new(
-            get_block_timestamp().into(), delay_stat_reveal
+            get_block_timestamp().into(), delay_stat_reveal, golden_token_id.try_into().unwrap()
         );
 
         let beast_battle_details = _starter_beast_ambush(ref adventurer, adventurer_id, weapon);
@@ -2030,12 +2107,9 @@ mod Game {
         previous_level: u8,
         new_level: u8,
     ) -> ItemLeveledUp {
-        // init specials with no specials
-        let mut specials = SpecialPowers { special1: 0, special2: 0, special3: 0 };
-
-        // check if item reached greatness 20
+        // if item reached max greatness level
         if (new_level == ITEM_MAX_GREATNESS) {
-            // if so, adventurer gets a stat point as a reward
+            // adventurer receives a bonus stat upgrade point
             adventurer.increase_stat_upgrades_available(MAX_GREATNESS_STAT_BONUS);
         }
 
@@ -2044,42 +2118,60 @@ mod Game {
             previous_level, new_level
         );
 
+        // get item specials seed
+        let item_specials_seed = _get_item_specials_seed(@self, adventurer_id);
+        let specials = if item_specials_seed != 0 {
+            ImplLoot::get_specials(item.id, item.get_greatness(), item_specials_seed)
+        } else {
+            SpecialPowers { special1: 0, special2: 0, special3: 0 }
+        };
+
         // if specials were unlocked
         if (suffix_unlocked || prefixes_unlocked) {
-            // if item received a suffix as part of the level up
-            if (suffix_unlocked) {
-                // get item specials seed
-                let item_specials_seed = _get_item_specials_seed(@self, adventurer_id);
+            // check if we already have the vrf seed for the item specials
+            if item_specials_seed != 0 {
+                // if suffix was unlocked, apply stat boosts for suffix special to adventurer
+                if suffix_unlocked {
+                    // apply stat boosts for suffix special to adventurer
+                    adventurer.stats.apply_suffix_boost(specials.special1);
+                    // apply health boost for any vitality gained (one time event)
+                    adventurer.apply_health_boost_from_vitality_unlock(specials);
+                }
+            } else {
+                // if the contract doesn't have an item specials seed from vrf yet
+                // we need to request one but only once so we use a flag to ensure we only request for first item
+                if !adventurer.awaiting_item_specials {
+                    adventurer.awaiting_item_specials = true;
 
-                // if we don't have item specials seed yet
-                if item_specials_seed == 0 {
-                    // we need to request it but only once and it's possible multiple items are
-                    // reaching g15+ at the same time so we use a flag to ensure we only request for first item
-                    if !adventurer.awaiting_item_specials {
-                        adventurer.awaiting_item_specials = true;
+                    _event_RequestedItemSpecialsSeed(
+                        ref self, adventurer_id, self._randomness_contract_address.read()
+                    );
 
-                        _event_RequestedItemSpecialsSeed(
-                            ref self, adventurer_id, self._randomness_contract_address.read()
+                    if _network_supports_vrf() {
+                        _request_randomness(
+                            ref self, adventurer_id.try_into().unwrap(), adventurer_id, 1
+                        );
+                    } else {
+                        // if we are running on a network that doesn't support vrf
+                        // we generate a basic seed using item.xp + item.id
+                        let item_specials_seed = item.xp + item.id.into();
+
+                        // set the seed in the contract
+                        _set_item_specials_seed(ref self, adventurer_id, item_specials_seed);
+
+                        // get specials for the item
+                        let specials = ImplLoot::get_specials(
+                            item.id, item.get_greatness(), item_specials_seed
                         );
 
-                        if _network_supports_vrf() {
-                            _request_randomness(
-                                ref self, adventurer_id.try_into().unwrap(), adventurer_id, 1
-                            );
-                        } else {
-                            // on katana we simply use item.xp + item.id as a simple seed
-                            // that will always fit in a u16
-                            let item_specials_seed = item.xp + item.id.into();
-                            _set_item_specials_seed(ref self, adventurer_id, item_specials_seed);
-                            _get_and_apply_item_specials(
-                                ref adventurer, ref specials, item, item_specials_seed
-                            );
+                        // if suffix was unlocked, apply stat boosts for suffix special to adventurer
+                        if suffix_unlocked {
+                            // apply stat boosts for suffix special to adventurer
+                            adventurer.stats.apply_suffix_boost(specials.special1);
+                            // apply health boost for any vitality gained (one time event)
+                            adventurer.apply_health_boost_from_vitality_unlock(specials);
                         }
                     }
-                } else { // apply them and record the new specials so we can include them in event
-                    _get_and_apply_item_specials(
-                        ref adventurer, ref specials, item, item_specials_seed
-                    );
                 }
             }
         }
@@ -3066,11 +3158,11 @@ mod Game {
         }
     }
 
-    fn _assert_launch_promotion_open(self: @ContractState) {
+    fn _assert_genesis_tournament_active(self: @ContractState) {
         let current_timestamp = starknet::get_block_info().unbox().block_timestamp;
         let launch_promotion_end_timestamp = self._launch_promotion_end_timestamp.read();
         assert(
-            current_timestamp < launch_promotion_end_timestamp, messages::LAUNCH_PROMOTION_CLOSED
+            current_timestamp <= launch_promotion_end_timestamp, messages::LAUNCH_TOURNAMENT_ENDED
         );
     }
 
@@ -3117,7 +3209,7 @@ mod Game {
 
     fn _assert_token_not_claimed(self: @ContractState, token_hash: felt252) {
         let token_hashed = self._claimed_tokens.read(token_hash);
-        assert(!token_hashed, messages::TOKEN_ALREADY_CLAIMED);
+        assert(!token_hashed, messages::TOKEN_ALREADY_REGISTERED);
     }
 
     fn _get_market(
@@ -3272,9 +3364,11 @@ mod Game {
         let chain_id = get_tx_info().unbox().chain_id;
         if chain_id == MAINNET_CHAIN_ID {
             _dollar_to_wei(self, VRF_MAX_CALLBACK_MAINNET.into())
-        } else {
+        } else if chain_id == SEPOLIA_CHAIN_ID {
             // $3 for non-mainnet to prevent interference from gas price swings
             _dollar_to_wei(self, VRF_MAX_CALLBACK_TESTNET.into())
+        } else {
+            panic_with_felt252('network does not support vrf')
         }
     }
 
@@ -3446,16 +3540,6 @@ mod Game {
     struct DroppedItems {
         adventurer_state_with_bag: AdventurerStateWithBag,
         item_ids: Array<u8>,
-    }
-
-    #[derive(Drop, Serde)]
-    struct ItemLeveledUp {
-        item_id: u8,
-        previous_level: u8,
-        new_level: u8,
-        suffix_unlocked: bool,
-        prefixes_unlocked: bool,
-        specials: SpecialPowers
     }
 
     #[derive(Drop, starknet::Event)]
@@ -3981,7 +4065,10 @@ mod Game {
     }
 
     fn __event_ClaimedFreeGame(
-        ref self: ContractState, adventurer_id: felt252, collection_address: ContractAddress, token_id: u256
+        ref self: ContractState,
+        adventurer_id: felt252,
+        collection_address: ContractAddress,
+        token_id: u256
     ) {
         self.emit(ClaimedFreeGame { adventurer_id, collection_address, token_id });
     }
@@ -4008,36 +4095,82 @@ mod Game {
     }
 
     #[abi(embed_v0)]
-    impl ERC721Metadata of IERC721Metadata<ContractState> {
+    impl ERC721Mixin of IERC721Mixin<ContractState> {
+        // IERC721
+        fn balance_of(self: @ContractState, account: ContractAddress) -> u256 {
+            ERC721::balance_of(self, account)
+        }
+
+        fn owner_of(self: @ContractState, token_id: u256) -> ContractAddress {
+            ERC721::owner_of(self, token_id)
+        }
+
+        fn safe_transfer_from(
+            ref self: ContractState,
+            from: ContractAddress,
+            to: ContractAddress,
+            token_id: u256,
+            data: Span<felt252>
+        ) {
+            ERC721::safe_transfer_from(ref self, from, to, token_id, data);
+        }
+
+        fn transfer_from(
+            ref self: ContractState, from: ContractAddress, to: ContractAddress, token_id: u256
+        ) {
+            ERC721::transfer_from(ref self, from, to, token_id);
+        }
+
+        fn approve(ref self: ContractState, to: ContractAddress, token_id: u256) {
+            ERC721::approve(ref self, to, token_id);
+        }
+
+        fn set_approval_for_all(
+            ref self: ContractState, operator: ContractAddress, approved: bool
+        ) {
+            ERC721::set_approval_for_all(ref self, operator, approved);
+        }
+
+        fn get_approved(self: @ContractState, token_id: u256) -> ContractAddress {
+            ERC721::get_approved(self, token_id)
+        }
+
+        fn is_approved_for_all(
+            self: @ContractState, owner: ContractAddress, operator: ContractAddress
+        ) -> bool {
+            ERC721::is_approved_for_all(self, owner, operator)
+        }
+
+        // IERC721Metadata
         fn name(self: @ContractState) -> ByteArray {
-            self.erc721.ERC721_name.read()
+            ERC721Metadata::name(self)
         }
 
         fn symbol(self: @ContractState) -> ByteArray {
-            self.erc721.ERC721_symbol.read()
+            ERC721Metadata::symbol(self)
         }
 
-        fn token_uri(self: @ContractState, adventurer_id: u256) -> ByteArray {
-            self.erc721._require_owned(adventurer_id);
+        fn token_uri(self: @ContractState, token_id: u256) -> ByteArray {
+            self.erc721._require_owned(token_id);
 
-            let adventurer_id_felt = adventurer_id.try_into().unwrap();
+            let adventurer_id = token_id.try_into().unwrap();
 
             // use custom renderer if available
-            let mut renderer_contract = self._custom_renderer.read(adventurer_id_felt);
+            let mut renderer_contract = self._custom_renderer.read(adventurer_id);
             if renderer_contract.is_zero() {
                 renderer_contract = self._default_renderer.read();
             }
 
-            let adventurer = _load_adventurer(self, adventurer_id_felt);
-            let adventurer_name = _load_adventurer_name(self, adventurer_id_felt);
-            let adventurer_metadata = _load_adventurer_metadata(self, adventurer_id_felt);
-            let bag = _load_bag(self, adventurer_id_felt);
-            let item_specials_seed = _get_item_specials_seed(self, adventurer_id_felt);
-            let current_rank = _get_rank(self, adventurer_id_felt);
+            let adventurer = _load_adventurer(self, adventurer_id);
+            let adventurer_name = _load_adventurer_name(self, adventurer_id);
+            let adventurer_metadata = _load_adventurer_metadata(self, adventurer_id);
+            let bag = _load_bag(self, adventurer_id);
+            let item_specials_seed = _get_item_specials_seed(self, adventurer_id);
+            let current_rank = _get_rank(self, adventurer_id);
 
             IRenderContractDispatcher { contract_address: renderer_contract }
                 .token_uri(
-                    adventurer_id,
+                    token_id,
                     adventurer,
                     adventurer_name,
                     adventurer_metadata,
@@ -4046,6 +4179,60 @@ mod Game {
                     adventurer_metadata.rank_at_death,
                     current_rank,
                 )
+        }
+
+        // IERC721CamelOnly
+        fn balanceOf(self: @ContractState, account: ContractAddress) -> u256 {
+            ERC721CamelOnly::balanceOf(self, account)
+        }
+
+        fn ownerOf(self: @ContractState, tokenId: u256) -> ContractAddress {
+            ERC721CamelOnly::ownerOf(self, tokenId)
+        }
+
+        fn safeTransferFrom(
+            ref self: ContractState,
+            from: ContractAddress,
+            to: ContractAddress,
+            tokenId: u256,
+            data: Span<felt252>
+        ) {
+            ERC721CamelOnly::safeTransferFrom(ref self, from, to, tokenId, data);
+        }
+
+        fn transferFrom(
+            ref self: ContractState, from: ContractAddress, to: ContractAddress, tokenId: u256
+        ) {
+            ERC721CamelOnly::transferFrom(ref self, from, to, tokenId);
+        }
+
+        fn setApprovalForAll(ref self: ContractState, operator: ContractAddress, approved: bool) {
+            ERC721CamelOnly::setApprovalForAll(ref self, operator, approved);
+        }
+
+        fn getApproved(self: @ContractState, tokenId: u256) -> ContractAddress {
+            ERC721CamelOnly::getApproved(self, tokenId)
+        }
+
+        fn isApprovedForAll(
+            self: @ContractState, owner: ContractAddress, operator: ContractAddress
+        ) -> bool {
+            ERC721CamelOnly::isApprovedForAll(self, owner, operator)
+        }
+
+        // IERC721MetadataCamelOnly
+        fn tokenURI(self: @ContractState, tokenId: u256) -> ByteArray {
+            ERC721Mixin::token_uri(self, tokenId)
+        }
+
+        // ISRC5 snake case
+        fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
+            SRC5::supports_interface(self, interface_id)
+        }
+
+        // ISRC5 camel case
+        fn supportsInterface(self: @ContractState, interfaceId: felt252) -> bool {
+            SRC5::supports_interface(self, interfaceId)
         }
     }
 }

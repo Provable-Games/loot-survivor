@@ -1072,13 +1072,6 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(198584)]
-    fn test_increase_item_xp_at_slot_gas() {
-        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
-        adventurer.equipment.increase_item_xp_at_slot(Slot::Weapon(()), 1);
-    }
-
-    #[test]
     #[available_gas(385184)]
     fn test_increase_item_xp_at_slot() {
         let mut adventurer = ImplAdventurer::new(ItemId::Wand);

@@ -10,7 +10,6 @@ export interface Adventurer {
   classType?: string; // Class of the adventurer
   homeRealm?: number; // Home Realm of the adventurer
   name?: string; // Name of the adventurer
-  order?: string; // Order of the adventurer
   health?: number; // Health of the adventurer
   level?: number; // Level of the adventurer
   strength?: number; // Strength of the adventurer
@@ -31,8 +30,8 @@ export interface Adventurer {
   ring?: string; // Ring of the adventure
   beastHealth?: number; // Beast health adventurer is engaging
   statUpgrades?: number; // Stat upgrades adventurer has
-  birthDate?: number; // Birth date of the adventurer
-  deathDate?: number; // Death date of the adventurer
+  birthDate?: string; // Birth date of the adventurer
+  deathDate?: string; // Death date of the adventurer
   goldenTokenId?: number; // Golden token ID of the adventurer
   customRenderer?: string; // Custom renderer of the adventurer
   battleActionCount?: number; // Battle action count of the adventurer
@@ -208,6 +207,7 @@ export interface Call {
 export interface ButtonData {
   id: number;
   label: string;
+  tip?: string;
   icon?: ReactElement;
   loading?: boolean;
   value?: string;
@@ -331,7 +331,6 @@ export const NullAdventurer: Adventurer = {
   classType: undefined,
   homeRealm: undefined,
   name: undefined,
-  order: undefined,
   health: undefined,
   level: undefined,
   strength: undefined,
@@ -517,4 +516,15 @@ export type PragmaPrice = {
   last_updated_timestamp: bigint;
   num_sources_aggregated: bigint;
   price: bigint;
+};
+
+export type Attribute = {
+  key: number;
+  name: string;
+  icon: ReactElement;
+  description: string;
+  buttonText: string;
+  abbrev: string;
+  stat: number;
+  upgrades: number;
 };

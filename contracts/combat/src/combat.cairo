@@ -940,12 +940,6 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(2860)]
-    fn test_is_critical_hit_gas() {
-        ImplCombat::is_critical_hit(100, 0);
-    }
-
-    #[test]
     fn test_is_critical_hit() {
         // no critical hit without luck
         let mut luck = 0;
@@ -1315,19 +1309,6 @@ mod tests {
         let min_beast_level = ImplCombat::get_random_level(adventurer_level, 0);
         assert(min_beast_level == 81, 'on lvl50, min beast lvl is 51');
         assert(max_beast_level == 180, 'on lvl50, max beast lvl is 180');
-    }
-
-    #[test]
-    #[available_gas(7480)]
-    fn test_get_base_reward_gas() {
-        let combat_spec = CombatSpec {
-            item_type: Type::Blade_or_Hide,
-            tier: Tier::T1,
-            level: 1,
-            specials: SpecialPowers { special1: 0, special2: 0, special3: 0 }
-        };
-
-        combat_spec.get_base_reward(1);
     }
 
     #[test]

@@ -67,17 +67,37 @@ module.exports = {
         'md': '0px 0px 20px -2px rgb(51 255 51 / 1)',
         'lg': '0px 5px 20px -5px rgb(51 255 51 / 1)',
       },
+      height: {
+        '1/8': '12.5%',
+        '7/8': '87.5%',
+      }
     },
   },
   plugins: [
-    function({ addUtilities }) {
+    function({ addUtilities, theme }) {
       const newUtilities = {
-        '.text-shadow-none': {
-          textShadow: 'none',
+        '.custom-range-input': {
+          '&::-webkit-slider-thumb': {
+            '-webkit-appearance': 'none',
+            'appearance': 'none',
+            'width': '20px',
+            'height': '20px',
+            'background-color': 'rgba(74, 246, 38, 1)',
+            'cursor': 'pointer',
+          },
+          '&::-moz-range-thumb': {
+            'width': '20px',
+            'height': '20px',
+            'background-color': 'rgba(74, 246, 38, 1)',
+            'cursor': 'pointer',
+          },
+          '&::-webkit-slider-runnable-track': {
+            'background-color': 'rgba(0, 0, 0, 1)',
+            'border-radius': '0px',
+          },
         },
-        // You can add more custom text shadow utilities here...
-      }
-      addUtilities(newUtilities)
+      };
+      addUtilities(newUtilities);
     }
   ],
 }

@@ -68,9 +68,7 @@ export default function EncountersScreen({ profile }: EncountersProps) {
         <>
           {discoveryBattleCount > 0 ? (
             <>
-              <h3 className="text-center">
-                {profile ? "Encounters" : "Your Encounters"}
-              </h3>
+              <h3 className="text-center uppercase">Travel Log</h3>
               {(isLoading.latestDiscoveriesQuery ||
                 !discoveriesAndBattlesData) && <LootIconLoader />}
               <div className="flex flex-col items-center gap-2 overflow-auto default-scroll">

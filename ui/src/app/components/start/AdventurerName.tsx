@@ -25,9 +25,9 @@ export const AdventurerName = ({
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value.slice(0, 13),
+      [name]: value.slice(0, 31),
     });
-    if (value.length >= 18) {
+    if (value.length >= 31) {
       setIsMaxLength(true);
     } else {
       setIsMaxLength(false);
@@ -51,7 +51,7 @@ export const AdventurerName = ({
             name="name"
             onChange={handleChange}
             className="p-1 m-2 2xl:h-16 2xl:w-64 2xl:text-4xl bg-terminal-black border border-terminal-green animate-pulse transform"
-            maxLength={13}
+            maxLength={31}
           />
           {isMaxLength && (
             <p className="absolute top-10 sm:top-20">MAX LENGTH!</p>

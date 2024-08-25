@@ -72,7 +72,7 @@ const allMenuItems: Menu[] = [
   { id: 3, label: "Inventory", screen: "inventory", disabled: false },
   { id: 4, label: "Upgrade", screen: "upgrade", disabled: false },
   { id: 5, label: "Leaderboard", screen: "leaderboard", disabled: false },
-  { id: 6, label: "Encounters", screen: "encounters", disabled: false },
+  { id: 6, label: "Travel Log", screen: "encounters", disabled: false },
   { id: 7, label: "Guide", screen: "guide", disabled: false },
 ];
 
@@ -81,7 +81,7 @@ const mobileMenuItems: Menu[] = [
   { id: 2, label: "Play", screen: "play", disabled: false },
   { id: 3, label: "Inventory", screen: "inventory", disabled: false },
   { id: 4, label: "Upgrade", screen: "upgrade", disabled: false },
-  { id: 5, label: "Encounters", screen: "encounters", disabled: false },
+  { id: 5, label: "Travel Log", screen: "encounters", disabled: false },
   { id: 6, label: "Guide", screen: "guide", disabled: false },
 ];
 
@@ -140,6 +140,8 @@ function Home() {
   const showProfile = useUIStore((state) => state.showProfile);
   const itemEntropy = useUIStore((state) => state.itemEntropy);
   const setItemEntropy = useUIStore((state) => state.setItemEntropy);
+  const openInterlude = useUIStore((state) => state.openInterlude);
+  const setOpenInterlude = useUIStore((state) => state.setOpenInterlude);
 
   const { contract: gameContract } = useContract({
     address: networkConfig[network!].gameAddress,
@@ -252,6 +254,7 @@ function Home() {
     multicall,
     mintLords,
     withdraw,
+    transferAdventurer,
   } = useSyscalls({
     gameContract: gameContract!,
     ethContract: ethContract!,
@@ -548,21 +551,23 @@ function Home() {
   useControls();
 
   useEffect(() => {
-    setCondition("a", screen === "play" && hasBeast);
-    setCondition("s", screen === "play" && hasBeast);
-    setCondition("f", screen === "play" && hasBeast);
-    setCondition("g", screen === "play" && hasBeast);
-    setCondition("e", screen === "play" && !hasBeast);
-    setCondition("r", screen === "play" && !hasBeast);
-    setCondition("u", screen === "upgrade");
-    setCondition(
-      "i",
-      screen === "play" ||
-        screen === "beast" ||
-        screen === "upgrade" ||
-        screen === "inventory"
-    );
-  }, [screen, hasBeast]);
+    if (process.env.NEXT_PUBLIC_NETWORK === "arcade") {
+      setCondition("a", screen === "play" && hasBeast);
+      setCondition("s", screen === "play" && hasBeast);
+      setCondition("f", screen === "play" && hasBeast);
+      setCondition("g", screen === "play" && hasBeast);
+      setCondition("e", screen === "play" && !hasBeast);
+      setCondition("r", screen === "play" && !hasBeast);
+      setCondition("u", screen === "upgrade");
+      setCondition(
+        "i",
+        screen === "play" ||
+          screen === "beast" ||
+          screen === "upgrade" ||
+          screen === "inventory"
+      );
+    }
+  }, [screen, hasBeast, network]);
 
   useEffect(() => {
     if (!onboarded) {
@@ -648,12 +653,17 @@ function Home() {
     return () => clearInterval(interval); // Cleanup on component unmount
   }, [fetchUnlocksEntropy]);
 
+  useEffect(() => {
+    if ((!entropyReady && hasStatUpgrades) || fetchUnlocksEntropy) {
+      setOpenInterlude(true);
+    }
+  }, [entropyReady, hasStatUpgrades, fetchUnlocksEntropy]);
+
   return (
     <>
-      {((!entropyReady && hasStatUpgrades) || fetchUnlocksEntropy) &&
-        !onKatana && (
-          <InterludeScreen type={fetchUnlocksEntropy ? "item" : "level"} />
-        )}
+      {openInterlude && !onKatana && (
+        <InterludeScreen type={fetchUnlocksEntropy ? "item" : "level"} />
+      )}
       <NetworkSwitchError network={network} isWrongNetwork={isWrongNetwork} />
       {isMintingLords && <TokenLoader isToppingUpLords={isMintingLords} />}
       {isWithdrawing && <TokenLoader isWithdrawing={isWithdrawing} />}
@@ -733,6 +743,7 @@ function Home() {
                     getBalances={getBalances}
                     mintLords={mintLords}
                     costToPlay={costToPlay}
+                    transferAdventurer={transferAdventurer}
                   />
                 )}
                 {screen === "play" && (

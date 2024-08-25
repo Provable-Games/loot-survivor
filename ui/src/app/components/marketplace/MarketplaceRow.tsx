@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/app/components/buttons/Button";
-import { getItemData, getItemPrice, getKeyFromValue } from "@/app/lib/utils";
+import {
+  getItemData,
+  getItemPrice,
+  getKeyFromValue,
+  removeSpaces,
+} from "@/app/lib/utils";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
 import LootIcon from "@/app/components/icons/LootIcon";
 import { Item, ItemPurchase, UpgradeStats, NullAdventurer } from "@/app/types";
@@ -97,8 +102,35 @@ const MarketplaceRow = ({
 
   // Check whether an equipped slot is free, if it is free then even if the bag is full the slot can be bought and equipped.
   const formatAdventurer = adventurer ?? NullAdventurer;
-  const equppedItem = formatAdventurer[slot.toLowerCase()];
-  const emptySlot = equppedItem === null;
+  const equippedItem = formatAdventurer[slot.toLowerCase()];
+  const emptySlot = equippedItem === undefined || equippedItem === null;
+  const slotEquipped = purchaseItems.some(
+    (item) =>
+      item.equip === "1" &&
+      gameData.ITEM_SLOTS[
+        removeSpaces(gameData.ITEMS[parseInt(item?.item)])
+      ] === slot
+  );
+
+  const handlePurchase = () => {
+    if (
+      singlePurchaseExists(item.item ?? "") ||
+      checkPurchased(item.item ?? "")
+    ) {
+      const newItems = purchaseItems.filter(
+        (i) => gameData.ITEMS[parseInt(i.item)] !== item.item
+      );
+      setPurchaseItems(newItems);
+    } else {
+      const newPurchase = {
+        item: getKeyFromValue(gameData.ITEMS, item?.item ?? "") ?? "0",
+        equip: (emptySlot || slot === "Weapon") && !slotEquipped ? "1" : "0",
+      };
+      const newPurchases = [...purchaseItems, newPurchase];
+      setPurchaseItems(newPurchases);
+      upgradeHandler(undefined, undefined, newPurchases);
+    }
+  };
 
   const purchaseNoEquipItems = purchaseItems.filter(
     (item) => item.equip === "0"
@@ -122,7 +154,7 @@ const MarketplaceRow = ({
   return (
     <tr
       className={
-        "border-b border-terminal-green hover:bg-terminal-green hover:text-terminal-black w-full h-12 sm:h-full"
+        "border-b border-terminal-green hover:bg-terminal-green-50 hover:text-terminal-black w-full h-12 sm:h-full"
       }
     >
       <td className="text-center">{item.item}</td>
@@ -151,85 +183,38 @@ const MarketplaceRow = ({
       </td>
 
       <td className="w-20 sm:w-32 text-center">
-        {activeMenu === index ? (
-          <div className="hidden sm:flex flex-row items-center justify-center gap-2">
-            <Button
-              className="w-10"
-              variant={"contrast"}
-              onClick={() => {
-                const newPurchases = [
-                  ...purchaseItems,
-                  {
-                    item:
-                      getKeyFromValue(gameData.ITEMS, item?.item ?? "") ?? "0",
-                    equip: "1",
-                  },
-                ];
-                setPurchaseItems(newPurchases);
-                upgradeHandler(undefined, undefined, newPurchases);
-                setActiveMenu(null);
-              }}
-            >
-              Equip
-            </Button>
-            <Button
-              className="w-10"
-              variant={"contrast"}
-              onClick={() => {
-                const newPurchases = [
-                  ...purchaseItems,
-                  {
-                    item:
-                      getKeyFromValue(gameData.ITEMS, item?.item ?? "") ?? "0",
-                    equip: "0",
-                  },
-                ];
-                setPurchaseItems(newPurchases);
-                upgradeHandler(undefined, undefined, newPurchases);
-                setActiveMenu(null);
-              }}
-              disabled={bagFull}
-            >
-              Bag
-            </Button>
-
-            <Button
-              className="text-8xl"
-              variant={"ghost"}
-              onClick={() => setActiveMenu(null)}
-            >
-              X
-            </Button>
-          </div>
-        ) : (
-          <Button
-            onClick={() => {
-              setActiveMenu(index);
-            }}
-            className="h-10 w-16 sm:h-auto sm:w-auto"
-            disabled={
-              itemPrice > (adventurer?.gold ?? 0) ||
+        <Button
+          onClick={() => handlePurchase()}
+          className={`h-10 w-16 sm:h-auto sm:w-auto ${
+            (singlePurchaseExists(item.item ?? "") ||
+              checkPurchased(item.item ?? "")) &&
+            "bg-terminal-yellow"
+          }`}
+          disabled={
+            (itemPrice > (adventurer?.gold ?? 0) ||
               !enoughGold ||
-              singlePurchaseExists(item.item ?? "") ||
               item.owner ||
               checkOwned(item.item ?? "") ||
-              checkPurchased(item.item ?? "") ||
               (equipFull && bagFull) ||
-              (bagFull && !emptySlot)
-            }
-          >
-            {!enoughGold || itemPrice > (adventurer?.gold ?? 0)
-              ? "Not Enough Gold"
-              : singlePurchaseExists(item.item ?? "") ||
-                checkPurchased(item.item ?? "")
-              ? "In Cart"
-              : checkOwned(item.item ?? "")
-              ? "Owned"
-              : (equipFull && bagFull) || (bagFull && !emptySlot)
-              ? "Inventory Full"
-              : "Purchase"}
-          </Button>
-        )}
+              (bagFull && !emptySlot)) &&
+            !(
+              singlePurchaseExists(item.item ?? "") ||
+              checkPurchased(item.item ?? "")
+            )
+          }
+          variant="secondary"
+        >
+          {singlePurchaseExists(item.item ?? "") ||
+          checkPurchased(item.item ?? "")
+            ? "Undo"
+            : !enoughGold || itemPrice > (adventurer?.gold ?? 0)
+            ? "Not Enough Gold"
+            : checkOwned(item.item ?? "")
+            ? "Owned"
+            : (equipFull && bagFull) || (bagFull && !emptySlot)
+            ? "Inventory Full"
+            : "Purchase"}
+        </Button>
       </td>
     </tr>
   );

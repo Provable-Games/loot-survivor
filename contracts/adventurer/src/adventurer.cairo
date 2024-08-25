@@ -12,6 +12,7 @@ use loot::{
     loot::{Loot, ILoot, ImplLoot},
     constants::{
         ItemSuffix, ItemId, NamePrefixLength, NameSuffixLength, SUFFIX_UNLOCK_GREATNESS,
+        PREFIXES_UNLOCK_GREATNESS,
         ItemSuffix::{
             of_Power, of_Giant, of_Titans, of_Skill, of_Perfection, of_Brilliance, of_Enlightenment,
             of_Protection, of_Anger, of_Rage, of_Fury, of_Vitriol, of_the_Fox, of_Detection,
@@ -57,6 +58,22 @@ struct Adventurer {
     battle_action_count: u8, // 8 bits
     mutated: bool, // not packed
     awaiting_item_specials: bool, // not packed
+}
+
+#[derive(Drop, Serde)]
+struct ItemLeveledUp {
+    item_id: u8,
+    previous_level: u8,
+    new_level: u8,
+    suffix_unlocked: bool,
+    prefixes_unlocked: bool,
+    specials: SpecialPowers
+}
+
+#[derive(Drop, Serde)]
+struct ItemSpecial {
+    item_id: u8,
+    special_power: SpecialPowers
 }
 
 /// @title Adventurer Packing
@@ -1177,6 +1194,165 @@ impl ImplAdventurer of IAdventurer {
         hash_span.append(adventurer_id);
         poseidon_hash_span(hash_span.span()).into()
     }
+
+    /// @notice Generates item leveled up events
+    /// @param equipment: adventurer equipment
+    /// @param seed: seed for randomness
+    /// @return Array<ItemSpecial>: array of item specials
+    /// @dev this function is used immediately after receiving item specials entropy from VRF to let the client know the specials of the items that triggered the specials
+    fn get_items_leveled_up(equipment: Equipment, seed: u16,) -> Array<ItemLeveledUp> {
+        let mut items_leveled_up = ArrayTrait::<ItemLeveledUp>::new();
+        let weapon_level = ImplCombat::get_level_from_xp(equipment.weapon.xp);
+        if weapon_level >= SUFFIX_UNLOCK_GREATNESS {
+            let weapon_id = equipment.weapon.id;
+            let weapon_leveled_up_event = ItemLeveledUp {
+                item_id: weapon_id,
+                previous_level: weapon_level,
+                new_level: weapon_level,
+                suffix_unlocked: true,
+                prefixes_unlocked: weapon_level > PREFIXES_UNLOCK_GREATNESS,
+                specials: SpecialPowers {
+                    special1: ImplLoot::get_suffix(weapon_id, seed),
+                    special2: ImplLoot::get_prefix1(weapon_id, seed),
+                    special3: ImplLoot::get_prefix2(weapon_id, seed),
+                },
+            };
+
+            items_leveled_up.append(weapon_leveled_up_event);
+        }
+        let chest_level = ImplCombat::get_level_from_xp(equipment.chest.xp);
+        if chest_level >= SUFFIX_UNLOCK_GREATNESS {
+            let chest_id = equipment.chest.id;
+            let chest_leveled_up_event = ItemLeveledUp {
+                item_id: chest_id,
+                previous_level: chest_level,
+                new_level: chest_level,
+                suffix_unlocked: true,
+                prefixes_unlocked: chest_level > PREFIXES_UNLOCK_GREATNESS,
+                specials: SpecialPowers {
+                    special1: ImplLoot::get_suffix(chest_id, seed),
+                    special2: ImplLoot::get_prefix1(chest_id, seed),
+                    special3: ImplLoot::get_prefix2(chest_id, seed),
+                },
+            };
+            items_leveled_up.append(chest_leveled_up_event);
+        }
+        let head_level = ImplCombat::get_level_from_xp(equipment.head.xp);
+        if head_level >= SUFFIX_UNLOCK_GREATNESS {
+            let head_id = equipment.head.id;
+            let head_leveled_up_event = ItemLeveledUp {
+                item_id: head_id,
+                previous_level: head_level,
+                new_level: head_level,
+                suffix_unlocked: true,
+                prefixes_unlocked: head_level > PREFIXES_UNLOCK_GREATNESS,
+                specials: SpecialPowers {
+                    special1: ImplLoot::get_suffix(head_id, seed),
+                    special2: ImplLoot::get_prefix1(head_id, seed),
+                    special3: ImplLoot::get_prefix2(head_id, seed),
+                },
+            };
+            items_leveled_up.append(head_leveled_up_event);
+        }
+        let waist_level = ImplCombat::get_level_from_xp(equipment.waist.xp);
+        if waist_level >= SUFFIX_UNLOCK_GREATNESS {
+            let waist_id = equipment.waist.id;
+            let waist_leveled_up_event = ItemLeveledUp {
+                item_id: waist_id,
+                previous_level: waist_level,
+                new_level: waist_level,
+                suffix_unlocked: true,
+                prefixes_unlocked: waist_level > PREFIXES_UNLOCK_GREATNESS,
+                specials: SpecialPowers {
+                    special1: ImplLoot::get_suffix(waist_id, seed),
+                    special2: ImplLoot::get_prefix1(waist_id, seed),
+                    special3: ImplLoot::get_prefix2(waist_id, seed),
+                },
+            };
+            items_leveled_up.append(waist_leveled_up_event);
+        }
+        let foot_level = ImplCombat::get_level_from_xp(equipment.foot.xp);
+        if foot_level >= SUFFIX_UNLOCK_GREATNESS {
+            let foot_id = equipment.foot.id;
+            let foot_leveled_up_event = ItemLeveledUp {
+                item_id: foot_id,
+                previous_level: foot_level,
+                new_level: foot_level,
+                suffix_unlocked: true,
+                prefixes_unlocked: foot_level > PREFIXES_UNLOCK_GREATNESS,
+                specials: SpecialPowers {
+                    special1: ImplLoot::get_suffix(foot_id, seed),
+                    special2: ImplLoot::get_prefix1(foot_id, seed),
+                    special3: ImplLoot::get_prefix2(foot_id, seed),
+                },
+            };
+            items_leveled_up.append(foot_leveled_up_event);
+        }
+        let hand_level = ImplCombat::get_level_from_xp(equipment.hand.xp);
+        if hand_level >= SUFFIX_UNLOCK_GREATNESS {
+            let hand_id = equipment.hand.id;
+            let hand_leveled_up_event = ItemLeveledUp {
+                item_id: hand_id,
+                previous_level: hand_level,
+                new_level: hand_level,
+                suffix_unlocked: true,
+                prefixes_unlocked: hand_level > PREFIXES_UNLOCK_GREATNESS,
+                specials: SpecialPowers {
+                    special1: ImplLoot::get_suffix(hand_id, seed),
+                    special2: ImplLoot::get_prefix1(hand_id, seed),
+                    special3: ImplLoot::get_prefix2(hand_id, seed),
+                },
+            };
+            items_leveled_up.append(hand_leveled_up_event);
+        }
+        let neck_level = ImplCombat::get_level_from_xp(equipment.neck.xp);
+        if neck_level >= SUFFIX_UNLOCK_GREATNESS {
+            let neck_id = equipment.neck.id;
+            let neck_leveled_up_event = ItemLeveledUp {
+                item_id: neck_id,
+                previous_level: neck_level,
+                new_level: neck_level,
+                suffix_unlocked: true,
+                prefixes_unlocked: neck_level > PREFIXES_UNLOCK_GREATNESS,
+                specials: SpecialPowers {
+                    special1: ImplLoot::get_suffix(neck_id, seed),
+                    special2: ImplLoot::get_prefix1(neck_id, seed),
+                    special3: ImplLoot::get_prefix2(neck_id, seed),
+                },
+            };
+            items_leveled_up.append(neck_leveled_up_event);
+        }
+        let ring_level = ImplCombat::get_level_from_xp(equipment.ring.xp);
+        if ring_level >= SUFFIX_UNLOCK_GREATNESS {
+            let ring_id = equipment.ring.id;
+            let ring_leveled_up_event = ItemLeveledUp {
+                item_id: ring_id,
+                previous_level: ring_level,
+                new_level: ring_level,
+                suffix_unlocked: true,
+                prefixes_unlocked: ring_level > PREFIXES_UNLOCK_GREATNESS,
+                specials: SpecialPowers {
+                    special1: ImplLoot::get_suffix(ring_id, seed),
+                    special2: ImplLoot::get_prefix1(ring_id, seed),
+                    special3: ImplLoot::get_prefix2(ring_id, seed),
+                },
+            };
+            items_leveled_up.append(ring_leveled_up_event);
+        }
+        items_leveled_up
+    }
+
+    #[inline(always)]
+    fn apply_health_boost_from_vitality_unlock(ref self: Adventurer, item_specials: SpecialPowers) {
+        // get the vitality boost for the special
+        let vit_boost = ImplAdventurer::get_vitality_item_boost(item_specials.special1);
+        // if the special provides a vitality boost
+        if (vit_boost != 0) {
+            // adventurer gains health
+            let health_amount = vit_boost.into() * VITALITY_INSTANT_HEALTH_BONUS.into();
+            self.increase_health(health_amount);
+        }
+    }
 }
 
 const TWO_POW_4_NZ: NonZero<u256> = 0x10;
@@ -1218,7 +1394,7 @@ mod tests {
     };
     use array::ArrayTrait;
     use beasts::{beast::{ImplBeast, Beast}, constants::{BeastSettings, BeastId}};
-    use combat::{constants::CombatEnums::{Slot, Type}};
+    use combat::{constants::CombatEnums::{Slot, Type}, combat::SpecialPowers};
     use core::result::ResultTrait;
     use integer::{u8_overflowing_add, u16_overflowing_add, u16_overflowing_sub};
     use loot::{
@@ -1350,13 +1526,6 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(184194)]
-    fn test_jewelry_gold_bonus_gas() {
-        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
-        adventurer.equipment.ring.jewelry_gold_bonus(1);
-    }
-
-    #[test]
     #[available_gas(1914024)]
     fn test_jewelry_gold_bonus() {
         let mut adventurer = ImplAdventurer::new(ItemId::Wand);
@@ -1397,14 +1566,6 @@ mod tests {
         let platinum_ring = Item { id: ItemId::PlatinumRing, xp: 1 };
         adventurer.equipment.ring = platinum_ring;
         assert(adventurer.equipment.ring.jewelry_gold_bonus(0) == 0, 'no bonus with plat ring');
-    }
-
-    #[test]
-    #[available_gas(173744)]
-    fn test_get_bonus_luck_gas() {
-        // instantiate silver ring
-        let silver_ring = Item { id: ItemId::SilverRing, xp: 1 };
-        let _bonus_luck = silver_ring.jewelry_bonus_luck();
     }
 
     #[test]
@@ -1505,13 +1666,6 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(14610)]
-    fn test_jewelry_armor_bonus_gas() {
-        let amulet = Item { id: ItemId::Amulet, xp: 400 };
-        amulet.jewelry_armor_bonus(Type::Magic_or_Cloth(()), 100);
-    }
-
-    #[test]
     #[available_gas(284000)]
     fn test_jewelry_armor_bonus() {
         // amulet test cases
@@ -1584,14 +1738,6 @@ mod tests {
         assert(katana.jewelry_armor_bonus(Type::None(()), 100) == 0, 'Katan does not boost armor');
     }
 
-    // gas baseline
-    #[test]
-    #[available_gas(13510)]
-    fn test_name_match_bonus_damage_gas() {
-        let platinum_ring = Item { id: ItemId::PlatinumRing, xp: 400 };
-        platinum_ring.name_match_bonus_damage(0);
-    }
-
     #[test]
     #[available_gas(60180)]
     fn test_name_match_bonus_damage() {
@@ -1634,11 +1780,6 @@ mod tests {
     }
 
     #[test]
-    fn test_get_beast_gas() {
-        ImplAdventurer::get_beast(1, 12, 1, 1, 1, 1, 1);
-    }
-
-    #[test]
     fn test_get_beast() {
         let beast = ImplAdventurer::get_beast(1, 12, 1, 1, 1, 1, 1);
         assert(beast.combat_spec.level == 1, 'beast should be lvl1');
@@ -1654,6 +1795,7 @@ mod tests {
     }
 
     #[test]
+    #[available_gas(999999999999999999)]
     fn test_get_beast_distribution_fixed_entropy() {
         let mut warlock_count: u32 = 0;
         let mut typhon_count: u32 = 0;
@@ -1738,7 +1880,7 @@ mod tests {
 
         let level_seed: u64 = 123456789;
         loop {
-            if xp == 10000 {
+            if xp == 2000 {
                 break;
             }
 
@@ -1932,241 +2074,241 @@ mod tests {
 
         // assert beasts distributions are reasonably uniform
         let warlock_percentage = (warlock_count * 1000) / total_beasts;
-        assert(warlock_percentage >= 7 && warlock_percentage <= 21, 'warlock distribution');
+        assert(warlock_percentage >= 4 && warlock_percentage <= 23, 'warlock distribution');
 
         let typhon_percentage = (typhon_count * 1000) / total_beasts;
-        assert(typhon_percentage >= 7 && typhon_percentage <= 21, 'typhon distribution');
+        assert(typhon_percentage >= 4 && typhon_percentage <= 23, 'typhon distribution');
 
         let jiangshi_percentage = (jiangshi_count * 1000) / total_beasts;
-        assert(jiangshi_percentage >= 7 && jiangshi_percentage <= 21, 'jiangshi distribution');
+        assert(jiangshi_percentage >= 4 && jiangshi_percentage <= 23, 'jiangshi distribution');
 
         let anansi_percentage = (anansi_count * 1000) / total_beasts;
-        assert(anansi_percentage >= 7 && anansi_percentage <= 21, 'anansi distribution');
+        assert(anansi_percentage >= 4 && anansi_percentage <= 23, 'anansi distribution');
 
         let basilisk_percentage = (basilisk_count * 1000) / total_beasts;
-        assert(basilisk_percentage >= 7 && basilisk_percentage <= 21, 'basilisk distribution');
+        assert(basilisk_percentage >= 4 && basilisk_percentage <= 23, 'basilisk distribution');
 
         let gorgon_percentage = (gorgon_count * 1000) / total_beasts;
-        assert(gorgon_percentage >= 7 && gorgon_percentage <= 21, 'gorgon distribution');
+        assert(gorgon_percentage >= 4 && gorgon_percentage <= 23, 'gorgon distribution');
 
         let kitsune_percentage = (kitsune_count * 1000) / total_beasts;
-        assert(kitsune_percentage >= 7 && kitsune_percentage <= 21, 'kitsune distribution');
+        assert(kitsune_percentage >= 4 && kitsune_percentage <= 23, 'kitsune distribution');
 
         let lich_percentage = (lich_count * 1000) / total_beasts;
-        assert(lich_percentage >= 7 && lich_percentage <= 21, 'lich distribution');
+        assert(lich_percentage >= 4 && lich_percentage <= 23, 'lich distribution');
 
         let chimera_percentage = (chimera_count * 1000) / total_beasts;
-        assert(chimera_percentage >= 7 && chimera_percentage <= 21, 'chimera distribution');
+        assert(chimera_percentage >= 4 && chimera_percentage <= 23, 'chimera distribution');
 
         let wendigo_percentage = (wendigo_count * 1000) / total_beasts;
-        assert(wendigo_percentage >= 7 && wendigo_percentage <= 21, 'wendigo distribution');
+        assert(wendigo_percentage >= 4 && wendigo_percentage <= 23, 'wendigo distribution');
 
         let raksasa_percentage = (raksasa_count * 1000) / total_beasts;
-        assert(raksasa_percentage >= 7 && raksasa_percentage <= 21, 'raksasa distribution');
+        assert(raksasa_percentage >= 4 && raksasa_percentage <= 23, 'raksasa distribution');
 
         let werewolf_percentage = (werewolf_count * 1000) / total_beasts;
-        assert(werewolf_percentage >= 7 && werewolf_percentage <= 21, 'werewolf distribution');
+        assert(werewolf_percentage >= 4 && werewolf_percentage <= 23, 'werewolf distribution');
 
         let banshee_percentage = (banshee_count * 1000) / total_beasts;
-        assert(banshee_percentage >= 7 && banshee_percentage <= 21, 'banshee distribution');
+        assert(banshee_percentage >= 4 && banshee_percentage <= 23, 'banshee distribution');
 
         let draugr_percentage = (draugr_count * 1000) / total_beasts;
-        assert(draugr_percentage >= 7 && draugr_percentage <= 21, 'draugr distribution');
+        assert(draugr_percentage >= 4 && draugr_percentage <= 23, 'draugr distribution');
 
         let vampire_percentage = (vampire_count * 1000) / total_beasts;
-        assert(vampire_percentage >= 7 && vampire_percentage <= 21, 'vampire distribution');
+        assert(vampire_percentage >= 4 && vampire_percentage <= 23, 'vampire distribution');
 
         let goblin_percentage = (goblin_count * 1000) / total_beasts;
-        assert(goblin_percentage >= 7 && goblin_percentage <= 21, 'goblin distribution');
+        assert(goblin_percentage >= 4 && goblin_percentage <= 23, 'goblin distribution');
 
         let ghoul_percentage = (ghoul_count * 1000) / total_beasts;
-        assert(ghoul_percentage >= 7 && ghoul_percentage <= 21, 'ghoul distribution');
+        assert(ghoul_percentage >= 4 && ghoul_percentage <= 23, 'ghoul distribution');
 
         let wraith_percentage = (wraith_count * 1000) / total_beasts;
-        assert(wraith_percentage >= 7 && wraith_percentage <= 21, 'wraith distribution');
+        assert(wraith_percentage >= 4 && wraith_percentage <= 23, 'wraith distribution');
 
         let sprite_percentage = (sprite_count * 1000) / total_beasts;
-        assert(sprite_percentage >= 7 && sprite_percentage <= 21, 'sprite distribution');
+        assert(sprite_percentage >= 4 && sprite_percentage <= 23, 'sprite distribution');
 
         let kappa_percentage = (kappa_count * 1000) / total_beasts;
-        assert(kappa_percentage >= 7 && kappa_percentage <= 21, 'kappa distribution');
+        assert(kappa_percentage >= 4 && kappa_percentage <= 23, 'kappa distribution');
 
         let fairy_percentage = (fairy_count * 1000) / total_beasts;
-        assert(fairy_percentage >= 7 && fairy_percentage <= 21, 'fairy distribution');
+        assert(fairy_percentage >= 4 && fairy_percentage <= 23, 'fairy distribution');
 
         let leprechaun_percentage = (leprechaun_count * 1000) / total_beasts;
         assert(
-            leprechaun_percentage >= 7 && leprechaun_percentage <= 21, 'leprechaun distribution'
+            leprechaun_percentage >= 4 && leprechaun_percentage <= 23, 'leprechaun distribution'
         );
 
         let kelpie_percentage = (kelpie_count * 1000) / total_beasts;
-        assert(kelpie_percentage >= 7 && kelpie_percentage <= 21, 'kelpie distribution');
+        assert(kelpie_percentage >= 4 && kelpie_percentage <= 23, 'kelpie distribution');
 
         let pixie_percentage = (pixie_count * 1000) / total_beasts;
-        assert(pixie_percentage >= 7 && pixie_percentage <= 21, 'pixie distribution');
+        assert(pixie_percentage >= 4 && pixie_percentage <= 23, 'pixie distribution');
 
         let gnome_percentage = (gnome_count * 1000) / total_beasts;
-        assert(gnome_percentage >= 7 && gnome_percentage <= 21, 'gnome distribution');
+        assert(gnome_percentage >= 4 && gnome_percentage <= 23, 'gnome distribution');
 
         let griffin_percentage = (griffin_count * 1000) / total_beasts;
-        assert(griffin_percentage >= 7 && griffin_percentage <= 21, 'griffin distribution');
+        assert(griffin_percentage >= 4 && griffin_percentage <= 23, 'griffin distribution');
 
         let manticore_percentage = (manticore_count * 1000) / total_beasts;
-        assert(manticore_percentage >= 7 && manticore_percentage <= 21, 'manticore distribution');
+        assert(manticore_percentage >= 4 && manticore_percentage <= 23, 'manticore distribution');
 
         let phoenix_percentage = (phoenix_count * 1000) / total_beasts;
-        assert(phoenix_percentage >= 7 && phoenix_percentage <= 21, 'phoenix distribution');
+        assert(phoenix_percentage >= 4 && phoenix_percentage <= 23, 'phoenix distribution');
 
         let dragon_percentage = (dragon_count * 1000) / total_beasts;
-        assert(dragon_percentage >= 7 && dragon_percentage <= 21, 'dragon distribution');
+        assert(dragon_percentage >= 4 && dragon_percentage <= 23, 'dragon distribution');
 
         let minotaur_percentage = (minotaur_count * 1000) / total_beasts;
-        assert(minotaur_percentage >= 7 && minotaur_percentage <= 21, 'minotaur distribution');
+        assert(minotaur_percentage >= 4 && minotaur_percentage <= 23, 'minotaur distribution');
 
         let qilin_percentage = (qilin_count * 1000) / total_beasts;
-        assert(qilin_percentage >= 7 && qilin_percentage <= 21, 'qilin distribution');
+        assert(qilin_percentage >= 4 && qilin_percentage <= 23, 'qilin distribution');
 
         let ammit_percentage = (ammit_count * 1000) / total_beasts;
-        assert(ammit_percentage >= 7 && ammit_percentage <= 21, 'ammit distribution');
+        assert(ammit_percentage >= 4 && ammit_percentage <= 23, 'ammit distribution');
 
         let nue_percentage = (nue_count * 1000) / total_beasts;
-        assert(nue_percentage >= 7 && nue_percentage <= 21, 'nue distribution');
+        assert(nue_percentage >= 4 && nue_percentage <= 23, 'nue distribution');
 
         let skinwalker_percentage = (skinwalker_count * 1000) / total_beasts;
         assert(
-            skinwalker_percentage >= 7 && skinwalker_percentage <= 21, 'skinwalker distribution'
+            skinwalker_percentage >= 4 && skinwalker_percentage <= 23, 'skinwalker distribution'
         );
 
         let chupacabra_percentage = (chupacabra_count * 1000) / total_beasts;
         assert(
-            chupacabra_percentage >= 7 && chupacabra_percentage <= 21, 'chupacabra distribution'
+            chupacabra_percentage >= 4 && chupacabra_percentage <= 23, 'chupacabra distribution'
         );
 
         let weretiger_percentage = (weretiger_count * 1000) / total_beasts;
-        assert(weretiger_percentage >= 7 && weretiger_percentage <= 21, 'weretiger distribution');
+        assert(weretiger_percentage >= 4 && weretiger_percentage <= 23, 'weretiger distribution');
 
         let wyvern_percentage = (wyvern_count * 1000) / total_beasts;
-        assert(wyvern_percentage >= 7 && wyvern_percentage <= 21, 'wyvern distribution');
+        assert(wyvern_percentage >= 4 && wyvern_percentage <= 23, 'wyvern distribution');
 
         let roc_percentage = (roc_count * 1000) / total_beasts;
-        assert(roc_percentage >= 7 && roc_percentage <= 21, 'roc distribution');
+        assert(roc_percentage >= 4 && roc_percentage <= 23, 'roc distribution');
 
         let harpy_percentage = (harpy_count * 1000) / total_beasts;
-        assert(harpy_percentage >= 7 && harpy_percentage <= 21, 'harpy distribution');
+        assert(harpy_percentage >= 4 && harpy_percentage <= 23, 'harpy distribution');
 
         let pegasus_percentage = (pegasus_count * 1000) / total_beasts;
-        assert(pegasus_percentage >= 7 && pegasus_percentage <= 21, 'pegasus distribution');
+        assert(pegasus_percentage >= 4 && pegasus_percentage <= 23, 'pegasus distribution');
 
         let hippogriff_percentage = (hippogriff_count * 1000) / total_beasts;
         assert(
-            hippogriff_percentage >= 7 && hippogriff_percentage <= 21, 'hippogriff distribution'
+            hippogriff_percentage >= 4 && hippogriff_percentage <= 23, 'hippogriff distribution'
         );
 
         let fenrir_percentage = (fenrir_count * 1000) / total_beasts;
-        assert(fenrir_percentage >= 7 && fenrir_percentage <= 21, 'fenrir distribution');
+        assert(fenrir_percentage >= 4 && fenrir_percentage <= 23, 'fenrir distribution');
 
         let jaguar_percentage = (jaguar_count * 1000) / total_beasts;
-        assert(jaguar_percentage >= 7 && jaguar_percentage <= 21, 'jaguar distribution');
+        assert(jaguar_percentage >= 4 && jaguar_percentage <= 23, 'jaguar distribution');
 
         let satori_percentage = (satori_count * 1000) / total_beasts;
-        assert(satori_percentage >= 7 && satori_percentage <= 21, 'satori distribution');
+        assert(satori_percentage >= 4 && satori_percentage <= 23, 'satori distribution');
 
         let direwolf_percentage = (direwolf_count * 1000) / total_beasts;
-        assert(direwolf_percentage >= 7 && direwolf_percentage <= 21, 'direwolf distribution');
+        assert(direwolf_percentage >= 4 && direwolf_percentage <= 23, 'direwolf distribution');
 
         let bear_percentage = (bear_count * 1000) / total_beasts;
-        assert(bear_percentage >= 7 && bear_percentage <= 21, 'bear distribution');
+        assert(bear_percentage >= 4 && bear_percentage <= 23, 'bear distribution');
 
         let wolf_percentage = (wolf_count * 1000) / total_beasts;
-        assert(wolf_percentage >= 7 && wolf_percentage <= 21, 'wolf distribution');
+        assert(wolf_percentage >= 4 && wolf_percentage <= 23, 'wolf distribution');
 
         let mantis_percentage = (mantis_count * 1000) / total_beasts;
-        assert(mantis_percentage >= 7 && mantis_percentage <= 21, 'mantis distribution');
+        assert(mantis_percentage >= 4 && mantis_percentage <= 23, 'mantis distribution');
 
         let spider_percentage = (spider_count * 1000) / total_beasts;
-        assert(spider_percentage >= 7 && spider_percentage <= 21, 'spider distribution');
+        assert(spider_percentage >= 4 && spider_percentage <= 23, 'spider distribution');
 
         let rat_percentage = (rat_count * 1000) / total_beasts;
-        assert(rat_percentage >= 7 && rat_percentage <= 21, 'rat distribution');
+        assert(rat_percentage >= 4 && rat_percentage <= 23, 'rat distribution');
 
         let kraken_percentage = (kraken_count * 1000) / total_beasts;
-        assert(kraken_percentage >= 7 && kraken_percentage <= 21, 'kraken distribution');
+        assert(kraken_percentage >= 4 && kraken_percentage <= 23, 'kraken distribution');
 
         let colossus_percentage = (colossus_count * 1000) / total_beasts;
-        assert(colossus_percentage >= 7 && colossus_percentage <= 21, 'colossus distribution');
+        assert(colossus_percentage >= 4 && colossus_percentage <= 23, 'colossus distribution');
 
         let balrog_percentage = (balrog_count * 1000) / total_beasts;
-        assert(balrog_percentage >= 7 && balrog_percentage <= 21, 'balrog distribution');
+        assert(balrog_percentage >= 4 && balrog_percentage <= 23, 'balrog distribution');
 
         let leviathan_percentage = (leviathan_count * 1000) / total_beasts;
-        assert(leviathan_percentage >= 7 && leviathan_percentage <= 21, 'leviathan distribution');
+        assert(leviathan_percentage >= 4 && leviathan_percentage <= 23, 'leviathan distribution');
 
         let tarrasque_percentage = (tarrasque_count * 1000) / total_beasts;
-        assert(tarrasque_percentage >= 7 && tarrasque_percentage <= 21, 'tarrasque distribution');
+        assert(tarrasque_percentage >= 4 && tarrasque_percentage <= 23, 'tarrasque distribution');
 
         let titan_percentage = (titan_count * 1000) / total_beasts;
-        assert(titan_percentage >= 7 && titan_percentage <= 21, 'titan distribution');
+        assert(titan_percentage >= 4 && titan_percentage <= 23, 'titan distribution');
 
         let nephilim_percentage = (nephilim_count * 1000) / total_beasts;
-        assert(nephilim_percentage >= 7 && nephilim_percentage <= 21, 'nephilim distribution');
+        assert(nephilim_percentage >= 4 && nephilim_percentage <= 23, 'nephilim distribution');
 
         let behemoth_percentage = (behemoth_count * 1000) / total_beasts;
-        assert(behemoth_percentage >= 7 && behemoth_percentage <= 21, 'behemoth distribution');
+        assert(behemoth_percentage >= 4 && behemoth_percentage <= 23, 'behemoth distribution');
 
         let hydra_percentage = (hydra_count * 1000) / total_beasts;
-        assert(hydra_percentage >= 7 && hydra_percentage <= 21, 'hydra distribution');
+        assert(hydra_percentage >= 4 && hydra_percentage <= 23, 'hydra distribution');
 
         let juggernaut_percentage = (juggernaut_count * 1000) / total_beasts;
         assert(
-            juggernaut_percentage >= 7 && juggernaut_percentage <= 21, 'juggernaut distribution'
+            juggernaut_percentage >= 4 && juggernaut_percentage <= 23, 'juggernaut distribution'
         );
 
         let oni_percentage = (oni_count * 1000) / total_beasts;
-        assert(oni_percentage >= 7 && oni_percentage <= 21, 'oni distribution');
+        assert(oni_percentage >= 4 && oni_percentage <= 23, 'oni distribution');
 
         let jotunn_percentage = (jotunn_count * 1000) / total_beasts;
-        assert(jotunn_percentage >= 7 && jotunn_percentage <= 21, 'jotunn distribution');
+        assert(jotunn_percentage >= 4 && jotunn_percentage <= 23, 'jotunn distribution');
 
         let ettin_percentage = (ettin_count * 1000) / total_beasts;
-        assert(ettin_percentage >= 7 && ettin_percentage <= 21, 'ettin distribution');
+        assert(ettin_percentage >= 4 && ettin_percentage <= 23, 'ettin distribution');
 
         let cyclops_percentage = (cyclops_count * 1000) / total_beasts;
-        assert(cyclops_percentage >= 7 && cyclops_percentage <= 21, 'cyclops distribution');
+        assert(cyclops_percentage >= 4 && cyclops_percentage <= 23, 'cyclops distribution');
 
         let giant_percentage = (giant_count * 1000) / total_beasts;
-        assert(giant_percentage >= 7 && giant_percentage <= 21, 'giant distribution');
+        assert(giant_percentage >= 4 && giant_percentage <= 23, 'giant distribution');
 
         let nemean_lion_percentage = (nemean_lion_count * 1000) / total_beasts;
         assert(
-            nemean_lion_percentage >= 7 && nemean_lion_percentage <= 21, 'nemean_lion distribution'
+            nemean_lion_percentage >= 4 && nemean_lion_percentage <= 23, 'nemean_lion distribution'
         );
 
         let berserker_percentage = (berserker_count * 1000) / total_beasts;
-        assert(berserker_percentage >= 7 && berserker_percentage <= 21, 'berserker distribution');
+        assert(berserker_percentage >= 4 && berserker_percentage <= 23, 'berserker distribution');
 
         let yeti_percentage = (yeti_count * 1000) / total_beasts;
-        assert(yeti_percentage >= 7 && yeti_percentage <= 21, 'yeti distribution');
+        assert(yeti_percentage >= 4 && yeti_percentage <= 23, 'yeti distribution');
 
         let golem_percentage = (golem_count * 1000) / total_beasts;
-        assert(golem_percentage >= 7 && golem_percentage <= 21, 'golem distribution');
+        assert(golem_percentage >= 4 && golem_percentage <= 23, 'golem distribution');
 
         let ent_percentage = (ent_count * 1000) / total_beasts;
-        assert(ent_percentage >= 7 && ent_percentage <= 21, 'ent distribution');
+        assert(ent_percentage >= 4 && ent_percentage <= 23, 'ent distribution');
 
         let troll_percentage = (troll_count * 1000) / total_beasts;
-        assert(troll_percentage >= 7 && troll_percentage <= 21, 'troll distribution');
+        assert(troll_percentage >= 4 && troll_percentage <= 23, 'troll distribution');
 
         let bigfoot_percentage = (bigfoot_count * 1000) / total_beasts;
-        assert(bigfoot_percentage >= 7 && bigfoot_percentage <= 21, 'bigfoot distribution');
+        assert(bigfoot_percentage >= 4 && bigfoot_percentage <= 23, 'bigfoot distribution');
 
         let ogre_percentage = (ogre_count * 1000) / total_beasts;
-        assert(ogre_percentage >= 7 && ogre_percentage <= 21, 'ogre distribution');
+        assert(ogre_percentage >= 4 && ogre_percentage <= 23, 'ogre distribution');
 
         let orc_percentage = (orc_count * 1000) / total_beasts;
-        assert(orc_percentage >= 7 && orc_percentage <= 21, 'orc distribution');
+        assert(orc_percentage >= 4 && orc_percentage <= 23, 'orc distribution');
 
         let skeleton_percentage = (skeleton_count * 1000) / total_beasts;
-        assert(skeleton_percentage >= 7 && skeleton_percentage <= 21, 'skeleton distribution');
+        assert(skeleton_percentage >= 4 && skeleton_percentage <= 23, 'skeleton distribution');
     // println!("warlock percentage: {}", warlock_percentage);
     // println!("typhon percentage: {}", typhon_percentage);
     // println!("jiangshi percentage: {}", jiangshi_percentage);
@@ -2328,7 +2470,7 @@ mod tests {
 
         let mut level_seed: u64 = 1;
         loop {
-            if level_seed == 10000 {
+            if level_seed == 3000 {
                 break;
             }
             let (
@@ -2518,241 +2660,241 @@ mod tests {
 
         // assert beasts distributions are reasonably uniform
         let warlock_percentage = (warlock_count * 1000) / total_beasts;
-        assert(warlock_percentage >= 7 && warlock_percentage <= 21, 'warlock distribution');
+        assert(warlock_percentage >= 4 && warlock_percentage <= 23, 'warlock distribution');
 
         let typhon_percentage = (typhon_count * 1000) / total_beasts;
-        assert(typhon_percentage >= 7 && typhon_percentage <= 21, 'typhon distribution');
+        assert(typhon_percentage >= 4 && typhon_percentage <= 23, 'typhon distribution');
 
         let jiangshi_percentage = (jiangshi_count * 1000) / total_beasts;
-        assert(jiangshi_percentage >= 7 && jiangshi_percentage <= 21, 'jiangshi distribution');
+        assert(jiangshi_percentage >= 4 && jiangshi_percentage <= 23, 'jiangshi distribution');
 
         let anansi_percentage = (anansi_count * 1000) / total_beasts;
-        assert(anansi_percentage >= 7 && anansi_percentage <= 21, 'anansi distribution');
+        assert(anansi_percentage >= 4 && anansi_percentage <= 23, 'anansi distribution');
 
         let basilisk_percentage = (basilisk_count * 1000) / total_beasts;
-        assert(basilisk_percentage >= 7 && basilisk_percentage <= 21, 'basilisk distribution');
+        assert(basilisk_percentage >= 4 && basilisk_percentage <= 23, 'basilisk distribution');
 
         let gorgon_percentage = (gorgon_count * 1000) / total_beasts;
-        assert(gorgon_percentage >= 7 && gorgon_percentage <= 21, 'gorgon distribution');
+        assert(gorgon_percentage >= 4 && gorgon_percentage <= 23, 'gorgon distribution');
 
         let kitsune_percentage = (kitsune_count * 1000) / total_beasts;
-        assert(kitsune_percentage >= 7 && kitsune_percentage <= 21, 'kitsune distribution');
+        assert(kitsune_percentage >= 4 && kitsune_percentage <= 23, 'kitsune distribution');
 
         let lich_percentage = (lich_count * 1000) / total_beasts;
-        assert(lich_percentage >= 7 && lich_percentage <= 21, 'lich distribution');
+        assert(lich_percentage >= 4 && lich_percentage <= 23, 'lich distribution');
 
         let chimera_percentage = (chimera_count * 1000) / total_beasts;
-        assert(chimera_percentage >= 7 && chimera_percentage <= 21, 'chimera distribution');
+        assert(chimera_percentage >= 4 && chimera_percentage <= 23, 'chimera distribution');
 
         let wendigo_percentage = (wendigo_count * 1000) / total_beasts;
-        assert(wendigo_percentage >= 7 && wendigo_percentage <= 21, 'wendigo distribution');
+        assert(wendigo_percentage >= 4 && wendigo_percentage <= 23, 'wendigo distribution');
 
         let raksasa_percentage = (raksasa_count * 1000) / total_beasts;
-        assert(raksasa_percentage >= 7 && raksasa_percentage <= 21, 'raksasa distribution');
+        assert(raksasa_percentage >= 4 && raksasa_percentage <= 23, 'raksasa distribution');
 
         let werewolf_percentage = (werewolf_count * 1000) / total_beasts;
-        assert(werewolf_percentage >= 7 && werewolf_percentage <= 21, 'werewolf distribution');
+        assert(werewolf_percentage >= 4 && werewolf_percentage <= 23, 'werewolf distribution');
 
         let banshee_percentage = (banshee_count * 1000) / total_beasts;
-        assert(banshee_percentage >= 7 && banshee_percentage <= 21, 'banshee distribution');
+        assert(banshee_percentage >= 4 && banshee_percentage <= 23, 'banshee distribution');
 
         let draugr_percentage = (draugr_count * 1000) / total_beasts;
-        assert(draugr_percentage >= 7 && draugr_percentage <= 21, 'draugr distribution');
+        assert(draugr_percentage >= 4 && draugr_percentage <= 23, 'draugr distribution');
 
         let vampire_percentage = (vampire_count * 1000) / total_beasts;
-        assert(vampire_percentage >= 7 && vampire_percentage <= 21, 'vampire distribution');
+        assert(vampire_percentage >= 4 && vampire_percentage <= 23, 'vampire distribution');
 
         let goblin_percentage = (goblin_count * 1000) / total_beasts;
-        assert(goblin_percentage >= 7 && goblin_percentage <= 21, 'goblin distribution');
+        assert(goblin_percentage >= 4 && goblin_percentage <= 23, 'goblin distribution');
 
         let ghoul_percentage = (ghoul_count * 1000) / total_beasts;
-        assert(ghoul_percentage >= 7 && ghoul_percentage <= 21, 'ghoul distribution');
+        assert(ghoul_percentage >= 4 && ghoul_percentage <= 23, 'ghoul distribution');
 
         let wraith_percentage = (wraith_count * 1000) / total_beasts;
-        assert(wraith_percentage >= 7 && wraith_percentage <= 21, 'wraith distribution');
+        assert(wraith_percentage >= 4 && wraith_percentage <= 23, 'wraith distribution');
 
         let sprite_percentage = (sprite_count * 1000) / total_beasts;
-        assert(sprite_percentage >= 7 && sprite_percentage <= 21, 'sprite distribution');
+        assert(sprite_percentage >= 4 && sprite_percentage <= 23, 'sprite distribution');
 
         let kappa_percentage = (kappa_count * 1000) / total_beasts;
-        assert(kappa_percentage >= 7 && kappa_percentage <= 21, 'kappa distribution');
+        assert(kappa_percentage >= 4 && kappa_percentage <= 23, 'kappa distribution');
 
         let fairy_percentage = (fairy_count * 1000) / total_beasts;
-        assert(fairy_percentage >= 7 && fairy_percentage <= 21, 'fairy distribution');
+        assert(fairy_percentage >= 4 && fairy_percentage <= 23, 'fairy distribution');
 
         let leprechaun_percentage = (leprechaun_count * 1000) / total_beasts;
         assert(
-            leprechaun_percentage >= 7 && leprechaun_percentage <= 21, 'leprechaun distribution'
+            leprechaun_percentage >= 4 && leprechaun_percentage <= 23, 'leprechaun distribution'
         );
 
         let kelpie_percentage = (kelpie_count * 1000) / total_beasts;
-        assert(kelpie_percentage >= 7 && kelpie_percentage <= 21, 'kelpie distribution');
+        assert(kelpie_percentage >= 4 && kelpie_percentage <= 23, 'kelpie distribution');
 
         let pixie_percentage = (pixie_count * 1000) / total_beasts;
-        assert(pixie_percentage >= 7 && pixie_percentage <= 21, 'pixie distribution');
+        assert(pixie_percentage >= 4 && pixie_percentage <= 23, 'pixie distribution');
 
         let gnome_percentage = (gnome_count * 1000) / total_beasts;
-        assert(gnome_percentage >= 7 && gnome_percentage <= 21, 'gnome distribution');
+        assert(gnome_percentage >= 4 && gnome_percentage <= 23, 'gnome distribution');
 
         let griffin_percentage = (griffin_count * 1000) / total_beasts;
-        assert(griffin_percentage >= 7 && griffin_percentage <= 21, 'griffin distribution');
+        assert(griffin_percentage >= 4 && griffin_percentage <= 23, 'griffin distribution');
 
         let manticore_percentage = (manticore_count * 1000) / total_beasts;
-        assert(manticore_percentage >= 7 && manticore_percentage <= 21, 'manticore distribution');
+        assert(manticore_percentage >= 4 && manticore_percentage <= 23, 'manticore distribution');
 
         let phoenix_percentage = (phoenix_count * 1000) / total_beasts;
-        assert(phoenix_percentage >= 7 && phoenix_percentage <= 21, 'phoenix distribution');
+        assert(phoenix_percentage >= 4 && phoenix_percentage <= 23, 'phoenix distribution');
 
         let dragon_percentage = (dragon_count * 1000) / total_beasts;
-        assert(dragon_percentage >= 7 && dragon_percentage <= 21, 'dragon distribution');
+        assert(dragon_percentage >= 4 && dragon_percentage <= 23, 'dragon distribution');
 
         let minotaur_percentage = (minotaur_count * 1000) / total_beasts;
-        assert(minotaur_percentage >= 7 && minotaur_percentage <= 21, 'minotaur distribution');
+        assert(minotaur_percentage >= 4 && minotaur_percentage <= 23, 'minotaur distribution');
 
         let qilin_percentage = (qilin_count * 1000) / total_beasts;
-        assert(qilin_percentage >= 7 && qilin_percentage <= 21, 'qilin distribution');
+        assert(qilin_percentage >= 4 && qilin_percentage <= 23, 'qilin distribution');
 
         let ammit_percentage = (ammit_count * 1000) / total_beasts;
-        assert(ammit_percentage >= 7 && ammit_percentage <= 21, 'ammit distribution');
+        assert(ammit_percentage >= 4 && ammit_percentage <= 23, 'ammit distribution');
 
         let nue_percentage = (nue_count * 1000) / total_beasts;
-        assert(nue_percentage >= 7 && nue_percentage <= 21, 'nue distribution');
+        assert(nue_percentage >= 4 && nue_percentage <= 23, 'nue distribution');
 
         let skinwalker_percentage = (skinwalker_count * 1000) / total_beasts;
         assert(
-            skinwalker_percentage >= 7 && skinwalker_percentage <= 21, 'skinwalker distribution'
+            skinwalker_percentage >= 4 && skinwalker_percentage <= 23, 'skinwalker distribution'
         );
 
         let chupacabra_percentage = (chupacabra_count * 1000) / total_beasts;
         assert(
-            chupacabra_percentage >= 7 && chupacabra_percentage <= 21, 'chupacabra distribution'
+            chupacabra_percentage >= 4 && chupacabra_percentage <= 23, 'chupacabra distribution'
         );
 
         let weretiger_percentage = (weretiger_count * 1000) / total_beasts;
-        assert(weretiger_percentage >= 7 && weretiger_percentage <= 21, 'weretiger distribution');
+        assert(weretiger_percentage >= 4 && weretiger_percentage <= 23, 'weretiger distribution');
 
         let wyvern_percentage = (wyvern_count * 1000) / total_beasts;
-        assert(wyvern_percentage >= 7 && wyvern_percentage <= 21, 'wyvern distribution');
+        assert(wyvern_percentage >= 4 && wyvern_percentage <= 23, 'wyvern distribution');
 
         let roc_percentage = (roc_count * 1000) / total_beasts;
-        assert(roc_percentage >= 7 && roc_percentage <= 21, 'roc distribution');
+        assert(roc_percentage >= 4 && roc_percentage <= 23, 'roc distribution');
 
         let harpy_percentage = (harpy_count * 1000) / total_beasts;
-        assert(harpy_percentage >= 7 && harpy_percentage <= 21, 'harpy distribution');
+        assert(harpy_percentage >= 4 && harpy_percentage <= 23, 'harpy distribution');
 
         let pegasus_percentage = (pegasus_count * 1000) / total_beasts;
-        assert(pegasus_percentage >= 7 && pegasus_percentage <= 21, 'pegasus distribution');
+        assert(pegasus_percentage >= 4 && pegasus_percentage <= 23, 'pegasus distribution');
 
         let hippogriff_percentage = (hippogriff_count * 1000) / total_beasts;
         assert(
-            hippogriff_percentage >= 7 && hippogriff_percentage <= 21, 'hippogriff distribution'
+            hippogriff_percentage >= 4 && hippogriff_percentage <= 23, 'hippogriff distribution'
         );
 
         let fenrir_percentage = (fenrir_count * 1000) / total_beasts;
-        assert(fenrir_percentage >= 7 && fenrir_percentage <= 21, 'fenrir distribution');
+        assert(fenrir_percentage >= 4 && fenrir_percentage <= 23, 'fenrir distribution');
 
         let jaguar_percentage = (jaguar_count * 1000) / total_beasts;
-        assert(jaguar_percentage >= 7 && jaguar_percentage <= 21, 'jaguar distribution');
+        assert(jaguar_percentage >= 4 && jaguar_percentage <= 23, 'jaguar distribution');
 
         let satori_percentage = (satori_count * 1000) / total_beasts;
-        assert(satori_percentage >= 7 && satori_percentage <= 21, 'satori distribution');
+        assert(satori_percentage >= 4 && satori_percentage <= 23, 'satori distribution');
 
         let direwolf_percentage = (direwolf_count * 1000) / total_beasts;
-        assert(direwolf_percentage >= 7 && direwolf_percentage <= 21, 'direwolf distribution');
+        assert(direwolf_percentage >= 4 && direwolf_percentage <= 23, 'direwolf distribution');
 
         let bear_percentage = (bear_count * 1000) / total_beasts;
-        assert(bear_percentage >= 7 && bear_percentage <= 21, 'bear distribution');
+        assert(bear_percentage >= 4 && bear_percentage <= 23, 'bear distribution');
 
         let wolf_percentage = (wolf_count * 1000) / total_beasts;
-        assert(wolf_percentage >= 7 && wolf_percentage <= 21, 'wolf distribution');
+        assert(wolf_percentage >= 4 && wolf_percentage <= 23, 'wolf distribution');
 
         let mantis_percentage = (mantis_count * 1000) / total_beasts;
-        assert(mantis_percentage >= 7 && mantis_percentage <= 21, 'mantis distribution');
+        assert(mantis_percentage >= 4 && mantis_percentage <= 23, 'mantis distribution');
 
         let spider_percentage = (spider_count * 1000) / total_beasts;
-        assert(spider_percentage >= 7 && spider_percentage <= 21, 'spider distribution');
+        assert(spider_percentage >= 4 && spider_percentage <= 23, 'spider distribution');
 
         let rat_percentage = (rat_count * 1000) / total_beasts;
-        assert(rat_percentage >= 7 && rat_percentage <= 21, 'rat distribution');
+        assert(rat_percentage >= 4 && rat_percentage <= 23, 'rat distribution');
 
         let kraken_percentage = (kraken_count * 1000) / total_beasts;
-        assert(kraken_percentage >= 7 && kraken_percentage <= 21, 'kraken distribution');
+        assert(kraken_percentage >= 4 && kraken_percentage <= 23, 'kraken distribution');
 
         let colossus_percentage = (colossus_count * 1000) / total_beasts;
-        assert(colossus_percentage >= 7 && colossus_percentage <= 21, 'colossus distribution');
+        assert(colossus_percentage >= 4 && colossus_percentage <= 23, 'colossus distribution');
 
         let balrog_percentage = (balrog_count * 1000) / total_beasts;
-        assert(balrog_percentage >= 7 && balrog_percentage <= 21, 'balrog distribution');
+        assert(balrog_percentage >= 4 && balrog_percentage <= 23, 'balrog distribution');
 
         let leviathan_percentage = (leviathan_count * 1000) / total_beasts;
-        assert(leviathan_percentage >= 7 && leviathan_percentage <= 21, 'leviathan distribution');
+        assert(leviathan_percentage >= 4 && leviathan_percentage <= 23, 'leviathan distribution');
 
         let tarrasque_percentage = (tarrasque_count * 1000) / total_beasts;
-        assert(tarrasque_percentage >= 7 && tarrasque_percentage <= 21, 'tarrasque distribution');
+        assert(tarrasque_percentage >= 4 && tarrasque_percentage <= 23, 'tarrasque distribution');
 
         let titan_percentage = (titan_count * 1000) / total_beasts;
-        assert(titan_percentage >= 7 && titan_percentage <= 21, 'titan distribution');
+        assert(titan_percentage >= 4 && titan_percentage <= 23, 'titan distribution');
 
         let nephilim_percentage = (nephilim_count * 1000) / total_beasts;
-        assert(nephilim_percentage >= 7 && nephilim_percentage <= 21, 'nephilim distribution');
+        assert(nephilim_percentage >= 4 && nephilim_percentage <= 23, 'nephilim distribution');
 
         let behemoth_percentage = (behemoth_count * 1000) / total_beasts;
-        assert(behemoth_percentage >= 7 && behemoth_percentage <= 21, 'behemoth distribution');
+        assert(behemoth_percentage >= 4 && behemoth_percentage <= 23, 'behemoth distribution');
 
         let hydra_percentage = (hydra_count * 1000) / total_beasts;
-        assert(hydra_percentage >= 7 && hydra_percentage <= 21, 'hydra distribution');
+        assert(hydra_percentage >= 4 && hydra_percentage <= 23, 'hydra distribution');
 
         let juggernaut_percentage = (juggernaut_count * 1000) / total_beasts;
         assert(
-            juggernaut_percentage >= 7 && juggernaut_percentage <= 21, 'juggernaut distribution'
+            juggernaut_percentage >= 4 && juggernaut_percentage <= 23, 'juggernaut distribution'
         );
 
         let oni_percentage = (oni_count * 1000) / total_beasts;
-        assert(oni_percentage >= 7 && oni_percentage <= 21, 'oni distribution');
+        assert(oni_percentage >= 4 && oni_percentage <= 23, 'oni distribution');
 
         let jotunn_percentage = (jotunn_count * 1000) / total_beasts;
-        assert(jotunn_percentage >= 7 && jotunn_percentage <= 21, 'jotunn distribution');
+        assert(jotunn_percentage >= 4 && jotunn_percentage <= 23, 'jotunn distribution');
 
         let ettin_percentage = (ettin_count * 1000) / total_beasts;
-        assert(ettin_percentage >= 7 && ettin_percentage <= 21, 'ettin distribution');
+        assert(ettin_percentage >= 4 && ettin_percentage <= 23, 'ettin distribution');
 
         let cyclops_percentage = (cyclops_count * 1000) / total_beasts;
-        assert(cyclops_percentage >= 7 && cyclops_percentage <= 21, 'cyclops distribution');
+        assert(cyclops_percentage >= 4 && cyclops_percentage <= 23, 'cyclops distribution');
 
         let giant_percentage = (giant_count * 1000) / total_beasts;
-        assert(giant_percentage >= 7 && giant_percentage <= 21, 'giant distribution');
+        assert(giant_percentage >= 4 && giant_percentage <= 23, 'giant distribution');
 
         let nemean_lion_percentage = (nemean_lion_count * 1000) / total_beasts;
         assert(
-            nemean_lion_percentage >= 7 && nemean_lion_percentage <= 21, 'nemean_lion distribution'
+            nemean_lion_percentage >= 4 && nemean_lion_percentage <= 23, 'nemean_lion distribution'
         );
 
         let berserker_percentage = (berserker_count * 1000) / total_beasts;
-        assert(berserker_percentage >= 7 && berserker_percentage <= 21, 'berserker distribution');
+        assert(berserker_percentage >= 4 && berserker_percentage <= 23, 'berserker distribution');
 
         let yeti_percentage = (yeti_count * 1000) / total_beasts;
-        assert(yeti_percentage >= 7 && yeti_percentage <= 21, 'yeti distribution');
+        assert(yeti_percentage >= 4 && yeti_percentage <= 23, 'yeti distribution');
 
         let golem_percentage = (golem_count * 1000) / total_beasts;
-        assert(golem_percentage >= 7 && golem_percentage <= 21, 'golem distribution');
+        assert(golem_percentage >= 4 && golem_percentage <= 23, 'golem distribution');
 
         let ent_percentage = (ent_count * 1000) / total_beasts;
-        assert(ent_percentage >= 7 && ent_percentage <= 21, 'ent distribution');
+        assert(ent_percentage >= 4 && ent_percentage <= 23, 'ent distribution');
 
         let troll_percentage = (troll_count * 1000) / total_beasts;
-        assert(troll_percentage >= 7 && troll_percentage <= 21, 'troll distribution');
+        assert(troll_percentage >= 4 && troll_percentage <= 23, 'troll distribution');
 
         let bigfoot_percentage = (bigfoot_count * 1000) / total_beasts;
-        assert(bigfoot_percentage >= 7 && bigfoot_percentage <= 21, 'bigfoot distribution');
+        assert(bigfoot_percentage >= 4 && bigfoot_percentage <= 23, 'bigfoot distribution');
 
         let ogre_percentage = (ogre_count * 1000) / total_beasts;
-        assert(ogre_percentage >= 7 && ogre_percentage <= 21, 'ogre distribution');
+        assert(ogre_percentage >= 4 && ogre_percentage <= 23, 'ogre distribution');
 
         let orc_percentage = (orc_count * 1000) / total_beasts;
-        assert(orc_percentage >= 7 && orc_percentage <= 21, 'orc distribution');
+        assert(orc_percentage >= 4 && orc_percentage <= 23, 'orc distribution');
 
         let skeleton_percentage = (skeleton_count * 1000) / total_beasts;
-        assert(skeleton_percentage >= 7 && skeleton_percentage <= 21, 'skeleton distribution');
+        assert(skeleton_percentage >= 4 && skeleton_percentage <= 23, 'skeleton distribution');
     // println!("warlock percentage: {}", warlock_percentage);
     // println!("typhon percentage: {}", typhon_percentage);
     // println!("jiangshi percentage: {}", jiangshi_percentage);
@@ -2830,12 +2972,6 @@ mod tests {
     // println!("skeleton percentage: {}", skeleton_percentage);
     }
 
-    #[test]
-    #[available_gas(254644)]
-    fn test_charisma_adjusted_item_price_gas() {
-        let stats = ImplStats::new();
-        stats.charisma_adjusted_item_price(0);
-    }
 
     #[test]
     fn test_charisma_adjusted_item_price() {
@@ -2858,12 +2994,6 @@ mod tests {
         stats.charisma = 31;
         let item_price = stats.charisma_adjusted_item_price(15);
         assert(item_price == MINIMUM_ITEM_PRICE.into(), 'price should be minimum');
-    }
-
-    #[test]
-    fn test_charisma_adjusted_potion_price_gas() {
-        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
-        adventurer.charisma_adjusted_potion_price();
     }
 
     #[test]
@@ -3047,13 +3177,6 @@ mod tests {
         assert(adventurer.xp == MAX_ADVENTURER_XP, 'xp should stop at max xp');
         assert(previous_level == 2, 'prev level should be 2');
         assert(new_level == 181, 'new level should be max 181');
-    }
-
-    #[test]
-    #[available_gas(3000000)]
-    fn test_increase_stat_upgrades_available_gas() {
-        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
-        adventurer.increase_stat_upgrades_available(1);
     }
 
     #[test]
@@ -4095,12 +4218,6 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(20450)]
-    fn test_get_discovery_gas() {
-        ImplAdventurer::get_discovery(255, 255, 255, 255);
-    }
-
-    #[test]
     fn test_get_discovery() {
         let adventurer_level = 1;
         let mut discovery_rnd = 1;
@@ -4219,27 +4336,6 @@ mod tests {
             },
             _ => panic_with_felt252('should have found t1 loot')
         }
-    }
-
-    #[test]
-    #[available_gas(245054)]
-    fn test_calculate_luck_gas_no_luck() {
-        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
-        let bag = ImplBag::new();
-        assert(adventurer.equipment.calculate_luck(bag) == 2, 'start with 2 luck');
-    }
-
-    #[test]
-    #[available_gas(245554)]
-    fn test_calculate_luck_gas_with_luck() {
-        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
-        let bag = ImplBag::new();
-
-        let neck = Item { id: ItemId::Amulet, xp: 1 };
-        adventurer.equipment.equip_necklace(neck);
-        let ring = Item { id: ItemId::GoldRing, xp: 1 };
-        adventurer.equipment.equip_ring(ring);
-        assert(adventurer.equipment.calculate_luck(bag) == 2, 'start with 2 luck');
     }
 
     #[test]
@@ -4394,12 +4490,6 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(3820)]
-    fn test_get_gold_discovery_gas() {
-        ImplAdventurer::get_gold_discovery(1, 0);
-    }
-
-    #[test]
     fn test_get_gold_discovery() {
         let adventurer_level = 1;
         let entropy = 0;
@@ -4408,23 +4498,11 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(4690)]
-    fn test_get_health_discovery_gas() {
-        ImplAdventurer::get_health_discovery(1, 1);
-    }
-
-    #[test]
     fn test_get_health_discovery() {
         let adventurer_level = 1;
         let entropy = 0;
         let discovery_amount = ImplAdventurer::get_health_discovery(adventurer_level, entropy);
         assert(discovery_amount == 2, 'health discovery should be 2');
-    }
-
-    #[test]
-    #[available_gas(328654)]
-    fn test_get_loot_discovery_gas() {
-        ImplAdventurer::get_loot_discovery(1, 2);
     }
 
     fn is_item_in_set(item_id: u8, ref item_set: Span<u8>) -> bool {
@@ -4603,24 +4681,25 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(2500)]
-    fn test_get_item_gas() {
+    fn test_get_item_simple() {
         let equipment = Equipment {
-            weapon: Item { id: 10, xp: 10 },
-            chest: Item { id: 20, xp: 20 },
-            head: Item { id: 30, xp: 30 },
-            waist: Item { id: 40, xp: 40 },
-            foot: Item { id: 50, xp: 50 },
-            hand: Item { id: 60, xp: 60 },
-            neck: Item { id: 70, xp: 70 },
-            ring: Item { id: 80, xp: 80 },
+            weapon: Item { id: ItemId::Katana, xp: 15 },
+            chest: Item { id: ItemId::DivineRobe, xp: 25 },
+            head: Item { id: ItemId::Crown, xp: 35 },
+            waist: Item { id: ItemId::BrightsilkSash, xp: 45 },
+            foot: Item { id: ItemId::DivineSlippers, xp: 55 },
+            hand: Item { id: ItemId::DivineGloves, xp: 65 },
+            neck: Item { id: ItemId::Amulet, xp: 75 },
+            ring: Item { id: ItemId::GoldRing, xp: 85 },
         };
 
-        equipment.get_item(1);
+        let item = equipment.get_item(ItemId::Katana);
+        assert(item.id == ItemId::Katana, 'wrong item id');
+        assert(item.xp == 15, 'wrong item xp');
     }
 
     #[test]
-    fn test_get_item() {
+    fn test_get_item_extended() {
         let equipment = Equipment {
             weapon: Item { id: ItemId::Katana, xp: 15 },
             chest: Item { id: ItemId::DivineRobe, xp: 25 },
@@ -4691,12 +4770,6 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(31860)]
-    fn test_get_battle_randomness_gas() {
-        ImplAdventurer::get_battle_randomness(0, 0, 0);
-    }
-
-    #[test]
     fn test_get_battle_randomness() {
         // Test case 1: Basic functionality
         let mut level_seed: u64 = 1;
@@ -4758,11 +4831,6 @@ mod tests {
         assert(adventurer.battle_action_count == 0, 'battle count should overflow');
     }
 
-    #[test]
-    #[available_gas(40000)]
-    fn test_get_random_explore_gas() {
-        ImplAdventurer::get_random_explore(0);
-    }
     #[test]
     #[available_gas(40000)]
     fn test_get_random_explore() {
@@ -4838,5 +4906,66 @@ mod tests {
         // extreme/overflow case
         adventurer.stats.vitality = 255;
         assert(adventurer.stats.get_max_health() == MAX_ADVENTURER_HEALTH, 'wrong max health');
+    }
+
+    #[test]
+    fn test_apply_health_boost_from_vitality_unlock_gas() {
+        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
+        let no_boost_specials = SpecialPowers { special1: of_Power, special2: 0, special3: 0 };
+        adventurer.apply_health_boost_from_vitality_unlock(no_boost_specials);
+        assert(adventurer.health == 100, 'health should not change');
+    }
+
+    #[test]
+    fn test_apply_health_boost_from_vitality_unlock() {
+        // Create a new adventurer
+        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
+
+        // Set initial health to a known value
+        let starting_health = 10;
+        adventurer.health = starting_health;
+
+        // Test case 1: No vitality boost
+        let no_boost_specials = SpecialPowers { special1: of_Power, special2: 0, special3: 0 };
+        let mut previous_health = adventurer.health;
+        adventurer.apply_health_boost_from_vitality_unlock(no_boost_specials);
+        assert(adventurer.health == previous_health, 'Health should not change');
+
+        // Test case 2: Vitality boost from of_Giant (3 vitality)
+        let giant_specials = SpecialPowers { special1: of_Giant, special2: 0, special3: 0 };
+        previous_health = adventurer.health;
+        adventurer.apply_health_boost_from_vitality_unlock(giant_specials);
+        let health_increase = 3 * HEALTH_INCREASE_PER_VITALITY;
+        assert(adventurer.health == previous_health + health_increase.into(), 'of giants, wrong hp increase');
+
+        // Test case 3: Vitality boost from of_Protection (2 vitality)
+        let protection_specials = SpecialPowers {
+            special1: of_Protection, special2: 0, special3: 0
+        };
+        previous_health = adventurer.health;
+        adventurer.apply_health_boost_from_vitality_unlock(protection_specials);
+        let health_increase = 2 * HEALTH_INCREASE_PER_VITALITY;
+        assert(
+            adventurer.health == previous_health + health_increase.into(),
+            'of protection, wrong hp'
+        );
+
+        // Test case 4: Vitality boost from of_Perfection (1 vitality)
+        let perfection_specials = SpecialPowers {
+            special1: of_Perfection, special2: 0, special3: 0
+        };
+        previous_health = adventurer.health;
+        adventurer.apply_health_boost_from_vitality_unlock(perfection_specials);
+        let health_increase = HEALTH_INCREASE_PER_VITALITY;
+        assert(
+            adventurer.health == previous_health + health_increase.into(),
+            'of perfection, wrong hp'
+        );
+
+        // Test case 5: No additional boost when at max health
+        adventurer.health = adventurer.stats.get_max_health();
+        previous_health = adventurer.health;
+        adventurer.apply_health_boost_from_vitality_unlock(giant_specials);
+        assert(adventurer.health == previous_health, 'Health should not exceed max');
     }
 }

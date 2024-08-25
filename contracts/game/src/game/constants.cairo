@@ -7,8 +7,8 @@ const MINIMUM_SCORE_FOR_PAYOUTS: u16 = 50;
 const SECONDS_IN_DAY: u32 = 86400;
 const TARGET_PRICE_USD_CENTS: u16 = 300;
 const VRF_COST_PER_GAME: u32 = 100000000; // 1$ with 8 decimals
-const VRF_MAX_CALLBACK_MAINNET: u32 = 5000000; // $0.05
-const VRF_MAX_CALLBACK_TESTNET: u32 = 100000000; // 1$ with 8 decimals
+const VRF_MAX_CALLBACK_MAINNET: u32 = 10000000; // $0.10
+const VRF_MAX_CALLBACK_TESTNET: u32 = 300000000; // $3.00
 const PRAGMA_LORDS_KEY: felt252 = 'LORDS/USD'; // felt252 conversion of "LORDS/USD"
 const PRAGMA_PUBLISH_DELAY: u8 = 0;
 const PRAGMA_NUM_WORDS: u8 = 1;
@@ -64,11 +64,11 @@ mod messages {
     const OBITUARY_ALREADY_SET: felt252 = 'obituary already set';
     const OBITUARY_WINDOW_CLOSED: felt252 = 'obituary window closed';
     const INVALID_ITEM_ID: felt252 = 'invalid item id';
-    const LAUNCH_PROMOTION_CLOSED: felt252 = 'launch promotion closed';
+    const LAUNCH_TOURNAMENT_ENDED: felt252 = 'launch tournament has ended';
     const NFT_COLLECTION_NOT_ELIGIBLE: felt252 = 'nft collection not eligible';
     const NOT_TOKEN_OWNER: felt252 = 'not token owner';
-    const TOKEN_ALREADY_CLAIMED: felt252 = 'token already claimed';
-
+    const TOKEN_ALREADY_REGISTERED: felt252 = 'token already registered';
+    const ITEM_SPECIALS_UNAVAILABLE: felt252 = 'item specials unavailable';
 }
 
 #[derive(Drop, Copy)]
