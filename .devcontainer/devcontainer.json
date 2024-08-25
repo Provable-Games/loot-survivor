@@ -18,5 +18,4 @@
 		"CAIRO_COMPILER_ARGS":"--add-pythonic-hints"
     },
 	"postCreateCommand": "git config --global core.editor \"code --wait\" && bash scripts/starkli_setup.sh",
-	"postStartCommand": "cd contracts && scarb build && scarb test"
 }
