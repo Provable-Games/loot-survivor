@@ -9,6 +9,7 @@ import {
   parseU16,
   parseU256,
   parseU64,
+  parseU32,
   parseU8,
 } from "./parser.ts";
 
@@ -191,7 +192,7 @@ export const parseStartGame = combineParsers({
   adventurerState: { index: 0, parser: parseAdventurerState },
   adventurerMeta: { index: 1, parser: parseAdventurerMetadata },
   name: { index: 2, parser: parseFelt252 },
-  goldenTokenId: { index: 3, parser: parseU256 },
+  goldenTokenId: { index: 3, parser: parseU8 },
   customRenderer: { index: 4, parser: parseFelt252 },
 });
 
@@ -371,5 +372,5 @@ export const parseTransfer = combineParsers({
 export const parseClaimedFreeGame = combineParsers({
   adventurerId: { index: 0, parser: parseFelt252 },
   tokenAddress: { index: 1, parser: parseFelt252 },
-  tokenId: { index: 2, parser: parseU256 },
+  tokenId: { index: 2, parser: parseU32 },
 });
