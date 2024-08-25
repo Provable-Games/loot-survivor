@@ -270,7 +270,15 @@ export const AdventurersList = ({
                               </div>
                             </div>
                             {timeRemainingSeconds > 0 && !dead && (
-                              <div className="relative flex flex-row sm:gap-1 items-center">
+                              <div
+                                className={`relative flex flex-row sm:gap-1 items-center ${
+                                  timeRemainingHours <= 24
+                                    ? "text-red-500"
+                                    : timeRemainingHours <= 72
+                                    ? "text-terminal-yellow"
+                                    : "text-terminal-green"
+                                }`}
+                              >
                                 <ClockIcon className="w-5 h-5" />
                                 <p className="text-xs">
                                   {timeRemainingHours} hrs

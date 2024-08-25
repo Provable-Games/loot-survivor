@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/app/components/buttons/Button";
 import { Adventurer } from "@/app/types";
 import Info from "@/app/components/adventurer/Info";
-import { Contract, validateChecksumAddress } from "starknet";
+import { Contract, validateAndParseAddress } from "starknet";
 import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
 import { useAccount } from "@starknet-react/core";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
@@ -34,12 +34,12 @@ export const AdventurerListCard = ({
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
 
   const validAddress = (() => {
-    const paddedAddress = padAddress(transferAddress);
+    const paddedAddress = padAddress(transferAddress.toLowerCase());
     if (paddedAddress.length !== 66 || !transferAddress.startsWith("0x")) {
       return false;
     }
     try {
-      return validateChecksumAddress(paddedAddress);
+      return validateAndParseAddress(paddedAddress);
     } catch {
       return false;
     }

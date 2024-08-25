@@ -525,6 +525,6 @@ export type Attribute = {
   description: string;
   buttonText: string;
   abbrev: string;
-  nonBoostedStat: bigint;
+  stat: number;
   upgrades: number;
 };
