@@ -103,7 +103,7 @@ const MarketplaceRow = ({
   // Check whether an equipped slot is free, if it is free then even if the bag is full the slot can be bought and equipped.
   const formatAdventurer = adventurer ?? NullAdventurer;
   const equippedItem = formatAdventurer[slot.toLowerCase()];
-  const emptySlot = equippedItem === undefined || null;
+  const emptySlot = equippedItem === (undefined || null);
   const slotEquipped = purchaseItems.some(
     (item) =>
       item.equip === "1" &&

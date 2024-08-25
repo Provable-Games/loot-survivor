@@ -7,7 +7,6 @@ export class AdventurerClass implements Adventurer {
   owner?: string; // Hex address of the owner
   entropy?: string; // Entropy of the adventurer
   name?: string; // Name of the adventurer
-  order?: string; // Order of the adventurer
   health?: number; // Health of the adventurer
   level?: number; // Level of the adventurer
   strength?: number; // Strength of the adventurer
@@ -43,7 +42,6 @@ export class AdventurerClass implements Adventurer {
       owner,
       entropy,
       name,
-      order,
       health,
       strength,
       dexterity,
@@ -78,7 +76,6 @@ export class AdventurerClass implements Adventurer {
     this.owner = owner;
     this.entropy = entropy;
     this.name = name;
-    this.order = order;
     this.health = health;
     this.level = calculateLevel(xp ?? 0);
     this.strength = strength;

@@ -56,11 +56,6 @@ export default function ActionsScreen({
 
   const hasBeast = useAdventurerStore((state) => state.computed.hasBeast);
   const resetNotification = useLoadingStore((state) => state.resetNotification);
-  const latestDiscoveries = useQueriesStore((state) =>
-    state.data.latestDiscoveriesQuery
-      ? state.data.latestDiscoveriesQuery.discoveries
-      : []
-  );
 
   const adventurerEntropy = useUIStore((state) => state.adventurerEntropy);
 
