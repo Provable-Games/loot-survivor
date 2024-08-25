@@ -22,8 +22,7 @@ mod tests {
     use game::{
         Game,
         Game::{
-            IGame,
-            _process_item_level_up, _set_item_specials_seed, _initialize_launch_tournament
+            IGame, _process_item_level_up, _set_item_specials_seed, _initialize_launch_tournament
         },
         game::{
             interfaces::{IGameDispatcherTrait, IGameDispatcher},
@@ -76,8 +75,6 @@ mod tests {
 
     const ADVENTURER_ID: felt252 = 1;
     const APPROVE: u256 = 1000000000000000000000000000000000000000000;
-    const DEFAULT_NO_GOLDEN_TOKEN: u8 = 0;
-    const NO_WINNING_COLLECTION_TOKEN_ID: u32 = 0;
     const DAY: u64 = 86400;
     const TESTING_CHAIN_ID: felt252 = 0x4c4f4f545355525649564f52;
 
@@ -384,7 +381,7 @@ mod tests {
                 golden_token_id,
                 false,
                 ZERO_ADDRESS(),
-                NO_WINNING_COLLECTION_TOKEN_ID
+                0
             );
 
         let new_adventurer = game.get_adventurer(adventurer_id);
@@ -408,7 +405,7 @@ mod tests {
                 golden_token_id,
                 false,
                 ZERO_ADDRESS(),
-                NO_WINNING_COLLECTION_TOKEN_ID
+                0
             );
 
         let new_adventurer = game.get_adventurer(adventurer_id);
@@ -431,16 +428,7 @@ mod tests {
         let name = 'abcdefghijklmno';
 
         // start new game
-        game
-            .new_game(
-                INTERFACE_ID(),
-                starting_weapon,
-                name,
-                DEFAULT_NO_GOLDEN_TOKEN.into(),
-                false,
-                ZERO_ADDRESS(),
-                NO_WINNING_COLLECTION_TOKEN_ID
-            );
+        game.new_game(INTERFACE_ID(), starting_weapon, name, 0, false, ZERO_ADDRESS(), 0);
 
         // get adventurer state
         let adventurer = game.get_adventurer(ADVENTURER_ID);
@@ -759,16 +747,7 @@ mod tests {
         let name = 'abcdefghijklmno';
 
         // start new game
-        game
-            .new_game(
-                INTERFACE_ID(),
-                starting_weapon,
-                name,
-                DEFAULT_NO_GOLDEN_TOKEN.into(),
-                false,
-                ZERO_ADDRESS(),
-                NO_WINNING_COLLECTION_TOKEN_ID
-            );
+        game.new_game(INTERFACE_ID(), starting_weapon, name, 0, false, ZERO_ADDRESS(), 0);
 
         // get adventurer state
         let adventurer = game.get_adventurer(ADVENTURER_ID);

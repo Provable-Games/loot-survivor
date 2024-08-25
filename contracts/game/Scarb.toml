@@ -15,3 +15,6 @@ graffiti = { git = "https://github.com/ponderingdemocritus/graffiti", rev = "bc5
 
 [dev-dependencies]
 snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.27.0" }
+
+[[target.starknet-contract]]
+build-external-contracts = ["openzeppelin::token::erc20::ERC20", "openzeppelin::token::erc721::ERC721", "openzeppelin::tests::mocks::erc20_mocks::DualCaseERC20Mock"]
