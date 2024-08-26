@@ -211,6 +211,7 @@ mod Game {
         #[flat]
         SRC5Event: SRC5Component::Event,
         ClaimedFreeGame: ClaimedFreeGame,
+        NewCollectionTotal: NewCollectionTotal,
     }
 
     /// @title Constructor
@@ -1596,16 +1597,22 @@ mod Game {
         }
 
         // if this game is part of the launch tournament and the tournament is still active
-        let nft_address = self._launch_tournament_participants.read(adventurer_id);
-        if nft_address.is_non_zero() && _is_launch_tournament_active(@self) {
+        let collection_address = self._launch_tournament_participants.read(adventurer_id);
+        if collection_address.is_non_zero() && _is_launch_tournament_active(@self) {
             // get previous score for the collection
-            let previous_score = self._launch_tournament_scores.read(nft_address);
+            let previous_score = self._launch_tournament_scores.read(collection_address);
 
             // calculate new score
             let new_score = previous_score + adventurer.xp.into();
 
             // update the score
-            self._launch_tournament_scores.write(nft_address, new_score);
+            self._launch_tournament_scores.write(collection_address, new_score);
+
+            // get number of games played for this collection
+            let games_played = self._launch_tournament_game_counts.read(collection_address);
+
+            // emit event
+            __event_NewCollectionTotal(ref self, collection_address, new_score, games_played);
         }
     }
 
@@ -1843,12 +1850,7 @@ mod Game {
 
         // emit events
         __event_StartGame(
-            ref self,
-            adventurer,
-            adventurer_id,
-            adventurer_meta,
-            name,
-            custom_renderer
+            ref self, adventurer, adventurer_id, adventurer_meta, name, custom_renderer
         );
         __event_AmbushedByBeast(ref self, adventurer, adventurer_id, beast_battle_details);
 
@@ -3938,6 +3940,13 @@ mod Game {
         token_id: u32
     }
 
+    #[derive(Drop, starknet::Event)]
+    struct NewCollectionTotal {
+        collection_address: ContractAddress,
+        xp: u32,
+        games_played: u16,
+    }
+
     #[derive(Drop, Serde)]
     struct PlayerReward {
         adventurer_id: felt252,
@@ -4021,12 +4030,7 @@ mod Game {
         };
         self
             .emit(
-                StartGame {
-                    adventurer_state,
-                    adventurer_meta,
-                    adventurer_name,
-                    custom_renderer
-                }
+                StartGame { adventurer_state, adventurer_meta, adventurer_name, custom_renderer }
             );
     }
 
@@ -4349,6 +4353,12 @@ mod Game {
         token_id: u32
     ) {
         self.emit(ClaimedFreeGame { adventurer_id, collection_address, token_id });
+    }
+
+    fn __event_NewCollectionTotal(
+        ref self: ContractState, collection_address: ContractAddress, xp: u32, games_played: u16
+    ) {
+        self.emit(NewCollectionTotal { collection_address, xp, games_played });
     }
 
     fn _free_game_available(
