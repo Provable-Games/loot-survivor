@@ -151,7 +151,7 @@ services:
       - ./:/data/
     environment:
       PERSIST_TO_ETCD: http://etcd:2379
-      SINK_ID: scores
+      SINK_ID: tokens
       AUTH_TOKEN: ${AUTH_TOKEN}
     networks:
       - indexer
@@ -170,7 +170,7 @@ services:
       - ./:/data/
     environment:
       PERSIST_TO_ETCD: http://etcd:2379
-      SINK_ID: scores
+      SINK_ID: claimed_free_games
       AUTH_TOKEN: ${AUTH_TOKEN}
     networks:
       - indexer

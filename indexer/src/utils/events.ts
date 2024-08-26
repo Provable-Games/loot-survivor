@@ -187,6 +187,7 @@ export const parseAdventurerMetadata = combineParsers({
   itemSpecialsSeed: { index: 3, parser: parseU16 },
   rankAtDeath: { index: 4, parser: parseU8 },
   delayStatReveal: { index: 5, parser: parseBoolean },
+  goldenTokenId: { index: 6, parser: parseU8 },
 });
 export const parseStartGame = combineParsers({
   adventurerState: { index: 0, parser: parseAdventurerState },
