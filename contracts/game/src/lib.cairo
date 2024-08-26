@@ -3676,7 +3676,6 @@ mod Game {
         adventurer_state: AdventurerState,
         adventurer_meta: AdventurerMetadata,
         adventurer_name: felt252,
-        golden_token_id: u8,
         custom_renderer: ContractAddress
     }
 
@@ -4029,7 +4028,6 @@ mod Game {
                     adventurer_state,
                     adventurer_meta,
                     adventurer_name,
-                    golden_token_id,
                     custom_renderer
                 }
             );
