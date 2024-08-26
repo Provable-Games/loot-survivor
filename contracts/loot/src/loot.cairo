@@ -37,16 +37,22 @@ impl ImplLoot of ILoot {
     // @return The naming seed.
     #[inline(always)]
     fn get_specials_seed(item_id: u8, entropy: u16) -> u16 {
-        let (item_entropy, overflow) = entropy.overflowing_add(item_id.into());
-        if (!overflow) {
-            entropy + item_id.into()
-        } else {
-            entropy - item_id.into()
-        };
+        let (mut item_entropy, overflow) = entropy.overflowing_add(item_id.into());
+        // if adding the item_id to entropy overflows
+        if (overflow) {
+            // we subtract to provide item specific entropy
+            item_entropy = entropy - item_id.into();
+        }
 
+        // scope rnd between 0 and NUM_ITEMS-1
         let rnd = item_entropy % NUM_ITEMS.into();
-        rnd * Self::get_slot_length(Self::get_slot(item_id)).into()
-            + Self::get_item_index(item_id).into()
+        // get the item index
+        let item_index = Self::get_item_index(item_id).into();
+        // get the slot length
+        let slot_length = Self::get_slot_length(Self::get_slot(item_id)).into();
+
+        // return the item specific entropy
+        rnd * slot_length + item_index
     }
 
     // get_prefix1 returns the name prefix of an item (Agony, Apocalypse, Armageddon, etc)
