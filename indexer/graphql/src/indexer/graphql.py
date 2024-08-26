@@ -2010,7 +2010,7 @@ class TokenWithFreeGameStatus:
             token=token_data["token"],
             tokenId=token_data["tokenId"],
             ownerAddress=token_data["ownerAddress"],
-            claimedFreeGameUsed=claimed_free_game_data is not None,
+            freeGameUsed=claimed_free_game_data is not None,
             freeGameRevealed=(
                 claimed_free_game_data["revealed"] if claimed_free_game_data else False
             ),
