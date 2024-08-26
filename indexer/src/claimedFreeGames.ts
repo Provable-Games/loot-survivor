@@ -21,7 +21,10 @@ const MONGO_DB = Deno.env.get("MONGO_DB");
 
 const filter = {
   header: { weak: true },
-  events: [{ fromAddress: GAME, keys: [CLAIMED_FREE_GAME] }],
+  events: [
+    { fromAddress: GAME, keys: [CLAIMED_FREE_GAME] },
+    { fromAddress: GAME, keys: [RECEIVED_LEVEL_SEED] },
+  ],
 };
 
 export const config: Config<Starknet, Mongo | Console> = {

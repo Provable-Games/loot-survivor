@@ -648,7 +648,7 @@ export function insertClaimedFreeGame({
       $set: {
         ...entity,
         token: checkExistsInt(BigInt(token).toString(16)),
-        tokenId: checkExistsInt(parseInt(tokenId)),
+        tokenId: parseInt(tokenId),
         revealed,
       },
     },

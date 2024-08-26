@@ -2003,6 +2003,7 @@ class TokenWithFreeGameStatus:
     ownerAddress: Optional[HexValue]
     freeGameUsed: bool
     freeGameRevealed: bool
+    adventurerId: Optional[FeltValue]
 
     @classmethod
     def from_mongo(cls, token_data, claimed_free_game_data):
@@ -2013,6 +2014,11 @@ class TokenWithFreeGameStatus:
             freeGameUsed=claimed_free_game_data is not None,
             freeGameRevealed=(
                 claimed_free_game_data["revealed"] if claimed_free_game_data else False
+            ),
+            adventurerId=(
+                claimed_free_game_data["adventurerId"]
+                if claimed_free_game_data
+                else None
             ),
         )
 
@@ -2716,13 +2722,19 @@ async def get_tokens_with_free_game_status(
     # Query free games for these tokens
     token_ids = [token["tokenId"] for token in tokens]
     free_games = {
-        fg["tokenId"]: fg
-        for fg in db["claimed_free_games"].find({"tokenId": {"$in": token_ids}})
+        (fg["token"], fg["tokenId"]): fg
+        for fg in db["claimed_free_games"].find({
+            "token": {"$in": [token["token"] for token in tokens]},
+            "tokenId": {"$in": token_ids}
+        })
     }
 
     # Combine token and free game information
     result = [
-        TokenWithFreeGameStatus.from_mongo(token, free_games.get(token["tokenId"]))
+        TokenWithFreeGameStatus.from_mongo(
+            token, 
+            free_games.get((token["token"], token["tokenId"]))
+        )
         for token in tokens
     ]
 
@@ -2730,7 +2742,6 @@ async def get_tokens_with_free_game_status(
     await redis.set(cache_key, json.dumps([item.__dict__ for item in result]), ex=60)
 
     return result
-
 
 async def get_discoveries_and_battles(
     info,
