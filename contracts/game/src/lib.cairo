@@ -34,6 +34,14 @@ impl ImplFreeGameTokenType of IFreeGameTokenType {
     }
 }
 
+use core::starknet::ContractAddress;
+
+#[derive(Drop, Copy, Serde)]
+struct LaunchTournamentCollections {
+    collection_address: ContractAddress,
+    games_per_token: u8,
+}
+
 #[starknet::contract]
 mod Game {
     use alexandria_math::pow;
@@ -69,7 +77,7 @@ mod Game {
     use pragma_lib::abi::{IPragmaABIDispatcher, IPragmaABIDispatcherTrait};
     use pragma_lib::types::{AggregationMode, DataType, PragmaPricesResponse};
 
-    use super::{FreeGameTokenType, ImplFreeGameTokenType};
+    use super::{FreeGameTokenType, ImplFreeGameTokenType, LaunchTournamentCollections};
     use super::game::{
         interfaces::{
             IGame, IERC721Mixin, ILeetLoot, ILeetLootDispatcher, ILeetLootDispatcherTrait,
@@ -79,7 +87,8 @@ mod Game {
             MINIMUM_DAMAGE_FROM_BEASTS, MAINNET_CHAIN_ID, SEPOLIA_CHAIN_ID, KATANA_CHAIN_ID,
             MINIMUM_SCORE_FOR_PAYOUTS, SECONDS_IN_DAY, TARGET_PRICE_USD_CENTS, VRF_COST_PER_GAME,
             VRF_MAX_CALLBACK_MAINNET, VRF_MAX_CALLBACK_TESTNET, PRAGMA_LORDS_KEY,
-            PRAGMA_PUBLISH_DELAY, PRAGMA_NUM_WORDS, GAME_EXPIRY_DAYS, OBITUARY_EXPIRY_DAYS, MAX_U64
+            PRAGMA_PUBLISH_DELAY, PRAGMA_NUM_WORDS, GAME_EXPIRY_DAYS, OBITUARY_EXPIRY_DAYS, MAX_U64,
+            LAUNCH_TOURNAMENT_GAMES_PER_COLLECTION
         },
         RenderContract::{
             IRenderContract, IRenderContractDispatcher, IRenderContractDispatcherTrait
@@ -140,13 +149,14 @@ mod Game {
         _game_count: felt252,
         _golden_token_dispatcher: IERC721Dispatcher,
         _golden_token_last_use: Map::<u32, u64>,
+        _launch_tournament_champions_dispatcher: IERC721Dispatcher,
         _launch_tournament_claimed_games: Map::<felt252, bool>,
         _launch_tournament_collections: Vec<ContractAddress>,
+        _launch_tournament_games_per_claim: Map::<ContractAddress, u8>,
         _launch_tournament_end_time: u64,
         _launch_tournament_participants: Map::<felt252, ContractAddress>,
         _launch_tournament_scores: Map::<ContractAddress, u32>,
         _launch_tournament_game_counts: Map::<ContractAddress, u16>,
-        _launch_tournament_champions_dispatcher: IERC721Dispatcher,
         _leaderboard: Leaderboard,
         _payment_token_dispatcher: IERC20Dispatcher,
         _oracle_dispatcher: IPragmaABIDispatcher,
@@ -230,7 +240,7 @@ mod Game {
         vrf_provider_address: ContractAddress,
         oracle_address: ContractAddress,
         render_contract: ContractAddress,
-        qualifying_collections: Array<ContractAddress>,
+        qualifying_collections: Array<LaunchTournamentCollections>,
         launch_promotion_end_timestamp: u64,
         vrf_payments_address: ContractAddress
     ) {
@@ -931,14 +941,16 @@ mod Game {
         }
 
         /// @title Enter Genesis Tournament
-        /// @notice Allows an adventurer to enter the genesis tournament.
-        /// @param weapon A u8 representing the weapon to use in the game.
+        /// @notice Allows an adventurer to enter the launch tournament.
+        /// @param weapon A u8 representing the weapon to start the game with.
         /// @param name A felt252 representing the name of the adventurer.
         /// @param custom_renderer A ContractAddress representing the custom renderer to use for the
         /// adventurer.
         /// @param delay_stat_reveal A bool representing whether to delay the stat reveal.
-        /// @param collection_address A ContractAddress representing the address of the NFT collection.
-        /// @param token_id A u256 representing the token ID of the NFT.
+        /// @param collection_address A ContractAddress representing the address of the NFT
+        /// collection.
+        /// @param token_id a u32 representing the token ID of the NFT.
+        /// @return An Array of felt252 representing the adventurer IDs of the adventurers that were
         fn enter_launch_tournament(
             ref self: ContractState,
             weapon: u8,
@@ -947,7 +959,7 @@ mod Game {
             delay_stat_reveal: bool,
             collection_address: ContractAddress,
             token_id: u32
-        ) -> felt252 {
+        ) -> Array<felt252> {
             // assert game terminal time has not been reached
             _assert_genesis_tournament_active(@self);
 
@@ -964,27 +976,67 @@ mod Game {
             _assert_token_not_claimed(@self, token_hash);
 
             // assert the total number of games for this collection is below the max limit
-            let total_games = self._launch_tournament_game_counts.read(collection_address);
-            assert(total_games < MAX_LAUNCH_GAMES, messages::MAX_LAUNCH_GAMES_REACHED);
+            let games_claimed_for_collection = self
+                ._launch_tournament_game_counts
+                .read(collection_address);
+
+            assert(
+                games_claimed_for_collection < LAUNCH_TOURNAMENT_GAMES_PER_COLLECTION,
+                messages::COLLECTION_OUT_OF_GAMES
+            );
+
+            // get the number of games allowed per collection
+            let max_claimable_games = self
+                ._launch_tournament_games_per_claim
+                .read(collection_address);
+
+            // adjust for the case where the collection doesn't have enough games remaining to claim
+            // the max amount
+            let claimable_games = if games_claimed_for_collection
+                + max_claimable_games.into() > LAUNCH_TOURNAMENT_GAMES_PER_COLLECTION {
+                // if there aren't enough games remaining to claim the max, claim the remaining
+                LAUNCH_TOURNAMENT_GAMES_PER_COLLECTION - games_claimed_for_collection.into()
+            } else {
+                // if there are enough games remaining, claim max
+                max_claimable_games.into()
+            };
 
             // increment game count for this collection
-            self._launch_tournament_game_counts.write(collection_address, total_games + 1);
+            self
+                ._launch_tournament_game_counts
+                .write(collection_address, games_claimed_for_collection + claimable_games);
 
             // set token as claimed
             self._launch_tournament_claimed_games.write(token_hash, true);
 
-            // start the game
-            let adventurer_id = _start_game(
-                ref self, weapon, name, custom_renderer, delay_stat_reveal, 0
-            );
+            // iterate over the number of claimable games
+            let mut adventurer_ids: Array<felt252> = ArrayTrait::<felt252>::new();
+            let mut claim_count = 0;
+            loop {
+                if claim_count == claimable_games {
+                    break;
+                }
 
-            // record adventurer allegiance
-            self._launch_tournament_participants.write(adventurer_id, collection_address);
+                // mint/start the game
+                let adventurer_id = _start_game(
+                    ref self, weapon, name, custom_renderer, delay_stat_reveal, 0
+                );
 
-            // emit claimed free game event
-            __event_ClaimedFreeGame(ref self, adventurer_id, collection_address, token_id);
+                // record the collection the adventurer is playing for
+                self._launch_tournament_participants.write(adventurer_id, collection_address);
 
-            adventurer_id
+                // emit claimed free game event
+                __event_ClaimedFreeGame(ref self, adventurer_id, collection_address, token_id);
+
+                // add adventurer id to array of new game ids
+                adventurer_ids.append(adventurer_id);
+
+                // increment game index
+                claim_count += 1;
+            };
+
+            // return the array of new game ids
+            adventurer_ids
         }
 
         fn receive_random_words(
@@ -3345,7 +3397,7 @@ mod Game {
     }
 
     fn _initialize_launch_tournament(
-        ref self: ContractState, qualifying_collections: Span<ContractAddress>
+        ref self: ContractState, qualifying_collections: Span<LaunchTournamentCollections>
     ) {
         let mut collection_index = 0;
 
@@ -3354,17 +3406,25 @@ mod Game {
             if collection_index >= qualifying_collections.len() {
                 break;
             }
-            // save each collection in vector storage so we can easily iterate over scores at end of
-            // the tournament @dev launch tournament scores are stored in a Map<ContractAddress,
-            // u32>
-            // @dev this vector storage provides an easy way to iterate over the collections at the
-            // end of the tournament
-            let collection_address = *qualifying_collections.at(collection_index);
-            self._launch_tournament_collections.append().write(collection_address);
+            let qualifying_collection = *qualifying_collections.at(collection_index);
 
-            // initialize qualifying collection scores to 1 so we can use 0 to check if the
-            // collection is ineligible
-            self._launch_tournament_scores.write(collection_address, 1);
+            // append qualifying collection to vector storage so we can eaisly iterate over
+            // collections
+            self
+                ._launch_tournament_collections
+                .append()
+                .write(qualifying_collection.collection_address);
+
+            // initialize qualifying collection scores to 1 to distinguish from ineligible
+            // collections
+            self._launch_tournament_scores.write(qualifying_collection.collection_address, 1);
+
+            // store number of games allowed per collection
+            self
+                ._launch_tournament_games_per_claim
+                .write(
+                    qualifying_collection.collection_address, qualifying_collection.games_per_token
+                );
 
             collection_index += 1;
         }

@@ -20,7 +20,7 @@ mod tests {
     };
     use loot::{loot::{Loot, ImplLoot, ILoot}, constants::{ItemId}};
     use game::{
-        Game,
+        Game, LaunchTournamentCollections,
         Game::{
             IGame, _process_item_level_up, _set_item_specials_seed, _initialize_launch_tournament
         },
@@ -252,7 +252,7 @@ mod tests {
         golden_token: ContractAddress,
         terminal_timestamp: u64,
         randomness: ContractAddress,
-        qualifying_collections: Span<ContractAddress>,
+        qualifying_collections: Span<LaunchTournamentCollections>,
         launch_promotion_end_timestamp: u64
     ) -> IGameDispatcher {
         let mut calldata = ArrayTrait::<felt252>::new();
@@ -274,7 +274,8 @@ mod tests {
                 break;
             }
             let collection = *qualifying_collections.at(collection_count);
-            calldata.append(collection.into());
+            calldata.append(collection.collection_address.into());
+            calldata.append(collection.games_per_token.into());
             collection_count += 1;
         };
 
@@ -333,8 +334,8 @@ mod tests {
         let beasts = deploy_beasts(erc721_class_hash);
 
         // add bloberts to qualifying collections
-        let mut qualifying_collections = ArrayTrait::<ContractAddress>::new();
-        qualifying_collections.append(bloberts.contract_address);
+        let mut qualifying_collections = ArrayTrait::<LaunchTournamentCollections>::new();
+        qualifying_collections.append(LaunchTournamentCollections{collection_address: bloberts.contract_address, games_per_token: 1});
 
         // deploy vrf/randomness
         let randomness = deploy_vrf();
@@ -2470,7 +2471,7 @@ mod tests {
     }
 
     #[test]
-    fn test_genesis_tournament_success() {
+    fn test_enter_genesis_tournament_success() {
         let starting_block = 1000;
         let mut current_block_time = 1696201757;
 
@@ -2481,15 +2482,18 @@ mod tests {
         );
 
         // Enter genesis tournament using token id 1
-        let adventurer_id = game
+        let adventurer_ids = game
             .enter_launch_tournament(
                 12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1
             );
 
+        // assert the claim resulted in 1 game being minted
+        assert(adventurer_ids.len() == 1, 'Wrong number of adventurer ids');
+
         // get adventurer id details and assert they are correct
-        let adventurer_meta = game.get_adventurer_meta(adventurer_id);
-        let adventurer_name = game.get_adventurer_name(adventurer_id);
-        let adventurer = game.get_adventurer(adventurer_id);
+        let adventurer_meta = game.get_adventurer_meta(*adventurer_ids.at(0));
+        let adventurer_name = game.get_adventurer_name(*adventurer_ids.at(0));
+        let adventurer = game.get_adventurer(*adventurer_ids.at(0));
         assert(adventurer_name == 123, 'Name not set correctly');
         assert(adventurer_meta.birth_date == current_block_time, 'birthdate not set correctly');
         assert(adventurer.equipment.weapon.id == 12, 'Weapon not set correctly');
@@ -2861,14 +2865,12 @@ mod tests {
         let mut state = Game::contract_state_for_testing();
 
         // Create a span of qualifying collections
-        let mut qualifying_collections = ArrayTrait::<ContractAddress>::new();
-        qualifying_collections.append(contract_address_const::<1>());
-        qualifying_collections.append(contract_address_const::<2>());
-        qualifying_collections.append(contract_address_const::<3>());
-        let qualifying_collections_span = qualifying_collections.span();
-
+        let mut qualifying_collections = ArrayTrait::<LaunchTournamentCollections>::new();
+        qualifying_collections.append(LaunchTournamentCollections{collection_address: contract_address_const::<1>(), games_per_token: 1});
+        qualifying_collections.append(LaunchTournamentCollections{collection_address: contract_address_const::<2>(), games_per_token: 2});
+        qualifying_collections.append(LaunchTournamentCollections{collection_address: contract_address_const::<3>(), games_per_token: 3});
         // Call the internal function
-        _initialize_launch_tournament(ref state, qualifying_collections_span);
+        _initialize_launch_tournament(ref state, qualifying_collections.span());
 
         // Verify the results
         let collections_len = state._launch_tournament_collections.len();
@@ -2906,6 +2908,24 @@ mod tests {
         assert(
             state._launch_tournament_scores.read(contract_address_const::<4>()) == 0,
             'collection should have 0 score'
+        );
+
+        // assert the number of games per token is 1
+        assert(
+            state._launch_tournament_games_per_claim.read(contract_address_const::<1>()) == 1,
+            'games per token collection 1'
+        );
+
+        // assert the number of games per token is 2
+        assert(
+            state._launch_tournament_games_per_claim.read(contract_address_const::<2>()) == 2,
+            'games per token collection 2'
+        );
+
+        // assert the number of games per token is 3
+        assert(
+            state._launch_tournament_games_per_claim.read(contract_address_const::<3>()) == 3,
+            'games per token collection 3'
         );
     }
 }

@@ -59,9 +59,9 @@ trait IGame<TContractState> {
         name: felt252,
         custom_renderer: ContractAddress,
         delay_stat_reveal: bool,
-        nft_address: ContractAddress,
+        collection_address: ContractAddress,
         token_id: u32
-    ) -> felt252;
+    ) -> Array<felt252>;
     fn settle_launch_tournament(ref self: TContractState);
     // ------ View Functions ------
 
