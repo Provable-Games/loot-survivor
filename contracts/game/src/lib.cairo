@@ -1106,7 +1106,7 @@ mod Game {
 
             // assert tournament winner has not already been set
             assert(
-                self._launch_tournament_champions_dispatcher.read().contract_address.is_non_zero(),
+                self._launch_tournament_champions_dispatcher.read().contract_address.is_zero(),
                 messages::TOURNAMENT_WINNER_ALREADY_SET
             );
 
