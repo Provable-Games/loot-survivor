@@ -281,6 +281,7 @@ mod tests {
 
         calldata.append(launch_promotion_end_timestamp.into());
         calldata.append(VRF_PREMIUMS_ADDRESS().into());
+        calldata.append(300);
         let contract = declare("Game").unwrap();
         let (contract_address, _) = contract.deploy(@calldata).unwrap();
         IGameDispatcher { contract_address }
@@ -335,7 +336,12 @@ mod tests {
 
         // add bloberts to qualifying collections
         let mut qualifying_collections = ArrayTrait::<LaunchTournamentCollections>::new();
-        qualifying_collections.append(LaunchTournamentCollections{collection_address: bloberts.contract_address, games_per_token: 1});
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: bloberts.contract_address, games_per_token: 1
+                }
+            );
 
         // deploy vrf/randomness
         let randomness = deploy_vrf();
@@ -2866,9 +2872,24 @@ mod tests {
 
         // Create a span of qualifying collections
         let mut qualifying_collections = ArrayTrait::<LaunchTournamentCollections>::new();
-        qualifying_collections.append(LaunchTournamentCollections{collection_address: contract_address_const::<1>(), games_per_token: 1});
-        qualifying_collections.append(LaunchTournamentCollections{collection_address: contract_address_const::<2>(), games_per_token: 2});
-        qualifying_collections.append(LaunchTournamentCollections{collection_address: contract_address_const::<3>(), games_per_token: 3});
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<1>(), games_per_token: 1
+                }
+            );
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<2>(), games_per_token: 2
+                }
+            );
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<3>(), games_per_token: 3
+                }
+            );
         // Call the internal function
         _initialize_launch_tournament(ref state, qualifying_collections.span());
 

@@ -16,7 +16,6 @@ const GAME_EXPIRY_DAYS: u8 = 10;
 const OBITUARY_EXPIRY_DAYS: u8 = 10;
 const MAX_U64: u64 = 0xffffffffffffffff;
 const STARTER_BEAST_ATTACK_DAMAGE: u16 = 10;
-const LAUNCH_TOURNAMENT_GAMES_PER_COLLECTION: u16 = 1600; // TODO: make this a constructor argument
 
 mod messages {
     const NOT_ENOUGH_GOLD: felt252 = 'Not enough gold';

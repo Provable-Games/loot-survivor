@@ -87,8 +87,7 @@ mod Game {
             MINIMUM_DAMAGE_FROM_BEASTS, MAINNET_CHAIN_ID, SEPOLIA_CHAIN_ID, KATANA_CHAIN_ID,
             MINIMUM_SCORE_FOR_PAYOUTS, SECONDS_IN_DAY, TARGET_PRICE_USD_CENTS, VRF_COST_PER_GAME,
             VRF_MAX_CALLBACK_MAINNET, VRF_MAX_CALLBACK_TESTNET, PRAGMA_LORDS_KEY,
-            PRAGMA_PUBLISH_DELAY, PRAGMA_NUM_WORDS, GAME_EXPIRY_DAYS, OBITUARY_EXPIRY_DAYS, MAX_U64,
-            LAUNCH_TOURNAMENT_GAMES_PER_COLLECTION
+            PRAGMA_PUBLISH_DELAY, PRAGMA_NUM_WORDS, GAME_EXPIRY_DAYS, OBITUARY_EXPIRY_DAYS, MAX_U64
         },
         RenderContract::{
             IRenderContract, IRenderContractDispatcher, IRenderContractDispatcherTrait
@@ -153,6 +152,7 @@ mod Game {
         _launch_tournament_claimed_games: Map::<felt252, bool>,
         _launch_tournament_collections: Vec<ContractAddress>,
         _launch_tournament_games_per_claim: Map::<ContractAddress, u8>,
+        _launch_tournament_games_per_collection: u16,
         _launch_tournament_end_time: u64,
         _launch_tournament_participants: Map::<felt252, ContractAddress>,
         _launch_tournament_scores: Map::<ContractAddress, u32>,
@@ -213,20 +213,26 @@ mod Game {
         ClaimedFreeGame: ClaimedFreeGame,
     }
 
-    // @title Constructor
-    // @notice Initializes the contract
-    // @param lords The address of the LORDS contract
-    // @param eth_address The address of the ETH contract
-    // @param dao The address of the DAO contract
-    // @param pg_address The address of the PG contract
-    // @param collectible_beasts The address of the collectible beasts contract
-    // @param golden_token_address The address of the golden token contract
-    // @param terminal_timestamp The timestamp at which the game is terminal
-    // @param randomness_contract_address The address of the randomness contract
-    // @param oracle_address The address of the price oracle contract
-    // @param previous_first_place The address of the previous first place
-    // @param previous_second_place The address of the previous second place
-    // @param previous_third_place The address of the previous third place
+    /// @title Constructor
+    /// @notice Initializes the contract
+    /// @dev This is the constructor for the contract. It is called once when the contract is
+    /// deployed.
+    ///
+    /// @param payment_token: the payment token for the contract
+    /// @param eth_address: the address of the ETH dispatcher
+    /// @param dao_address: the address of the DAO
+    /// @param pg_address: the address of the PG
+    /// @param beasts_address: the address of the beasts dispatcher
+    /// @param golden_token_address: the address of the golden token dispatcher
+    /// @param terminal_timestamp: the timestamp of the terminal timestamp
+    /// @param vrf_provider_address: the address of the VRF provider
+    /// @param oracle_address: the address of the oracle
+    /// @param render_contract: the address of the render contract
+    /// @param qualifying_collections: the qualifying collections for the launch tournament
+    /// @param launch_tournament_end_timestamp: the timestamp of the launch tournament end
+    /// @param vrf_payments_address: the address of the VRF payments
+    /// @param launch_tournament_games_per_collection: the number of games per collection for the
+    /// launch tournament
     #[constructor]
     fn constructor(
         ref self: ContractState,
@@ -241,8 +247,9 @@ mod Game {
         oracle_address: ContractAddress,
         render_contract: ContractAddress,
         qualifying_collections: Array<LaunchTournamentCollections>,
-        launch_promotion_end_timestamp: u64,
-        vrf_payments_address: ContractAddress
+        launch_tournament_end_timestamp: u64,
+        vrf_payments_address: ContractAddress,
+        launch_tournament_games_per_collection: u16
     ) {
         if payment_token.is_non_zero() {
             let payment_dispatcher = IERC20Dispatcher { contract_address: payment_token };
@@ -292,8 +299,14 @@ mod Game {
             self._default_renderer.write(render_contract);
         }
 
-        if launch_promotion_end_timestamp != 0 {
-            self._launch_tournament_end_time.write(launch_promotion_end_timestamp);
+        if launch_tournament_end_timestamp != 0 {
+            self._launch_tournament_end_time.write(launch_tournament_end_timestamp);
+        }
+
+        if launch_tournament_games_per_collection != 0 {
+            self
+                ._launch_tournament_games_per_collection
+                .write(launch_tournament_games_per_collection);
         }
 
         if golden_token_address.is_non_zero() {
@@ -961,7 +974,7 @@ mod Game {
             token_id: u32
         ) -> Array<felt252> {
             // assert game terminal time has not been reached
-            _assert_genesis_tournament_active(@self);
+            _assert_launch_tournament_is_active(@self);
 
             // assert the nft collection is part of the set of free game nft collections
             _assert_is_qualifying_nft(@self, collection_address);
@@ -975,13 +988,15 @@ mod Game {
             // assert token has not already claimed free game
             _assert_token_not_claimed(@self, token_hash);
 
-            // assert the total number of games for this collection is below the max limit
+            // assert the total number of games for this collection is below the tournament limit
             let games_claimed_for_collection = self
                 ._launch_tournament_game_counts
                 .read(collection_address);
 
+            let max_games_per_collection = self._launch_tournament_games_per_collection.read();
+
             assert(
-                games_claimed_for_collection < LAUNCH_TOURNAMENT_GAMES_PER_COLLECTION,
+                games_claimed_for_collection < max_games_per_collection,
                 messages::COLLECTION_OUT_OF_GAMES
             );
 
@@ -991,11 +1006,11 @@ mod Game {
                 .read(collection_address);
 
             // adjust for the case where the collection doesn't have enough games remaining to claim
-            // the max amount
+            // the full amount of games they are allowed
             let claimable_games = if games_claimed_for_collection
-                + max_claimable_games.into() > LAUNCH_TOURNAMENT_GAMES_PER_COLLECTION {
+                + max_claimable_games.into() > max_games_per_collection {
                 // if there aren't enough games remaining to claim the max, claim the remaining
-                LAUNCH_TOURNAMENT_GAMES_PER_COLLECTION - games_claimed_for_collection.into()
+                max_games_per_collection - games_claimed_for_collection.into()
             } else {
                 // if there are enough games remaining, claim max
                 max_claimable_games.into()
@@ -1086,10 +1101,10 @@ mod Game {
         /// @dev iterates over the collection scores to find the top score
         /// @dev stores the top score collection in the contract state for easy retrieval
         fn settle_launch_tournament(ref self: ContractState) {
-            // assert the tournament is over
-            assert(_is_launch_tournament_active(@self), messages::TOURNAMENT_STILL_ACTIVE);
+            // assert the tournament has ended
+            _assert_launch_tournament_has_ended(@self);
 
-            // assert tournament winner is not already set
+            // assert tournament winner has not already been set
             assert(
                 self._launch_tournament_champions_dispatcher.read().contract_address.is_non_zero(),
                 messages::TOURNAMENT_WINNER_ALREADY_SET
@@ -3386,8 +3401,12 @@ mod Game {
         }
     }
 
-    fn _assert_genesis_tournament_active(self: @ContractState) {
+    fn _assert_launch_tournament_is_active(self: @ContractState) {
         assert(_is_launch_tournament_active(self), messages::LAUNCH_TOURNAMENT_ENDED);
+    }
+
+    fn _assert_launch_tournament_has_ended(self: @ContractState) {
+        assert(!_is_launch_tournament_active(self), messages::TOURNAMENT_STILL_ACTIVE);
     }
 
     fn _is_launch_tournament_active(self: @ContractState) -> bool {
