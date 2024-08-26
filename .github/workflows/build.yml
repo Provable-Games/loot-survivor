@@ -31,7 +31,7 @@ jobs:
         run: curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | bash -s -- -v ${{ env.SCARB_VERSION }}
 
       - name: Install Foundry
-        run: curl -L https://raw.githubusercontent.com/foundry-rs/starknet-foundry/master/scripts/install.sh | bash && source ~/.bashrc && snfoundryup
+        run: curl -L https://raw.githubusercontent.com/foundry-rs/starknet-foundry/master/scripts/install.sh | bash && source ~/.bashrc && snfoundryup -v 0.27.0
 
       - name: Build and Test ${{ matrix.contract }}
         run: cd contracts/${{ matrix.contract }} && snforge test --max-n-steps 4294967295
