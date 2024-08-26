@@ -3427,8 +3427,7 @@ mod Game {
             }
             let qualifying_collection = *qualifying_collections.at(collection_index);
 
-            // append qualifying collection to vector storage so we can eaisly iterate over
-            // collections
+            // append qualifying collection to vector storage so we can easily iterate over them
             self
                 ._launch_tournament_collections
                 .append()
