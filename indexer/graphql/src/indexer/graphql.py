@@ -1300,14 +1300,16 @@ class ItemsFilter:
 class TokensFilter:
     token: Optional[HexValueFilter] = None
     tokenId: Optional[FeltValueFilter] = None
-    ownerAddress: Optional[HexValueFilter] = None
+    nftOwnerAddress: Optional[HexValueFilter] = None
     timestamp: Optional[DateTimeFilter] = None
 
     def to_dict(self):
         return {
             "token": self.token.to_dict() if self.token else None,
             "tokenId": self.tokenId.to_dict() if self.tokenId else None,
-            "ownerAddress": self.ownerAddress.to_dict() if self.ownerAddress else None,
+            "nftOwnerAddress": (
+                self.nftOwnerAddress.to_dict() if self.nftOwnerAddress else None
+            ),
             "timestamp": self.timestamp.to_dict() if self.timestamp else None,
         }
 
@@ -1317,6 +1319,7 @@ class ClaimedFreeGamesFilter:
     token: Optional[HexValueFilter] = None
     tokenId: Optional[FeltValueFilter] = None
     adventurerId: Optional[FeltValueFilter] = None
+    gameOwnerAddress: Optional[HexValueFilter] = None
     revealed: Optional[BooleanFilter] = None
 
     def to_dict(self):
@@ -1324,6 +1327,9 @@ class ClaimedFreeGamesFilter:
             "token": self.token.to_dict() if self.token else None,
             "tokenId": self.tokenId.to_dict() if self.tokenId else None,
             "adventurerId": self.adventurerId.to_dict() if self.adventurerId else None,
+            "gameOwnerAddress": (
+                self.gameOwnerAddress.to_dict() if self.gameOwnerAddress else None
+            ),
             "revealed": self.revealed.to_dict() if self.revealed else None,
         }
 
@@ -1332,21 +1338,27 @@ class ClaimedFreeGamesFilter:
 class TokenWithFreeGameStatusFilter:
     token: Optional[HexValueFilter] = None
     tokenId: Optional[FeltValueFilter] = None
-    ownerAddress: Optional[HexValueFilter] = None
+    nftOwnerAddress: Optional[HexValueFilter] = None
     freeGameUsed: Optional[BooleanFilter] = None
     freeGameRevealed: Optional[BooleanFilter] = None
     adventurerId: Optional[FeltValueFilter] = None
+    gameOwnerAddress: Optional[HexValueFilter] = None
 
     def to_dict(self):
         return {
             "token": self.token.to_dict() if self.token else None,
             "tokenId": self.tokenId.to_dict() if self.tokenId else None,
-            "ownerAddress": self.ownerAddress.to_dict() if self.ownerAddress else None,
+            "nftOwnerAddress": (
+                self.nftOwnerAddress.to_dict() if self.nftOwnerAddress else None
+            ),
             "freeGameUsed": self.freeGameUsed.to_dict() if self.freeGameUsed else None,
             "freeGameRevealed": (
                 self.freeGameRevealed.to_dict() if self.freeGameRevealed else None
             ),
             "adventurerId": self.adventurerId.to_dict() if self.adventurerId else None,
+            "gameOwnerAddress": (
+                self.gameOwnerAddress.to_dict() if self.gameOwnerAddress else None
+            ),
         }
 
 
@@ -1660,14 +1672,16 @@ class ItemsOrderByInput:
 class TokensOrderByInput:
     token: Optional[OrderByInput] = None
     tokenId: Optional[OrderByInput] = None
-    ownerAddress: Optional[OrderByInput] = None
+    nftOwnerAddress: Optional[OrderByInput] = None
     timestamp: Optional[OrderByInput] = None
 
     def to_dict(self):
         return {
             "token": self.token.to_dict() if self.token else None,
             "tokenId": self.tokenId.to_dict() if self.tokenId else None,
-            "ownerAddress": self.ownerAddress.to_dict() if self.ownerAddress else None,
+            "nftOwnerAddress": (
+                self.nftOwnerAddress.to_dict() if self.nftOwnerAddress else None
+            ),
             "timestamp": self.timestamp.to_dict() if self.timestamp else None,
         }
 
@@ -1677,6 +1691,7 @@ class ClaimedFreeGamesOrderByInput:
     token: Optional[OrderByInput] = None
     tokenId: Optional[OrderByInput] = None
     adventurerId: Optional[OrderByInput] = None
+    gameOwnerAddress: Optional[OrderByInput] = None
     revealed: Optional[OrderByInput] = None
 
     def to_dict(self):
@@ -1684,6 +1699,9 @@ class ClaimedFreeGamesOrderByInput:
             "token": self.token.to_dict() if self.token else None,
             "tokenId": self.tokenId.to_dict() if self.tokenId else None,
             "adventurerId": self.adventurerId.to_dict() if self.adventurerId else None,
+            "gameOwnerAddress": (
+                self.gameOwnerAddress.to_dict() if self.gameOwnerAddress else None
+            ),
             "revealed": self.revealed.to_dict() if self.revealed else None,
         }
 
@@ -1692,21 +1710,27 @@ class ClaimedFreeGamesOrderByInput:
 class TokenWithFreeGameStatusOrderByInput:
     token: Optional[OrderByInput] = None
     tokenId: Optional[OrderByInput] = None
-    ownerAddress: Optional[OrderByInput] = None
+    nftOwnerAddress: Optional[OrderByInput] = None
     freeGameUsed: Optional[OrderByInput] = None
     freeGameRevealed: Optional[OrderByInput] = None
     adventurerId: Optional[OrderByInput] = None
+    gameOwnerAddress: Optional[OrderByInput] = None
 
     def to_dict(self):
         return {
             "token": self.token.to_dict() if self.token else None,
             "tokenId": self.tokenId.to_dict() if self.tokenId else None,
-            "ownerAddress": self.ownerAddress.to_dict() if self.ownerAddress else None,
+            "nftOwnerAddress": (
+                self.nftOwnerAddress.to_dict() if self.nftOwnerAddress else None
+            ),
             "freeGameUsed": self.freeGameUsed.to_dict() if self.freeGameUsed else None,
             "freeGameRevealed": (
                 self.freeGameRevealed.to_dict() if self.freeGameRevealed else None
             ),
             "adventurerId": self.adventurerId.to_dict() if self.adventurerId else None,
+            "gameOwnerAddress": (
+                self.gameOwnerAddress.to_dict() if self.gameOwnerAddress else None
+            ),
         }
 
 
@@ -2010,7 +2034,7 @@ class Item:
 class Token:
     token: Optional[HexValue]
     tokenId: Optional[FeltValue]
-    ownerAddress: Optional[HexValue]
+    nftOwnerAddress: Optional[HexValue]
     timestamp: Optional[str]
 
     @classmethod
@@ -2018,7 +2042,7 @@ class Token:
         return cls(
             token=data["token"],
             tokenId=data["tokenId"],
-            ownerAddress=data["ownerAddress"],
+            nftOwnerAddress=data["nftOwnerAddress"],
             timestamp=data["timestamp"],
         )
 
@@ -2028,6 +2052,7 @@ class ClaimedFreeGame:
     token: Optional[HexValue]
     tokenId: Optional[FeltValue]
     adventurerId: Optional[FeltValue]
+    gameOwnerAddress: Optional[HexValue]
     revealed: Optional[bool]
 
     @classmethod
@@ -2036,6 +2061,7 @@ class ClaimedFreeGame:
             token=data["token"],
             tokenId=data["tokenId"],
             adventurerId=data["adventurerId"],
+            gameOwnerAddress=data["gameOwnerAddress"],
             revealed=data["revealed"],
         )
 
@@ -2044,23 +2070,29 @@ class ClaimedFreeGame:
 class TokenWithFreeGameStatus:
     token: Optional[HexValue]
     tokenId: Optional[FeltValue]
-    ownerAddress: Optional[HexValue]
+    nftOwnerAddress: Optional[HexValue]
     freeGameUsed: bool
     freeGameRevealed: bool
     adventurerId: Optional[FeltValue]
+    gameOwnerAddress: Optional[HexValue]
 
     @classmethod
     def from_mongo(cls, token_data, claimed_free_game_data):
         return cls(
             token=token_data["token"],
             tokenId=token_data["tokenId"],
-            ownerAddress=token_data["ownerAddress"],
+            nftOwnerAddress=token_data["nftOwnerAddress"],
             freeGameUsed=claimed_free_game_data is not None,
             freeGameRevealed=(
                 claimed_free_game_data["revealed"] if claimed_free_game_data else False
             ),
             adventurerId=(
                 claimed_free_game_data["adventurerId"]
+                if claimed_free_game_data
+                else None
+            ),
+            gameOwnerAddress=(
+                claimed_free_game_data["gameOwnerAddress"]
                 if claimed_free_game_data
                 else None
             ),

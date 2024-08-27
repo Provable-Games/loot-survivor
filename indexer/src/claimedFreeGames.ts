@@ -7,9 +7,12 @@ import {
   CLAIMED_FREE_GAME,
   parseReceivedLevelSeed,
   RECEIVED_LEVEL_SEED,
+  START_GAME,
+  parseStartGame,
 } from "./utils/events.ts";
 import {
-  insertClaimedFreeGame,
+  insertFreeGame,
+  updateClaimedFreeGame,
   updateRevealedFreeGame,
 } from "./utils/helpers.ts";
 import { MONGO_CONNECTION_STRING } from "./utils/constants.ts";
@@ -22,6 +25,7 @@ const MONGO_DB = Deno.env.get("MONGO_DB");
 const filter = {
   header: { weak: true },
   events: [
+    { fromAddress: GAME, keys: [START_GAME] },
     { fromAddress: GAME, keys: [CLAIMED_FREE_GAME] },
     { fromAddress: GAME, keys: [RECEIVED_LEVEL_SEED] },
   ],
@@ -46,14 +50,24 @@ export const config: Config<Starknet, Mongo | Console> = {
 export default function transform({ header, events }: Block) {
   return events.flatMap(({ event, receipt }) => {
     switch (event.keys[0]) {
+      case START_GAME: {
+        const { value } = parseStartGame(event.data, 0);
+        console.log("START_GAME", "->", "CLAIMED_FREE_GAMES UPDATES");
+        const as = value.adventurerState;
+        return insertFreeGame({
+          adventurerId: as.adventurerId,
+          gameOwnerAddress: as.owner,
+          revealed: false,
+        });
+      }
+
       case CLAIMED_FREE_GAME: {
         const { value } = parseClaimedFreeGame(event.data, 0);
         console.log("CLAIMED_FREE_GAME", "->", "CLAIMED_FREE_GAMES UPDATES");
-        return insertClaimedFreeGame({
+        return updateClaimedFreeGame({
           adventurerId: value.adventurerId,
           token: value.tokenAddress,
           tokenId: value.tokenId,
-          revealed: false,
         });
       }
 
