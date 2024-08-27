@@ -395,7 +395,13 @@ mod Game {
 
             // start the game
             let adventurer_id = _start_game(
-                ref self, weapon, name, custom_renderer, delay_reveal, golden_token_id
+                ref self,
+                weapon,
+                name,
+                custom_renderer,
+                delay_reveal,
+                golden_token_id,
+                launch_tournament_winner_token_id
             );
 
             // store client provider address
@@ -1035,7 +1041,7 @@ mod Game {
 
                 // mint/start the game
                 let adventurer_id = _start_game(
-                    ref self, weapon, name, custom_renderer, delay_stat_reveal, 0
+                    ref self, weapon, name, custom_renderer, delay_stat_reveal, 0, 0
                 );
 
                 // record the collection the adventurer is playing for
@@ -1811,7 +1817,8 @@ mod Game {
         name: felt252,
         custom_renderer: ContractAddress,
         delay_stat_reveal: bool,
-        golden_token_id: u8
+        golden_token_id: u8,
+        launch_tournament_winner_token_id: u32
     ) -> felt252 {
         // assert game terminal time has not been reached
         _assert_terminal_time_not_reached(@self);
@@ -1827,7 +1834,10 @@ mod Game {
 
         // create meta data for the adventurer
         let adventurer_meta = ImplAdventurerMetadata::new(
-            get_block_timestamp().into(), delay_stat_reveal, golden_token_id
+            get_block_timestamp().into(),
+            delay_stat_reveal,
+            golden_token_id,
+            launch_tournament_winner_token_id
         );
 
         let beast_battle_details = _starter_beast_ambush(ref adventurer, adventurer_id, weapon);

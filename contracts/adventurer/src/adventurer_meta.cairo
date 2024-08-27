@@ -9,6 +9,7 @@ struct AdventurerMetadata {
     rank_at_death: u8, // 2 bits in storage
     delay_stat_reveal: bool, // 1 bit in storage
     golden_token_id: u8, // 8 bits in storage
+    launch_tournament_winner_token_id: u32, // 32 bits in storage
 }
 
 impl PackingAdventurerMetadata of StorePacking<AdventurerMetadata, felt252> {
@@ -28,7 +29,8 @@ impl PackingAdventurerMetadata of StorePacking<AdventurerMetadata, felt252> {
             + value.item_specials_seed.into() * TWO_POW_192
             + value.rank_at_death.into() * TWO_POW_208
             + delay_stat_reveal * TWO_POW_210
-            + value.golden_token_id.into() * TWO_POW_211)
+            + value.golden_token_id.into() * TWO_POW_211
+            + value.launch_tournament_winner_token_id.into() * TWO_POW_219)
             .try_into()
             .unwrap()
     }
@@ -45,7 +47,10 @@ impl PackingAdventurerMetadata of StorePacking<AdventurerMetadata, felt252> {
         let (packed, item_specials_seed) = integer::U256DivRem::div_rem(packed, TWO_POW_16_NZ);
         let (packed, rank_at_death) = integer::U256DivRem::div_rem(packed, TWO_POW_2_NZ);
         let (packed, delay_stat_reveal_u256) = integer::U256DivRem::div_rem(packed, TWO_POW_1_NZ);
-        let (_, golden_token_id) = integer::U256DivRem::div_rem(packed, TWO_POW_8_NZ);
+        let (packed, golden_token_id) = integer::U256DivRem::div_rem(packed, TWO_POW_8_NZ);
+        let (_, launch_tournament_winner_token_id) = integer::U256DivRem::div_rem(
+            packed, TWO_POW_32_NZ
+        );
 
         let birth_date = birth_date.try_into().unwrap();
         let death_date = death_date.try_into().unwrap();
@@ -54,6 +59,9 @@ impl PackingAdventurerMetadata of StorePacking<AdventurerMetadata, felt252> {
         let rank_at_death = rank_at_death.try_into().unwrap();
         let item_specials_seed = item_specials_seed.try_into().unwrap();
         let golden_token_id = golden_token_id.try_into().unwrap();
+        let launch_tournament_winner_token_id = launch_tournament_winner_token_id
+            .try_into()
+            .unwrap();
 
         AdventurerMetadata {
             birth_date,
@@ -62,7 +70,8 @@ impl PackingAdventurerMetadata of StorePacking<AdventurerMetadata, felt252> {
             item_specials_seed,
             rank_at_death,
             delay_stat_reveal,
-            golden_token_id
+            golden_token_id,
+            launch_tournament_winner_token_id,
         }
     }
 }
@@ -74,8 +83,14 @@ impl ImplAdventurerMetadata of IAdventurerMetadata {
     /// @param birth_date: The start time of the adventurer
     /// @param delay_reveal: Whether the adventurer should delay reveal
     /// @param golden_token_id: The golden token id of the adventurer
-    /// @return: The newly created AdventurerMetadata struct
-    fn new(birth_date: u64, delay_stat_reveal: bool, golden_token_id: u8) -> AdventurerMetadata {
+    /// @param launch_tournament_winner_token_id: The launch tournament winner token id of the
+    /// adventurer @return: The newly created AdventurerMetadata struct
+    fn new(
+        birth_date: u64,
+        delay_stat_reveal: bool,
+        golden_token_id: u8,
+        launch_tournament_winner_token_id: u32
+    ) -> AdventurerMetadata {
         AdventurerMetadata {
             birth_date,
             death_date: 0,
@@ -84,6 +99,7 @@ impl ImplAdventurerMetadata of IAdventurerMetadata {
             rank_at_death: 0,
             delay_stat_reveal,
             golden_token_id,
+            launch_tournament_winner_token_id,
         }
     }
 }
@@ -94,6 +110,7 @@ const TWO_POW_1_NZ: NonZero<u256> = 0x2;
 const TWO_POW_8_NZ: NonZero<u256> = 0x100;
 const TWO_POW_16: u256 = 0x10000;
 const TWO_POW_16_NZ: NonZero<u256> = 0x10000;
+const TWO_POW_32_NZ: NonZero<u256> = 0x100000000;
 const TWO_POW_64: u256 = 0x10000000000000000;
 const TWO_POW_64_NZ: NonZero<u256> = 0x10000000000000000;
 const TWO_POW_128: u256 = 0x100000000000000000000000000000000;
@@ -101,6 +118,7 @@ const TWO_POW_192: u256 = 0x1000000000000000000000000000000000000000000000000;
 const TWO_POW_208: u256 = 0x10000000000000000000000000000000000000000000000000000;
 const TWO_POW_210: u256 = 0x40000000000000000000000000000000000000000000000000000;
 const TWO_POW_211: u256 = 0x80000000000000000000000000000000000000000000000000000;
+const TWO_POW_219: u256 = 0x8000000000000000000000000000000000000000000000000000000;
 
 // ---------------------------
 // ---------- Tests ----------
@@ -109,6 +127,7 @@ const TWO_POW_211: u256 = 0x8000000000000000000000000000000000000000000000000000
 mod tests {
     use super::{AdventurerMetadata, PackingAdventurerMetadata, ImplAdventurerMetadata};
     const U64_MAX: u64 = 0xffffffffffffffff;
+    const U32_MAX: u32 = 0xffffffff;
     const U16_MAX: u16 = 0xffff;
     const U2_MAX: u8 = 0x3;
     const U8_MAX: u8 = 0xff;
@@ -124,6 +143,7 @@ mod tests {
             rank_at_death: U2_MAX,
             delay_stat_reveal: true,
             golden_token_id: U8_MAX,
+            launch_tournament_winner_token_id: U32_MAX,
         };
         let packed = PackingAdventurerMetadata::pack(meta);
         let unpacked: AdventurerMetadata = PackingAdventurerMetadata::unpack(packed);
@@ -137,7 +157,10 @@ mod tests {
         assert(meta.rank_at_death == unpacked.rank_at_death, 'rank at death should be max u2');
         assert(meta.delay_stat_reveal == unpacked.delay_stat_reveal, 'delay reveal should be true');
         assert(meta.golden_token_id == unpacked.golden_token_id, 'golden token should be max');
-
+        assert(
+            meta.launch_tournament_winner_token_id == unpacked.launch_tournament_winner_token_id,
+            'champ token should be max'
+        );
         // zero case
         let meta = AdventurerMetadata {
             birth_date: 0,
@@ -147,6 +170,7 @@ mod tests {
             rank_at_death: 0,
             delay_stat_reveal: false,
             golden_token_id: 0,
+            launch_tournament_winner_token_id: 0,
         };
         let packed = PackingAdventurerMetadata::pack(meta);
         let unpacked: AdventurerMetadata = PackingAdventurerMetadata::unpack(packed);
@@ -157,12 +181,13 @@ mod tests {
         assert(unpacked.rank_at_death == 0, 'rank at death should be 0');
         assert(unpacked.delay_stat_reveal == false, 'delay reveal should be false');
         assert(unpacked.golden_token_id == 0, 'golden token id should be 0');
+        assert(unpacked.launch_tournament_winner_token_id == 0, 'champ token should be 0');
     }
 
     #[test]
     fn test_new_adventurer_metadata() {
         let birthdate = 12345;
-        let meta = ImplAdventurerMetadata::new(birthdate, false, 0);
+        let meta = ImplAdventurerMetadata::new(birthdate, false, 0, 0);
         assert(meta.birth_date == birthdate, 'start time should be 12345');
         assert(meta.death_date == 0, 'end time should be 0');
         assert(meta.level_seed == 0, 'level seed should be 0');
@@ -170,5 +195,6 @@ mod tests {
         assert(meta.rank_at_death == 0, 'rank at death should be 0');
         assert(meta.delay_stat_reveal == false, 'delay reveal should be false');
         assert(meta.golden_token_id == 0, 'golden token id should be 0');
+        assert(meta.launch_tournament_winner_token_id == 0, 'champ token should be 0');
     }
 }
