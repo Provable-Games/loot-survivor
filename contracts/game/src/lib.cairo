@@ -134,6 +134,7 @@ mod Game {
     struct Storage {
         _adventurer: Map::<felt252, Adventurer>,
         _adventurer_client_provider: Map::<felt252, ContractAddress>,
+        _adventurer_dropped_items: Vec<Item>,
         _adventurer_meta: Map::<felt252, AdventurerMetadata>,
         _adventurer_minter: Map::<felt252, ContractAddress>,
         _adventurer_name: Map::<felt252, felt252>,
@@ -723,7 +724,7 @@ mod Game {
             assert(!_is_expired(@self, adventurer_id), messages::GAME_EXPIRED);
 
             // drop items
-            _drop(@self, ref adventurer, ref bag, adventurer_id, items.clone());
+            _drop(ref self, ref adventurer, ref bag, adventurer_id, items.clone());
 
             // emit dropped items event
             __event_DroppedItems(ref self, adventurer, adventurer_id, bag, items);
@@ -2811,7 +2812,7 @@ mod Game {
     /// @return A tuple containing two boolean values. The first indicates if the adventurer was
     /// mutated, the second indicates if the bag was mutated.
     fn _drop(
-        self: @ContractState,
+        ref self: ContractState,
         ref adventurer: Adventurer,
         ref bag: Bag,
         adventurer_id: felt252,
@@ -2824,26 +2825,45 @@ mod Game {
                 break ();
             }
 
-            // get and drop item
-            let item_id = *items.at(i);
-            if adventurer.equipment.is_equipped(item_id) {
-                let item = adventurer.equipment.get_item(item_id);
+            // init a blank item to use for dropped item storage
+            let mut item = ImplItem::new(0);
 
-                // if the item was providing a stat boosts, remove it
+            // get item id
+            let item_id = *items.at(i);
+
+            // if item is equipped
+            if adventurer.equipment.is_equipped(item_id) {
+                // get it from adventurer equipment
+                item = adventurer.equipment.get_item(item_id);
+
+                // if the item was providing a stat boosts
                 if item.get_greatness() >= SUFFIX_UNLOCK_GREATNESS {
-                    _remove_item_stat_boost(self, ref adventurer, adventurer_id, item);
+                    // remove it
+                    _remove_item_stat_boost(@self, ref adventurer, adventurer_id, item);
                 }
 
+                // drop the item
                 adventurer.equipment.drop(item_id);
+
+                // set adventurer to mutated
                 adventurer.mutated = true;
             } else {
+                // if item is not equipped, it must be in the bag
+                // but we double check and panic just in case
                 let (item_in_bag, _) = bag.contains(item_id);
                 if item_in_bag {
+                    // get item from the bag
+                    item = bag.get_item(item_id);
+
+                    // remove item from the bag (sets mutated to true)
                     bag.remove_item(item_id);
                 } else {
                     panic_with_felt252('Item not owned by adventurer');
                 }
             }
+
+            // add item to our adventurer dropped item storage
+            self._adventurer_dropped_items.append().write(item);
 
             i += 1;
         };
