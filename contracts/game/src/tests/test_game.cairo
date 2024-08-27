@@ -2392,7 +2392,10 @@ mod tests {
         // set block timestamp to one second after the launch tournament end
         start_cheat_block_timestamp_global(genesis_tournament_end + 1);
         // try to enter launch tournament should panic
-        game.enter_launch_tournament(12, 123, ZERO_ADDRESS(), false, ZERO_ADDRESS(), 0);
+        game
+            .enter_launch_tournament(
+                12, 123, ZERO_ADDRESS(), false, ZERO_ADDRESS(), 0, ZERO_ADDRESS()
+            );
     }
 
     #[test]
@@ -2408,7 +2411,10 @@ mod tests {
         );
 
         // try to enter launch tournament should panic
-        game.enter_launch_tournament(12, 123, ZERO_ADDRESS(), false, ZERO_ADDRESS(), 0);
+        game
+            .enter_launch_tournament(
+                12, 123, ZERO_ADDRESS(), false, ZERO_ADDRESS(), 0, ZERO_ADDRESS()
+            );
     }
 
     #[test]
@@ -2429,7 +2435,13 @@ mod tests {
         // try to enter tournament with a wallet that doesn't own the qualifying token
         game
             .enter_launch_tournament(
-                12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1
+                12,
+                123,
+                ZERO_ADDRESS(),
+                false,
+                blobert_dispatcher.contract_address,
+                1,
+                ZERO_ADDRESS()
             );
     }
 
@@ -2448,14 +2460,26 @@ mod tests {
         // Enter genesis tournament using token id 1
         game
             .enter_launch_tournament(
-                12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1
+                12,
+                123,
+                ZERO_ADDRESS(),
+                false,
+                blobert_dispatcher.contract_address,
+                1,
+                ZERO_ADDRESS()
             );
 
         // try to enter tournament with the same token id again
         // should panic
         game
             .enter_launch_tournament(
-                12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1
+                12,
+                123,
+                ZERO_ADDRESS(),
+                false,
+                blobert_dispatcher.contract_address,
+                1,
+                ZERO_ADDRESS()
             );
     }
 
@@ -2473,7 +2497,13 @@ mod tests {
         // Enter genesis tournament using token id 1
         let adventurer_ids = game
             .enter_launch_tournament(
-                12, 123, ZERO_ADDRESS(), false, blobert_dispatcher.contract_address, 1
+                12,
+                123,
+                ZERO_ADDRESS(),
+                false,
+                blobert_dispatcher.contract_address,
+                1,
+                ZERO_ADDRESS()
             );
 
         // assert the claim resulted in 1 game being minted
