@@ -1329,6 +1329,28 @@ class ClaimedFreeGamesFilter:
 
 
 @strawberry.input
+class TokenWithFreeGameStatusFilter:
+    token: Optional[HexValueFilter] = None
+    tokenId: Optional[FeltValueFilter] = None
+    ownerAddress: Optional[HexValueFilter] = None
+    freeGameUsed: Optional[BooleanFilter] = None
+    freeGameRevealed: Optional[BooleanFilter] = None
+    adventurerId: Optional[FeltValueFilter] = None
+
+    def to_dict(self):
+        return {
+            "token": self.token.to_dict() if self.token else None,
+            "tokenId": self.tokenId.to_dict() if self.tokenId else None,
+            "ownerAddress": self.ownerAddress.to_dict() if self.ownerAddress else None,
+            "freeGameUsed": self.freeGameUsed.to_dict() if self.freeGameUsed else None,
+            "freeGameRevealed": (
+                self.freeGameRevealed.to_dict() if self.freeGameRevealed else None
+            ),
+            "adventurerId": self.adventurerId.to_dict() if self.adventurerId else None,
+        }
+
+
+@strawberry.input
 class AdventurersOrderByInput:
     id: Optional[OrderByInput] = None
     entropy: Optional[OrderByInput] = None
@@ -1663,6 +1685,28 @@ class ClaimedFreeGamesOrderByInput:
             "tokenId": self.tokenId.to_dict() if self.tokenId else None,
             "adventurerId": self.adventurerId.to_dict() if self.adventurerId else None,
             "revealed": self.revealed.to_dict() if self.revealed else None,
+        }
+
+
+@strawberry.input
+class TokenWithFreeGameStatusOrderByInput:
+    token: Optional[OrderByInput] = None
+    tokenId: Optional[OrderByInput] = None
+    ownerAddress: Optional[OrderByInput] = None
+    freeGameUsed: Optional[OrderByInput] = None
+    freeGameRevealed: Optional[OrderByInput] = None
+    adventurerId: Optional[OrderByInput] = None
+
+    def to_dict(self):
+        return {
+            "token": self.token.to_dict() if self.token else None,
+            "tokenId": self.tokenId.to_dict() if self.tokenId else None,
+            "ownerAddress": self.ownerAddress.to_dict() if self.ownerAddress else None,
+            "freeGameUsed": self.freeGameUsed.to_dict() if self.freeGameUsed else None,
+            "freeGameRevealed": (
+                self.freeGameRevealed.to_dict() if self.freeGameRevealed else None
+            ),
+            "adventurerId": self.adventurerId.to_dict() if self.adventurerId else None,
         }
 
 
@@ -2677,10 +2721,10 @@ async def get_free_games(
 
 async def get_tokens_with_free_game_status(
     info,
-    where: Optional[TokensFilter] = {},
+    where: Optional[TokenWithFreeGameStatusFilter] = {},
     limit: Optional[int] = 10,
     skip: Optional[int] = 0,
-    orderBy: Optional[TokensOrderByInput] = {},
+    orderBy: Optional[TokenWithFreeGameStatusOrderByInput] = {},
 ) -> List[TokenWithFreeGameStatus]:
     db = info.context["db"]
     redis = info.context["redis"]
@@ -2706,6 +2750,8 @@ async def get_tokens_with_free_game_status(
                 token_filter[key] = get_felt_filters(value)
             elif isinstance(value, DateTimeFilter):
                 token_filter[key] = get_date_filters(value)
+            elif isinstance(value, BooleanFilter):
+                filter[key] = get_bool_filters(value)
 
     sort_options = {
         k: v for k, v in (orderBy.__dict__ if orderBy else {}).items() if v is not None
@@ -2723,17 +2769,18 @@ async def get_tokens_with_free_game_status(
     token_ids = [token["tokenId"] for token in tokens]
     free_games = {
         (fg["token"], fg["tokenId"]): fg
-        for fg in db["claimed_free_games"].find({
-            "token": {"$in": [token["token"] for token in tokens]},
-            "tokenId": {"$in": token_ids}
-        })
+        for fg in db["claimed_free_games"].find(
+            {
+                "token": {"$in": [token["token"] for token in tokens]},
+                "tokenId": {"$in": token_ids},
+            }
+        )
     }
 
     # Combine token and free game information
     result = [
         TokenWithFreeGameStatus.from_mongo(
-            token, 
-            free_games.get((token["token"], token["tokenId"]))
+            token, free_games.get((token["token"], token["tokenId"]))
         )
         for token in tokens
     ]
@@ -2742,6 +2789,7 @@ async def get_tokens_with_free_game_status(
     await redis.set(cache_key, json.dumps([item.__dict__ for item in result]), ex=60)
 
     return result
+
 
 async def get_discoveries_and_battles(
     info,
