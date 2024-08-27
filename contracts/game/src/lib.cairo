@@ -358,6 +358,7 @@ mod Game {
         /// the NFT. Provide 0 to use the default renderer.
         /// @param launch_tournament_winner_token_id A u32 representing the id of a token that won
         /// the launch tournament
+        /// @param mint_to A ContractAddress representing the address to mint the adventurer to.
         /// @return A felt252 representing the adventurer id.
         fn new_game(
             ref self: ContractState,
@@ -368,6 +369,7 @@ mod Game {
             delay_reveal: bool,
             custom_renderer: ContractAddress,
             launch_tournament_winner_token_id: u32,
+            mint_to: ContractAddress
         ) -> felt252 {
             // don't process payment distributions on Katana
             if _network_supports_vrf() {
@@ -403,7 +405,8 @@ mod Game {
                 custom_renderer,
                 delay_reveal,
                 golden_token_id,
-                launch_tournament_winner_token_id
+                launch_tournament_winner_token_id,
+                mint_to
             );
 
             // store client provider address
@@ -972,6 +975,7 @@ mod Game {
         /// @param collection_address A ContractAddress representing the address of the NFT
         /// collection.
         /// @param token_id a u32 representing the token ID of the NFT.
+        /// @param mint_to A ContractAddress representing the address to mint the adventurer to.
         /// @return An Array of felt252 representing the adventurer IDs of the adventurers that were
         fn enter_launch_tournament(
             ref self: ContractState,
@@ -980,7 +984,8 @@ mod Game {
             custom_renderer: ContractAddress,
             delay_stat_reveal: bool,
             collection_address: ContractAddress,
-            token_id: u32
+            token_id: u32,
+            mint_to: ContractAddress
         ) -> Array<felt252> {
             // assert game terminal time has not been reached
             _assert_launch_tournament_is_active(@self);
@@ -1043,7 +1048,7 @@ mod Game {
 
                 // mint/start the game
                 let adventurer_id = _start_game(
-                    ref self, weapon, name, custom_renderer, delay_stat_reveal, 0, 0
+                    ref self, weapon, name, custom_renderer, delay_stat_reveal, 0, 0, mint_to
                 );
 
                 // record the collection the adventurer is playing for
@@ -1811,6 +1816,8 @@ mod Game {
     /// @param delay_stat_reveal A bool representing whether to delay the stat reveal until the
     /// starter beast is defeated.
     /// @param golden_token_id A u8 representing the golden token id of the adventurer.
+    /// @param launch_tournament_winner_token_id A u32 representing the token id of the launch
+    /// @param mint_to A ContractAddress representing the address to mint the adventurer to.
     /// @return A felt252 representing the adventurer id.
     fn _start_game(
         ref self: ContractState,
@@ -1819,7 +1826,8 @@ mod Game {
         custom_renderer: ContractAddress,
         delay_stat_reveal: bool,
         golden_token_id: u8,
-        launch_tournament_winner_token_id: u32
+        launch_tournament_winner_token_id: u32,
+        mint_to: ContractAddress
     ) -> felt252 {
         // assert game terminal time has not been reached
         _assert_terminal_time_not_reached(@self);
@@ -1860,8 +1868,13 @@ mod Game {
         // store the original minter of the adventurer
         self._adventurer_minter.write(adventurer_id, get_caller_address());
 
-        // mint erc721 token to wrap the game
-        self.erc721.mint(get_caller_address(), adventurer_id.into());
+        // if a mint to address was provided, mint the adventurer to that address
+        if mint_to.is_non_zero() {
+            self.erc721.mint(mint_to, adventurer_id.into());
+        } else {
+            // otherwise mint to the caller
+            self.erc721.mint(get_caller_address(), adventurer_id.into());
+        }
 
         // emit events
         __event_StartGame(

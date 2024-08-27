@@ -20,7 +20,8 @@ trait IGame<TContractState> {
         golden_token_id: u8,
         delay_reveal: bool,
         custom_renderer: ContractAddress,
-        launch_tournament_winner_token_id: u32
+        launch_tournament_winner_token_id: u32,
+        mint_to: ContractAddress
     ) -> felt252;
     fn explore(
         ref self: TContractState, adventurer_id: felt252, till_beast: bool
@@ -60,7 +61,8 @@ trait IGame<TContractState> {
         custom_renderer: ContractAddress,
         delay_stat_reveal: bool,
         collection_address: ContractAddress,
-        token_id: u32
+        token_id: u32,
+        mint_to: ContractAddress
     ) -> Array<felt252>;
     fn settle_launch_tournament(ref self: TContractState);
     // ------ View Functions ------
