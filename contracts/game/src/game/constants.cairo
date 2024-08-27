@@ -70,7 +70,7 @@ mod messages {
     const TOKEN_ALREADY_REGISTERED: felt252 = 'token already registered';
     const ITEM_SPECIALS_UNAVAILABLE: felt252 = 'item specials unavailable';
     const TOURNAMENT_STILL_ACTIVE: felt252 = 'tournament still active';
-    const TOURNAMENT_WINNER_ALREADY_SET: felt252 = 'tournament winner already set';
+    const TOURNAMENT_WINNER_ALREADY_SET: felt252 = 'tournament already settled';
     const FREE_GAME_UNAVAILABLE: felt252 = 'free game not yet available';
     const NOT_PARTICIPATED_IN_TOURNAMENT: felt252 = 'not tournament participant';
     const COLLECTION_OUT_OF_GAMES: felt252 = 'collection out of games';
@@ -93,4 +93,3 @@ mod REWARD_DISTRIBUTIONS_BP {
     const THIRD_PLACE: u128 = 100;
     const CREATOR: u128 = 200;
 }
-

@@ -3664,7 +3664,7 @@ mod Game {
         }
 
         // if player xp is higher than minimum score for payouts
-        if adventurer.xp > MINIMUM_SCORE_FOR_PAYOUTS {
+        if adventurer.xp >= MINIMUM_SCORE_FOR_PAYOUTS {
             // record rank at death for onchain fun
             _record_adventurer_rank_at_death(ref self, adventurer_id, player_rank);
         }

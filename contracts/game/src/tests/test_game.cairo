@@ -22,7 +22,8 @@ mod tests {
     use game::{
         Game, LaunchTournamentCollections,
         Game::{
-            IGame, _process_item_level_up, _set_item_specials_seed, _initialize_launch_tournament
+            IGame, _process_item_level_up, _set_item_specials_seed, _initialize_launch_tournament,
+            _process_adventurer_death
         },
         game::{
             interfaces::{IGameDispatcherTrait, IGameDispatcher},
@@ -2254,144 +2255,118 @@ mod tests {
 
     #[test]
     fn test_adventurer_death_ranking() {
-        // deploy_game
-        let shopping_cart = ArrayTrait::<ItemPurchase>::new();
-        let stat_upgrades = Stats {
-            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 1, luck: 0
+        let mut state = Game::contract_state_for_testing();
+
+        // Create four adventurers
+        let mut adventurer1 = ImplAdventurer::new(ItemId::Wand);
+        let mut adventurer2 = ImplAdventurer::new(ItemId::Wand);
+        let mut adventurer3 = ImplAdventurer::new(ItemId::Wand);
+        let mut adventurer4 = ImplAdventurer::new(ItemId::Wand);
+        let mut adventurer5 = ImplAdventurer::new(ItemId::Wand);
+
+        // Set different XP values to create a ranking
+        adventurer1.xp = 50;
+        adventurer2.xp = 200;
+        adventurer3.xp = 300;
+        adventurer4.xp = 250;
+        adventurer5.xp = 225;
+
+        // Save adventurers to state
+        state._adventurer.write(1, adventurer1);
+        state._adventurer.write(2, adventurer2);
+        state._adventurer.write(3, adventurer3);
+        state._adventurer.write(4, adventurer4);
+        state._adventurer.write(5, adventurer5);
+
+        // Set metadata for each adventurer
+        let current_timestamp = 1000000;
+        let mut metadata = AdventurerMetadata {
+            birth_date: current_timestamp,
+            death_date: 0,
+            rank_at_death: 0,
+            item_specials_seed: 0,
+            level_seed: 0,
+            delay_stat_reveal: false,
+            golden_token_id: 0,
+            launch_tournament_winner_token_id: 0
         };
-        let starting_block = 1000;
-        let mut current_block_time = 1696201757;
-        let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, current_block_time, 0, 0);
 
-        // Create a new adventurer
-        current_block_time += 777;
-        let player1_birth_date = current_block_time;
-        start_cheat_block_timestamp_global(current_block_time);
-        let player1 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
-        game.attack(player1, false);
-        game.upgrade(player1, 0, stat_upgrades, shopping_cart.clone());
-        game.explore(player1, true);
-        current_block_time += 1000;
-        let player1_death_date = current_block_time;
-        start_cheat_block_timestamp_global(current_block_time);
-        game.attack(player1, true);
+        state._adventurer_meta.write(1, metadata);
+        state._adventurer_meta.write(2, metadata);
+        state._adventurer_meta.write(3, metadata);
+        state._adventurer_meta.write(4, metadata);
+        state._adventurer_meta.write(5, metadata);
 
-        // assert adventurer metadata and leaderboard
-        let player1_metadata = game.get_adventurer_meta(player1);
-        let leaderboard = game.get_leaderboard();
-        assert(player1_metadata.birth_date == player1_birth_date, 'Birth date not set correctly');
-        assert(player1_metadata.death_date == player1_death_date, 'Death date not set correctly');
-        assert(player1_metadata.rank_at_death == 1, 'Rank at death not set correctly');
-        assert(leaderboard.first.adventurer_id.into() == player1, 'player1 should be 1st place');
+        let mut adventurer1 = state._adventurer.read(1);
+        _process_adventurer_death(ref state, ref adventurer1, 1, 0, 0, false);
 
-        // introduce second player (new top score)
-        current_block_time += 777;
-        let player2_birth_date = current_block_time;
-        start_cheat_block_timestamp_global(current_block_time);
-        let player2 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
-        game.attack(player2, false);
-        game.upgrade(player2, 1, stat_upgrades, shopping_cart.clone());
-        game.explore(player2, true);
-        current_block_time += 777;
-        let player2_death_date = current_block_time;
-        start_cheat_block_timestamp_global(current_block_time);
-        game.upgrade(player2, 1, stat_upgrades, shopping_cart.clone());
-        game.explore(player2, true);
-        game.attack(player2, true);
+        let mut adventurer2 = state._adventurer.read(2);
+        _process_adventurer_death(ref state, ref adventurer2, 2, 0, 0, false);
 
-        // assert adventurer metadata and leaderboard
-        let player1_metadata = game.get_adventurer_meta(player1);
-        let player2_metadata = game.get_adventurer_meta(player2);
-        let leaderboard = game.get_leaderboard();
-        assert(player2_metadata.birth_date == player2_birth_date, 'Birth date not set correctly');
-        assert(player2_metadata.death_date == player2_death_date, 'Death date not set correctly');
-        assert(player2_metadata.rank_at_death == 1, 'P2 should be death rank 1');
-        assert(player1_metadata.rank_at_death == 1, 'P1 should be death rank 1');
-        assert(leaderboard.first.adventurer_id.into() == player2, 'P2 should be 1st on LB');
-        assert(leaderboard.second.adventurer_id.into() == player1, 'P1 should be 2nd on LB');
+        let mut adventurer3 = state._adventurer.read(3);
+        _process_adventurer_death(ref state, ref adventurer3, 3, 0, 0, false);
 
-        // introduce third player (new top score)
-        current_block_time += 777;
-        let player3_birth_date = current_block_time;
-        start_cheat_block_timestamp_global(current_block_time);
-        let player3 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
-        game.attack(player3, false);
-        let stat_upgrades = Stats {
-            strength: 0, dexterity: 1, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
-        };
-        game.upgrade(player3, 1, stat_upgrades, shopping_cart.clone());
-        game.explore(player3, true);
-        game.flee(player3, true);
-        game.explore(player3, true);
-        game.upgrade(player3, 0, stat_upgrades, shopping_cart.clone());
-        game.explore(player3, true);
-        game.upgrade(player3, 0, stat_upgrades, shopping_cart.clone());
-        game.explore(player3, true);
-        game.attack(player3, true);
-        game.explore(player3, true);
-        game.upgrade(player3, 0, stat_upgrades, shopping_cart.clone());
-        game.explore(player3, true);
-        current_block_time += 777;
-        let player3_death_date = current_block_time;
-        start_cheat_block_timestamp_global(current_block_time);
-        game.attack(player3, true);
+        let mut adventurer4 = state._adventurer.read(4);
+        _process_adventurer_death(ref state, ref adventurer4, 4, 0, 0, false);
 
-        // assert adventurer metadata and leaderboard
-        let player3_metadata = game.get_adventurer_meta(player3);
-        let player2_metadata = game.get_adventurer_meta(player2);
-        let player1_metadata = game.get_adventurer_meta(player1);
-        let leaderboard = game.get_leaderboard();
-        assert(
-            player3_metadata.death_date == player3_death_date, 'P3 death date not set correctly'
-        );
-        assert(
-            player3_metadata.birth_date == player3_birth_date, 'P3 birth date not set correctly'
-        );
-        assert(player3_metadata.rank_at_death == 1, 'P3 should be death rank 1');
-        assert(player2_metadata.rank_at_death == 1, 'P2 should be death rank 1');
-        assert(player1_metadata.rank_at_death == 1, 'P1 should be death rank 1');
-        assert(leaderboard.first.adventurer_id.into() == player3, 'P3 should be 1st on LB');
-        assert(leaderboard.second.adventurer_id.into() == player2, 'P2 should be 2nd on LB');
-        assert(leaderboard.third.adventurer_id.into() == player1, 'P1 should be 3rd on LB');
+        // Check leaderboard
+        let leaderboard = state.get_leaderboard();
+        assert(leaderboard.first.adventurer_id.into() == 3, 'P3 should be 1st on LB');
+        assert(leaderboard.second.adventurer_id.into() == 4, 'P4 should be 2nd on LB');
+        assert(leaderboard.third.adventurer_id.into() == 2, 'P2 should be 3rd on LB');
 
-        // introduce fourth player (2nd place finish)
-        current_block_time += 777;
-        let player4_birth_date = current_block_time;
-        start_cheat_block_timestamp_global(current_block_time);
-        let player4 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
-        game.attack(player4, false);
-        game.upgrade(player4, 0, stat_upgrades, shopping_cart.clone());
-        game.explore(player4, true);
-        game.upgrade(player4, 0, stat_upgrades, shopping_cart.clone());
-        game.explore(player4, true);
-        game.attack(player4, true);
-        game.explore(player4, true);
-        game.upgrade(player4, 0, stat_upgrades, shopping_cart.clone());
-        game.explore(player4, true);
-        current_block_time += 777;
-        let player4_death_date = current_block_time;
-        start_cheat_block_timestamp_global(current_block_time);
-        game.attack(player4, true);
+        // Check rank at death
+        let metadata1 = state._adventurer_meta.read(1);
+        let metadata2 = state._adventurer_meta.read(2);
+        let metadata3 = state._adventurer_meta.read(3);
+        let metadata4 = state._adventurer_meta.read(4);
 
-        // assert adventurer metadata and leaderboard
-        let player1_metadata = game.get_adventurer_meta(player1);
-        let player2_metadata = game.get_adventurer_meta(player2);
-        let player3_metadata = game.get_adventurer_meta(player3);
-        let player4_metadata = game.get_adventurer_meta(player4);
-        let leaderboard = game.get_leaderboard();
-        assert(
-            player4_metadata.birth_date == player4_birth_date, 'P4 birth date not set correctly'
-        );
-        assert(
-            player4_metadata.death_date == player4_death_date, 'P4 death date not set correctly'
-        );
-        assert(player4_metadata.rank_at_death == 2, 'P4 should be death rank 2');
-        assert(player3_metadata.rank_at_death == 1, 'P3 should be death rank 1');
-        assert(player2_metadata.rank_at_death == 1, 'P2 should be death rank 1');
-        assert(player1_metadata.rank_at_death == 1, 'P1 should be death rank 1');
-        assert(leaderboard.first.adventurer_id.into() == player3, 'P3 should be 1st on LB');
-        assert(leaderboard.second.adventurer_id.into() == player4, 'P4 should be 2nd on LB');
-        assert(leaderboard.third.adventurer_id.into() == player2, 'P2 should be 3rd on LB');
+        // adventurer 1 technically finished first but their score wasn't above 100xp
+        // so they don't get a qualified rank
+        assert(metadata1.rank_at_death == 0, 'P1 should be death rank 0');
+
+        // adventurer 2 finished first and above 100xp so they get a death rank
+        assert(metadata2.rank_at_death == 1, 'P2 should be death rank 1');
+
+        // adventurer 3 finished higher than adventurer 2 so they now also get death rank 1
+        assert(metadata3.rank_at_death == 1, 'P3 should be death rank 1');
+
+        // verify adventurer 2 is still death rank 1 too
+        let metadata2 = state._adventurer_meta.read(2);
+        assert(metadata2.rank_at_death == 1, 'P2 should be death rank 1');
+
+        // adventurer 4 finishes above 100xp in 2nd place so they get death rank 2
+        assert(metadata4.rank_at_death == 2, 'P4 should be death rank 2');
+
+        // verify adventurer 2 and 3 still have rank 1
+        let metadata2 = state._adventurer_meta.read(2);
+        let metadata3 = state._adventurer_meta.read(3);
+        assert(metadata2.rank_at_death == 1, 'P2 should be death rank 1');
+        assert(metadata3.rank_at_death == 1, 'P3 should be death rank 1');
+
+        // adventurer 5 dies and finishes 3rd
+        let mut adventurer5 = state._adventurer.read(5);
+        _process_adventurer_death(ref state, ref adventurer5, 5, 0, 0, false);
+
+        // check leaderboard
+        let leaderboard = state.get_leaderboard();
+        assert(leaderboard.first.adventurer_id.into() == 3, 'P3 should be 1st on LB');
+        assert(leaderboard.second.adventurer_id.into() == 4, 'P4 should be 2nd on LB');
+        assert(leaderboard.third.adventurer_id.into() == 5, 'P5 should be 3rd on LB');
+
+        // assert death rank from meta data
+        let metadata5 = state._adventurer_meta.read(5);
+        assert(metadata5.rank_at_death == 3, 'P5 should be death rank 3');
+
+        // verify other adventurers still have same death rank
+        let metadata1 = state._adventurer_meta.read(1);
+        let metadata2 = state._adventurer_meta.read(2);
+        let metadata3 = state._adventurer_meta.read(3);
+        let metadata4 = state._adventurer_meta.read(4);
+        assert(metadata1.rank_at_death == 0, 'P1 should be death rank 0');
+        assert(metadata2.rank_at_death == 1, 'P2 should be death rank 1');
+        assert(metadata3.rank_at_death == 1, 'P3 should be death rank 1');
+        assert(metadata4.rank_at_death == 2, 'P4 should be death rank 2');
     }
 
     #[test]
@@ -2948,5 +2923,133 @@ mod tests {
             state._launch_tournament_games_per_claim.read(contract_address_const::<3>()) == 3,
             'games per token collection 3'
         );
+    }
+
+    #[test]
+    fn test_settle_launch_tournament() {
+        // Initialize the contract state for testing
+        let mut state = Game::contract_state_for_testing();
+
+        // Create a span of qualifying collections
+        let mut qualifying_collections = ArrayTrait::<LaunchTournamentCollections>::new();
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<1>(), games_per_token: 1
+                }
+            );
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<2>(), games_per_token: 2
+                }
+            );
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<3>(), games_per_token: 3
+                }
+            );
+
+        // Initialize the launch tournament
+        _initialize_launch_tournament(ref state, qualifying_collections.span());
+
+        // Set different scores for each collection
+        state._launch_tournament_scores.write(contract_address_const::<1>(), 100);
+        state._launch_tournament_scores.write(contract_address_const::<2>(), 200);
+        state._launch_tournament_scores.write(contract_address_const::<3>(), 150);
+
+        // Set the tournament end time to a past timestamp
+        let current_timestamp = 1000000;
+        state._launch_tournament_end_time.write(current_timestamp - 1);
+
+        // Mock the block timestamp
+        start_cheat_block_timestamp_global(current_timestamp);
+
+        // Call the settle_launch_tournament function
+        state.settle_launch_tournament();
+
+        // Verify the results
+        let champions_dispatcher = state._launch_tournament_champions_dispatcher.read();
+        assert(
+            champions_dispatcher.contract_address == contract_address_const::<2>(),
+            'Wrong champion collection'
+        );
+    }
+    #[test]
+    #[should_panic(expected: ('tournament still active',))]
+    fn test_settle_launch_tournament_before_end() {
+        // Initialize the contract state for testing
+        let mut state = Game::contract_state_for_testing();
+
+        // Create a span of qualifying collections
+        let mut qualifying_collections = ArrayTrait::<LaunchTournamentCollections>::new();
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<1>(), games_per_token: 1
+                }
+            );
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<2>(), games_per_token: 2
+                }
+            );
+
+        // Initialize the launch tournament
+        _initialize_launch_tournament(ref state, qualifying_collections.span());
+
+        // Set the tournament end time to a future timestamp
+        let current_timestamp = 1000000;
+        state._launch_tournament_end_time.write(current_timestamp + 1000);
+
+        // Mock the block timestamp to be before the end time
+        start_cheat_block_timestamp_global(current_timestamp);
+
+        // Attempt to settle the tournament before it has ended (should panic)
+        state.settle_launch_tournament();
+    }
+
+    #[test]
+    #[should_panic(expected: ('tournament already settled',))]
+    fn test_settle_launch_tournament_twice() {
+        // Initialize the contract state for testing
+        let mut state = Game::contract_state_for_testing();
+
+        // Create a span of qualifying collections
+        let mut qualifying_collections = ArrayTrait::<LaunchTournamentCollections>::new();
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<1>(), games_per_token: 1
+                }
+            );
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<2>(), games_per_token: 2
+                }
+            );
+
+        // Initialize the launch tournament
+        _initialize_launch_tournament(ref state, qualifying_collections.span());
+
+        // Set different scores for each collection
+        state._launch_tournament_scores.write(contract_address_const::<1>(), 100);
+        state._launch_tournament_scores.write(contract_address_const::<2>(), 200);
+
+        // Set the tournament end time to a past timestamp
+        let current_timestamp = 1000000;
+        state._launch_tournament_end_time.write(current_timestamp - 1);
+
+        // Mock the block timestamp
+        start_cheat_block_timestamp_global(current_timestamp);
+
+        // Settle the tournament for the first time
+        state.settle_launch_tournament();
+
+        // Attempt to settle the tournament again (should panic)
+        state.settle_launch_tournament();
     }
 }
