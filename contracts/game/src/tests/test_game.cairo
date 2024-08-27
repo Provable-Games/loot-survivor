@@ -389,7 +389,8 @@ mod tests {
                 golden_token_id,
                 false,
                 ZERO_ADDRESS(),
-                0
+                0,
+                ZERO_ADDRESS()
             );
 
         let new_adventurer = game.get_adventurer(adventurer_id);
@@ -413,7 +414,8 @@ mod tests {
                 golden_token_id,
                 false,
                 ZERO_ADDRESS(),
-                0
+                0,
+                ZERO_ADDRESS()
             );
 
         let new_adventurer = game.get_adventurer(adventurer_id);
@@ -436,7 +438,10 @@ mod tests {
         let name = 'abcdefghijklmno';
 
         // start new game
-        game.new_game(INTERFACE_ID(), starting_weapon, name, 0, false, ZERO_ADDRESS(), 0);
+        game
+            .new_game(
+                INTERFACE_ID(), starting_weapon, name, 0, false, ZERO_ADDRESS(), 0, ZERO_ADDRESS()
+            );
 
         // get adventurer state
         let adventurer = game.get_adventurer(ADVENTURER_ID);
@@ -755,7 +760,10 @@ mod tests {
         let name = 'abcdefghijklmno';
 
         // start new game
-        game.new_game(INTERFACE_ID(), starting_weapon, name, 0, false, ZERO_ADDRESS(), 0);
+        game
+            .new_game(
+                INTERFACE_ID(), starting_weapon, name, 0, false, ZERO_ADDRESS(), 0, ZERO_ADDRESS()
+            );
 
         // get adventurer state
         let adventurer = game.get_adventurer(ADVENTURER_ID);

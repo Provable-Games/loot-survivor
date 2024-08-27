@@ -22,6 +22,9 @@ custom_renderer=0x0
 qualifying_collections="3 0x07c006181ea9cc7dd1b09c29e9ff23112be30ecfef73b760fabe5bc7ae6ecb44 0x04efe851716110abeee81b7f22f7964845355ffa32e6833fc3a557a1881721ac 0x04a79a62dc260f2e9e4b208181b2014c14f3ff44fe7d0e6452a759ed91a106d1"
 vrf_premiums_address=0x06a519DCcd7Ed4D1aACD3975691AEEae47bF7f9F5b62Ed7C2D929D2E27A9CC5E
 launch_promotion_end_timestamp=1724971234
+launch_tournament_games_per_collection=300
+launch_tournament_winner_token_id=0
+mint_to=0
 
 # Source env vars
 ENV_FILE="/workspaces/loot-survivor/.env"
@@ -41,7 +44,7 @@ game_class_hash=$(starkli declare --watch /workspaces/loot-survivor/target/dev/g
 renderer_contract=$(starkli deploy --watch $renderer_class_hash --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null)
 
 # deploy game
-game_contract=$(starkli deploy --watch $game_class_hash $lords_contract $eth_contract $dao_address $pg_address $beasts_address $golden_token_address $terminal_timestamp $randomness_contract $oracle_address $renderer_contract $qualifying_collections $launch_promotion_end_timestamp $vrf_premiums_address --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null)
+game_contract=$(starkli deploy --watch $game_class_hash $lords_contract $eth_contract $dao_address $pg_address $beasts_address $golden_token_address $terminal_timestamp $randomness_contract $oracle_address $renderer_contract $qualifying_collections $launch_promotion_end_timestamp $vrf_premiums_address $launch_tournament_games_per_collection --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null)
 
 # mint lords
 echo "minting lords"
@@ -57,7 +60,7 @@ starkli invoke --watch $eth_contract transfer $game_contract 50000000000000000 0
 
 # start new game
 echo "starting new game"
-starkli invoke --watch $game_contract new_game $client_reward_address $starting_weapon $player_name $golden_token_id $interface_camel $vrf_fee_limit $custom_renderer --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null
+starkli invoke --watch $game_contract new_game $client_reward_address $starting_weapon $player_name $golden_token_id $interface_camel $vrf_fee_limit $custom_renderer $launch_tournament_winner_token_id $mint_to --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null
 
 #output contracts and export contract vars
 echo "game contract: " $game_contract
