@@ -29,8 +29,7 @@ export const networkConfig = {
     accountClassHash: "0x0",
   },
   mainnet: {
-    rpcUrl:
-      "https://starknet-mainnet.blastapi.io/5ef61753-e7c1-4593-bc62-97fdf96f8de5",
+    rpcUrl: "https://api.cartridge.gg/x/starknet/mainnet",
     lsGQLURL: "https://ls-indexer-mainnet.provable.games/graphql",
     tokensGQLURL: "https://realms.world/api/graphql",
     ethAddress:
