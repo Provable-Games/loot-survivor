@@ -1651,8 +1651,8 @@ mod Game {
         self._adventurer_meta.write(adventurer_id, adventurer_meta);
     }
 
-    fn _calculate_payout(bp: u256, price: u128) -> u256 {
-        (bp * price.into()) / 1000
+    fn _calculate_payout(bp: u128, price: u128) -> u128 {
+        (bp * price) / 1000
     }
 
     fn _get_cost_to_play(self: @ContractState) -> u128 {
@@ -1668,37 +1668,27 @@ mod Game {
     fn _get_reward_distribution(self: @ContractState) -> Rewards {
         let cost_to_play = self._cost_to_play.read();
 
-        // Alternate contract reward between PG and Biblo for each game
-        // @dev this reduces total erc20 transfers per game
+        let mut rewards = Rewards {
+            BIBLIO: _calculate_payout(REWARD_DISTRIBUTIONS_BP::CREATOR, cost_to_play),
+            PG: 0,
+            CLIENT_PROVIDER: _calculate_payout(
+                REWARD_DISTRIBUTIONS_BP::CLIENT_PROVIDER, cost_to_play
+            ),
+            FIRST_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::FIRST_PLACE, cost_to_play),
+            SECOND_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::SECOND_PLACE, cost_to_play),
+            THIRD_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::THIRD_PLACE, cost_to_play),
+        };
+
+        // alternate contract rewards between pg and bibio
+        // @dev this is functional equivalent to splitting rewards but saves an erc20 transfer
         let game_count = self._game_count.read();
         let (_, r) = integer::U256DivRem::div_rem(game_count.into(), 2);
         if r == 1 {
-            Rewards {
-                BIBLIO: _calculate_payout(REWARD_DISTRIBUTIONS_BP::CREATOR, cost_to_play),
-                PG: 0,
-                CLIENT_PROVIDER: _calculate_payout(
-                    REWARD_DISTRIBUTIONS_BP::CLIENT_PROVIDER, cost_to_play
-                ),
-                FIRST_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::FIRST_PLACE, cost_to_play),
-                SECOND_PLACE: _calculate_payout(
-                    REWARD_DISTRIBUTIONS_BP::SECOND_PLACE, cost_to_play
-                ),
-                THIRD_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::THIRD_PLACE, cost_to_play)
-            }
-        } else {
-            Rewards {
-                BIBLIO: 0,
-                PG: _calculate_payout(REWARD_DISTRIBUTIONS_BP::CREATOR, cost_to_play),
-                CLIENT_PROVIDER: _calculate_payout(
-                    REWARD_DISTRIBUTIONS_BP::CLIENT_PROVIDER, cost_to_play
-                ),
-                FIRST_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::FIRST_PLACE, cost_to_play),
-                SECOND_PLACE: _calculate_payout(
-                    REWARD_DISTRIBUTIONS_BP::SECOND_PLACE, cost_to_play
-                ),
-                THIRD_PLACE: _calculate_payout(REWARD_DISTRIBUTIONS_BP::THIRD_PLACE, cost_to_play)
-            }
+            rewards.PG = rewards.BIBLIO;
+            rewards.BIBLIO = 0;
         }
+
+        rewards
     }
 
     /// @title Pay for VRF
@@ -1741,65 +1731,74 @@ mod Game {
     fn _process_payment_and_distribute_rewards(
         ref self: ContractState, client_address: ContractAddress
     ) {
-        let rewards = _get_reward_distribution(@self);
-
-        let caller = get_caller_address();
-        let dao_address = self._dao.read();
-        let pg_address = self._pg_address.read();
-        let mut leaderboard = self._leaderboard.read();
-        let mut first_place_address = _get_owner(@self, leaderboard.first.adventurer_id.into());
-        let mut second_place_address = _get_owner(@self, leaderboard.second.adventurer_id.into());
-        let mut third_place_address = _get_owner(@self, leaderboard.third.adventurer_id.into());
-
-        // wait until we have three decent scores before rewarding top scores
-        // this removes incentive to quickly play and die with bots
-        if leaderboard.third.xp < MINIMUM_SCORE_FOR_PAYOUTS {
-            first_place_address = self._pg_address.read();
-            second_place_address = self._dao.read();
-            third_place_address = self._dao.read();
-            leaderboard.first.adventurer_id = 0;
-            leaderboard.second.adventurer_id = 0;
-            leaderboard.third.adventurer_id = 0;
-        }
-
+        let leaderboard = self._leaderboard.read();
+        let cost_to_play = self._cost_to_play.read();
         let payment_dispatcher = self._payment_token_dispatcher.read();
-        if (rewards.BIBLIO != 0) {
-            payment_dispatcher.transfer_from(caller, dao_address, rewards.BIBLIO);
+
+        // if the third place score is less than the minimum score for payouts
+        if leaderboard.third.xp < MINIMUM_SCORE_FOR_PAYOUTS {
+            // burn the payment
+            payment_dispatcher
+                .transfer_from(
+                    get_caller_address(), contract_address_const::<0>(), cost_to_play.into()
+                );
         } else {
-            payment_dispatcher.transfer_from(caller, pg_address, rewards.PG);
-        }
+            // if payouts are active, calculate rewards
+            let rewards = _get_reward_distribution(@self);
 
-        payment_dispatcher.transfer_from(caller, client_address, rewards.CLIENT_PROVIDER);
-        payment_dispatcher.transfer_from(caller, first_place_address, rewards.FIRST_PLACE);
-        payment_dispatcher.transfer_from(caller, second_place_address, rewards.SECOND_PLACE);
-        payment_dispatcher.transfer_from(caller, third_place_address, rewards.THIRD_PLACE);
+            // get owner addresses for each place
+            let first_place_address = _get_owner(@self, leaderboard.first.adventurer_id.into());
+            let second_place_address = _get_owner(@self, leaderboard.second.adventurer_id.into());
+            let third_place_address = _get_owner(@self, leaderboard.third.adventurer_id.into());
 
-        __event_RewardDistribution(
-            ref self,
-            RewardDistribution {
-                first_place: PlayerReward {
-                    adventurer_id: leaderboard.first.adventurer_id.into(),
-                    rank: 1,
-                    amount: rewards.FIRST_PLACE,
-                    address: first_place_address
-                },
-                second_place: PlayerReward {
-                    adventurer_id: leaderboard.second.adventurer_id.into(),
-                    rank: 2,
-                    amount: rewards.SECOND_PLACE,
-                    address: second_place_address
-                },
-                third_place: PlayerReward {
-                    adventurer_id: leaderboard.third.adventurer_id.into(),
-                    rank: 3,
-                    amount: rewards.THIRD_PLACE,
-                    address: third_place_address
-                },
-                client: ClientReward { amount: rewards.CLIENT_PROVIDER, address: client_address },
-                dao: rewards.BIBLIO,
-                pg: rewards.PG
+            // if client provider is not zero, transfer rewards
+            if rewards.CLIENT_PROVIDER != 0 {
+                payment_dispatcher
+                    .transfer_from(
+                        get_caller_address(), client_address, rewards.CLIENT_PROVIDER.into()
+                    );
             }
-        );
+
+            if rewards.BIBLIO != 0 {
+                let dao_address = self._dao.read();
+                payment_dispatcher
+                    .transfer_from(get_caller_address(), dao_address, rewards.BIBLIO.into());
+            }
+
+            // if pg is not zero, transfer rewards
+            if rewards.PG != 0 {
+                let pg_address = self._pg_address.read();
+                payment_dispatcher
+                    .transfer_from(get_caller_address(), pg_address, rewards.PG.into());
+            }
+
+            // if first place is not zero, transfer rewards
+            if rewards.FIRST_PLACE != 0 {
+                payment_dispatcher
+                    .transfer_from(
+                        get_caller_address(), first_place_address, rewards.FIRST_PLACE.into()
+                    );
+            }
+
+            // if second place is not zero, transfer rewards
+            if rewards.SECOND_PLACE != 0 {
+                payment_dispatcher
+                    .transfer_from(
+                        get_caller_address(), second_place_address, rewards.SECOND_PLACE.into()
+                    );
+            }
+
+            // if third place is not zero, transfer rewards
+            if rewards.THIRD_PLACE != 0 {
+                payment_dispatcher
+                    .transfer_from(
+                        get_caller_address(), third_place_address, rewards.THIRD_PLACE.into()
+                    );
+            }
+
+            // emit event
+            __event_RewardDistribution(ref self, rewards, leaderboard, client_address);
+        }
     }
 
     /// @title Start Game
@@ -3664,8 +3663,11 @@ mod Game {
             player_rank = 3;
         }
 
-        // store rank at death so this can be used for future onchain fun
-        _record_adventurer_rank_at_death(ref self, adventurer_id, player_rank);
+        // if player xp is higher than minimum score for payouts
+        if adventurer.xp > MINIMUM_SCORE_FOR_PAYOUTS {
+            // record rank at death for onchain fun
+            _record_adventurer_rank_at_death(ref self, adventurer_id, player_rank);
+        }
 
         // emit new high score event
         __event_NewHighScore(ref self, adventurer_id, adventurer, player_rank);
@@ -3915,8 +3917,8 @@ mod Game {
         second_place: PlayerReward,
         third_place: PlayerReward,
         client: ClientReward,
-        dao: u256,
-        pg: u256
+        dao: u128,
+        pg: u128,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -3986,18 +3988,50 @@ mod Game {
     struct PlayerReward {
         adventurer_id: felt252,
         rank: u8,
-        amount: u256,
+        amount: u128,
         address: ContractAddress,
     }
 
     #[derive(Drop, Serde)]
     struct ClientReward {
-        amount: u256,
+        amount: u128,
         address: ContractAddress,
     }
 
-    fn __event_RewardDistribution(ref self: ContractState, event: RewardDistribution) {
-        self.emit(event);
+    fn __event_RewardDistribution(
+        ref self: ContractState,
+        rewards: Rewards,
+        leaderboard: Leaderboard,
+        client_address: ContractAddress
+    ) {
+        let first_place_address = _get_owner(@self, leaderboard.first.adventurer_id.into());
+        let second_place_address = _get_owner(@self, leaderboard.second.adventurer_id.into());
+        let third_place_address = _get_owner(@self, leaderboard.third.adventurer_id.into());
+
+        let reward_distribution = RewardDistribution {
+            first_place: PlayerReward {
+                adventurer_id: leaderboard.first.adventurer_id.into(),
+                rank: 1,
+                amount: rewards.FIRST_PLACE,
+                address: first_place_address
+            },
+            second_place: PlayerReward {
+                adventurer_id: leaderboard.second.adventurer_id.into(),
+                rank: 2,
+                amount: rewards.SECOND_PLACE,
+                address: second_place_address
+            },
+            third_place: PlayerReward {
+                adventurer_id: leaderboard.third.adventurer_id.into(),
+                rank: 3,
+                amount: rewards.THIRD_PLACE,
+                address: third_place_address
+            },
+            client: ClientReward { amount: rewards.CLIENT_PROVIDER, address: client_address },
+            dao: rewards.BIBLIO,
+            pg: rewards.PG,
+        };
+        self.emit(reward_distribution);
     }
     fn __event_RequestedLevelSeed(ref self: ContractState, adventurer_id: felt252, seed: u64) {
         let vrf_address = self._vrf_dispatcher.read().contract_address;

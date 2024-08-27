@@ -3,7 +3,7 @@ const MINIMUM_DAMAGE_FROM_BEASTS: u8 = 2;
 const MAINNET_CHAIN_ID: felt252 = 0x534e5f4d41494e;
 const SEPOLIA_CHAIN_ID: felt252 = 0x534e5f5345504f4c4941;
 const KATANA_CHAIN_ID: felt252 = 0x4b4154414e41;
-const MINIMUM_SCORE_FOR_PAYOUTS: u16 = 50;
+const MINIMUM_SCORE_FOR_PAYOUTS: u16 = 100;
 const SECONDS_IN_DAY: u32 = 86400;
 const TARGET_PRICE_USD_CENTS: u16 = 300;
 const VRF_COST_PER_GAME: u32 = 100000000; // 1$ with 8 decimals
@@ -78,19 +78,19 @@ mod messages {
 
 #[derive(Drop, Copy)]
 struct Rewards {
-    BIBLIO: u256,
-    PG: u256,
-    CLIENT_PROVIDER: u256,
-    FIRST_PLACE: u256,
-    SECOND_PLACE: u256,
-    THIRD_PLACE: u256,
+    BIBLIO: u128,
+    PG: u128,
+    CLIENT_PROVIDER: u128,
+    FIRST_PLACE: u128,
+    SECOND_PLACE: u128,
+    THIRD_PLACE: u128,
 }
 
 mod REWARD_DISTRIBUTIONS_BP {
-    const CLIENT_PROVIDER: u256 = 270;
-    const FIRST_PLACE: u256 = 270;
-    const SECOND_PLACE: u256 = 160;
-    const THIRD_PLACE: u256 = 100;
-    const CREATOR: u256 = 200;
+    const CLIENT_PROVIDER: u128 = 270;
+    const FIRST_PLACE: u128 = 270;
+    const SECOND_PLACE: u128 = 160;
+    const THIRD_PLACE: u128 = 100;
+    const CREATOR: u128 = 200;
 }
 
