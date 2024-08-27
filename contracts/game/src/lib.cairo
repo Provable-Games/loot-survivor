@@ -135,6 +135,7 @@ mod Game {
         _adventurer: Map::<felt252, Adventurer>,
         _adventurer_client_provider: Map::<felt252, ContractAddress>,
         _adventurer_meta: Map::<felt252, AdventurerMetadata>,
+        _adventurer_minter: Map::<felt252, ContractAddress>,
         _adventurer_name: Map::<felt252, felt252>,
         _adventurer_obituary: Map::<felt252, ByteArray>,
         _adventurer_renderer: Map::<felt252, ContractAddress>,
@@ -1856,6 +1857,10 @@ mod Game {
             self._adventurer_renderer.write(adventurer_id, custom_renderer);
         }
 
+        // store the original minter of the adventurer
+        self._adventurer_minter.write(adventurer_id, get_caller_address());
+
+        // mint erc721 token to wrap the game
         self.erc721.mint(get_caller_address(), adventurer_id.into());
 
         // emit events
