@@ -1848,7 +1848,6 @@ mod Game {
             adventurer_id,
             adventurer_meta,
             name,
-            golden_token_id,
             custom_renderer
         );
         __event_AmbushedByBeast(ref self, adventurer, adventurer_id, beast_battle_details);
@@ -3675,7 +3674,6 @@ mod Game {
         adventurer_state: AdventurerState,
         adventurer_meta: AdventurerMetadata,
         adventurer_name: felt252,
-        golden_token_id: u8,
         custom_renderer: ContractAddress
     }
 
@@ -4015,7 +4013,6 @@ mod Game {
         adventurer_id: felt252,
         adventurer_meta: AdventurerMetadata,
         adventurer_name: felt252,
-        golden_token_id: u8,
         custom_renderer: ContractAddress
     ) {
         let level_seed = _get_level_seed(@self, adventurer_id);
@@ -4028,7 +4025,6 @@ mod Game {
                     adventurer_state,
                     adventurer_meta,
                     adventurer_name,
-                    golden_token_id,
                     custom_renderer
                 }
             );
