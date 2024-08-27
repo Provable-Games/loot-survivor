@@ -287,6 +287,7 @@ export function createSyscalls({
         goldenTokenId,
         "0", // delay_stat_reveal
         rendererContractAddress,
+        "0",
       ],
     };
 
