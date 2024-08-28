@@ -73,7 +73,7 @@ const allMenuItems: Menu[] = [
   { id: 3, label: "Inventory", screen: "inventory", disabled: false },
   { id: 4, label: "Upgrade", screen: "upgrade", disabled: false },
   { id: 5, label: "Leaderboard", screen: "leaderboard", disabled: false },
-  { id: 6, label: "Encounters", screen: "encounters", disabled: false },
+  { id: 6, label: "Travel Log", screen: "encounters", disabled: false },
   { id: 7, label: "Guide", screen: "guide", disabled: false },
   {
     id: 8,
@@ -88,7 +88,7 @@ const mobileMenuItems: Menu[] = [
   { id: 2, label: "Play", screen: "play", disabled: false },
   { id: 3, label: "Inventory", screen: "inventory", disabled: false },
   { id: 4, label: "Upgrade", screen: "upgrade", disabled: false },
-  { id: 5, label: "Encounters", screen: "encounters", disabled: false },
+  { id: 5, label: "Travel Log", screen: "encounters", disabled: false },
   { id: 6, label: "Guide", screen: "guide", disabled: false },
   {
     id: 7,
@@ -153,6 +153,8 @@ function Home() {
   const showProfile = useUIStore((state) => state.showProfile);
   const itemEntropy = useUIStore((state) => state.itemEntropy);
   const setItemEntropy = useUIStore((state) => state.setItemEntropy);
+  const openInterlude = useUIStore((state) => state.openInterlude);
+  const setOpenInterlude = useUIStore((state) => state.setOpenInterlude);
 
   const { contract: gameContract } = useContract({
     address: networkConfig[network!].gameAddress,
@@ -664,12 +666,17 @@ function Home() {
     return () => clearInterval(interval); // Cleanup on component unmount
   }, [fetchUnlocksEntropy]);
 
+  useEffect(() => {
+    if ((!entropyReady && hasStatUpgrades) || fetchUnlocksEntropy) {
+      setOpenInterlude(true);
+    }
+  }, [entropyReady, hasStatUpgrades, fetchUnlocksEntropy]);
+
   return (
     <>
-      {((!entropyReady && hasStatUpgrades) || fetchUnlocksEntropy) &&
-        !onKatana && (
-          <InterludeScreen type={fetchUnlocksEntropy ? "item" : "level"} />
-        )}
+      {openInterlude && !onKatana && (
+        <InterludeScreen type={fetchUnlocksEntropy ? "item" : "level"} />
+      )}
       <NetworkSwitchError network={network} isWrongNetwork={isWrongNetwork} />
       {isMintingLords && <TokenLoader isToppingUpLords={isMintingLords} />}
       {isWithdrawing && <TokenLoader isWithdrawing={isWithdrawing} />}

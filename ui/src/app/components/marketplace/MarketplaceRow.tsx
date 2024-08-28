@@ -103,7 +103,7 @@ const MarketplaceRow = ({
   // Check whether an equipped slot is free, if it is free then even if the bag is full the slot can be bought and equipped.
   const formatAdventurer = adventurer ?? NullAdventurer;
   const equippedItem = formatAdventurer[slot.toLowerCase()];
-  const emptySlot = equippedItem === undefined || null;
+  const emptySlot = equippedItem === undefined || equippedItem === null;
   const slotEquipped = purchaseItems.some(
     (item) =>
       item.equip === "1" &&
@@ -113,13 +113,23 @@ const MarketplaceRow = ({
   );
 
   const handlePurchase = () => {
-    const newPurchase = {
-      item: getKeyFromValue(gameData.ITEMS, item?.item ?? "") ?? "0",
-      equip: (emptySlot || slot === "Weapon") && !slotEquipped ? "1" : "0",
-    };
-    const newPurchases = [...purchaseItems, newPurchase];
-    setPurchaseItems(newPurchases);
-    upgradeHandler(undefined, undefined, newPurchases);
+    if (
+      singlePurchaseExists(item.item ?? "") ||
+      checkPurchased(item.item ?? "")
+    ) {
+      const newItems = purchaseItems.filter(
+        (i) => gameData.ITEMS[parseInt(i.item)] !== item.item
+      );
+      setPurchaseItems(newItems);
+    } else {
+      const newPurchase = {
+        item: getKeyFromValue(gameData.ITEMS, item?.item ?? "") ?? "0",
+        equip: (emptySlot || slot === "Weapon") && !slotEquipped ? "1" : "0",
+      };
+      const newPurchases = [...purchaseItems, newPurchase];
+      setPurchaseItems(newPurchases);
+      upgradeHandler(undefined, undefined, newPurchases);
+    }
   };
 
   const purchaseNoEquipItems = purchaseItems.filter(
@@ -175,24 +185,30 @@ const MarketplaceRow = ({
       <td className="w-20 sm:w-32 text-center">
         <Button
           onClick={() => handlePurchase()}
-          className="h-10 w-16 sm:h-auto sm:w-auto"
+          className={`h-10 w-16 sm:h-auto sm:w-auto ${
+            (singlePurchaseExists(item.item ?? "") ||
+              checkPurchased(item.item ?? "")) &&
+            "bg-terminal-yellow"
+          }`}
           disabled={
-            itemPrice > (adventurer?.gold ?? 0) ||
-            !enoughGold ||
-            singlePurchaseExists(item.item ?? "") ||
-            item.owner ||
-            checkOwned(item.item ?? "") ||
-            checkPurchased(item.item ?? "") ||
-            (equipFull && bagFull) ||
-            (bagFull && !emptySlot)
+            (itemPrice > (adventurer?.gold ?? 0) ||
+              !enoughGold ||
+              item.owner ||
+              checkOwned(item.item ?? "") ||
+              (equipFull && bagFull) ||
+              (bagFull && !emptySlot)) &&
+            !(
+              singlePurchaseExists(item.item ?? "") ||
+              checkPurchased(item.item ?? "")
+            )
           }
           variant="secondary"
         >
-          {!enoughGold || itemPrice > (adventurer?.gold ?? 0)
+          {singlePurchaseExists(item.item ?? "") ||
+          checkPurchased(item.item ?? "")
+            ? "Undo"
+            : !enoughGold || itemPrice > (adventurer?.gold ?? 0)
             ? "Not Enough Gold"
-            : singlePurchaseExists(item.item ?? "") ||
-              checkPurchased(item.item ?? "")
-            ? "Purchased"
             : checkOwned(item.item ?? "")
             ? "Owned"
             : (equipFull && bagFull) || (bagFull && !emptySlot)

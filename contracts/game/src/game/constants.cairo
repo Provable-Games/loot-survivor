@@ -3,7 +3,7 @@ const MINIMUM_DAMAGE_FROM_BEASTS: u8 = 2;
 const MAINNET_CHAIN_ID: felt252 = 0x534e5f4d41494e;
 const SEPOLIA_CHAIN_ID: felt252 = 0x534e5f5345504f4c4941;
 const KATANA_CHAIN_ID: felt252 = 0x4b4154414e41;
-const MINIMUM_SCORE_FOR_PAYOUTS: u16 = 50;
+const MINIMUM_SCORE_FOR_PAYOUTS: u16 = 100;
 const SECONDS_IN_DAY: u32 = 86400;
 const TARGET_PRICE_USD_CENTS: u16 = 300;
 const VRF_COST_PER_GAME: u32 = 100000000; // 1$ with 8 decimals
@@ -65,27 +65,31 @@ mod messages {
     const OBITUARY_WINDOW_CLOSED: felt252 = 'obituary window closed';
     const INVALID_ITEM_ID: felt252 = 'invalid item id';
     const LAUNCH_TOURNAMENT_ENDED: felt252 = 'launch tournament has ended';
-    const NFT_COLLECTION_NOT_ELIGIBLE: felt252 = 'nft collection not eligible';
+    const COLLECTION_NOT_ELIGIBLE: felt252 = 'nft collection not eligible';
     const NOT_TOKEN_OWNER: felt252 = 'not token owner';
     const TOKEN_ALREADY_REGISTERED: felt252 = 'token already registered';
     const ITEM_SPECIALS_UNAVAILABLE: felt252 = 'item specials unavailable';
+    const TOURNAMENT_STILL_ACTIVE: felt252 = 'tournament still active';
+    const TOURNAMENT_WINNER_ALREADY_SET: felt252 = 'tournament already settled';
+    const FREE_GAME_UNAVAILABLE: felt252 = 'free game not yet available';
+    const NOT_PARTICIPATED_IN_TOURNAMENT: felt252 = 'not tournament participant';
+    const COLLECTION_OUT_OF_GAMES: felt252 = 'collection out of games';
 }
 
 #[derive(Drop, Copy)]
 struct Rewards {
-    BIBLIO: u256,
-    PG: u256,
-    CLIENT_PROVIDER: u256,
-    FIRST_PLACE: u256,
-    SECOND_PLACE: u256,
-    THIRD_PLACE: u256,
+    BIBLIO: u128,
+    PG: u128,
+    CLIENT_PROVIDER: u128,
+    FIRST_PLACE: u128,
+    SECOND_PLACE: u128,
+    THIRD_PLACE: u128,
 }
 
 mod REWARD_DISTRIBUTIONS_BP {
-    const CLIENT_PROVIDER: u256 = 270;
-    const FIRST_PLACE: u256 = 270;
-    const SECOND_PLACE: u256 = 160;
-    const THIRD_PLACE: u256 = 100;
-    const CREATOR: u256 = 200;
+    const CLIENT_PROVIDER: u128 = 270;
+    const FIRST_PLACE: u128 = 270;
+    const SECOND_PLACE: u128 = 160;
+    const THIRD_PLACE: u128 = 100;
+    const CREATOR: u128 = 200;
 }
-

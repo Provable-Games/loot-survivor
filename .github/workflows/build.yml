@@ -1,4 +1,4 @@
-name: Build Scarb project
+name: Build and Test Contracts
 
 on:
   push:
@@ -7,11 +7,13 @@ on:
   pull_request:
 
 env:
-  SCARB_VERSION: 2.6.5
+  SCARB_VERSION: 2.7.1
+  FOUNDRY_VERSION: 0.27.0
+  MAX_N_STEPS: 4294967295
 
 jobs:
   build:
-    name: Build Contracts
+    name: Build and Test Contracts
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -31,7 +33,7 @@ jobs:
         run: curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | bash -s -- -v ${{ env.SCARB_VERSION }}
 
       - name: Install Foundry
-        run: curl -L https://raw.githubusercontent.com/foundry-rs/starknet-foundry/master/scripts/install.sh | bash && source ~/.bashrc && snfoundryup
+        run: curl -L https://raw.githubusercontent.com/foundry-rs/starknet-foundry/master/scripts/install.sh | bash && source ~/.bashrc && snfoundryup -v ${{ env.FOUNDRY_VERSION }}
 
       - name: Build and Test ${{ matrix.contract }}
-        run: cd contracts/${{ matrix.contract }} && snforge test --max-n-steps 4294967295
+        run: cd contracts/${{ matrix.contract }} && snforge test --max-n-steps ${{ env.MAX_N_STEPS }}

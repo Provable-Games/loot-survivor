@@ -7,9 +7,9 @@ export const networkConfig = {
     ethAddress:
       "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
     gameAddress:
-      "0x0046506cccd3ffb110bc04445d25d94f1d26d645a30e6ac8a17c24e084bed08b",
+      "0x02e5a602219a2462c760b5d5b4526c06e1bba0fe729367cbf133a247d2a1bfbd",
     lordsAddress:
-      "0x019c92fa87f4d5e3bE25C3DD6a284f30282a07e87cd782f5Fd387B82c8142017",
+      "0x064fd80fcb41d00214430574a0aa19d21cc5d6452aeb4996f31b6e9ba4f466a0",
     beastsAddress:
       "0x0468e7a1761b65c891207aeb7cfc044044d9a61fc22c71d46a7bf4dbb67c607a",
     goldenTokenAddress:
@@ -29,8 +29,7 @@ export const networkConfig = {
     accountClassHash: "0x0",
   },
   mainnet: {
-    rpcUrl:
-      "https://starknet-mainnet.blastapi.io/5ef61753-e7c1-4593-bc62-97fdf96f8de5",
+    rpcUrl: "https://api.cartridge.gg/x/starknet/mainnet",
     lsGQLURL: "https://ls-indexer-mainnet.provable.games/graphql",
     tokensGQLURL: "https://realms.world/api/graphql",
     ethAddress:

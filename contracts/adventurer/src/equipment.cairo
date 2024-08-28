@@ -901,7 +901,8 @@ mod tests {
             adventurer.equipment.is_equipped(gold_ring.id) == false, 'gold ring is not equipped'
         );
 
-        // equip a divine robe and verify is_equipped returns true for katana and divine robe and false everything else
+        // equip a divine robe and verify is_equipped returns true for katana and divine robe and
+        // false everything else
         adventurer.equipment.equip(divine_robe);
         assert(
             adventurer.equipment.is_equipped(divine_robe.id) == true,
@@ -926,7 +927,8 @@ mod tests {
             adventurer.equipment.is_equipped(gold_ring.id) == false, 'gold ring is not equipped'
         );
 
-        // equip a crown and verify is_equipped returns true for katana, divine robe, and crown and false everything else
+        // equip a crown and verify is_equipped returns true for katana, divine robe, and crown and
+        // false everything else
         adventurer.equipment.equip(crown);
         assert(adventurer.equipment.is_equipped(crown.id) == true, 'crown should be equipped');
         assert(
@@ -951,7 +953,8 @@ mod tests {
             adventurer.equipment.is_equipped(gold_ring.id) == false, 'gold ring is not equipped'
         );
 
-        // equip a demonhide belt and verify is_equipped returns true for katana, divine robe, crown, and demonhide belt and false everything else
+        // equip a demonhide belt and verify is_equipped returns true for katana, divine robe,
+        // crown, and demonhide belt and false everything else
         adventurer.equipment.equip(demonhide_belt);
         assert(
             adventurer.equipment.is_equipped(demonhide_belt.id) == true,
@@ -976,7 +979,8 @@ mod tests {
             adventurer.equipment.is_equipped(gold_ring.id) == false, 'gold ring is not equipped'
         );
 
-        // equip leather boots and verify is_equipped returns true for katana, divine robe, crown, demonhide belt, and leather boots and false everything else
+        // equip leather boots and verify is_equipped returns true for katana, divine robe, crown,
+        // demonhide belt, and leather boots and false everything else
         adventurer.equipment.equip(leather_boots);
         assert(
             adventurer.equipment.is_equipped(leather_boots.id) == true, 'leather boots is equipped'
@@ -1000,7 +1004,8 @@ mod tests {
             adventurer.equipment.is_equipped(gold_ring.id) == false, 'gold ring is not equipped'
         );
 
-        // equip leather gloves and verify is_equipped returns true for katana, divine robe, crown, demonhide belt, leather boots, and leather gloves and false everything else
+        // equip leather gloves and verify is_equipped returns true for katana, divine robe, crown,
+        // demonhide belt, leather boots, and leather gloves and false everything else
         adventurer.equipment.equip(leather_gloves);
         assert(
             adventurer.equipment.is_equipped(leather_gloves.id) == true,
@@ -1024,7 +1029,8 @@ mod tests {
             adventurer.equipment.is_equipped(gold_ring.id) == false, 'gold ring is not equipped'
         );
 
-        // equip amulet and verify is_equipped returns true for katana, divine robe, crown, demonhide belt, leather boots, leather gloves, and amulet and false everything else
+        // equip amulet and verify is_equipped returns true for katana, divine robe, crown,
+        // demonhide belt, leather boots, leather gloves, and amulet and false everything else
         adventurer.equipment.equip(amulet);
         assert(adventurer.equipment.is_equipped(amulet.id) == true, 'amulet is equipped');
         assert(
@@ -1048,7 +1054,9 @@ mod tests {
             adventurer.equipment.is_equipped(gold_ring.id) == false, 'gold ring is not equipped'
         );
 
-        // equip gold ring and verify is_equipped returns true for katana, divine robe, crown, demonhide belt, leather boots, leather gloves, amulet, and gold ring and false everything else
+        // equip gold ring and verify is_equipped returns true for katana, divine robe, crown,
+        // demonhide belt, leather boots, leather gloves, amulet, and gold ring and false everything
+        // else
         adventurer.equipment.equip(gold_ring);
         assert(adventurer.equipment.is_equipped(gold_ring.id) == true, 'gold ring is equipped');
         assert(adventurer.equipment.is_equipped(amulet.id) == true, 'amulet is equipped');

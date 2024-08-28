@@ -1,4 +1,3 @@
-use core::integer::u8_overflowing_add;
 use core::{option::OptionTrait, starknet::{StorePacking}, traits::{TryInto, Into}};
 use loot::constants::ItemSuffix;
 
@@ -105,7 +104,8 @@ impl ImplStats of IStat {
     // - of_Giant: Increases the adventurer's Vitality by 3 points.
     // - of_Titans: Increases the adventurer's Strength by 2 points and Charisma by 1 point.
     // - of_Skill: Increases the adventurer's Dexterity by 3 points.
-    // - of_Perfection: Increases the adventurer's Strength, Dexterity, and Vitality by 1 point each.
+    // - of_Perfection: Increases the adventurer's Strength, Dexterity, and Vitality by 1 point
+    // each.
     // - of_Brilliance: Increases the adventurer's Intelligence by 3 points.
     // - of_Enlightenment: Increases the adventurer's Wisdom by 3 points.
     // - of_Protection: Increases the adventurer's Vitality by 2 points and Dexterity by 1 point.

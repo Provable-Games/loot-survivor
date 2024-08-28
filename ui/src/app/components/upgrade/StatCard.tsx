@@ -26,8 +26,7 @@ const StatCard: React.FC<ButtonProps> = ({
   const [showInfo, setShowInfo] = useState(false);
   const [buttonClicked, setButtonClicked] = useState(false);
   const prevAmountRef = useRef<{ [key: string]: number }>({ ...ZeroUpgrade });
-  const maxNonBoosted =
-    (attribute.nonBoostedStat ?? 0n) + BigInt(amount) >= 31n;
+  const maxNonBoosted = (attribute.stat ?? 0) + amount >= 31;
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const upgrades = useUIStore((state) => state.upgrades);
   const removeEntrypointFromCalls = useTransactionCartStore(
@@ -97,7 +96,7 @@ const StatCard: React.FC<ButtonProps> = ({
             -
           </span>
           <span className="text-2xl">{`${
-            (attribute.nonBoostedStat ?? 0n) + BigInt(amount)
+            (attribute.stat ?? 0) + amount
           }`}</span>
           <span
             onClick={handleIncrement}

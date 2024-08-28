@@ -9,8 +9,8 @@ adventurer = { path = "../adventurer" }
 market = { path = "../market" }
 obstacles = { path = "../obstacles" }
 pragma_lib = { git = "https://github.com/astraly-labs/pragma-lib" }
-openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.14.0" }
-alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.15.1" }
+alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "7c19379ab6cf0f8b48be3c5b118ffddd7e26a4d2" }
 graffiti = { git = "https://github.com/ponderingdemocritus/graffiti", rev = "bc569531791dbc71c6cd8d9bc154c34eedad31fe" }
 
 [dev-dependencies]

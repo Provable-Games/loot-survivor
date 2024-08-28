@@ -581,7 +581,7 @@ mod tests {
         let birth_date = 1421807737;
         let delay_stat_reveal = false;
 
-        let adventurer_metadata = ImplAdventurerMetadata::new(birth_date, delay_stat_reveal, 0);
+        let adventurer_metadata = ImplAdventurerMetadata::new(birth_date, delay_stat_reveal, 0, 0);
 
         start_cheat_block_timestamp_global(1721860860);
 

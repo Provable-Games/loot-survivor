@@ -49,10 +49,10 @@ impl ImplMarket of IMarket {
     /// @return An array of items that are available on the market.
     fn get_available_items(seed: u64, market_size: u8) -> Array<u8> {
         if market_size >= NUM_ITEMS {
-            return ImplMarket::get_all_items();
+            return Self::get_all_items();
         }
 
-        let (seed, offset) = ImplMarket::get_market_seed_and_offset(seed);
+        let (seed, offset) = Self::get_market_seed_and_offset(seed);
 
         let mut all_items = ArrayTrait::<u8>::new();
         let mut item_count: u16 = 0;
@@ -60,7 +60,7 @@ impl ImplMarket of IMarket {
             if item_count == market_size.into() {
                 break;
             } else {
-                let item_id = ImplMarket::get_id(seed + (offset.into() * item_count).into());
+                let item_id = Self::get_id(seed + (offset.into() * item_count).into());
                 all_items.append(item_id);
                 item_count += 1;
             }
@@ -214,9 +214,11 @@ impl ImplMarket of IMarket {
     }
 
     /// @notice This function takes in a seed and returns a market seed and offset.
-    /// @dev The seed is divided by the number of items to get the market seed and the remainder is the offset.
+    /// @dev The seed is divided by the number of items to get the market seed and the remainder is
+    /// the offset.
     /// @param seed The seed to be divided.
-    /// @return A tuple where the first element is a u64 representing the market seed and the second element is a u8 representing the market offset.1
+    /// @return A tuple where the first element is a u64 representing the market seed and the second
+    /// element is a u8 representing the market offset.1
     fn get_market_seed_and_offset(seed: u64) -> (u64, u8) {
         let (seed, offset) = integer::u64_safe_divmod(seed, NUM_ITEMS_NZ_MINUS_ONE);
         (seed, 1 + offset.try_into().unwrap())
@@ -465,7 +467,6 @@ mod tests {
 
     #[test]
     fn test_unique_market() {
-
         // loop from 0 to 255 and get the market seed and offset
         let mut i: u64 = 0;
         loop {

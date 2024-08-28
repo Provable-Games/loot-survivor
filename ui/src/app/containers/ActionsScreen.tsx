@@ -3,7 +3,7 @@ import { Contract } from "starknet";
 import useLoadingStore from "@/app/hooks/useLoadingStore";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
 import Info from "@/app/components/adventurer/Info";
-import Discovery from "@/app/components/actions/Discovery";
+import Prescience from "@/app/components/actions/Prescience";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import BeastScreen from "@/app/containers/BeastScreen";
 import MazeLoader from "@/app/components/icons/MazeLoader";
@@ -56,11 +56,6 @@ export default function ActionsScreen({
 
   const hasBeast = useAdventurerStore((state) => state.computed.hasBeast);
   const resetNotification = useLoadingStore((state) => state.resetNotification);
-  const latestDiscoveries = useQueriesStore((state) =>
-    state.data.latestDiscoveriesQuery
-      ? state.data.latestDiscoveriesQuery.discoveries
-      : []
-  );
 
   const adventurerEntropy = useUIStore((state) => state.adventurerEntropy);
 
@@ -151,9 +146,7 @@ export default function ActionsScreen({
         <div className="flex flex-col sm:flex-row h-full w-full sm:w-1/2 lg:w-2/3">
           {adventurer?.id ? (
             <div className="flex flex-col gap-2 sm:gap-0 items-center lg:w-1/2 bg-terminal-black order-1 sm:order-2 h-5/6 sm:h-full">
-              {!showFuture ? (
-                <Discovery discoveries={latestDiscoveries} />
-              ) : null}
+              {!showFuture ? <Prescience /> : null}
               <Button
                 className="uppercase sm:hidden"
                 onClick={() => setShowFuture(!showFuture)}

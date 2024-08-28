@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CallData, Contract } from "starknet";
+import { Contract } from "starknet";
 import {
   getItemData,
   getValueFromKey,
@@ -74,7 +74,6 @@ export default function UpgradeScreen({
   const hasStatUpgrades = useAdventurerStore(
     (state) => state.computed.hasStatUpgrades
   );
-  const [nonBoostedStats, setNonBoostedStats] = useState<any | null>(null);
   const upgradeScreen = useUIStore((state) => state.upgradeScreen);
   const setUpgradeScreen = useUIStore((state) => state.setUpgradeScreen);
   const potionAmount = useUIStore((state) => state.potionAmount);
@@ -167,7 +166,7 @@ export default function UpgradeScreen({
       description: "Strength increases attack damage by 10%",
       buttonText: "Upgrade Strength",
       abbrev: "STR",
-      nonBoostedStat: nonBoostedStats?.strength,
+      stat: adventurer?.strength!,
       upgrades: upgrades["Strength"] ?? 0,
     },
     {
@@ -177,7 +176,7 @@ export default function UpgradeScreen({
       description: "Dexterity increases chance of fleeing Beasts",
       buttonText: "Upgrade Dexterity",
       abbrev: "DEX",
-      nonBoostedStat: nonBoostedStats?.dexterity,
+      stat: adventurer?.dexterity!,
       upgrades: upgrades["Dexterity"] ?? 0,
     },
     {
@@ -187,7 +186,7 @@ export default function UpgradeScreen({
       description: `Vitality increases max health and gives +${vitalityIncrease}hp per point`,
       buttonText: "Upgrade Vitality",
       abbrev: "VIT",
-      nonBoostedStat: nonBoostedStats?.vitality,
+      stat: adventurer?.vitality!,
       upgrades: upgrades["Vitality"] ?? 0,
     },
     {
@@ -197,7 +196,7 @@ export default function UpgradeScreen({
       description: "Intelligence increases chance of avoiding Obstacles",
       buttonText: "Upgrade Intelligence",
       abbrev: "INT",
-      nonBoostedStat: nonBoostedStats?.intelligence,
+      stat: adventurer?.intelligence!,
       upgrades: upgrades["Intelligence"] ?? 0,
     },
     {
@@ -207,7 +206,7 @@ export default function UpgradeScreen({
       description: "Wisdom increases chance of avoiding a Beast ambush",
       buttonText: "Upgrade Wisdom",
       abbrev: "WIS",
-      nonBoostedStat: nonBoostedStats?.wisdom,
+      stat: adventurer?.wisdom!,
       upgrades: upgrades["Wisdom"] ?? 0,
     },
     {
@@ -217,7 +216,7 @@ export default function UpgradeScreen({
       description: "Charisma provides discounts on the marketplace and potions",
       buttonText: "Upgrade Charisma",
       abbrev: "CHA",
-      nonBoostedStat: nonBoostedStats?.charisma,
+      stat: adventurer?.charisma!,
       upgrades: upgrades["Charisma"] ?? 0,
     },
   ];
@@ -384,18 +383,6 @@ export default function UpgradeScreen({
   };
 
   const totalStatUpgrades = (adventurer?.statUpgrades ?? 0) - upgradesTotal;
-
-  const getNoBoostedStats = async () => {
-    const baseAdventurer = (await gameContract?.call(
-      "get_adventurer_no_boosts",
-      CallData.compile({ token_id: adventurer?.id! })
-    )) as any; // check whether player can use the current token
-    setNonBoostedStats(baseAdventurer.stats);
-  };
-
-  useEffect(() => {
-    getNoBoostedStats();
-  }, [entropyReady]);
 
   const bankrupt = upgradeTotalCost > (adventurer?.gold ?? 0);
 

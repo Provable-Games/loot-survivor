@@ -1,10 +1,9 @@
-use core::{integer::u16_sqrt};
+use core::num::traits::Sqrt;
 use super::constants::{
     CombatEnums::{Tier, Type, Slot, WeaponEffectiveness},
     CombatSettings::{
-        XP_MULTIPLIER, XP_REWARD_DIVISOR, TIER_DAMAGE_MULTIPLIER,
-        ELEMENTAL_DAMAGE_BONUS, STRENGTH_DAMAGE_BONUS, MAX_XP_DECAY, SPECIAL2_DAMAGE_MULTIPLIER,
-        SPECIAL3_DAMAGE_MULTIPLIER
+        XP_MULTIPLIER, XP_REWARD_DIVISOR, TIER_DAMAGE_MULTIPLIER, ELEMENTAL_DAMAGE_BONUS,
+        STRENGTH_DAMAGE_BONUS, MAX_XP_DECAY, SPECIAL2_DAMAGE_MULTIPLIER, SPECIAL3_DAMAGE_MULTIPLIER
     }
 };
 
@@ -40,16 +39,20 @@ struct CombatResult {
 
 #[generate_trait]
 impl ImplCombat of ICombat {
-    /// @notice Calculates the damage dealt to a defender based on various combat specifications and statistics
-    /// @dev This function computes elemental adjusted damage, strength bonus, critical hit bonus, and weapon special bonus to find out the total damage.
+    /// @notice Calculates the damage dealt to a defender based on various combat specifications and
+    /// statistics @dev This function computes elemental adjusted damage, strength bonus, critical
+    /// hit bonus, and weapon special bonus to find out the total damage.
     /// @param weapon The weapon CombatSpec of the attacker
     /// @param armor The armor CombatSpec of the defender
     /// @param minimum_damage The minimum damage the attacker can inflict
     /// @param attacker_strength The strength statistic of the attacker
-    /// @param defender_strength The strength statistic of the defender (Note: unused in this function, can potentially be removed if not needed elsewhere)
-    /// @param critical_hit_chance The probability for a critical hit expressed as an integer between 0 and 100
-    /// @param entropy A random value to determine certain random aspects of the combat, like critical hits
-    /// @return Returns a CombatResult object containing detailed damage calculations, including base attack, base armor, elemental adjusted damage, strength bonus, critical hit bonus, weapon special bonus, and total damage inflicted.
+    /// @param defender_strength The strength statistic of the defender (Note: unused in this
+    /// function, can potentially be removed if not needed elsewhere)
+    /// @param critical_hit_chance The probability for a critical hit expressed as an integer
+    /// between 0 and 100 @param entropy A random value to determine certain random aspects of the
+    /// combat, like critical hits @return Returns a CombatResult object containing detailed damage
+    /// calculations, including base attack, base armor, elemental adjusted damage, strength bonus,
+    /// critical hit bonus, weapon special bonus, and total damage inflicted.
     fn calculate_damage(
         weapon: CombatSpec,
         armor: CombatSpec,
@@ -60,27 +63,24 @@ impl ImplCombat of ICombat {
         critical_hit_rnd: u8,
     ) -> CombatResult {
         // get base attack and armor
-        let base_attack = ImplCombat::get_attack_hp(weapon);
-        let base_armor = ImplCombat::get_armor_hp(armor);
+        let base_attack = Self::get_attack_hp(weapon);
+        let base_armor = Self::get_armor_hp(armor);
 
-        // get damage adjusted for elemental
-        let elemental_adjusted_damage = ImplCombat::elemental_adjusted_damage(
+        // adjust base damage for elemental effectiveness
+        let elemental_adjusted_damage = Self::elemental_adjusted_damage(
             base_attack, weapon.item_type, armor.item_type
         );
 
-        // get strength bonus
-        let strength_bonus = ImplCombat::strength_bonus(
-            elemental_adjusted_damage, attacker_strength
-        );
+        // get strength bonus using elemental adjusted damage
+        let strength_bonus = Self::strength_bonus(elemental_adjusted_damage, attacker_strength);
 
-        // get critical hit bonus using strength adjusted elemental damage
-        let critical_hit_bonus = ImplCombat::critical_hit_bonus(
+        // get critical hit bonus using elemental adjusted damage
+        let critical_hit_bonus = Self::critical_hit_bonus(
             elemental_adjusted_damage, critical_hit_chance, critical_hit_rnd
         );
 
-        // get weapon special damage bonus using strength adjusted elemental damage
-        // @dev this is a name prefix match for Loot Survivor
-        let weapon_special_bonus = ImplCombat::weapon_special_bonus(
+        // get weapon special bonus using elemental adjusted damage
+        let weapon_special_bonus = Self::weapon_special_bonus(
             elemental_adjusted_damage, weapon.specials, armor.specials
         );
 
@@ -135,14 +135,14 @@ impl ImplCombat of ICombat {
         }
     }
 
-    /// @notice Adjusts the damage dealt based on the elemental compatibility of the weapon and armor types
-    /// @param damage: the initial damage value
+    /// @notice Adjusts the damage dealt based on the elemental compatibility of the weapon and
+    /// armor types @param damage: the initial damage value
     /// @param weapon_type: the elemental type of the weapon
     /// @param armor_type: the elemental type of the armor
     /// @return u16: the adjusted damage value after considering the elemental effectiveness
     fn elemental_adjusted_damage(damage: u16, weapon_type: Type, armor_type: Type) -> u16 {
         let elemental_effect = damage / ELEMENTAL_DAMAGE_BONUS.into();
-        let weapon_effectiveness = ImplCombat::get_elemental_effectiveness(weapon_type, armor_type);
+        let weapon_effectiveness = Self::get_elemental_effectiveness(weapon_type, armor_type);
         match weapon_effectiveness {
             WeaponEffectiveness::Weak => { damage - elemental_effect },
             WeaponEffectiveness::Fair => { damage },
@@ -221,7 +221,7 @@ impl ImplCombat of ICombat {
     /// @param rnd: the random value used to determine if the attack is a critical hit
     /// @return u16: the bonus damage done by a critical hit
     fn critical_hit_bonus(base_damage: u16, critical_hit_chance: u8, rnd: u8) -> u16 {
-        let is_critical_hit = ImplCombat::is_critical_hit(critical_hit_chance, rnd);
+        let is_critical_hit = Self::is_critical_hit(critical_hit_chance, rnd);
         if (is_critical_hit) {
             base_damage
         } else {
@@ -255,19 +255,19 @@ impl ImplCombat of ICombat {
         }
     }
 
-    /// @notice calculates the bonus damage done by a weapon as a result of the weapon special2 and special3
-    /// @param base_damage: the base damage done by the attacker
+    /// @notice calculates the bonus damage done by a weapon as a result of the weapon special2 and
+    /// special3 @param base_damage: the base damage done by the attacker
     /// @param weapon_special2: the special2 of the weapon used to attack
     /// @param armor_special2: the special2 of the armor worn by the defender
     /// @return u16: the bonus damage done by a special item
     fn weapon_special_bonus(
         base_damage: u16, weapon_name: SpecialPowers, armor_name: SpecialPowers
     ) -> u16 {
-        let special2_bonus = ImplCombat::get_special2_bonus(
+        let special2_bonus = Self::get_special2_bonus(
             base_damage, weapon_name.special2, armor_name.special2
         );
 
-        let special3_bonus = ImplCombat::get_special3_bonus(
+        let special3_bonus = Self::get_special3_bonus(
             base_damage, weapon_name.special3, armor_name.special3
         );
 
@@ -337,11 +337,11 @@ impl ImplCombat of ICombat {
         if (xp == 0) {
             1
         } else {
-            u16_sqrt(xp)
+            xp.sqrt()
         }
     }
 
-    /// @notice gets the base reward for defeating an entity. 
+    /// @notice gets the base reward for defeating an entity.
     /// @param self: the combat spec for the defeated entity
     /// @param adventurer_level: the level of the adventurer
     /// @return u16: the base reward
@@ -476,8 +476,8 @@ impl ImplCombat of ICombat {
         }
     }
 
-    /// @notice: determines if the adventurer can avoid the threat based on their level and relevant stat
-    /// @param adventurer_level: the level of the adventurer
+    /// @notice: determines if the adventurer can avoid the threat based on their level and relevant
+    /// stat @param adventurer_level: the level of the adventurer
     /// @param relevant_stat: the stat that is relevant to the threat
     /// @param rnd: a u8 random value used to determine if the adventurer can avoid the threat
     /// @return bool: whether or not the adventurer can avoid the threat
@@ -497,7 +497,6 @@ impl ImplCombat of ICombat {
 #[cfg(test)]
 mod tests {
     use core::option::OptionTrait;
-    use integer::{u16_sqrt};
     use core::traits::{TryInto, Into};
     use combat::{
         combat::{ImplCombat, ICombat, CombatSpec, SpecialPowers},
@@ -1057,7 +1056,8 @@ mod tests {
         );
         assert(special2_bonus == 0, 'should be no bonus');
 
-        // assign armor a special2 name and ensure lack of weapon special name still results in no bonus
+        // assign armor a special2 name and ensure lack of weapon special name still results in no
+        // bonus
         armor_specials.special2 = 1;
         let special2_bonus = ImplCombat::get_special2_bonus(
             base_damage, weapon_specials.special2, armor_specials.special2
@@ -1086,7 +1086,8 @@ mod tests {
         );
         assert(special3_bonus == 0, 'no prefix2 == no bonus');
 
-        // assign armor a prefix2 name and ensure lack of weapon special name still results in no bonus
+        // assign armor a prefix2 name and ensure lack of weapon special name still results in no
+        // bonus
         armor_specials.special3 = 1;
         let special3_bonus = ImplCombat::get_special3_bonus(
             base_damage, weapon_specials.special3, armor_specials.special3
@@ -1242,7 +1243,7 @@ mod tests {
             medium_critical_hit_bonus
         );
 
-        // G20 Katana does minimum damage against the T2 LVL40 Metal armor 
+        // G20 Katana does minimum damage against the T2 LVL40 Metal armor
         assert(damage_results.total_damage == 4, 'T1 G20 vs T3 G30: 4hp');
 
         // Same battle but against a magical beast (cloth)

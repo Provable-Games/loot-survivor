@@ -8,6 +8,7 @@ import {
   HeartVitalityIcon,
   CoinIcon,
   InfoIcon,
+  DownArrowIcon,
 } from "@/app/components/icons/Icons";
 import LootIcon from "@/app/components/icons/LootIcon";
 import React, { useMemo, useState } from "react";
@@ -60,16 +61,16 @@ const EncounterTable = () => {
 
   return (
     <div className="flex flex-col gap-5 sm:gap-0 sm:flex-row justify-between w-full bg-terminal-black max-h-[300px] border border-terminal-green text-xs sm:text-base">
-      <div className="flex flex-col w-full flex-grow-2">
+      <div className="flex flex-col w-full flex-grow-2 p-2">
         <div className="flex w-full justify-center h-8"></div>
         <button
-          className="absolute top-0 right-0"
+          className="absolute top-0 right-0 z-10"
           onClick={() => showEncounterTable(false)}
         >
           <MdClose className="w-10 h-10" />
         </button>
 
-        <table className="border-separate border-spacing-0 w-full sm:text-sm xl:text-sm 2xl:text-sm block overflow-x-scroll sm:overflow-y-scroll default-scroll p-2">
+        <table className="border-separate border-spacing-0 w-full sm:text-sm xl:text-sm 2xl:text-sm block overflow-x-scroll sm:overflow-y-scroll default-scroll">
           <thead
             className="border border-terminal-green sticky top-0 bg-terminal-black uppercase"
             style={{ zIndex: 8 }}
@@ -93,14 +94,20 @@ const EncounterTable = () => {
               <th className="py-2 px-1 sm:pr-3 border-b border-terminal-green">
                 Location
               </th>
-              <th className="py-2 px-1 sm:pr-3 border-b border-terminal-green">
+              <th className="relative py-2 px-1 border-b border-terminal-green">
                 Avoid
+                <span className="absolute left-1/2 transform -translate-x-1/2 bottom-0 text-xs text-terminal-yellow">
+                  Roll
+                </span>
               </th>
               <th className="py-2 px-1 sm:pr-3 border-b border-terminal-green">
                 Crit
               </th>
-              <th className="py-2 px-1 border-b border-terminal-green">
-                Next XP (Lvl)
+              <th className="relative py-2 px-1 border-b border-terminal-green">
+                Next XP
+                <span className="absolute left-1/2 transform -translate-x-1/2 bottom-0 text-xs text-terminal-yellow">
+                  +LVL
+                </span>
               </th>
             </tr>
           </thead>
@@ -128,6 +135,9 @@ const EncounterTable = () => {
                         )
                       : false;
 
+                  let levelUp =
+                    calculateLevel(encounter.nextXp) > adventurer?.level!;
+
                   return (
                     <tr>
                       <td className="py-2 border-b border-terminal-green">
@@ -154,8 +164,11 @@ const EncounterTable = () => {
                         <span className="flex justify-center">
                           {encounter.encounter !== "Discovery" && (
                             <div className="relative flex flex-row gap-1 items-center justify-center w-full">
-                              <span className="text-xs">PWR:</span>
+                              <span className="text-xs">PWR</span>
                               <span>{encounter.power}</span>
+                              <span className="absolute bottom-[-10px] text-terminal-yellow text-xs">
+                                T{encounter.tier} L{encounter.level}
+                              </span>
                             </div>
                           )}
                           {encounter.type === "Health" && (
@@ -271,7 +284,7 @@ const EncounterTable = () => {
                               ? "Yes"
                               : "No"}
                           </span>
-                          <span className="flex justify-center">
+                          <span className="flex justify-center text-terminal-yellow">
                             {encounter.dodgeRoll && `(${encounter.dodgeRoll})`}
                           </span>
                         </span>
@@ -291,7 +304,9 @@ const EncounterTable = () => {
                         <span className="flex flex-row gap-1 justify-center">
                           {encounter.nextXp}{" "}
                           <span className={`${"text-terminal-yellow"}`}>
-                            ({calculateLevel(encounter.nextXp)})
+                            {levelUp && (
+                              <DownArrowIcon className="h-4 transform rotate-180" />
+                            )}
                           </span>
                         </span>
                       </td>

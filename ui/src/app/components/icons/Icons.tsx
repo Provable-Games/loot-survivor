@@ -58,6 +58,7 @@ import Complete from "public/icons/complete.svg";
 import Cartridge from "public/icons/cartridge.svg";
 import PotionArrow from "public/icons/potion-arrow.svg";
 import Eye from "public/icons/eye.svg";
+import Clock from "public/icons/clock.svg";
 
 const ClothIcon = Cloth;
 const HideIcon = Hide;
@@ -111,6 +112,7 @@ const DoubleArrowIcon = DoubleArrow;
 const ArrowIcon = Arrow;
 const PotionArrowIcon = PotionArrow;
 const EyeIcon = Eye;
+const ClockIcon = Clock;
 
 const GithubIcon = Github;
 const DiscordIcon = Discord;
@@ -175,6 +177,7 @@ export {
   ArrowIcon,
   PotionArrowIcon,
   EyeIcon,
+  ClockIcon,
   GithubIcon,
   DiscordIcon,
   ArcadeIcon,

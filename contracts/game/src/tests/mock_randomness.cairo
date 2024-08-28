@@ -79,15 +79,15 @@ trait IMockRandomness<TContractState> {
 #[starknet::contract]
 mod MockRandomness {
     use super::{ContractAddress, IMockRandomness, RequestStatus};
-    use starknet::{get_caller_address, get_contract_address, ClassHash};
+    use starknet::{get_caller_address, get_contract_address, ClassHash, storage::Map};
     use game::game::interfaces::{IGameDispatcher, IGameDispatcherTrait};
     use array::ArrayTrait;
     use traits::Into;
 
     #[storage]
     struct Storage {
-        request_id: LegacyMap::<ContractAddress, u64>,
-        request_status: LegacyMap::<(ContractAddress, u64), RequestStatus>,
+        request_id: Map::<ContractAddress, u64>,
+        request_status: Map::<(ContractAddress, u64), RequestStatus>,
     }
 
     #[constructor]

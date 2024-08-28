@@ -2,7 +2,12 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Contract, AccountInterface, validateChecksumAddress } from "starknet";
 import { Button } from "@/app/components/buttons/Button";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
-import { CoinIcon, HeartIcon, SkullIcon } from "@/app/components/icons/Icons";
+import {
+  CoinIcon,
+  HeartIcon,
+  SkullIcon,
+  ClockIcon,
+} from "@/app/components/icons/Icons";
 import useUIStore from "@/app/hooks/useUIStore";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import LootIconLoader from "@/app/components/icons/Loader";
@@ -49,7 +54,7 @@ export const AdventurersList = ({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const skip = (currentPage - 1) * adventurersPerPage;
 
-  const { refetch, setData, isLoading } = useQueriesStore();
+  const { refetch, setData } = useQueriesStore();
 
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
 
@@ -93,6 +98,8 @@ export const AdventurersList = ({
     adventurersVariables,
     owner === ""
   );
+
+  const isLoading = adventurersData === undefined;
 
   const adventurers: Adventurer[] = adventurersData?.adventurers ?? [];
 
@@ -179,69 +186,113 @@ export const AdventurersList = ({
               )}
             </span>
             <div className="relative flex flex-col w-full overflow-y-auto default-scroll mx-2 sm:mx-0 border border-terminal-green sm:border-none h-[625px] 2xl:h-[625px]">
+              {isLoading && (
+                <div className="absolute flex top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                  <LootIconLoader size="w-10" />
+                </div>
+              )}
               <div className="h-7/8 flex flex-col  w-full overflow-y-auto default-scrol">
                 {!isTransferOpen ? (
-                  adventurers.map((adventurer, index) => (
-                    <div className="relative w-full" key={index}>
-                      {index === selectedIndex && (
-                        <>
-                          <div className="sm:hidden absolute inset-0 bg-terminal-black/75" />
-                          <div className="sm:hidden absolute flex flex-row gap-5 w-full h-full items-center justify-center">
-                            <Button
-                              size={"lg"}
-                              onClick={() => {
-                                setAdventurer(adventurer);
-                                handleSwitchAdventurer(adventurer.id!);
-                              }}
-                            >
-                              Play
-                            </Button>
-                            <Button
-                              size={"lg"}
-                              variant={"contrast"}
-                              className="border border-terminal-green"
-                              onClick={() => setIsTransferOpen(true)}
-                            >
-                              Transfer
-                            </Button>
-                          </div>
-                        </>
-                      )}
-                      <Button
-                        key={index}
-                        ref={(ref) => (buttonRefs.current[index] = ref)}
-                        className={`text-lg sm:text-base w-full hover:animate-none`}
-                        variant={selectedIndex === index ? "default" : "ghost"}
-                        size={"lg"}
-                        onClick={async () => {
-                          setSelectedIndex(index);
-                          await handleSelectAdventurer(adventurer.id!);
-                        }}
-                        disabled={adventurer?.health === 0}
-                      >
-                        <div className="aboslute w-full inset-0 flex flex-row justify-between">
-                          <p className="w-1/2 overflow-hidden whitespace-nowrap text-ellipsis text-left">{`${adventurer.name} - ${adventurer.id}`}</p>
-                          <div className="flex flex-row items-center gap-2">
-                            <span className="flex flex-row gap-1">
-                              <p>LVL</p>
-                              <p>{calculateLevel(adventurer.xp!)}</p>
-                            </span>
-                            <div className="flex flex-row gap-1">
-                              <HeartIcon className="w-5 fill-current" />
-                              <span>{adventurer.health}</span>
+                  adventurers.map((adventurer, index) => {
+                    const birthstamp = parseInt(adventurer.birthDate!);
+                    const currentTimestamp = Math.floor(Date.now() / 1000);
+                    const tenDaysInSeconds = 10 * 24 * 60 * 60; // 10 days in seconds
+                    const futureTimestamp = birthstamp + tenDaysInSeconds;
+
+                    const timeRemainingSeconds =
+                      futureTimestamp - currentTimestamp;
+                    const timeRemainingHours = Math.max(
+                      0,
+                      Math.ceil(timeRemainingSeconds / 3600)
+                    );
+
+                    const expired = currentTimestamp >= futureTimestamp;
+                    const dead = adventurer.health === 0;
+                    return (
+                      <div className="relative w-full" key={index}>
+                        {index === selectedIndex && (
+                          <>
+                            <div className="sm:hidden absolute inset-0 bg-terminal-black/75" />
+                            <div className="sm:hidden absolute flex flex-row gap-5 w-full h-full items-center justify-center">
+                              <Button
+                                size={"lg"}
+                                onClick={() => {
+                                  setAdventurer(adventurer);
+                                  handleSwitchAdventurer(adventurer.id!);
+                                }}
+                              >
+                                Play
+                              </Button>
+                              <Button
+                                size={"lg"}
+                                variant={"contrast"}
+                                className="border border-terminal-green"
+                                onClick={() => setIsTransferOpen(true)}
+                              >
+                                Transfer
+                              </Button>
                             </div>
-                            <div className="flex flex-row text-terminal-yellow gap-1">
-                              <CoinIcon className="w-5 fill-current" />
-                              <span>{adventurer.gold}</span>
+                          </>
+                        )}
+                        <Button
+                          key={index}
+                          ref={(ref) => (buttonRefs.current[index] = ref)}
+                          className={`text-lg sm:text-base w-full hover:animate-none`}
+                          variant={
+                            selectedIndex === index ? "default" : "ghost"
+                          }
+                          size={"lg"}
+                          onClick={async () => {
+                            setSelectedIndex(index);
+                            await handleSelectAdventurer(adventurer.id!);
+                          }}
+                          disabled={dead || expired}
+                        >
+                          {expired && !dead && (
+                            <div className="flex items-center justify-center absolute inset-0 bg-terminal-black/50 text-terminal-yellow/50">
+                              Expired
                             </div>
-                          </div>
-                          {adventurer?.health === 0 && (
-                            <SkullIcon className="w-3 fill-current" />
                           )}
-                        </div>
-                      </Button>
-                    </div>
-                  ))
+                          <div className="aboslute w-full inset-0 flex flex-row gap-1 justify-between">
+                            <p className="w-1/2 overflow-hidden whitespace-nowrap text-ellipsis text-left">{`${adventurer.name} - ${adventurer.id}`}</p>
+                            <div className="flex flex-row items-center gap-2">
+                              <span className="flex flex-row gap-1">
+                                <p>LVL</p>
+                                <p>{calculateLevel(adventurer.xp!)}</p>
+                              </span>
+                              <div className="flex flex-row gap-1">
+                                <HeartIcon className="w-5 fill-current" />
+                                <span>{adventurer.health}</span>
+                              </div>
+                              <div className="flex flex-row text-terminal-yellow gap-1">
+                                <CoinIcon className="w-5 fill-current" />
+                                <span>{adventurer.gold}</span>
+                              </div>
+                            </div>
+                            {timeRemainingSeconds > 0 && !dead && (
+                              <div
+                                className={`relative flex flex-row sm:gap-1 items-center ${
+                                  timeRemainingHours <= 24
+                                    ? "text-red-500"
+                                    : timeRemainingHours <= 72
+                                    ? "text-terminal-yellow"
+                                    : "text-terminal-green"
+                                }`}
+                              >
+                                <ClockIcon className="w-5 h-5" />
+                                <p className="text-xs">
+                                  {timeRemainingHours} hrs
+                                </p>
+                              </div>
+                            )}
+                            {adventurer?.health === 0 && (
+                              <SkullIcon className="w-3 fill-current" />
+                            )}
+                          </div>
+                        </Button>
+                      </div>
+                    );
+                  })
                 ) : (
                   <div className="sm:hidden flex flex-col bg-terminal-black gap-2 items-center justify-center w-full h-full p-2">
                     <Button
@@ -329,22 +380,20 @@ export const AdventurersList = ({
               )}
             </div>
           </div>
-          {adventurers.length > 0 && (
-            <div className="relative hidden sm:block sm:w-6/12 md:w-6/12 lg:w-1/2 w-full h-full">
-              {isLoading.global ? (
-                <div className="flex justify-center items-center h-full">
-                  <LootIconLoader size="w-10" />
-                </div>
-              ) : (
-                <AdventurerListCard
-                  adventurer={adventurers[selectedIndex]}
-                  gameContract={gameContract}
-                  handleSwitchAdventurer={handleSwitchAdventurer}
-                  transferAdventurer={transferAdventurer}
-                />
-              )}
-            </div>
-          )}
+          <div className="relative hidden sm:block sm:w-6/12 md:w-6/12 lg:w-1/2 w-full h-full">
+            {isLoading ? (
+              <div className="flex justify-center items-center h-full">
+                <LootIconLoader size="w-10" />
+              </div>
+            ) : (
+              <AdventurerListCard
+                adventurer={adventurers[selectedIndex]}
+                gameContract={gameContract}
+                handleSwitchAdventurer={handleSwitchAdventurer}
+                transferAdventurer={transferAdventurer}
+              />
+            )}
+          </div>
         </div>
       ) : (
         <p className="text-lg uppercase flex-1">

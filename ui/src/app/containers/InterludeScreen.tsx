@@ -17,12 +17,16 @@ import { TopTipsTutorial } from "@/app/components/tutorial/TopTipsTutorial";
 import { ObstaclesTutorial } from "@/app/components/tutorial/ObstaclesTutorial";
 import { DiscoveriesTutorial } from "@/app/components/tutorial/DiscoveriesTutorial";
 import { CollectibleBeastsTutorial } from "@/app/components/tutorial/CollectibleBeatsTutorial";
+import useUIStore from "@/app/hooks/useUIStore";
 
 interface InterludeScreenProps {
   type: string;
 }
 
 export default function InterludeScreen({ type }: InterludeScreenProps) {
+  const setOpenInterlude = useUIStore((state) => state.setOpenInterlude);
+  const entropyReady = useUIStore((state) => state.entropyReady);
+
   const [loadingMessage, setLoadingMessage] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -100,6 +104,9 @@ export default function InterludeScreen({ type }: InterludeScreenProps) {
   ];
 
   useEffect(() => {
+    if (entropyReady) {
+      setLoading(false);
+    }
     const randomLoadingMessageIndex = Math.floor(
       Math.random() * loadingMessages.length
     );
@@ -107,15 +114,7 @@ export default function InterludeScreen({ type }: InterludeScreenProps) {
 
     const randomHintIndex = Math.floor(Math.random() * tutorials.length);
     setCurrentHintIndex(randomHintIndex);
-
-    // Set a timer to change loading to false after 15 seconds
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 15000);
-
-    // Clean up the timer when the component unmounts
-    return () => clearTimeout(timer);
-  }, []);
+  }, [entropyReady]);
 
   return (
     <>
@@ -145,7 +144,11 @@ export default function InterludeScreen({ type }: InterludeScreenProps) {
             <RandomnessLoader loadingSeconds={15} />
           </div>
         ) : (
-          <Button size={"lg"} className="text-2xl animate-pulse">
+          <Button
+            size={"lg"}
+            className="text-2xl animate-pulse"
+            onClick={() => setOpenInterlude(false)}
+          >
             Proceed to next level
           </Button>
         )}

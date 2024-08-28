@@ -1,6 +1,6 @@
 use core::{
     serde::Serde, clone::Clone, option::OptionTrait, starknet::StorePacking,
-    traits::{TryInto, Into}, integer::{u64_overflowing_add, u16_overflowing_add}
+    traits::{TryInto, Into}, num::traits::OverflowingAdd
 };
 
 use combat::{combat::{ImplCombat, SpecialPowers}, constants::CombatEnums::{Type, Tier, Slot}};
@@ -37,15 +37,22 @@ impl ImplLoot of ILoot {
     // @return The naming seed.
     #[inline(always)]
     fn get_specials_seed(item_id: u8, entropy: u16) -> u16 {
-        let item_entropy = if (u16_overflowing_add(entropy, item_id.into()).is_ok()) {
-            entropy + item_id.into()
-        } else {
-            entropy - item_id.into()
-        };
+        let (mut item_entropy, overflow) = entropy.overflowing_add(item_id.into());
+        // if adding the item_id to entropy overflows
+        if (overflow) {
+            // we subtract to provide item specific entropy
+            item_entropy = entropy - item_id.into();
+        }
 
+        // scope rnd between 0 and NUM_ITEMS-1
         let rnd = item_entropy % NUM_ITEMS.into();
-        rnd * ImplLoot::get_slot_length(ImplLoot::get_slot(item_id)).into()
-            + ImplLoot::get_item_index(item_id).into()
+        // get the item index
+        let item_index = Self::get_item_index(item_id).into();
+        // get the slot length
+        let slot_length = Self::get_slot_length(Self::get_slot(item_id)).into();
+
+        // return the item specific entropy
+        rnd * slot_length + item_index
     }
 
     // get_prefix1 returns the name prefix of an item (Agony, Apocalypse, Armageddon, etc)
@@ -54,9 +61,7 @@ impl ImplLoot of ILoot {
     // @return The first part of the prefix for the item
     #[inline(always)]
     fn get_prefix1(item_id: u8, seed: u16) -> u8 {
-        (ImplLoot::get_specials_seed(item_id, seed) % NamePrefixLength.into() + 1)
-            .try_into()
-            .unwrap()
+        (Self::get_specials_seed(item_id, seed) % NamePrefixLength.into() + 1).try_into().unwrap()
     }
 
     // get_prefix2 returns the name suffix of an item (Bane, Root, Bite, etc)
@@ -65,9 +70,7 @@ impl ImplLoot of ILoot {
     // @return The second part of the prefix for the item
     #[inline(always)]
     fn get_prefix2(item_id: u8, seed: u16) -> u8 {
-        (ImplLoot::get_specials_seed(item_id, seed) % NameSuffixLength.into() + 1)
-            .try_into()
-            .unwrap()
+        (Self::get_specials_seed(item_id, seed) % NameSuffixLength.into() + 1).try_into().unwrap()
     }
 
     // @notice gets the item suffix of an item (of_Power, of_Giant, of_Titans, etc)
@@ -76,9 +79,7 @@ impl ImplLoot of ILoot {
     // @return u8 the suffix for the item
     #[inline(always)]
     fn get_suffix(item_id: u8, seed: u16) -> u8 {
-        (ImplLoot::get_specials_seed(item_id, seed) % ItemSuffixLength.into() + 1)
-            .try_into()
-            .unwrap()
+        (Self::get_specials_seed(item_id, seed) % ItemSuffixLength.into() + 1).try_into().unwrap()
     }
 
     // @notice gets the specials of an item based on a seed
@@ -90,12 +91,12 @@ impl ImplLoot of ILoot {
         if greatness < SUFFIX_UNLOCK_GREATNESS {
             SpecialPowers { special1: 0, special2: 0, special3: 0 }
         } else if greatness < PREFIXES_UNLOCK_GREATNESS {
-            SpecialPowers { special1: ImplLoot::get_suffix(id, seed), special2: 0, special3: 0, }
+            SpecialPowers { special1: Self::get_suffix(id, seed), special2: 0, special3: 0, }
         } else {
             SpecialPowers {
-                special1: ImplLoot::get_suffix(id, seed),
-                special2: ImplLoot::get_prefix1(id, seed),
-                special3: ImplLoot::get_prefix2(id, seed),
+                special1: Self::get_suffix(id, seed),
+                special2: Self::get_prefix1(id, seed),
+                special3: Self::get_prefix2(id, seed),
             }
         }
     }
@@ -754,7 +755,7 @@ impl ImplLoot of ILoot {
 
     // @notice gets the number of Loot items for a given slot
     // @param slot the slot to get number of items for
-    // @return u8 the number of items for the given slot 
+    // @return u8 the number of items for the given slot
     fn get_slot_length(slot: Slot) -> u8 {
         match slot {
             Slot::None(()) => 0,
@@ -769,7 +770,7 @@ impl ImplLoot of ILoot {
         }
     }
 
-    // @notice gets the index of a Loot item 
+    // @notice gets the index of a Loot item
     // @dev the index is the items position in its repsective grouping {weapon, chest_armor, etc}
     // @param id of the item to get the index for
     // @return u8 the index of the item
@@ -1011,7 +1012,7 @@ mod tests {
         loot::{ImplLoot, ILoot, Loot},
         constants::{
             NamePrefixLength, ItemNameSuffix, ItemId, ItemNamePrefix, NameSuffixLength,
-            ItemSuffixLength, ItemSuffix, NUM_ITEMS,ItemSlotLength
+            ItemSuffixLength, ItemSuffix, NUM_ITEMS, ItemSlotLength
         },
         utils::{
             NameUtils::{
@@ -1232,7 +1233,8 @@ mod tests {
 
             // Chest Armor
             //
-            // Divine Robes are always {X Bane, X Song, X Instrument, X Shadow, X Growl, X Form} (set 1)
+            // Divine Robes are always {X Bane, X Song, X Instrument, X Shadow, X Growl, X Form}
+            // (set 1)
             assert(
                 is_special3_set1(ImplLoot::get_prefix2(ItemId::DivineRobe, i)),
                 'invalid divine robe name suffix'
@@ -1358,12 +1360,12 @@ mod tests {
             //
             // Rings
             //
-            // Can have any name so no need to test. Note while the contract doesn't generate any Rings with
-            // name prefix set 1  such as "X Bane" Gold Ring of Power, this is because those ring variants
-            // haven't yet reached G19 to receive their name. This is simlar to us
-            // knowing that all Warhammers will eventually be "X Bane" even though none have reached G19
-            // in the present day. The contract is deterministic with the item naming and the name
-            // assignment does not depend on the items greatness.
+            // Can have any name so no need to test. Note while the contract doesn't generate any
+            // Rings with name prefix set 1  such as "X Bane" Gold Ring of Power, this is because
+            // those ring variants haven't yet reached G19 to receive their name. This is simlar to
+            // us knowing that all Warhammers will eventually be "X Bane" even though none have
+            // reached G19 in the present day. The contract is deterministic with the item naming
+            // and the name assignment does not depend on the items greatness.
 
             i += 1;
         };
@@ -3576,7 +3578,8 @@ mod tests {
             if item_index == 102 {
                 break;
             }
-            ImplLoot::get_item(item_index);
+            let item = ImplLoot::get_item(item_index);
+            assert(item.id != 0, 'item should exist');
             item_index += 1;
         }
     }
@@ -3584,7 +3587,7 @@ mod tests {
     #[test]
     #[available_gas(26100)]
     fn test_get_item_zero() {
-        let item = ImplLoot::get_item(102);
+        let item = ImplLoot::get_item(0);
         assert(item.id == 0, 'item id is 0');
         assert(item.tier == Tier::None(()), 'item is tier none');
         assert(item.slot == Slot::None(()), 'item is slot none');
@@ -3594,16 +3597,6 @@ mod tests {
     #[test]
     #[available_gas(26100)]
     fn test_get_item_out_of_bounds() {
-        let item = ImplLoot::get_item(102);
-        assert(item.id == 0, 'item id is 0');
-        assert(item.tier == Tier::None(()), 'item is tier none');
-        assert(item.slot == Slot::None(()), 'item is slot none');
-        assert(item.item_type == Type::None(()), 'item is type none');
-    }
-
-    #[test]
-    #[available_gas(26100)]
-    fn test_get_item_max_value() {
         let item = ImplLoot::get_item(102);
         assert(item.id == 0, 'item id is 0');
         assert(item.tier == Tier::None(()), 'item is tier none');
@@ -3663,6 +3656,5 @@ mod tests {
             ImplLoot::get_slot_length(Slot::Ring(())) == ItemSlotLength::SlotItemsLengthRing,
             'Incorrect ring slot length'
         );
-
     }
 }

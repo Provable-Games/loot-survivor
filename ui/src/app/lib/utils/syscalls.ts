@@ -285,9 +285,10 @@ export function createSyscalls({
         getKeyFromValue(gameData.ITEMS, formData.startingWeapon) ?? "",
         stringToFelt(formData.name).toString(),
         goldenTokenId,
-        "0",
         "0", // delay_stat_reveal
         rendererContractAddress,
+        "0",
+        "0",
       ],
     };
 
