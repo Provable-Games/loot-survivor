@@ -279,10 +279,11 @@ export async function parseEvents(
             itemSpecialsSeed: parseInt(raw.data[37]),
             rankAtDeath: parseInt(raw.data[38]),
             delayStatReveal: convertToBoolean(parseInt(raw.data[39])),
+            goldenTokenId: parseInt(raw.data[40]),
+            launchTournamentWinnerTokenId: parseInt(raw.data[41]),
           },
-          name: parseInt(raw.data[36]),
-          goldenTokenId: parseInt(raw.data[37]),
-          customRenderer: raw.data[38],
+          name: parseInt(raw.data[42]),
+          customRenderer: raw.data[43],
         };
         const startGameEvent = processData(
           startGameData,

@@ -1021,6 +1021,7 @@ class AdventurersFilter:
     birthDate: Optional[OrderByInput] = None
     deathDate: Optional[OrderByInput] = None
     goldenTokenId: Optional[OrderByInput] = None
+    launchTournamentWinnerTokenId: Optional[OrderByInput] = None
     customRenderer: Optional[OrderByInput] = None
     battleActionCount: Optional[OrderByInput] = None
     gold: Optional[FeltValueFilter] = None
@@ -1058,6 +1059,11 @@ class AdventurersFilter:
             "deathDate": self.deathDate.to_dict() if self.deathDate else None,
             "goldenTokenId": (
                 self.goldenTokenId.to_dict() if self.goldenTokenId else None
+            ),
+            "launchTournamentWinnerTokenId": (
+                self.launchTournamentWinnerTokenId.to_dict()
+                if self.launchTournamentWinnerTokenId
+                else None
             ),
             "customRenderer": (
                 self.customRenderer.to_dict() if self.customRenderer else None
@@ -1296,6 +1302,20 @@ class ItemsFilter:
         }
 
 
+@strawberry.type
+class CollectionTotalFilter:
+    collection: Optional[HexValueFilter] = None
+    xp: Optional[FeltValueFilter] = None
+    gamesPlayed: Optional[FeltValueFilter] = None
+
+    def to_dict(self):
+        return {
+            "collection": self.collection.to_dict() if self.collection else None,
+            "xp": self.xp.to_dict() if self.xp else None,
+            "gamesPlayed": (self.gamesPlayed.to_dict() if self.gamesPlayed else None),
+        }
+
+
 @strawberry.input
 class TokensFilter:
     token: Optional[HexValueFilter] = None
@@ -1391,6 +1411,7 @@ class AdventurersOrderByInput:
     birthDate: Optional[OrderByInput] = None
     deathDate: Optional[OrderByInput] = None
     goldenTokenId: Optional[OrderByInput] = None
+    launchTournamentWinnerTokenId: Optional[OrderByInput] = None
     customRenderer: Optional[OrderByInput] = None
     battleActionCount: Optional[OrderByInput] = None
     gold: Optional[OrderByInput] = None
@@ -1428,6 +1449,11 @@ class AdventurersOrderByInput:
             "deathDate": self.deathDate.to_dict() if self.deathDate else None,
             "goldenTokenId": (
                 self.goldenTokenId.to_dict() if self.goldenTokenId else None
+            ),
+            "launchTournamentWinnerTokenId": (
+                self.launchTournamentWinnerTokenId.to_dict()
+                if self.launchTournamentWinnerTokenId
+                else None
             ),
             "customRenderer": (
                 self.customRenderer.to_dict() if self.customRenderer else None
@@ -1668,6 +1694,20 @@ class ItemsOrderByInput:
         }
 
 
+@strawberry.type
+class CollectionTotalOrderByInput:
+    collection: Optional[OrderByInput] = None
+    xp: Optional[OrderByInput] = None
+    gamesPlayed: Optional[OrderByInput] = None
+
+    def to_dict(self):
+        return {
+            "collection": self.collection.to_dict() if self.collection else None,
+            "xp": self.xp.to_dict() if self.xp else None,
+            "gamesPlayed": (self.gamesPlayed.to_dict() if self.gamesPlayed else None),
+        }
+
+
 @strawberry.input
 class TokensOrderByInput:
     token: Optional[OrderByInput] = None
@@ -1763,6 +1803,7 @@ class Adventurer:
     birthDate: Optional[str]
     deathDate: Optional[str]
     goldenTokenId: Optional[FeltValue]
+    launchTournamentWinnerTokenId: Optional[FeltValue]
     customRenderer: Optional[FeltValue]
     battleActionCount: Optional[FeltValue]
     gold: Optional[FeltValue]
@@ -1800,6 +1841,7 @@ class Adventurer:
             birthDate=data["birthDate"],
             deathDate=data["deathDate"],
             goldenTokenId=data["goldenTokenId"],
+            launchTournamentWinnerTokenId=data["launchTournamentWinnerTokenId"],
             customRenderer=data["customRenderer"],
             battleActionCount=data["battleActionCount"],
             gold=data["gold"],
@@ -2027,6 +2069,21 @@ class Item:
             xp=data["xp"],
             isAvailable=data["isAvailable"],
             timestamp=data["timestamp"],
+        )
+
+
+@strawberry.type
+class CollectionTotal:
+    collection: Optional[HexValue]
+    xp: Optional[FeltValue]
+    gamesPlayed: Optional[FeltValue]
+
+    @classmethod
+    def from_mongo(cls, data):
+        return cls(
+            collection=data["collection"],
+            xp=data["xp"],
+            gamesPlayed=data["gamesPlayed"],
         )
 
 
@@ -2612,6 +2669,78 @@ async def get_items(
     query = db["items"].find(filter).skip(skip).limit(limit).sort(sort_var, sort_dir)
 
     result = [Item.from_mongo(t) for t in query]
+
+    # Cache the result
+    await redis.set(cache_key, json.dumps([item.__dict__ for item in result]), ex=60)
+
+    return result
+
+
+async def get_collection_totals(
+    info,
+    where: Optional[CollectionTotalFilter] = {},
+    limit: Optional[int] = 10,
+    skip: Optional[int] = 0,
+    orderBy: Optional[CollectionTotalOrderByInput] = {},
+) -> List[CollectionTotal]:
+    db = info.context["db"]
+    redis = info.context["redis"]
+
+    # Convert custom filter objects to dictionaries
+    where_dict = where.to_dict() if where else {}
+    orderBy_dict = orderBy.to_dict() if orderBy else {}
+
+    # Create a unique cache key based on the query parameters
+    cache_key = f"collection_totals:{json.dumps(where_dict)}:{limit}:{skip}:{json.dumps(orderBy_dict)}"
+    cached_result = await redis.get(cache_key)
+
+    if cached_result:
+        cached_result = cached_result.decode("utf-8")  # Decode the byte string
+        return [CollectionTotal.from_mongo(item) for item in json.loads(cached_result)]
+
+    filter = {"cursor.to": None}
+
+    if where:
+        processed_filters = process_filters(where)
+        for key, value in processed_filters.items():
+            if (
+                isinstance(value, StringFilter)
+                | isinstance(value, DiscoveryFilter)
+                | isinstance(value, SubDiscoveryFilter)
+                | isinstance(value, SlotFilter)
+            ):
+                filter[key] = get_str_filters(value)
+            elif isinstance(value, HexValueFilter):
+                filter[key] = get_hex_filters(value)
+            elif isinstance(value, DateTimeFilter):
+                filter[key] = get_date_filters(value)
+            elif isinstance(value, FeltValueFilter):
+                filter[key] = get_felt_filters(value)
+
+    sort_options = {k: v for k, v in orderBy.__dict__.items() if v is not None}
+
+    sort_var = "updated_at"
+    sort_dir = -1
+
+    for key, value in sort_options.items():
+        if value.asc:
+            sort_var = key
+            sort_dir = 1
+            break
+        if value.desc:
+            sort_var = key
+            sort_dir = -1
+            break
+
+    query = (
+        db["collection_totals"]
+        .find(filter)
+        .skip(skip)
+        .limit(limit)
+        .sort(sort_var, sort_dir)
+    )
+
+    result = [CollectionTotal.from_mongo(t) for t in query]
 
     # Cache the result
     await redis.set(cache_key, json.dumps([item.__dict__ for item in result]), ex=60)

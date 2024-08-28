@@ -288,6 +288,7 @@ export function createSyscalls({
         "0", // delay_stat_reveal
         rendererContractAddress,
         "0",
+        "0",
       ],
     };
 

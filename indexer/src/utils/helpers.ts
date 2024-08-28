@@ -30,6 +30,7 @@ export function insertAdventurer({
   birthDate,
   deathDate,
   goldenTokenId,
+  launchTournamentWinnerTokenId,
   customRenderer,
   createdTime,
   lastUpdatedTime,
@@ -71,6 +72,9 @@ export function insertAdventurer({
         birthDate: parseInt(birthDate),
         deathDate: parseInt(deathDate),
         goldenTokenId: checkExistsInt(parseInt(goldenTokenId)),
+        launchTournamentWinnerTokenId: checkExistsInt(
+          checkExistsInt(parseInt(launchTournamentWinnerTokenId))
+        ),
         customRenderer: checkExistsInt(parseInt(customRenderer)),
         createdTime: createdTime,
         lastUpdatedTime: lastUpdatedTime,
@@ -683,6 +687,23 @@ export function updateRevealedFreeGame({ adventurerId, revealed }: any) {
       $set: {
         ...entity,
         revealed,
+      },
+    },
+  };
+}
+
+export function updateCollectionTotal({ collection, xp, gamesPlayed }: any) {
+  const entity = {
+    collection: checkExistsInt(BigInt(collection).toString(16)),
+  };
+
+  return {
+    entity,
+    update: {
+      $set: {
+        ...entity,
+        xp: parseInt(xp),
+        gamesPlayed: parseInt(gamesPlayed),
       },
     },
   };

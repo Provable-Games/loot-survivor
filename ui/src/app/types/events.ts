@@ -5,6 +5,7 @@ type u256 = {
 
 type u128 = number;
 type u64 = number;
+type u32 = number;
 type u16 = number;
 type u8 = number;
 
@@ -15,6 +16,8 @@ type AdventurerMetadata = {
   itemSpecialsSeed: u16;
   rankAtDeath: u8;
   delayStatReveal: boolean;
+  goldenTokenId: u8;
+  launchTournamentWinnerTokenId: u32;
 };
 
 type Stats = {
@@ -149,7 +152,6 @@ export type StartGameEvent = {
   adventurerState: AdventurerState;
   adventurerMeta: AdventurerMetadata;
   name: number;
-  goldenTokenId: number;
   customRenderer: ContractAddress;
 };
 
