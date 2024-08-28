@@ -1302,7 +1302,7 @@ class ItemsFilter:
         }
 
 
-@strawberry.type
+@strawberry.input
 class CollectionTotalFilter:
     collection: Optional[HexValueFilter] = None
     xp: Optional[FeltValueFilter] = None
@@ -1694,7 +1694,7 @@ class ItemsOrderByInput:
         }
 
 
-@strawberry.type
+@strawberry.input
 class CollectionTotalOrderByInput:
     collection: Optional[OrderByInput] = None
     xp: Optional[OrderByInput] = None
@@ -2703,17 +2703,8 @@ async def get_collection_totals(
     if where:
         processed_filters = process_filters(where)
         for key, value in processed_filters.items():
-            if (
-                isinstance(value, StringFilter)
-                | isinstance(value, DiscoveryFilter)
-                | isinstance(value, SubDiscoveryFilter)
-                | isinstance(value, SlotFilter)
-            ):
-                filter[key] = get_str_filters(value)
-            elif isinstance(value, HexValueFilter):
+            if isinstance(value, HexValueFilter):
                 filter[key] = get_hex_filters(value)
-            elif isinstance(value, DateTimeFilter):
-                filter[key] = get_date_filters(value)
             elif isinstance(value, FeltValueFilter):
                 filter[key] = get_felt_filters(value)
 
@@ -2732,13 +2723,7 @@ async def get_collection_totals(
             sort_dir = -1
             break
 
-    query = (
-        db["collection_totals"]
-        .find(filter)
-        .skip(skip)
-        .limit(limit)
-        .sort(sort_var, sort_dir)
-    )
+    query = db["collection_totals"].find[filter].skip(skip).limit(limit).sort(sort_var, sort_dir)
 
     result = [CollectionTotal.from_mongo(t) for t in query]
 
@@ -2746,7 +2731,6 @@ async def get_collection_totals(
     await redis.set(cache_key, json.dumps([item.__dict__ for item in result]), ex=60)
 
     return result
-
 
 async def get_tokens(
     info,
@@ -3244,6 +3228,9 @@ class Query:
     )
     adventurerRank: Optional[AdventurerRank] = strawberry.field(
         resolver=get_adventurer_rank
+    )
+    collectionTotals: List[CollectionTotal] = strawberry.field(
+        resolver=get_collection_totals
     )
 
 
