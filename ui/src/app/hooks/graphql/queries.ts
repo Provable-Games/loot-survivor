@@ -456,6 +456,16 @@ const getAdventurerRank = gql`
   }
 `;
 
+const getCollectionsTotals = gql`
+  query getCollectionsTotals {
+    collectionTotals {
+      collection
+      gamesPlayed
+      xp
+    }
+  }
+`;
+
 export {
   getLatestDiscoveries,
   getLastBeastDiscovery,
@@ -477,4 +487,5 @@ export {
   getAliveAdventurersCount,
   getDiscoveryBattleCount,
   getAdventurerRank,
+  getCollectionsTotals,
 };

@@ -74,3 +74,46 @@ export const efficacyData = [
   { weapon: "Bludgeon", metal: "Fair", hide: "Strong", cloth: "Weak" },
   { weapon: "Magic", metal: "Strong", hide: "Weak", cloth: "Fair" },
 ];
+
+export const collectionData = [
+  {
+    avatar: "/collections/Blobert.png",
+    name: "Bloberts",
+    token: "0x04a79a62dc260f2e9e4b208181b2014c14f3ff44fe7d0e6452a759ed91a106d1",
+  },
+  {
+    avatar: "/collections/Ducks-Everywhere.png",
+    name: "Ducks Everywhere",
+    token: "0x07c006181ea9cc7dd1b09c29e9ff23112be30ecfef73b760fabe5bc7ae6ecb44",
+  },
+  {
+    avatar: "/collections/Everai.png",
+    name: "Everai",
+    token: "0x04efe851716110abeee81b7f22f7964845355ffa32e6833fc3a557a1881721ac",
+  },
+  {
+    avatar: "/collections/Focus-Tree.png",
+    name: "Focus Tree",
+    token: "0x0377c2d65debb3978ea81904e7d59740da1f07412e30d01c5ded1c5d6f1ddc43",
+  },
+  {
+    avatar: "/collections/Influence.png",
+    name: "Influence",
+    token: "0x07280a807c8b79379bec87919433b7b836b93a92e6d71b24ee99f4ffe33dd337",
+  },
+  {
+    avatar: "/collections/The-Syndicate.png",
+    name: "The Syndicate",
+    token: "0x1",
+  },
+  {
+    avatar: "/collections/Pixel-Banners.png",
+    name: "Pixel Banners",
+    token: "0x02d66679de61a5c6d57afd21e005a8c96118bd60315fd79a4521d68f5e5430d1",
+  },
+  {
+    avatar: "/collections/Realms.png",
+    name: "Realms",
+    token: "0x07ae27a31bb6526e3de9cf02f081f6ce0615ac12a6d7b85ee58b8ad7947a2809",
+  },
+];

@@ -2758,7 +2758,7 @@ async def get_collection_totals(
             sort_dir = -1
             break
 
-    query = db["collection_totals"].find[filter].skip(skip).limit(limit).sort(sort_var, sort_dir)
+    query = db["collection_totals"].find(filter).skip(skip).limit(limit).sort(sort_var, sort_dir)
 
     result = [CollectionTotal.from_mongo(t) for t in query]
 

@@ -1,77 +1,73 @@
+import { useMemo } from "react";
 import { formatXP } from "@/app/lib/utils";
-import { CollectionScore } from "@/app/types";
+import { collectionData } from "@/app/lib/constants";
+import { useQuery } from "@apollo/client";
+import { getCollectionsTotals } from "@/app/hooks/graphql/queries";
+import { gameClient } from "@/app/lib/clients";
+import { networkConfig } from "@/app/lib/networkConfig";
+import useUIStore from "@/app/hooks/useUIStore";
+import { padAddress } from "@/app/lib/utils";
+
+interface CollectionTotal {
+  xp: number;
+  gamesPlayed: number;
+  collection: string;
+}
 
 /**
  * @container
  * @description Provides the collections leaderboard screen.
  */
 export default function CollectionsLeaderboardScreen() {
-  const sampleScores: CollectionScore[] = [
-    {
-      avatar: "/collections/Blobert.png",
-      totalXP: 300,
-      gamesPlayed: 20,
-      name: "Bloberts",
-    },
-    {
-      avatar: "/collections/Defi-Spring.png",
-      totalXP: 2,
-      gamesPlayed: 7,
-      name: "Defi-Spring",
-    },
-    {
-      avatar: "/collections/Ducks-Everywhere.png",
-      totalXP: 60,
-      gamesPlayed: 20,
-      name: "Ducks Everywhere",
-    },
-    {
-      avatar: "/collections/Everai.png",
-      totalXP: 60,
-      gamesPlayed: 900,
-      name: "Everai",
-    },
-    {
-      avatar: "/collections/Focus-Tree.png",
-      totalXP: 60,
-      gamesPlayed: 20,
-      name: "Focus Tree",
-    },
-    {
-      avatar: "/collections/Influence.png",
-      totalXP: 60,
-      gamesPlayed: 20,
-      name: "Influence",
-    },
-    {
-      avatar: "/collections/Open-Division.png",
-      totalXP: 60,
-      gamesPlayed: 20,
-      name: "Open Division",
-    },
-    {
-      avatar: "/collections/Pixel-Banners.png",
-      totalXP: 60,
-      gamesPlayed: 20,
-      name: "Pixel Banners",
-    },
-    {
-      avatar: "/collections/Realms.png",
-      totalXP: 60,
-      gamesPlayed: 20,
-      name: "Realms",
-    },
-  ].sort((a, b) => b.totalXP - a.totalXP);
+  const network = useUIStore((state) => state.network);
+  const client = useMemo(() => {
+    return gameClient(networkConfig[network!].lsGQLURL);
+  }, [network]);
+  const { data, refetch } = useQuery(getCollectionsTotals, {
+    client: client,
+    fetchPolicy: "network-only",
+  });
+  const collectionsTotals = data?.collectionTotals ?? [];
+
+  // Merge collectionsTotals with collectionData
+  const mergedCollections = useMemo(() => {
+    const totalsMap = new Map<string, CollectionTotal>(
+      collectionsTotals.map((total: CollectionTotal) => [
+        padAddress(total.collection),
+        total,
+      ]) || []
+    );
+
+    return collectionData
+      .map((collection) => {
+        const totals = totalsMap.get(collection.token) || {
+          xp: 0,
+          gamesPlayed: 0,
+        };
+
+        return {
+          ...collection,
+          xp: totals.xp || 0,
+          gamesPlayed: totals.gamesPlayed || 0,
+        };
+      })
+      .sort((a, b) => b.xp - a.xp);
+  }, [collectionsTotals]);
+
+  console.log(mergedCollections);
 
   // Calculate the maximum Total XP from all scores
-  const maxTotalXP = Math.max(...sampleScores.map((score) => score.totalXP));
+  const maxTotalXP = Math.max(
+    ...mergedCollections.map((score: any) => score.xp)
+  );
+  console.log(maxTotalXP);
   const maxGamesPlayable = 1600; // Set this to the maximum possible XP
 
   return (
     <div className="flex flex-col h-full w-full">
       <h3 className="text-center uppercase">Collection Scores</h3>
       <ScoreGraph
-        scores={sampleScores}
+        scores={mergedCollections}
         maxGamesPlayable={maxGamesPlayable}
         maxTotalXP={maxTotalXP}
       />
@@ -83,7 +79,7 @@ import React from "react";
 
 interface ScoreData {
   avatar: string;
-  totalXP: number;
+  xp: number;
   gamesPlayed: number;
   name: string;
 }
@@ -111,7 +107,7 @@ const ScoreGraph: React.FC<ScoreGraphProps> = ({
               <div className="w-full flex flex-grow flex-col-reverse text-terminal-black text-center">
                 <div
                   className="relative bg-terminal-green w-full relative"
-                  style={{ height: `${(score.totalXP / maxTotalXP) * 100}%` }}
+                  style={{ height: `${(score.xp / maxTotalXP) * 100}%` }}
                 >
                   <img
                     src={score.avatar}
@@ -138,9 +134,9 @@ const ScoreGraph: React.FC<ScoreGraphProps> = ({
                       )}%`}</span>
                     )}
                   </div>
-                  {score.totalXP > 0 && (
+                  {score.xp > 0 && (
                     <span className="text-xl absolute top-0 left-0 right-0">
-                      {formatXP(score.totalXP)} XP
+                      {formatXP(score.xp)} XP
                     </span>
                   )}
                 </div>
@@ -159,7 +155,7 @@ const ScoreGraph: React.FC<ScoreGraphProps> = ({
               <div className="flex flex-grow flex-row text-terminal-black text-center h-full">
                 <div
                   className="relative bg-terminal-green h-full relative"
-                  style={{ width: `${(score.totalXP / maxTotalXP) * 100}%` }}
+                  style={{ width: `${(score.xp / maxTotalXP) * 100}%` }}
                 >
                   <img
                     src={score.avatar}
@@ -175,7 +171,7 @@ const ScoreGraph: React.FC<ScoreGraphProps> = ({
                     {score.gamesPlayed > 0 && (
                       <span
                         className={`text-xl absolute top-1/2 transform -translate-y-1/2 ${
-                          (score.totalXP / maxTotalXP) * 100 <= 10 && "hidden"
+                          (score.xp / maxTotalXP) * 100 <= 10 && "hidden"
                         } ${
                           (score.gamesPlayed / maxGamesPlayable) * 100 <= 50
                             ? "left-full"
@@ -186,15 +182,15 @@ const ScoreGraph: React.FC<ScoreGraphProps> = ({
                       )}%`}</span>
                     )}
                   </div>
-                  {score.totalXP > 0 && (
+                  {score.xp > 0 && (
                     <span
                       className={`text-xl absolute right-1 top-1/2 transform -translate-y-1/2 ${
-                        (score.totalXP / maxTotalXP) * 100 <= 90
+                        (score.xp / maxTotalXP) * 100 <= 90
                           ? "right-[-20px] text-terminal-green"
                           : ""
                       }`}
                     >
-                      {formatXP(score.totalXP)}
+                      {formatXP(score.xp)}
                     </span>
                   )}
                 </div>
