@@ -85,6 +85,10 @@ export const cartridgeConnector = (
         method: "upgrade",
       },
       {
+        target: gameAddress,
+        method: "transfer_from",
+      },
+      {
         target: lordsAddress,
         method: "approve",
       },
