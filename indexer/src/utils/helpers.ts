@@ -637,6 +637,25 @@ export function updateTokenOwner({ token, tokenId, timestamp, newOwner }: any) {
   };
 }
 
+export function updateBeastOwner({ token, tokenId, timestamp, newOwner }: any) {
+  const entity = {
+    token: checkExistsInt(BigInt(token).toString(16)),
+    tokenId: parseInt(tokenId),
+  };
+
+  return {
+    entity,
+    update: {
+      $set: {
+        ...entity,
+        ownerAddress: checkExistsInt(BigInt(newOwner).toString(16)),
+        hash: computeHash(token, tokenId),
+        timestamp,
+      },
+    },
+  };
+}
+
 export function insertFreeGame({
   adventurerId,
   gameOwnerAddress,

@@ -156,6 +156,25 @@ services:
     networks:
       - indexer
 
+  beast_tokens_indexer:
+    image: quay.io/apibara/sink-mongo:0.9.1
+    depends_on:
+      - etcd
+      - mongo
+    restart: always
+    command:
+      - run
+      - --allow-env=/data/env-sepolia
+      - /data/src/beastTokens.ts
+    volumes:
+      - ./:/data/
+    environment:
+      PERSIST_TO_ETCD: http://etcd:2379
+      SINK_ID: beast_tokens
+      AUTH_TOKEN: ${AUTH_TOKEN}
+    networks:
+      - indexer
+
   claimed_free_games_indexer:
     image: quay.io/apibara/sink-mongo:0.9.1
     depends_on:
