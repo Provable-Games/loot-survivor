@@ -3,6 +3,7 @@ from typing import List, NewType, Optional, Dict, Union, Any
 import ssl
 import json
 import logging
+import hashlib
 
 import strawberry
 import aiohttp_cors
@@ -53,20 +54,15 @@ def serialize_felt(value):
 
 
 def parse_string(value):
-    # Encode the string to UTF-8 bytes
-    bytes_array = value.encode("utf-8")
-    # Convert the bytes to an integer
-    int_value = int.from_bytes(bytes_array, byteorder="big")
-    # Return the integer as a string
-    return str(int_value)
+    # Assuming the input is a regular string
+    # Convert it to bytes and then to a hexadecimal string
+    return value.encode("utf-8").hex()
 
 
 def serialize_string(value):
-    int_value = int(value)
-    # Convert the integer to bytes
-    bytes_array = int_value.to_bytes((int_value.bit_length() + 7) // 8, byteorder="big")
-    # Decode the bytes using UTF-8
-    return bytes_array.decode("utf-8")
+    # Assuming the input is a hexadecimal string
+    # Convert it back to bytes and then to a UTF-8 string
+    return bytes.fromhex(str(value)).decode("utf-8")
 
 
 def parse_class(value):
@@ -372,6 +368,19 @@ class StringFilter:
             "contains": self.contains,
             "startsWith": self.startsWith,
             "endsWith": self.endsWith,
+        }
+    
+@strawberry.input
+class HashFilter:
+    eq: Optional[str] = None
+    _in: Optional[List[str]] = None
+    notIn: Optional[List[str]] = None
+
+    def to_dict(self):
+        return {
+            "eq": self.eq,
+            "_in": self._in,
+            "notIn": self.notIn,
         }
 
 
@@ -1026,6 +1035,7 @@ class AdventurersFilter:
     birthDate: Optional[OrderByInput] = None
     deathDate: Optional[OrderByInput] = None
     goldenTokenId: Optional[OrderByInput] = None
+    launchTournamentWinnerTokenId: Optional[OrderByInput] = None
     customRenderer: Optional[OrderByInput] = None
     battleActionCount: Optional[OrderByInput] = None
     gold: Optional[FeltValueFilter] = None
@@ -1063,6 +1073,11 @@ class AdventurersFilter:
             "deathDate": self.deathDate.to_dict() if self.deathDate else None,
             "goldenTokenId": (
                 self.goldenTokenId.to_dict() if self.goldenTokenId else None
+            ),
+            "launchTournamentWinnerTokenId": (
+                self.launchTournamentWinnerTokenId.to_dict()
+                if self.launchTournamentWinnerTokenId
+                else None
             ),
             "customRenderer": (
                 self.customRenderer.to_dict() if self.customRenderer else None
@@ -1302,6 +1317,90 @@ class ItemsFilter:
 
 
 @strawberry.input
+class CollectionTotalFilter:
+    collection: Optional[HexValueFilter] = None
+    xp: Optional[FeltValueFilter] = None
+    gamesPlayed: Optional[FeltValueFilter] = None
+
+    def to_dict(self):
+        return {
+            "collection": self.collection.to_dict() if self.collection else None,
+            "xp": self.xp.to_dict() if self.xp else None,
+            "gamesPlayed": (self.gamesPlayed.to_dict() if self.gamesPlayed else None),
+        }
+
+
+@strawberry.input
+class TokensFilter:
+    token: Optional[HexValueFilter] = None
+    tokenId: Optional[FeltValueFilter] = None
+    nftOwnerAddress: Optional[HexValueFilter] = None
+    timestamp: Optional[DateTimeFilter] = None
+    hash: Optional[HashFilter] = None
+
+    def to_dict(self):
+        return {
+            "token": self.token.to_dict() if self.token else None,
+            "tokenId": self.tokenId.to_dict() if self.tokenId else None,
+            "nftOwnerAddress": (
+                self.nftOwnerAddress.to_dict() if self.nftOwnerAddress else None
+            ),
+            "timestamp": self.timestamp.to_dict() if self.timestamp else None,
+            "hash": self.hash.to_dict() if self.hash else None,
+        }
+
+
+@strawberry.input
+class ClaimedFreeGamesFilter:
+    token: Optional[HexValueFilter] = None
+    tokenId: Optional[FeltValueFilter] = None
+    adventurerId: Optional[FeltValueFilter] = None
+    gameOwnerAddress: Optional[HexValueFilter] = None
+    revealed: Optional[BooleanFilter] = None
+    hash: Optional[HashFilter] = None
+
+    def to_dict(self):
+        return {
+            "token": self.token.to_dict() if self.token else None,
+            "tokenId": self.tokenId.to_dict() if self.tokenId else None,
+            "adventurerId": self.adventurerId.to_dict() if self.adventurerId else None,
+            "gameOwnerAddress": (
+                self.gameOwnerAddress.to_dict() if self.gameOwnerAddress else None
+            ),
+            "revealed": self.revealed.to_dict() if self.revealed else None,
+            "hash": self.hash.to_dict() if self.hash else None,
+        }
+
+
+@strawberry.input
+class TokenWithFreeGameStatusFilter:
+    token: Optional[HexValueFilter] = None
+    tokenId: Optional[FeltValueFilter] = None
+    nftOwnerAddress: Optional[HexValueFilter] = None
+    freeGameUsed: Optional[BooleanFilter] = None
+    freeGameRevealed: Optional[BooleanFilter] = None
+    adventurerId: Optional[FeltValueFilter] = None
+    gameOwnerAddress: Optional[HexValueFilter] = None
+
+    def to_dict(self):
+        return {
+            "token": self.token.to_dict() if self.token else None,
+            "tokenId": self.tokenId.to_dict() if self.tokenId else None,
+            "nftOwnerAddress": (
+                self.nftOwnerAddress.to_dict() if self.nftOwnerAddress else None
+            ),
+            "freeGameUsed": self.freeGameUsed.to_dict() if self.freeGameUsed else None,
+            "freeGameRevealed": (
+                self.freeGameRevealed.to_dict() if self.freeGameRevealed else None
+            ),
+            "adventurerId": self.adventurerId.to_dict() if self.adventurerId else None,
+            "gameOwnerAddress": (
+                self.gameOwnerAddress.to_dict() if self.gameOwnerAddress else None
+            ),
+        }
+
+
+@strawberry.input
 class AdventurersOrderByInput:
     id: Optional[OrderByInput] = None
     entropy: Optional[OrderByInput] = None
@@ -1330,6 +1429,7 @@ class AdventurersOrderByInput:
     birthDate: Optional[OrderByInput] = None
     deathDate: Optional[OrderByInput] = None
     goldenTokenId: Optional[OrderByInput] = None
+    launchTournamentWinnerTokenId: Optional[OrderByInput] = None
     customRenderer: Optional[OrderByInput] = None
     battleActionCount: Optional[OrderByInput] = None
     gold: Optional[OrderByInput] = None
@@ -1367,6 +1467,11 @@ class AdventurersOrderByInput:
             "deathDate": self.deathDate.to_dict() if self.deathDate else None,
             "goldenTokenId": (
                 self.goldenTokenId.to_dict() if self.goldenTokenId else None
+            ),
+            "launchTournamentWinnerTokenId": (
+                self.launchTournamentWinnerTokenId.to_dict()
+                if self.launchTournamentWinnerTokenId
+                else None
             ),
             "customRenderer": (
                 self.customRenderer.to_dict() if self.customRenderer else None
@@ -1607,6 +1712,90 @@ class ItemsOrderByInput:
         }
 
 
+@strawberry.input
+class CollectionTotalOrderByInput:
+    collection: Optional[OrderByInput] = None
+    xp: Optional[OrderByInput] = None
+    gamesPlayed: Optional[OrderByInput] = None
+
+    def to_dict(self):
+        return {
+            "collection": self.collection.to_dict() if self.collection else None,
+            "xp": self.xp.to_dict() if self.xp else None,
+            "gamesPlayed": (self.gamesPlayed.to_dict() if self.gamesPlayed else None),
+        }
+
+
+@strawberry.input
+class TokensOrderByInput:
+    token: Optional[OrderByInput] = None
+    tokenId: Optional[OrderByInput] = None
+    nftOwnerAddress: Optional[OrderByInput] = None
+    timestamp: Optional[OrderByInput] = None
+    hash: Optional[OrderByInput] = None
+
+    def to_dict(self):
+        return {
+            "token": self.token.to_dict() if self.token else None,
+            "tokenId": self.tokenId.to_dict() if self.tokenId else None,
+            "nftOwnerAddress": (
+                self.nftOwnerAddress.to_dict() if self.nftOwnerAddress else None
+            ),
+            "timestamp": self.timestamp.to_dict() if self.timestamp else None,
+            "hash": self.hash.to_dict() if self.hash else None,
+        }
+
+
+@strawberry.input
+class ClaimedFreeGamesOrderByInput:
+    token: Optional[OrderByInput] = None
+    tokenId: Optional[OrderByInput] = None
+    adventurerId: Optional[OrderByInput] = None
+    gameOwnerAddress: Optional[OrderByInput] = None
+    revealed: Optional[OrderByInput] = None
+    hash: Optional[OrderByInput] = None
+
+    def to_dict(self):
+        return {
+            "token": self.token.to_dict() if self.token else None,
+            "tokenId": self.tokenId.to_dict() if self.tokenId else None,
+            "adventurerId": self.adventurerId.to_dict() if self.adventurerId else None,
+            "gameOwnerAddress": (
+                self.gameOwnerAddress.to_dict() if self.gameOwnerAddress else None
+            ),
+            "revealed": self.revealed.to_dict() if self.revealed else None,
+            "hash": self.hash.to_dict() if self.hash else None, 
+        }
+
+
+@strawberry.input
+class TokenWithFreeGameStatusOrderByInput:
+    token: Optional[OrderByInput] = None
+    tokenId: Optional[OrderByInput] = None
+    nftOwnerAddress: Optional[OrderByInput] = None
+    freeGameUsed: Optional[OrderByInput] = None
+    freeGameRevealed: Optional[OrderByInput] = None
+    adventurerId: Optional[OrderByInput] = None
+    gameOwnerAddress: Optional[OrderByInput] = None
+
+    def to_dict(self):
+        return {
+            "token": self.token.to_dict() if self.token else None,
+            "tokenId": self.tokenId.to_dict() if self.tokenId else None,
+            "nftOwnerAddress": (
+                self.nftOwnerAddress.to_dict() if self.nftOwnerAddress else None
+            ),
+            "freeGameUsed": self.freeGameUsed.to_dict() if self.freeGameUsed else None,
+            "freeGameRevealed": (
+                self.freeGameRevealed.to_dict() if self.freeGameRevealed else None
+            ),
+            "adventurerId": self.adventurerId.to_dict() if self.adventurerId else None,
+            "gameOwnerAddress": (
+                self.gameOwnerAddress.to_dict() if self.gameOwnerAddress else None
+            ),
+        }
+
+
 @strawberry.type
 class Adventurer:
     id: Optional[FeltValue]
@@ -1636,6 +1825,7 @@ class Adventurer:
     birthDate: Optional[str]
     deathDate: Optional[str]
     goldenTokenId: Optional[FeltValue]
+    launchTournamentWinnerTokenId: Optional[FeltValue]
     customRenderer: Optional[FeltValue]
     battleActionCount: Optional[FeltValue]
     gold: Optional[FeltValue]
@@ -1673,6 +1863,7 @@ class Adventurer:
             birthDate=data["birthDate"],
             deathDate=data["deathDate"],
             goldenTokenId=data["goldenTokenId"],
+            launchTournamentWinnerTokenId=data["launchTournamentWinnerTokenId"],
             customRenderer=data["customRenderer"],
             battleActionCount=data["battleActionCount"],
             gold=data["gold"],
@@ -1904,6 +2095,93 @@ class Item:
 
 
 @strawberry.type
+class CollectionTotal:
+    collection: Optional[HexValue]
+    xp: Optional[FeltValue]
+    gamesPlayed: Optional[FeltValue]
+
+    @classmethod
+    def from_mongo(cls, data):
+        return cls(
+            collection=data["collection"],
+            xp=data["xp"],
+            gamesPlayed=data["gamesPlayed"],
+        )
+
+
+@strawberry.type
+class Token:
+    token: Optional[HexValue]
+    tokenId: Optional[FeltValue]
+    nftOwnerAddress: Optional[HexValue]
+    timestamp: Optional[str]
+    hash: Optional[str]
+
+    @classmethod
+    def from_mongo(cls, data):
+        return cls(
+            token=data["token"],
+            tokenId=data["tokenId"],
+            nftOwnerAddress=data["nftOwnerAddress"],
+            timestamp=data["timestamp"],
+            hash=data["hash"]
+        )
+
+
+@strawberry.type
+class ClaimedFreeGame:
+    token: Optional[HexValue]
+    tokenId: Optional[FeltValue]
+    adventurerId: Optional[FeltValue]
+    gameOwnerAddress: Optional[HexValue]
+    revealed: Optional[bool]
+    hash: Optional[str]
+
+    @classmethod
+    def from_mongo(cls, data):
+        return cls(
+            token=data["token"],
+            tokenId=data["tokenId"],
+            adventurerId=data["adventurerId"],
+            gameOwnerAddress=data["gameOwnerAddress"],
+            revealed=data["revealed"],
+            hash=data["hash"]
+        )
+
+@strawberry.type
+class TokenWithFreeGameStatus:
+    token: Optional[HexValue]
+    tokenId: Optional[FeltValue]
+    nftOwnerAddress: Optional[HexValue]
+    freeGameUsed: bool
+    freeGameRevealed: bool
+    adventurerId: Optional[FeltValue]
+    gameOwnerAddress: Optional[HexValue]
+
+    @classmethod
+    def from_mongo(cls, token_data, claimed_free_game_data):
+        return cls(
+            token=token_data["token"],
+            tokenId=token_data["tokenId"],
+            nftOwnerAddress=token_data["nftOwnerAddress"],
+            freeGameUsed=claimed_free_game_data is not None,
+            freeGameRevealed=(
+                claimed_free_game_data["revealed"] if claimed_free_game_data else False
+            ),
+            adventurerId=(
+                claimed_free_game_data["adventurerId"]
+                if claimed_free_game_data
+                else None
+            ),
+            gameOwnerAddress=(
+                claimed_free_game_data["gameOwnerAddress"]
+                if claimed_free_game_data
+                else None
+            ),
+        )
+
+
+@strawberry.type
 class AdventurerRank:
     adventurer_id: str
     xp: int
@@ -1954,6 +2232,16 @@ def get_felt_filters(where: FeltValueFilter) -> List[Dict]:
     if where.gte is not None:
         filter["$gte"] = where.gte
 
+    return filter
+
+def get_hash_filters(where: HashFilter) -> Dict:
+    filter = {}
+    if where.eq is not None:
+        filter["$eq"] = where.eq
+    if where._in is not None:
+        filter["$in"] = where._in
+    if where.notIn is not None:
+        filter["$nin"] = where.notIn
     return filter
 
 
@@ -2423,6 +2711,284 @@ async def get_items(
     return result
 
 
+async def get_collection_totals(
+    info,
+    where: Optional[CollectionTotalFilter] = {},
+    limit: Optional[int] = 10,
+    skip: Optional[int] = 0,
+    orderBy: Optional[CollectionTotalOrderByInput] = {},
+) -> List[CollectionTotal]:
+    db = info.context["db"]
+    redis = info.context["redis"]
+
+    # Convert custom filter objects to dictionaries
+    where_dict = where.to_dict() if where else {}
+    orderBy_dict = orderBy.to_dict() if orderBy else {}
+
+    # Create a unique cache key based on the query parameters
+    cache_key = f"collection_totals:{json.dumps(where_dict)}:{limit}:{skip}:{json.dumps(orderBy_dict)}"
+    cached_result = await redis.get(cache_key)
+
+    if cached_result:
+        cached_result = cached_result.decode("utf-8")  # Decode the byte string
+        return [CollectionTotal.from_mongo(item) for item in json.loads(cached_result)]
+
+    filter = {"cursor.to": None}
+
+    if where:
+        processed_filters = process_filters(where)
+        for key, value in processed_filters.items():
+            if isinstance(value, HexValueFilter):
+                filter[key] = get_hex_filters(value)
+            elif isinstance(value, FeltValueFilter):
+                filter[key] = get_felt_filters(value)
+
+    sort_options = {k: v for k, v in orderBy.__dict__.items() if v is not None}
+
+    sort_var = "updated_at"
+    sort_dir = -1
+
+    for key, value in sort_options.items():
+        if value.asc:
+            sort_var = key
+            sort_dir = 1
+            break
+        if value.desc:
+            sort_var = key
+            sort_dir = -1
+            break
+
+    query = db["collection_totals"].find[filter].skip(skip).limit(limit).sort(sort_var, sort_dir)
+
+    result = [CollectionTotal.from_mongo(t) for t in query]
+
+    # Cache the result
+    await redis.set(cache_key, json.dumps([item.__dict__ for item in result]), ex=60)
+
+    return result
+
+async def get_tokens(
+    info,
+    where: Optional[TokensFilter] = {},
+    limit: Optional[int] = 10,
+    skip: Optional[int] = 0,
+    orderBy: Optional[TokensOrderByInput] = {},
+) -> List[Token]:
+    db = info.context["db"]
+    redis = info.context["redis"]
+
+    # Convert custom filter objects to dictionaries
+    where_dict = where.to_dict() if where else {}
+    orderBy_dict = orderBy.to_dict() if orderBy else {}
+
+    # Create a unique cache key based on the query parameters
+    cache_key = (
+        f"tokens:{json.dumps(where_dict)}:{limit}:{skip}:{json.dumps(orderBy_dict)}"
+    )
+    cached_result = await redis.get(cache_key)
+
+    if cached_result:
+        cached_result = cached_result.decode("utf-8")  # Decode the byte string
+        return [Token.from_mongo(item) for item in json.loads(cached_result)]
+
+    filter = {"_cursor.to": None}
+
+    if where:
+        processed_filters = process_filters(where)
+        for key, value in processed_filters.items():
+            if isinstance(value, StringFilter):
+                filter[key] = get_str_filters(value)
+            elif isinstance(value, HexValueFilter):
+                filter[key] = get_hex_filters(value)
+            elif isinstance(value, DateTimeFilter):
+                filter[key] = get_date_filters(value)
+            elif isinstance(value, FeltValueFilter):
+                filter[key] = get_felt_filters(value)
+            elif isinstance(value, BooleanFilter):
+                filter[key] = get_bool_filters(value)
+            elif isinstance(value, HashFilter):
+                filter[key] = get_hash_filters(value)
+
+    sort_options = {k: v for k, v in orderBy.__dict__.items() if v is not None}
+
+    sort_var = "updated_at"
+    sort_dir = -1
+
+    for key, value in sort_options.items():
+        if value.asc:
+            sort_var = key
+            sort_dir = 1
+            break
+        if value.desc:
+            sort_var = key
+            sort_dir = -1
+            break
+
+    query = db["tokens"].find(filter).skip(skip).limit(limit).sort(sort_var, sort_dir)
+
+    result = [Token.from_mongo(t) for t in query]
+
+    # Cache the result
+    await redis.set(cache_key, json.dumps([item.__dict__ for item in result]), ex=60)
+
+    return result
+
+
+async def get_free_games(
+    info,
+    where: Optional[ClaimedFreeGamesFilter] = {},
+    limit: Optional[int] = 10,
+    skip: Optional[int] = 0,
+    orderBy: Optional[ClaimedFreeGamesOrderByInput] = {},
+) -> List[ClaimedFreeGame]:
+    db = info.context["db"]
+    redis = info.context["redis"]
+
+    # Convert custom filter objects to dictionaries
+    where_dict = where.to_dict() if where else {}
+    orderBy_dict = orderBy.to_dict() if orderBy else {}
+
+    # Create a unique cache key based on the query parameters
+    cache_key = (
+        f"claimed_free_games:{json.dumps(where_dict)}:{limit}:{skip}:{json.dumps(orderBy_dict)}"
+    )
+    cached_result = await redis.get(cache_key)
+
+    if cached_result:
+        cached_result = cached_result.decode("utf-8")  # Decode the byte string
+        return [ClaimedFreeGame.from_mongo(item) for item in json.loads(cached_result)]
+
+    filter = {"_cursor.to": None}
+
+    if where:
+        processed_filters = process_filters(where)
+        for key, value in processed_filters.items():
+            if isinstance(value, StringFilter):
+                filter[key] = get_str_filters(value)
+            elif isinstance(value, HexValueFilter):
+                filter[key] = get_hex_filters(value)
+            elif isinstance(value, DateTimeFilter):
+                filter[key] = get_date_filters(value)
+            elif isinstance(value, FeltValueFilter):
+                filter[key] = get_felt_filters(value)
+            elif isinstance(value, BooleanFilter):
+                filter[key] = get_bool_filters(value)
+            elif isinstance(value, HashFilter):
+                filter[key] = get_hash_filters(value)
+
+    sort_options = {k: v for k, v in orderBy.__dict__.items() if v is not None}
+
+    sort_var = "updated_at"
+    sort_dir = -1
+
+    for key, value in sort_options.items():
+        if value.asc:
+            sort_var = key
+            sort_dir = 1
+            break
+        if value.desc:
+            sort_var = key
+            sort_dir = -1
+            break
+
+    query = (
+        db["claimed_free_games"].find(filter).skip(skip).limit(limit).sort(sort_var, sort_dir)
+    )
+
+    result = [ClaimedFreeGame.from_mongo(t) for t in query]
+
+    # Cache the result
+    await redis.set(cache_key, json.dumps([item.__dict__ for item in result]), ex=60)
+
+    return result
+
+
+# async def get_tokens_with_free_game_status(
+#     info,
+#     where: Optional[TokenWithFreeGameStatusFilter] = {},
+#     limit: Optional[int] = 10,
+#     skip: Optional[int] = 0,
+#     orderBy: Optional[TokenWithFreeGameStatusOrderByInput] = {},
+# ) -> List[TokenWithFreeGameStatus]:
+#     db = info.context["db"]
+#     redis = info.context["redis"]
+
+#     # Create a unique cache key
+#     cache_key = f"tokens_with_free_game_status:{json.dumps(where.to_dict() if where else {})}:{limit}:{skip}:{json.dumps(orderBy.to_dict() if orderBy else {})}"
+
+#     cached_result = await redis.get(cache_key)
+#     if cached_result:
+#         return [
+#             TokenWithFreeGameStatus(**item)
+#             for item in json.loads(cached_result.decode("utf-8"))
+#         ]
+    
+#     # Separate filters for tokens and claimed_free_games
+#     token_filter = {"_cursor.to": None}
+#     free_game_filter = {"_cursor.to": None}
+
+#     if where:
+#         processed_filters = process_filters(where)
+#         for key, value in processed_filters.items():
+#             if key in ["token", "tokenId", "nftOwnerAddress"]:
+#                 if isinstance(value, HexValueFilter):
+#                     token_filter[key] = get_hex_filters(value)
+#                 elif isinstance(value, FeltValueFilter):
+#                     token_filter[key] = get_felt_filters(value)
+#             elif key in ["gameOwnerAddress", "freeGameUsed", "freeGameRevealed"]:
+#                 if isinstance(value, HexValueFilter):
+#                     free_game_filter[key] = get_hex_filters(value)
+#                 elif isinstance(value, BooleanFilter):
+#                     free_game_filter[key] = get_bool_filters(value)
+#             elif key == "adventurerId":
+#                 token_filter[key] = get_felt_filters(value)
+#                 free_game_filter[key] = get_felt_filters(value)
+
+#     # Determine which collection to query first based on filters
+#     query_free_games_first = bool(free_game_filter)
+
+#     if query_free_games_first:
+#         free_games = list(db["claimed_free_games"].find(free_game_filter))
+#         token_ids = [(fg["token"], fg["tokenId"]) for fg in free_games]
+#         token_filter["token"] = {"$in": [t[0] for t in token_ids]}
+#         token_filter["tokenId"] = {"$in": [t[1] for t in token_ids]}
+#         tokens = list(db["tokens"].find(token_filter))
+#     else:
+#         sort_options = {k: v for k, v in (orderBy.__dict__ if orderBy else {}).items() if v is not None}
+#         sort_var = next((k for k, v in sort_options.items() if v.asc or v.desc), "timestamp")
+#         sort_dir = 1 if sort_options.get(sort_var, OrderByInput()).asc else -1
+
+#         tokens = list(
+#             db["tokens"].find(token_filter).skip(skip).limit(limit).sort(sort_var, sort_dir)
+#         )
+#         token_ids = [(token["token"], token["tokenId"]) for token in tokens]
+#         free_games = list(db["claimed_free_games"].find({
+#             "token": {"$in": [t[0] for t in token_ids]},
+#             "tokenId": {"$in": [t[1] for t in token_ids]},
+#             **free_game_filter
+#         }))
+
+#     # Create a dictionary for quick lookup
+#     free_games_dict = {(fg["token"], fg["tokenId"]): fg for fg in free_games}
+
+#     # Combine token and free game information
+#     result = [
+#         TokenWithFreeGameStatus.from_mongo(
+#             token, free_games_dict.get((token["token"], token["tokenId"]))
+#         )
+#         for token in tokens
+#     ]
+
+#     # Apply skip and limit after combining (if we queried free_games first)
+#     if query_free_games_first:
+#         result = result[skip:skip+limit]
+
+#     # Cache the result
+#     await redis.set(cache_key, json.dumps([item.__dict__ for item in result]), ex=60)
+
+#     return result
+
+
 async def get_discoveries_and_battles(
     info,
     where: Optional[ItemsFilter] = {},
@@ -2694,6 +3260,11 @@ class Query:
     beasts: List[Beast] = strawberry.field(resolver=get_beasts)
     discoveries: List[Discovery] = strawberry.field(resolver=get_discoveries)
     battles: List[Battle] = strawberry.field(resolver=get_battles)
+    tokens: List[Token] = strawberry.field(resolver=get_tokens)
+    claimedFreeGames: List[ClaimedFreeGame] = strawberry.field(resolver=get_free_games)
+    # tokensWithFreeGameStatus: List[TokenWithFreeGameStatus] = strawberry.field(
+    #     resolver=get_tokens_with_free_game_status
+    # )
     discoveriesAndBattles: List[DiscoveryOrBattle] = strawberry.field(
         resolver=get_discoveries_and_battles
     )
@@ -2710,6 +3281,9 @@ class Query:
     )
     adventurerRank: Optional[AdventurerRank] = strawberry.field(
         resolver=get_adventurer_rank
+    )
+    collectionTotals: List[CollectionTotal] = strawberry.field(
+        resolver=get_collection_totals
     )
 
 
@@ -2747,16 +3321,28 @@ async def run_graphql_api(
     app = web.Application()
 
     # Setup CORS with the specific origin
+    # cors = aiohttp_cors.setup(
+    #     app,
+    #     defaults={
+    #         origin: aiohttp_cors.ResourceOptions(
+    #             allow_credentials=True,
+    #             expose_headers="*",
+    #             allow_headers="*",
+    #             allow_methods=["POST", "GET"],
+    #         )
+    #         for origin in allowed_origins
+    #     },
+    # )
+
     cors = aiohttp_cors.setup(
         app,
         defaults={
-            origin: aiohttp_cors.ResourceOptions(
+            "*": aiohttp_cors.ResourceOptions(
                 allow_credentials=True,
                 expose_headers="*",
                 allow_headers="*",
                 allow_methods=["POST", "GET"],
             )
-            for origin in allowed_origins
         },
     )
 

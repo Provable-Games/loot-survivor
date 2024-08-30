@@ -39,6 +39,7 @@ export const InventoryDisplay = ({
               item={item}
               equipItems={equipItems}
               gameContract={gameContract}
+              setShowInventoryItems={setShowInventoryItems}
               key={index}
             />
           ))}
@@ -58,6 +59,7 @@ interface InventoryCardProps {
   item: Item;
   equipItems: string[];
   gameContract: Contract;
+  setShowInventoryItems: (showInventoryItems: boolean) => void;
 }
 
 export const InventoryCard = ({
@@ -65,6 +67,7 @@ export const InventoryCard = ({
   item,
   equipItems,
   gameContract,
+  setShowInventoryItems,
 }: InventoryCardProps) => {
   const { adventurer } = useAdventurerStore();
   const { tier, type, slot } = getItemData(item?.item ?? "");
@@ -99,6 +102,7 @@ export const InventoryCard = ({
       removeEntrypointFromCalls(equipItemTx.entrypoint);
       addToCalls(equipItemTx);
     }
+    setShowInventoryItems(false);
   };
 
   const itemId = getKeyFromValue(gameData.ITEMS, item?.item ?? "") ?? "";

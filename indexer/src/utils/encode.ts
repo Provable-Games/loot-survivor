@@ -1,3 +1,5 @@
+import { hash, num } from "https://esm.sh/starknet@5.19.5";
+
 export function encodeIntAsBytes(n: bigint): string {
   const arr = new Uint8Array(32);
   let bigIntValue: bigint = n;
@@ -35,4 +37,21 @@ export function getLevelFromXp(val: any): any | null {
   } else {
     return Math.floor(Math.sqrt(val));
   }
+}
+
+// Helper function to ensure we're working with strings
+function formatString(value: any): string {
+  const num = parseInt(value.toString());
+  return num.toString();
+}
+
+// Update this function to compute the hash using SHA-256
+export function computeHash(
+  token: string | null,
+  tokenId: string | null
+): string {
+  const tokenStr = formatString(token);
+  const tokenIdStr = formatString(tokenId);
+  const combinedString = `${tokenStr}:${tokenIdStr}`;
+  return hash.getSelectorFromName(combinedString);
 }

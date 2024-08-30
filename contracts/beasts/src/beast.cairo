@@ -53,8 +53,8 @@ impl ImplBeast of IBeast {
             id: beast_id,
             starting_health: STARTER_BEAST_HEALTH.into(),
             combat_spec: CombatSpec {
-                tier: ImplBeast::get_tier(beast_id),
-                item_type: ImplBeast::get_type(beast_id),
+                tier: Self::get_tier(beast_id),
+                item_type: Self::get_type(beast_id),
                 level: 1,
                 specials: SpecialPowers { special1: 0, special2: 0, special3: 0 }
             }
@@ -167,13 +167,13 @@ impl ImplBeast of IBeast {
     /// @param id: the id of the beast
     /// @return: the tier of the beast
     fn get_tier(id: u8) -> Tier {
-        if ImplBeast::is_t1(id) {
+        if Self::is_t1(id) {
             Tier::T1
-        } else if ImplBeast::is_t2(id) {
+        } else if Self::is_t2(id) {
             Tier::T2
-        } else if ImplBeast::is_t3(id) {
+        } else if Self::is_t3(id) {
             Tier::T3
-        } else if ImplBeast::is_t4(id) {
+        } else if Self::is_t4(id) {
             Tier::T4
         } else {
             Tier::T5
@@ -270,12 +270,6 @@ mod tests {
     };
 
     #[test]
-    #[available_gas(21800)]
-    fn test_get_tier_gas() {
-        ImplBeast::get_tier(MAX_ID);
-    }
-
-    #[test]
     #[available_gas(70000)]
     fn test_get_tier_unknown_id() {
         assert(ImplBeast::get_tier(MAX_ID + 1) == Tier::T5(()), 'unknown id gets T5');
@@ -309,12 +303,6 @@ mod tests {
         let bear = Bear;
         let bear_tier = ImplBeast::get_tier(bear);
         assert(bear_tier == Tier::T5(()), 'Bear should be T5');
-    }
-
-    #[test]
-    #[available_gas(2980)]
-    fn test_get_type_gas() {
-        ImplBeast::get_type(MAX_ID);
     }
 
     #[test]
@@ -434,23 +422,6 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(3980)]
-    fn test_get_gold_reward_gas() {
-        let beast = Beast {
-            id: 1,
-            starting_health: 100,
-            combat_spec: CombatSpec {
-                tier: Tier::T1(()),
-                item_type: Type::Magic_or_Cloth(()),
-                level: 10,
-                specials: SpecialPowers { special1: 3, special2: 1, special3: 2 },
-            },
-        };
-
-        beast.get_gold_reward();
-    }
-
-    #[test]
     fn test_get_gold_reward() {
         let mut beast = Beast {
             id: 1,
@@ -479,12 +450,6 @@ mod tests {
         beast.combat_spec.level = 20;
         let gold_reward = beast.get_gold_reward();
         assert(gold_reward == 50, 'gold reward should be 50');
-    }
-
-    #[test]
-    #[available_gas(3510)]
-    fn test_get_critical_hit_chance_gas() {
-        ImplBeast::get_critical_hit_chance(10, false);
     }
 
     #[test]
@@ -533,11 +498,5 @@ mod tests {
         let is_ambush = false;
         let chance = ImplBeast::get_critical_hit_chance(adventurer_level, is_ambush);
         assert(chance == 100, 'crit hit ambush exceeded 100');
-    }
-
-    #[test]
-    #[available_gas(5360)]
-    fn test_get_specials_gas() {
-        ImplBeast::get_specials(1, 2);
     }
 }

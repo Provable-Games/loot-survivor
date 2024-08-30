@@ -285,9 +285,10 @@ export function createSyscalls({
         getKeyFromValue(gameData.ITEMS, formData.startingWeapon) ?? "",
         stringToFelt(formData.name).toString(),
         goldenTokenId,
-        "0",
         "0", // delay_stat_reveal
         rendererContractAddress,
+        "0",
+        "0",
       ],
     };
 
@@ -681,6 +682,7 @@ export function createSyscalls({
       setDropItems([]);
       stopLoading(reversedDiscoveries, false, "Explore");
       !onKatana && getEthBalance();
+      setEntropyReady(false);
     } catch (e) {
       console.log(e);
       stopLoading(e, true);
@@ -1058,6 +1060,7 @@ export function createSyscalls({
       setEquipItems([]);
       setDropItems([]);
       !onKatana && getEthBalance();
+      setEntropyReady(false);
     } catch (e) {
       console.log(e);
       stopLoading(e, true);
@@ -1388,6 +1391,7 @@ export function createSyscalls({
 
       stopLoading(notification, false, "Multicall");
       !onKatana && getEthBalance();
+      setEntropyReady(false);
     } catch (e) {
       console.log(e);
       stopLoading(e, true);
@@ -1484,6 +1488,40 @@ export function createSyscalls({
       throw error;
     }
   };
+
+  const transferAdventurer = async (
+    account: AccountInterface,
+    adventurerId: number,
+    from: string,
+    recipient: string
+  ) => {
+    try {
+      const transferTx = {
+        contractAddress: gameContract?.address ?? "",
+        entrypoint: "transfer_from",
+        calldata: [from, recipient, adventurerId.toString() ?? "", "0"],
+      };
+
+      const { transaction_hash } = await account.execute([
+        ...calls,
+        transferTx,
+      ]);
+
+      const result = await provider.waitForTransaction(transaction_hash, {
+        retryInterval: getWaitRetryInterval(network!),
+      });
+
+      if (!result) {
+        throw new Error("Transaction did not complete successfully.");
+      }
+
+      getBalances();
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  };
+
   return {
     spawn,
     explore,
@@ -1493,6 +1531,7 @@ export function createSyscalls({
     multicall,
     mintLords,
     withdraw,
+    transferAdventurer,
   };
 }
 

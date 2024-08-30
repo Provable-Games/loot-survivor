@@ -28,7 +28,8 @@ export const SpecialBeast = ({ beastsContract }: SpecialBeastProps) => {
   const fetchBeast = async () => {
     const image = await fetchBeastImage(
       beastsContract?.address ?? "",
-      specialBeast?.tokenId ?? 0
+      specialBeast?.tokenId ?? 0,
+      network
     );
     setBeastImage(image);
   };

@@ -457,7 +457,7 @@ export default function Header({
               </Button>
             </span>
             <Button
-              variant={txInCart ? "default" : "outline"}
+              variant={"outline"}
               size={"xs"}
               ref={displayCartButtonRef}
               onClick={() => {
@@ -465,7 +465,9 @@ export default function Header({
                 clickPlay();
               }}
               className={`hidden sm:block xl:px-5 ${
-                txInCart ? "animate-pulse" : ""
+                txInCart
+                  ? "animate-pulse bg-terminal-green-50 text-terminal-black"
+                  : ""
               }`}
             >
               <CartIcon className="w-5 h-5 fill-current" />

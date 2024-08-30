@@ -1,7 +1,6 @@
 import { Button } from "@/app/components/buttons/Button";
 import { CompleteIcon } from "@/app/components/icons/Icons";
 import { displayAddress, padAddress, copyToClipboard } from "@/app/lib/utils";
-import { getWalletConnectors } from "@/app/lib/connectors";
 import { useConnect, useDisconnect } from "@starknet-react/core";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 import useUIStore from "@/app/hooks/useUIStore";
@@ -14,7 +13,6 @@ const WalletSection = ({ step }: WalletSectionProps) => {
   const { address } = useNetworkAccount();
   const { connectors, connect } = useConnect();
   const { disconnect } = useDisconnect();
-  const walletConnectors = getWalletConnectors(connectors);
   const username = useUIStore((state) => state.username);
   const isController = useUIStore((state) => state.isController);
 
@@ -50,7 +48,7 @@ const WalletSection = ({ step }: WalletSectionProps) => {
           Login with your Starknet account to play
         </p>
         <div className="hidden sm:flex flex-col">
-          {walletConnectors.map((connector, index) => (
+          {connectors.map((connector, index) => (
             <Button
               disabled={address !== undefined}
               onClick={() => {
@@ -68,7 +66,7 @@ const WalletSection = ({ step }: WalletSectionProps) => {
           ))}
         </div>
         <div className="sm:hidden flex flex-col gap-2">
-          {walletConnectors.map((connector, index) => (
+          {connectors.map((connector, index) => (
             <Button
               size={"lg"}
               disabled={address !== undefined}

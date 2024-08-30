@@ -7,9 +7,9 @@ export const networkConfig = {
     ethAddress:
       "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
     gameAddress:
-      "0x0238b1072f53589e94ee8f94c37f995411ae360369c0c07ee800fe1259c70463",
+      "0x02e5a602219a2462c760b5d5b4526c06e1bba0fe729367cbf133a247d2a1bfbd",
     lordsAddress:
-      "0x019c92fa87f4d5e3bE25C3DD6a284f30282a07e87cd782f5Fd387B82c8142017",
+      "0x064fd80fcb41d00214430574a0aa19d21cc5d6452aeb4996f31b6e9ba4f466a0",
     beastsAddress:
       "0x0468e7a1761b65c891207aeb7cfc044044d9a61fc22c71d46a7bf4dbb67c607a",
     goldenTokenAddress:
@@ -18,8 +18,7 @@ export const networkConfig = {
       "0x0314924118945405ac0bcd6181457712795c0effc29d8dd3be86d3f3ec62adc1",
     pragmaAddress:
       "0x036031daa264c24520b11d93af622c848b2499b66b41d611bac95e13cfca131a",
-    rendererAddress:
-      "0x036031daa264c24520b11d93af622c848b2499b66b41d611bac95e13cfca131a",
+    rendererAddress: "0x0",
     appUrl: "https://sepolia.lootsurvivor.io",
     beastsViewer: "https://testnet.realms.world/collection/beasts",
     goldenTokenMintUrl: "https://testnet.realms.world/collection/goldenToken",
@@ -30,8 +29,7 @@ export const networkConfig = {
     accountClassHash: "0x0",
   },
   mainnet: {
-    rpcUrl:
-      "https://starknet-mainnet.blastapi.io/5ef61753-e7c1-4593-bc62-97fdf96f8de5",
+    rpcUrl: "https://api.cartridge.gg/x/starknet/mainnet",
     lsGQLURL: "https://ls-indexer-mainnet.provable.games/graphql",
     tokensGQLURL: "https://realms.world/api/graphql",
     ethAddress:
@@ -65,14 +63,14 @@ export const networkConfig = {
     tokensGQLURL: "",
     ethAddress: "0x0",
     gameAddress:
-      "0x059f49acc758b262616f075135e5fd625140213cc64deaf07fb9dce5c7e56e82",
+      "0x06447d0ece46fe0e04107183aec3436ae0c12a00a3a6cb44f229984a28e8176d",
     lordsAddress: "0x0",
     beastsAddress: "0x0",
     goldenTokenAddress: "0x0",
     revenueAddress: "0x0",
     pragmaAddress: "0x0",
     rendererAddress: "0x0",
-    appUrl: "https://lootsurvivor.io/",
+    appUrl: "https://sepolia.lootsurvivor.io",
     beastsViewer: "",
     goldenTokenMintUrl: "",
     blockExplorerUrl: "",

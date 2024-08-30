@@ -2,7 +2,7 @@
 import { useConnect, useContract, useProvider } from "@starknet-react/core";
 import { sepolia } from "@starknet-react/chains";
 import { constants } from "starknet";
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import ActionsScreen from "@/app/containers/ActionsScreen";
 import AdventurerScreen from "@/app/containers/AdventurerScreen";
 import InventoryScreen from "@/app/containers/InventoryScreen";
@@ -64,7 +64,6 @@ import { ProfileDialog } from "@/app/components/profile/ProfileDialog";
 import TokenLoader from "@/app/components/animations/TokenLoader";
 import CartridgeConnector from "@cartridge/connector";
 import { VRF_WAIT_TIME } from "@/app/lib/constants";
-import { GameData } from "@/app/lib/data/GameData";
 import InterludeScreen from "@/app/containers/InterludeScreen";
 
 const allMenuItems: Menu[] = [
@@ -73,7 +72,7 @@ const allMenuItems: Menu[] = [
   { id: 3, label: "Inventory", screen: "inventory", disabled: false },
   { id: 4, label: "Upgrade", screen: "upgrade", disabled: false },
   { id: 5, label: "Leaderboard", screen: "leaderboard", disabled: false },
-  { id: 6, label: "Encounters", screen: "encounters", disabled: false },
+  { id: 6, label: "Travel Log", screen: "encounters", disabled: false },
   { id: 7, label: "Guide", screen: "guide", disabled: false },
 ];
 
@@ -82,7 +81,7 @@ const mobileMenuItems: Menu[] = [
   { id: 2, label: "Play", screen: "play", disabled: false },
   { id: 3, label: "Inventory", screen: "inventory", disabled: false },
   { id: 4, label: "Upgrade", screen: "upgrade", disabled: false },
-  { id: 5, label: "Encounters", screen: "encounters", disabled: false },
+  { id: 5, label: "Travel Log", screen: "encounters", disabled: false },
   { id: 6, label: "Guide", screen: "guide", disabled: false },
 ];
 
@@ -105,6 +104,9 @@ function Home() {
   const isMuted = useUIStore((state) => state.isMuted);
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
+  const updateAdventurerStats = useAdventurerStore(
+    (state) => state.updateAdventurerStats
+  );
   const calls = useTransactionCartStore((state) => state.calls);
   const screen = useUIStore((state) => state.screen);
   const setScreen = useUIStore((state) => state.setScreen);
@@ -138,6 +140,8 @@ function Home() {
   const showProfile = useUIStore((state) => state.showProfile);
   const itemEntropy = useUIStore((state) => state.itemEntropy);
   const setItemEntropy = useUIStore((state) => state.setItemEntropy);
+  const openInterlude = useUIStore((state) => state.openInterlude);
+  const setOpenInterlude = useUIStore((state) => state.setOpenInterlude);
 
   const { contract: gameContract } = useContract({
     address: networkConfig[network!].gameAddress,
@@ -213,25 +217,23 @@ function Home() {
     }
   }, [connector]);
 
-  const gameData = new GameData();
+  const [ethBalance, setEthBalance] = useState(BigInt(0));
+  const [lordsBalance, setLordsBalance] = useState(BigInt(0));
 
-  const ethBalanceRef = useRef(BigInt(0));
-  const lordsBalanceRef = useRef(BigInt(0));
-
-  const getBalances = useCallback(async () => {
+  const getBalances = async () => {
     const balances = await fetchBalances(
       address ?? "0x0",
       ethContract,
       lordsContract,
       gameContract
     );
-    ethBalanceRef.current = balances[0];
-    lordsBalanceRef.current = balances[1];
-  }, [address, ethContract, lordsContract, gameContract]);
+    setEthBalance(balances[0]);
+    setLordsBalance(balances[1]);
+  };
 
   const getEthBalance = async () => {
     const ethBalance = await fetchEthBalance(address ?? "0x0", ethContract);
-    ethBalanceRef.current = ethBalance;
+    setEthBalance(ethBalance);
   };
 
   useEffect(() => {
@@ -252,6 +254,7 @@ function Home() {
     multicall,
     mintLords,
     withdraw,
+    transferAdventurer,
   } = useSyscalls({
     gameContract: gameContract!,
     ethContract: ethContract!,
@@ -277,7 +280,7 @@ function Home() {
     setScreen,
     setAdventurer,
     setStartOption,
-    ethBalance: ethBalanceRef.current,
+    ethBalance,
     showTopUpDialog,
     setTopUpAccount,
     account: account!,
@@ -548,21 +551,23 @@ function Home() {
   useControls();
 
   useEffect(() => {
-    setCondition("a", screen === "play" && hasBeast);
-    setCondition("s", screen === "play" && hasBeast);
-    setCondition("f", screen === "play" && hasBeast);
-    setCondition("g", screen === "play" && hasBeast);
-    setCondition("e", screen === "play" && !hasBeast);
-    setCondition("r", screen === "play" && !hasBeast);
-    setCondition("u", screen === "upgrade");
-    setCondition(
-      "i",
-      screen === "play" ||
-        screen === "beast" ||
-        screen === "upgrade" ||
-        screen === "inventory"
-    );
-  }, [screen, hasBeast]);
+    if (process.env.NEXT_PUBLIC_NETWORK === "arcade") {
+      setCondition("a", screen === "play" && hasBeast);
+      setCondition("s", screen === "play" && hasBeast);
+      setCondition("f", screen === "play" && hasBeast);
+      setCondition("g", screen === "play" && hasBeast);
+      setCondition("e", screen === "play" && !hasBeast);
+      setCondition("r", screen === "play" && !hasBeast);
+      setCondition("u", screen === "upgrade");
+      setCondition(
+        "i",
+        screen === "play" ||
+          screen === "beast" ||
+          screen === "upgrade" ||
+          screen === "inventory"
+      );
+    }
+  }, [screen, hasBeast, network]);
 
   useEffect(() => {
     if (!onboarded) {
@@ -597,45 +602,42 @@ function Home() {
     return () => clearInterval(interval); // Cleanup on component unmount
   }, [adventurer?.level]);
 
-  const fetchItemSpecials = async () => {
-    if (entropyReady || onKatana) {
-      const marketItems = (await gameContract!.call("get_market", [
-        adventurer?.id!,
-      ])) as string[];
-      const itemData = [];
-      for (let item of marketItems) {
-        itemData.unshift({
-          item: gameData.ITEMS[parseInt(item)],
-          adventurerId: adventurer?.id,
-          owner: false,
-          equipped: false,
-          ownerAddress: adventurer?.owner,
-          xp: 0,
-          special1: null,
-          special2: null,
-          special3: null,
-          isAvailable: false,
-          purchasedTime: null,
-          timestamp: new Date(),
-        });
-      }
-      setData("latestMarketItemsQuery", {
-        items: itemData,
-      });
-    }
+  const fetchItemSpecialsData = async () => {
+    const updatedAdventurer = (await gameContract!.call("get_adventurer", [
+      adventurer?.id!,
+    ])) as any;
+    const itemsWithSpecials = await refetch("itemsByAdventurerQuery", {
+      id: adventurer?.id,
+    });
+    updateAdventurerStats({
+      health: parseInt(updatedAdventurer.health),
+      strength: parseInt(updatedAdventurer.stats.strength),
+      dexterity: parseInt(updatedAdventurer.stats.dexterity),
+      vitality: parseInt(updatedAdventurer.stats.vitality),
+      intelligence: parseInt(updatedAdventurer.stats.intelligence),
+      wisdom: parseInt(updatedAdventurer.stats.wisdom),
+      charisma: parseInt(updatedAdventurer.stats.charisma),
+      luck: parseInt(updatedAdventurer.stats.luck),
+    });
+    setData("itemsByAdventurerQuery", itemsWithSpecials);
   };
 
   useEffect(() => {
     const fetchEntropy = async () => {
       if (adventurer?.id && fetchUnlocksEntropy) {
-        const entropy = await gameContract!.call("get_item_entropy", [
-          adventurer?.id!,
-        ]);
+        const adventurerMeta: any = await gameContract!.call(
+          "get_adventurer_meta",
+          [adventurer?.id!]
+        );
+        const entropy = adventurerMeta.item_specials_seed;
         if (entropy !== BigInt(0)) {
-          setFetchUnlocksEntropy(false);
-          setItemEntropy(BigInt(entropy.toString()));
-          fetchItemSpecials();
-          clearInterval(interval);
+          // Add a 5-second delay before executing the rest of the logic
+          setTimeout(() => {
+            setFetchUnlocksEntropy(false);
+            setItemEntropy(BigInt(entropy.toString()));
+            fetchItemSpecialsData();
+            clearInterval(interval);
+          }, 5000); // 5000 milliseconds = 5 seconds
         }
       }
     };
@@ -651,19 +653,24 @@ function Home() {
     return () => clearInterval(interval); // Cleanup on component unmount
   }, [fetchUnlocksEntropy]);
 
+  useEffect(() => {
+    if ((!entropyReady && hasStatUpgrades) || fetchUnlocksEntropy) {
+      setOpenInterlude(true);
+    }
+  }, [entropyReady, hasStatUpgrades, fetchUnlocksEntropy]);
+
   return (
     <>
-      {((!entropyReady && hasStatUpgrades) || fetchUnlocksEntropy) &&
-        !onKatana && (
-          <InterludeScreen type={fetchUnlocksEntropy ? "item" : "level"} />
-        )}
+      {openInterlude && !onKatana && (
+        <InterludeScreen type={fetchUnlocksEntropy ? "item" : "level"} />
+      )}
       <NetworkSwitchError network={network} isWrongNetwork={isWrongNetwork} />
       {isMintingLords && <TokenLoader isToppingUpLords={isMintingLords} />}
       {isWithdrawing && <TokenLoader isWithdrawing={isWithdrawing} />}
       {screen === "onboarding" ? (
         <Onboarding
-          ethBalance={ethBalanceRef.current}
-          lordsBalance={lordsBalanceRef.current}
+          ethBalance={ethBalance}
+          lordsBalance={lordsBalance}
           costToPlay={costToPlay}
           mintLords={mintLords}
           getBalances={getBalances}
@@ -682,8 +689,8 @@ function Home() {
             <Header
               multicall={multicall}
               mintLords={mintLords}
-              ethBalance={ethBalanceRef.current}
-              lordsBalance={lordsBalanceRef.current}
+              ethBalance={ethBalance}
+              lordsBalance={lordsBalance}
               gameContract={gameContract!}
               costToPlay={costToPlay}
             />
@@ -730,12 +737,13 @@ function Home() {
                   <AdventurerScreen
                     spawn={spawn}
                     handleSwitchAdventurer={handleSwitchAdventurer}
-                    lordsBalance={lordsBalanceRef.current}
+                    lordsBalance={lordsBalance}
                     gameContract={gameContract!}
                     goldenTokenData={goldenTokenData}
                     getBalances={getBalances}
                     mintLords={mintLords}
                     costToPlay={costToPlay}
+                    transferAdventurer={transferAdventurer}
                   />
                 )}
                 {screen === "play" && (
@@ -777,8 +785,8 @@ function Home() {
                     <span className="w-full h-full bg-black/50" />
                     <ProfileDialog
                       withdraw={withdraw}
-                      ethBalance={ethBalanceRef.current}
-                      lordsBalance={lordsBalanceRef.current}
+                      ethBalance={ethBalance}
+                      lordsBalance={lordsBalance}
                       ethContractAddress={ethContract!.address}
                       lordsContractAddress={lordsContract!.address}
                     />

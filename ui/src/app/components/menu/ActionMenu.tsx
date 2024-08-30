@@ -21,24 +21,13 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
 
   return (
     <div className={`relative ${className ?? ""} flex w-full h-full`}>
-      <div
-        className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${
-          buttonsData[0].disabled
-            ? "text-slate-400"
-            : "border border-terminal-green"
-        } p-1 sm:p-2 bg-terminal-black ${
-          title === "Explore" ? "w-12" : "w-10"
-        } sm:w-20 flex justify-center`}
-      >
-        <p className="uppercase text-sm sm:text-base">{title}</p>
-      </div>
       {buttonsData.map((buttonData, index) => (
         <Button
           key={buttonData.id}
           ref={(ref) => (buttonRefs.current[index] = ref)}
           className={`flex flex-row gap-5 w-full h-full ${
             buttonData.className ?? ""
-          } text-terminal-green text-sm sm:text-base`}
+          } text-terminal-green text-sm sm:text-lg border border-terminal-green`}
           variant="outline"
           size={size}
           onClick={() => {
@@ -48,7 +37,10 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
           disabled={buttonData.disabled}
         >
           {buttonData.icon && <div className="w-6 h-6">{buttonData.icon}</div>}
-          {buttonData.label}
+          <div className="flex flex-col">
+            {buttonData.label}
+            <span className="text-xs text-red-400">{buttonData.tip}</span>
+          </div>
         </Button>
       ))}
     </div>

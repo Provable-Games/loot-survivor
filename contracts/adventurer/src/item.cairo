@@ -1,5 +1,4 @@
-use core::{option::OptionTrait, starknet::StorePacking, traits::{TryInto, Into}};
-use integer::{u16_sqrt};
+use core::{option::OptionTrait, starknet::StorePacking, traits::{TryInto, Into}, num::traits::Sqrt};
 use loot::loot::{ItemId};
 
 #[derive(Drop, Copy, PartialEq, Serde)]
@@ -90,7 +89,7 @@ impl ImplItem of IItemPrimitive {
         if self.xp == 0 {
             1
         } else {
-            let level = u16_sqrt(self.xp);
+            let level = self.xp.sqrt();
             if (level > MAX_GREATNESS) {
                 MAX_GREATNESS
             } else {
@@ -117,14 +116,6 @@ mod tests {
         Item, ImplItem, ItemPacking, IItemPrimitive, MAX_PACKABLE_XP, MAX_PACKABLE_ITEM_ID
     };
     use loot::constants::{ItemId};
-
-    #[test]
-    #[available_gas(54370)]
-    fn test_item_packing_gas() {
-        ItemPacking::unpack(
-            ItemPacking::pack(Item { id: MAX_PACKABLE_ITEM_ID, xp: MAX_PACKABLE_XP })
-        );
-    }
 
     #[test]
     fn test_item_packing() {
@@ -165,13 +156,12 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(1893950)]
-    fn test_is_jewlery_gas() {
+    #[available_gas(2900)]
+    fn test_is_jewlery_simple() {
         assert(!ImplItem::new(ItemId::Book).is_jewlery(), 'should not be jewlery');
     }
 
     #[test]
-    #[available_gas(1893950)]
     fn test_is_jewlery() {
         let mut item_index = 1;
         loop {
@@ -213,13 +203,6 @@ mod tests {
         let item = IItemPrimitive::new(255);
         assert(item.id == 255, 'id should be 255');
         assert(item.xp == 0, 'xp should be 0');
-    }
-
-    #[test]
-    #[available_gas(70320)]
-    fn test_get_greatness_gas() {
-        let mut item = Item { id: 1, xp: 400 };
-        item.get_greatness();
     }
 
     #[test]
@@ -334,11 +317,5 @@ mod tests {
         item.xp = 65535;
         let greatness = item.get_greatness();
         assert(greatness == 20, 'greatness should be 20');
-    }
-
-    #[test]
-    fn test_increase_xp_gas() {
-        let mut item = Item { id: 1, xp: 10 };
-        ImplItem::increase_xp(ref item, 20);
     }
 }

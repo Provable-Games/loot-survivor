@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod tests {
+    use starknet::storage::MutableVecTrait;
+    use starknet::storage_access::storage_address_from_base;
     use array::ArrayTrait;
     use core::{result::ResultTrait, traits::Into, array::SpanTrait, serde::Serde, clone::Clone};
     use option::OptionTrait;
@@ -10,14 +12,24 @@ mod tests {
     use traits::TryInto;
     use box::BoxTrait;
     use market::market::{ImplMarket, LootWithPrice, ItemPurchase};
+    use snforge_std::{
+        declare, ContractClassTrait, start_cheat_block_timestamp_global,
+        start_cheat_block_number_global, start_cheat_caller_address_global,
+        stop_cheat_caller_address_global, cheatcodes::contract_class::ContractClass,
+        start_cheat_chain_id_global, store, load, map_entry_address
+    };
     use loot::{loot::{Loot, ImplLoot, ILoot}, constants::{ItemId}};
     use game::{
-        Game,
+        Game, LaunchTournamentCollections,
+        Game::{
+            IGame, _process_item_level_up, _set_item_specials_seed, _initialize_launch_tournament,
+            _process_adventurer_death
+        },
         game::{
             interfaces::{IGameDispatcherTrait, IGameDispatcher},
             constants::{
                 COST_TO_PLAY, Rewards, REWARD_DISTRIBUTIONS_BP, messages::{STAT_UPGRADES_AVAILABLE},
-                STARTER_BEAST_ATTACK_DAMAGE,
+                STARTER_BEAST_ATTACK_DAMAGE, GAME_EXPIRY_DAYS, SECONDS_IN_DAY
             },
         }
     };
@@ -42,13 +54,18 @@ mod tests {
         OTHER, BASE_URI, TOKEN_ID
     };
 
-    use openzeppelin::tests::utils;
+    use game::tests::mocks::erc20_mocks::DualCaseERC20Mock;
+    use game::tests::mocks::erc721_mocks::DualCaseERC721Mock;
     use openzeppelin::token::erc20::dual20::{DualCaseERC20, DualCaseERC20Trait};
     use openzeppelin::token::erc20::interface::{IERC20CamelDispatcher, IERC20CamelDispatcherTrait};
     use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
     use openzeppelin::utils::serde::SerializedAppend;
     use openzeppelin::token::erc721::dual721::{DualCaseERC721, DualCaseERC721Trait};
     use openzeppelin::token::erc721::interface::IERC721_ID;
+    use openzeppelin::token::erc20::ERC20Component::{Approval, Transfer};
+    use openzeppelin::token::erc20::ERC20Component::{ERC20CamelOnlyImpl, ERC20Impl};
+    use openzeppelin::token::erc20::ERC20Component::{ERC20MetadataImpl, InternalImpl};
+    use openzeppelin::token::erc20::ERC20Component;
 
     use openzeppelin::token::erc721::interface::{
         IERC721, IERC721Dispatcher, IERC721DispatcherTrait, IERC721LibraryDispatcher,
@@ -56,36 +73,51 @@ mod tests {
     };
 
     use starknet::testing::set_caller_address;
-    use starknet::testing::set_contract_address;
 
     const ADVENTURER_ID: felt252 = 1;
-    const MAX_LORDS: u256 = 10000000000000000000000000000000000000000;
-    const APPROVE: u256 = 10000000000000000000000000000000000000000;
-    const DEFAULT_NO_GOLDEN_TOKEN: felt252 = 0;
+    const APPROVE: u256 = 1000000000000000000000000000000000000000000;
     const DAY: u64 = 86400;
+    const TESTING_CHAIN_ID: felt252 = 0x4c4f4f545355525649564f52;
 
     fn INTERFACE_ID() -> ContractAddress {
         contract_address_const::<1>()
     }
 
     fn DAO() -> ContractAddress {
-        contract_address_const::<1>()
+        contract_address_const::<2>()
     }
 
     fn PG() -> ContractAddress {
-        contract_address_const::<1>()
+        contract_address_const::<3>()
     }
 
     fn COLLECTIBLE_BEASTS() -> ContractAddress {
-        contract_address_const::<1>()
+        contract_address_const::<4>()
     }
 
     fn ORACLE_ADDRESS() -> ContractAddress {
-        contract_address_const::<1>()
+        contract_address_const::<5>()
     }
 
     fn RENDER_CONTRACT() -> ContractAddress {
-        contract_address_const::<1>()
+        contract_address_const::<6>()
+    }
+
+    fn ARBITRARY_ADDRESS() -> ContractAddress {
+        contract_address_const::<12345>()
+    }
+
+    fn VRF_PREMIUMS_ADDRESS() -> ContractAddress {
+        contract_address_const::<7>()
+    }
+
+    fn QUALIFYING_COLLECTIONS() -> Span<ContractAddress> {
+        let mut qualifying_collections = ArrayTrait::<ContractAddress>::new();
+        //let (_, blobert_dispatcher) = deploy_bloberts();
+        //qualifying_collections.append(blobert_dispatcher.contract_address);
+        qualifying_collections.append(contract_address_const::<12>());
+        qualifying_collections.append(contract_address_const::<13>());
+        qualifying_collections.span()
     }
 
     fn ZERO_ADDRESS() -> ContractAddress {
@@ -93,7 +125,7 @@ mod tests {
     }
 
     fn OWNER_TWO() -> ContractAddress {
-        contract_address_const::<2>()
+        contract_address_const::<15>()
     }
 
     const PUBLIC_KEY: felt252 = 0x333333;
@@ -118,7 +150,7 @@ mod tests {
         }
     }
 
-    fn setup_lords() -> (DualCaseERC20, IERC20Dispatcher) {
+    fn deploy_lords(contract_class: ContractClass) -> IERC20Dispatcher {
         let lords_name: ByteArray = "LORDS";
         let lords_symbol: ByteArray = "LORDS";
         let lords_supply: u256 = 10000000000000000000000000000000000000000;
@@ -128,58 +160,102 @@ mod tests {
         calldata.append_serde(lords_symbol);
         calldata.append_serde(lords_supply);
         calldata.append_serde(OWNER());
-        let target = utils::deploy(SnakeERC20Mock::TEST_CLASS_HASH, calldata);
-        (DualCaseERC20 { contract_address: target }, IERC20Dispatcher { contract_address: target })
+        let (contract_address, _) = contract_class.deploy(@calldata).unwrap();
+
+        IERC20Dispatcher { contract_address: contract_address }
     }
 
-    fn setup_eth() -> (DualCaseERC20, IERC20Dispatcher) {
-        let eth_name: ByteArray = "ETH";
-        let eth_symbol: ByteArray = "ETH";
-        let eth_supply: u256 = 10000000000000000000000000000000000000000;
+    fn deploy_eth(contract_class: ContractClass) -> IERC20Dispatcher {
+        let lords_name: ByteArray = "ETH";
+        let lords_symbol: ByteArray = "ETH";
+        let lords_supply: u256 = 10000000000000000000000000000000000000000;
 
         let mut calldata = array![];
-        calldata.append_serde(eth_name);
-        calldata.append_serde(eth_symbol);
-        calldata.append_serde(eth_supply);
+        calldata.append_serde(lords_name);
+        calldata.append_serde(lords_symbol);
+        calldata.append_serde(lords_supply);
         calldata.append_serde(OWNER());
-        let target = utils::deploy(SnakeERC20Mock::TEST_CLASS_HASH, calldata);
-        (DualCaseERC20 { contract_address: target }, IERC20Dispatcher { contract_address: target })
+
+        let (contract_address, _) = contract_class.deploy(@calldata).unwrap();
+
+        IERC20Dispatcher { contract_address: contract_address }
     }
 
-    fn setup_golden_token() -> (DualCaseERC721, IERC721Dispatcher) {
+    fn deploy_golden_token(contract_class: ContractClass) -> IERC721Dispatcher {
         let golden_token_name: ByteArray = "GOLDEN_TOKEN";
         let golden_token_symbol: ByteArray = "GLDTKN";
+        let base_uri: ByteArray = "https://gt.lootsurvivor.io/";
         let TOKEN_ID: u256 = 1;
 
         let mut calldata = array![];
         calldata.append_serde(golden_token_name);
         calldata.append_serde(golden_token_symbol);
-        calldata.append_serde(BASE_URI());
+        calldata.append_serde(base_uri);
         calldata.append_serde(OWNER());
         calldata.append_serde(TOKEN_ID);
-        set_contract_address(OWNER());
-        let target = utils::deploy(SnakeERC721Mock::TEST_CLASS_HASH, calldata);
-        (
-            DualCaseERC721 { contract_address: target },
-            IERC721Dispatcher { contract_address: target }
-        )
+        start_cheat_caller_address_global(OWNER());
+        let (contract_address, _) = contract_class.deploy(@calldata).unwrap();
+        IERC721Dispatcher { contract_address: contract_address }
     }
 
-    fn deploy_randomness() -> IMockRandomnessDispatcher {
+    fn deploy_bloberts(contract_class: ContractClass) -> IERC721Dispatcher {
+        let token_name: ByteArray = "Bloberts";
+        let token_symbol: ByteArray = "BLOB";
+        let base_uri: ByteArray = "https://bloberts.com/";
+        let TOKEN_ID: u256 = 1;
+        let mut calldata = array![];
+        calldata.append_serde(token_name);
+        calldata.append_serde(token_symbol);
+        calldata.append_serde(base_uri);
+        calldata.append_serde(OWNER());
+        calldata.append_serde(TOKEN_ID);
+        start_cheat_caller_address_global(OWNER());
+        let (contract_address, _) = contract_class.deploy(@calldata).unwrap();
+        IERC721Dispatcher { contract_address: contract_address }
+    }
+
+    fn deploy_beasts(contract_class: ContractClass) -> IERC721Dispatcher {
+        let token_name: ByteArray = "Beasts";
+        let token_symbol: ByteArray = "BEASTS";
+        let base_uri: ByteArray = "https://beasts.lootsurvivor.io/";
+        let TOKEN_ID: u256 = 1;
+        let mut calldata = array![];
+        calldata.append_serde(token_name);
+        calldata.append_serde(token_symbol);
+        calldata.append_serde(base_uri);
+        calldata.append_serde(OWNER());
+        calldata.append_serde(TOKEN_ID);
+        start_cheat_caller_address_global(OWNER());
+        let (contract_address, _) = contract_class.deploy(@calldata).unwrap();
+        IERC721Dispatcher { contract_address: contract_address }
+    }
+
+    fn deploy_vrf() -> IMockRandomnessDispatcher {
         let mut calldata = ArrayTrait::<felt252>::new();
         calldata.append(123);
-        let contract_address = utils::deploy(MockRandomness::TEST_CLASS_HASH, calldata);
+        let contract = declare("MockRandomness").unwrap();
+        let (contract_address, _) = contract.deploy(@calldata).unwrap();
         IMockRandomnessDispatcher { contract_address }
     }
 
-    fn deploy_game(
+    /// @title Deploy Loot Survivor
+    /// @notice Deploys the loot survivor game contract
+    /// @param lords The address of the lords token
+    /// @param eth The address of the eth token
+    /// @param golden_token The address of the golden token
+    /// @param terminal_timestamp The timestamp at which the game will terminate
+    /// @param randomness The address of the randomness contract
+    /// @param qualifying_collections The span of qualifying collections
+    /// @param launch_promotion_end_timestamp The timestamp at which the launch promotion ends
+    fn deploy_lootsurvivor(
         lords: ContractAddress,
         eth: ContractAddress,
         golden_token: ContractAddress,
-        terminal_block: u64,
-        randomness: ContractAddress
+        terminal_timestamp: u64,
+        randomness: ContractAddress,
+        qualifying_collections: Span<LaunchTournamentCollections>,
+        launch_promotion_end_timestamp: u64
     ) -> IGameDispatcher {
-        let vrf_level_interval = 3;
         let mut calldata = ArrayTrait::<felt252>::new();
         calldata.append(lords.into());
         calldata.append(eth.into());
@@ -187,64 +263,134 @@ mod tests {
         calldata.append(PG().into());
         calldata.append(COLLECTIBLE_BEASTS().into());
         calldata.append(golden_token.into());
-        calldata.append(terminal_block.into());
+        calldata.append(terminal_timestamp.into());
         calldata.append(randomness.into());
-        calldata.append(vrf_level_interval);
         calldata.append(ORACLE_ADDRESS().into());
         calldata.append(RENDER_CONTRACT().into());
+        calldata.append(qualifying_collections.len().into());
+        let mut collection_count = 0;
 
-        IGameDispatcher { contract_address: utils::deploy(Game::TEST_CLASS_HASH, calldata) }
+        loop {
+            if collection_count == qualifying_collections.len() {
+                break;
+            }
+            let collection = *qualifying_collections.at(collection_count);
+            calldata.append(collection.collection_address.into());
+            calldata.append(collection.games_per_token.into());
+            collection_count += 1;
+        };
+
+        calldata.append(launch_promotion_end_timestamp.into());
+        calldata.append(VRF_PREMIUMS_ADDRESS().into());
+        calldata.append(300);
+        let contract = declare("Game").unwrap();
+        let (contract_address, _) = contract.deploy(@calldata).unwrap();
+        IGameDispatcher { contract_address }
     }
 
-    fn setup(
-        starting_block: u64, starting_timestamp: u64, terminal_block: u64
-    ) -> (IGameDispatcher, IERC20Dispatcher, IERC20Dispatcher, IERC721Dispatcher, ContractAddress) {
-        testing::set_block_number(starting_block);
-        testing::set_block_timestamp(starting_timestamp);
-        testing::set_contract_address(OWNER());
+    /// @title Deploy Game
+    /// @notice Deploys the game contract
+    /// @param starting_block The block number at which the game will start
+    /// @param starting_timestamp The timestamp at which the game will start
+    /// @param terminal_block The block number at which the game will terminate
+    /// @param launch_promotion_end_timestamp The timestamp at which the launch promotion ends
+    /// @return The game contract, the lords token, the eth token, the golden token, the bloberts
+    /// contract, the beasts contract
+    fn deploy_game(
+        starting_block: u64,
+        starting_timestamp: u64,
+        terminal_block: u64,
+        launch_promotion_end_timestamp: u64
+    ) -> (
+        IGameDispatcher,
+        IERC20Dispatcher,
+        IERC20Dispatcher,
+        IERC721Dispatcher,
+        ContractAddress,
+        IERC721Dispatcher,
+        IERC721Dispatcher
+    ) {
+        start_cheat_chain_id_global(TESTING_CHAIN_ID);
+        start_cheat_block_number_global(starting_block);
+        start_cheat_block_timestamp_global(starting_timestamp);
+        start_cheat_caller_address_global(OWNER());
+
+        let erc20_class_hash = declare("DualCaseERC20Mock").unwrap();
 
         // deploy lords, eth, and golden token
-        let (_, lords) = setup_lords();
+        let lords = deploy_lords(erc20_class_hash);
 
-        // deploy eth   
-        let (_, eth) = setup_eth();
+        // deploy eth
+        let eth = deploy_eth(erc20_class_hash);
+
+        // declare erc721 class hash
+        let erc721_class_hash = declare("DualCaseERC721Mock").unwrap();
 
         // deploy golden token
-        let (_, golden_token) = setup_golden_token();
+        let golden_token = deploy_golden_token(erc721_class_hash);
 
-        // randomness
-        let randomness = deploy_randomness();
+        // deploy bloberts
+        let bloberts = deploy_bloberts(erc721_class_hash);
+
+        // deploy beasts
+        let beasts = deploy_beasts(erc721_class_hash);
+
+        // add bloberts to qualifying collections
+        let mut qualifying_collections = ArrayTrait::<LaunchTournamentCollections>::new();
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: bloberts.contract_address, games_per_token: 1
+                }
+            );
+
+        // deploy vrf/randomness
+        let randomness = deploy_vrf();
 
         // deploy game
-        let game = deploy_game(
+        let game = deploy_lootsurvivor(
             lords.contract_address,
             eth.contract_address,
             golden_token.contract_address,
             terminal_block,
-            randomness.contract_address
+            randomness.contract_address,
+            qualifying_collections.span(),
+            launch_promotion_end_timestamp
         );
 
-        // transfer lords to caller address and approve 
+        // transfer lords to caller address and approve
         lords.transfer(OWNER(), 100000000000000000000000000000000);
         eth.transfer(OWNER(), 100000000000000000000000000000000);
+        eth.transfer(game.contract_address, 100000000000000000000000000000000);
 
         // give golden token contract approval to access ETH
         eth.approve(golden_token.contract_address, APPROVE.into());
 
         lords.transfer(OWNER(), 1000000000000000000000000);
 
-        testing::set_contract_address(OWNER());
-        lords.approve(game.contract_address, APPROVE.into());
+        start_cheat_caller_address_global(game.contract_address);
+        eth.approve(VRF_PREMIUMS_ADDRESS(), APPROVE.into());
+        start_cheat_caller_address_global(OWNER());
 
-        (game, lords, eth, golden_token, OWNER())
+        lords.approve(game.contract_address, APPROVE.into());
+        lords.approve(OWNER(), APPROVE.into());
+
+        (game, lords, eth, golden_token, OWNER(), bloberts, beasts)
     }
 
     fn add_adventurer_to_game(
-        ref game: IGameDispatcher, golden_token_id: u256, starting_weapon: u8
+        ref game: IGameDispatcher, golden_token_id: u8, starting_weapon: u8
     ) -> felt252 {
         let adventurer_id = game
             .new_game(
-                INTERFACE_ID(), starting_weapon, 'loothero', golden_token_id, false, ZERO_ADDRESS()
+                INTERFACE_ID(),
+                starting_weapon,
+                'loothero',
+                golden_token_id,
+                false,
+                ZERO_ADDRESS(),
+                0,
+                ZERO_ADDRESS()
             );
 
         let new_adventurer = game.get_adventurer(adventurer_id);
@@ -258,11 +404,18 @@ mod tests {
     }
 
     fn add_level_2_adventurer_to_game(
-        ref game: IGameDispatcher, golden_token_id: u256, starting_weapon: u8
+        ref game: IGameDispatcher, golden_token_id: u8, starting_weapon: u8
     ) -> felt252 {
         let adventurer_id = game
             .new_game(
-                INTERFACE_ID(), starting_weapon, 'loothero', golden_token_id, false, ZERO_ADDRESS()
+                INTERFACE_ID(),
+                starting_weapon,
+                'loothero',
+                golden_token_id,
+                false,
+                ZERO_ADDRESS(),
+                0,
+                ZERO_ADDRESS()
             );
 
         let new_adventurer = game.get_adventurer(adventurer_id);
@@ -278,19 +431,16 @@ mod tests {
 
     fn new_adventurer(starting_block: u64, starting_time: u64) -> IGameDispatcher {
         let terminal_block = 0;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_time, terminal_block);
+        let (mut game, _, _, _, _, _, _) = deploy_game(
+            starting_block, starting_time, terminal_block, 0
+        );
         let starting_weapon = ItemId::Wand;
         let name = 'abcdefghijklmno';
 
         // start new game
         game
             .new_game(
-                INTERFACE_ID(),
-                starting_weapon,
-                name,
-                DEFAULT_NO_GOLDEN_TOKEN.into(),
-                false,
-                ZERO_ADDRESS()
+                INTERFACE_ID(), starting_weapon, name, 0, false, ZERO_ADDRESS(), 0, ZERO_ADDRESS()
             );
 
         // get adventurer state
@@ -448,9 +598,11 @@ mod tests {
     //     assert(
     //         adventurer.equipment.weapon.id == purchase_weapon_id, 'new weapon should be equipped'
     //     );
-    //     assert(adventurer.equipment.chest.id == purchase_chest_id, 'new chest should be equipped');
+    //     assert(adventurer.equipment.chest.id == purchase_chest_id, 'new chest should be
+    //     equipped');
     //     assert(adventurer.equipment.head.id == purchase_head_id, 'new head should be equipped');
-    //     assert(adventurer.equipment.waist.id == purchase_waist_id, 'new waist should be equipped');
+    //     assert(adventurer.equipment.waist.id == purchase_waist_id, 'new waist should be
+    //     equipped');
     //     assert(adventurer.equipment.foot.id == purchase_foot_id, 'new foot should be equipped');
     //     assert(adventurer.equipment.hand.id == purchase_hand_id, 'new hand should be equipped');
     //     assert(adventurer.gold < STARTING_GOLD, 'items should not be free');
@@ -601,8 +753,8 @@ mod tests {
     fn new_adventurer_with_lords(starting_block: u64) -> (IGameDispatcher, IERC20Dispatcher) {
         let starting_timestamp = 1;
         let terminal_timestamp = 0;
-        let (mut game, lords, _, _, _) = setup(
-            starting_block, starting_timestamp, terminal_timestamp
+        let (mut game, lords, _, _, _, _, _) = deploy_game(
+            starting_block, starting_timestamp, terminal_timestamp, 0
         );
         let starting_weapon = ItemId::Wand;
         let name = 'abcdefghijklmno';
@@ -610,12 +762,7 @@ mod tests {
         // start new game
         game
             .new_game(
-                INTERFACE_ID(),
-                starting_weapon,
-                name,
-                DEFAULT_NO_GOLDEN_TOKEN.into(),
-                false,
-                ZERO_ADDRESS()
+                INTERFACE_ID(), starting_weapon, name, 0, false, ZERO_ADDRESS(), 0, ZERO_ADDRESS()
             );
 
         // get adventurer state
@@ -652,7 +799,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Action not allowed in battle', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Action not allowed in battle',))]
     #[available_gas(900000000)]
     fn test_no_explore_during_battle() {
         let mut game = new_adventurer(1000, 1696201757);
@@ -662,18 +809,17 @@ mod tests {
         // is annotated in the test
         game.explore(ADVENTURER_ID, true);
     }
+
     #[test]
-    #[should_panic]
-    #[available_gas(90000000)]
-    fn test_attack() {
+    #[should_panic(expected: ('Not in battle',))]
+    fn test_defeat_starter_beast() {
         let mut game = new_adventurer(1000, 1696201757);
 
-        testing::set_block_number(1002);
+        start_cheat_block_number_global(1002);
 
         let adventurer_start = game.get_adventurer(ADVENTURER_ID);
 
         // verify starting state
-        assert(adventurer_start.health == 100, 'advtr should start with 100hp');
         assert(adventurer_start.xp == 0, 'advtr should start with 0xp');
         assert(
             adventurer_start.beast_health == BeastSettings::STARTER_BEAST_HEALTH.into(),
@@ -694,9 +840,6 @@ mod tests {
         if (updated_adventurer.beast_health == 0) {
             // verify adventurer received xp and gold
             assert(updated_adventurer.xp > adventurer_start.xp, 'advntr should gain xp');
-            assert(updated_adventurer.gold > adventurer_start.gold, 'adventuer should gain gold');
-            // and adventurer was untouched
-            assert(updated_adventurer.health == 100, 'no dmg from 1 hit tko');
 
             // attack again after the beast is dead which should
             // result in a panic. This test is annotated to expect a panic
@@ -708,7 +851,8 @@ mod tests {
             assert(updated_adventurer.gold == adventurer_start.gold, 'should have same gold');
             assert(updated_adventurer.health != 100, 'should have taken dmg');
 
-            // attack again (will take out starter beast with current settings regardless of critical hit)
+            // attack again (will take out starter beast with current settings regardless of
+            // critical hit)
             game.attack(ADVENTURER_ID, false);
 
             // recheck adventurer stats
@@ -725,7 +869,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Cant flee starter beast', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Cant flee starter beast',))]
     #[available_gas(23000000)]
     fn test_cant_flee_starter_beast() {
         // start new game
@@ -738,7 +882,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Not in battle', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Not in battle',))]
     #[available_gas(63000000)]
     fn test_cant_flee_outside_battle() {
         // start adventuer and advance to level 2
@@ -751,9 +895,8 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(247617069000)]
     fn test_explore_distributions() {
-        let number_of_games: u16 = 100;
+        let number_of_games: u16 = 50;
         let mut game = new_adventurer_lvl2(1003, 1696201757, 0);
         let mut game_ids = ArrayTrait::<felt252>::new();
         game_ids.append(1);
@@ -853,7 +996,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Stat upgrade available', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Stat upgrade available',))]
     #[available_gas(7800000000)]
     fn test_explore_not_allowed_with_avail_stat_upgrade() {
         let mut game = new_adventurer(1000, 1696201757);
@@ -874,7 +1017,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('level seed not set', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('level seed not set',))]
     fn test_buy_items_during_battle() {
         // mint new adventurer (will start in battle with starter beast)
         let mut game = new_adventurer(1000, 1696201757);
@@ -886,7 +1029,8 @@ mod tests {
         let mut shopping_cart = ArrayTrait::<ItemPurchase>::new();
         shopping_cart.append(ItemPurchase { item_id: item_id, equip: true });
 
-        // attempt to buy item during battle - should_panic with message 'Action not allowed in battle'
+        // attempt to buy item during battle - should_panic with message 'Action not allowed in
+        // battle'
         // this test is annotated to expect a panic so if it doesn't, this test will fail
         let stat_upgrades = Stats {
             strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 1, luck: 0
@@ -895,7 +1039,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Market is closed', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Market is closed',))]
     #[available_gas(73000000)]
     fn test_buy_items_without_stat_upgrade() {
         // mint adventurer and advance to level 2
@@ -921,7 +1065,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Item already owned', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Item already owned',))]
     fn test_buy_duplicate_item_equipped() {
         // start new game on level 2 so we have access to the market
         let mut game = new_adventurer_lvl2(1000, 1696201757, 0);
@@ -944,7 +1088,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Item already owned', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Item already owned',))]
     #[available_gas(61000000)]
     fn test_buy_duplicate_item_bagged() {
         // start new game on level 2 so we have access to the market
@@ -967,7 +1111,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Market item does not exist', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Market item does not exist',))]
     #[available_gas(65000000)]
     fn test_buy_item_not_on_market() {
         let mut game = new_adventurer_lvl2(1000, 1696201757, 0);
@@ -1086,7 +1230,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Item not in bag', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Item not in bag',))]
     #[available_gas(26022290)]
     fn test_equip_not_in_bag() {
         // start new game
@@ -1103,7 +1247,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Too many items', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Too many items',))]
     #[available_gas(26000000)]
     fn test_equip_too_many_items() {
         // start new game
@@ -1282,7 +1426,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Health already full', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Health already full',))]
     #[available_gas(450000000)]
     fn test_buy_potions_exceed_max_health() {
         let mut game = new_adventurer_lvl2(1000, 1696201757, 0);
@@ -1308,7 +1452,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Market is closed', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Market is closed',))]
     #[available_gas(100000000)]
     fn test_cant_buy_potion_without_stat_upgrade() {
         // deploy and start new game
@@ -1327,7 +1471,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Action not allowed in battle', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Action not allowed in battle',))]
     #[available_gas(100000000)]
     fn test_cant_buy_potion_during_battle() {
         // deploy and start new game
@@ -1426,7 +1570,8 @@ mod tests {
         let (contains, _) = bag.contains(purchased_item_id);
         assert(contains, 'item should be in bag');
 
-        // create drop list consisting of adventurers equipped weapon and purchased item that is in bag
+        // create drop list consisting of adventurers equipped weapon and purchased item that is in
+        // bag
         let mut drop_list = ArrayTrait::<u8>::new();
         drop_list.append(adventurer.equipment.weapon.id);
         drop_list.append(purchased_item_id);
@@ -1449,7 +1594,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Item not owned by adventurer', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Item not owned by adventurer',))]
     #[available_gas(90000000)]
     fn test_drop_item_without_ownership() {
         // start new game on level 2 so we have access to the market
@@ -1494,7 +1639,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('insufficient stat upgrades', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('insufficient stat upgrades',))]
     #[available_gas(70000000)]
     fn test_upgrade_stats_not_enough_points() {
         // deploy and start new game
@@ -1577,7 +1722,7 @@ mod tests {
     //     assert(lords.balance_of(DAO()) == COST_TO_PLAY.into(), 'wrong stage 1 balance');
 
     //     // stage 1
-    //     testing::set_block_number(1001 + BLOCKS_IN_A_WEEK * 2);
+    //     start_cheat_block_number_global(1001 + BLOCKS_IN_A_WEEK * 2);
 
     //     // spawn new
 
@@ -1608,23 +1753,26 @@ mod tests {
     // // (COST_TO_PLAY * 9 / 10).print();
     // }
 
-    #[test]
-    #[available_gas(9000000000)]
-    fn test_update_cost_to_play() {}
+    // TODO
+    // #[test]
+    // #[available_gas(9000000000)]
+    // fn test_update_cost_to_play() {}
 
     #[test]
     #[available_gas(9000000000)]
-    #[should_panic(expected: ('terminal time reached', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('terminal time reached',))]
     fn test_terminal_timestamp_reached() {
         let starting_block = 1;
         let starting_timestamp = 1;
         let terminal_timestamp = 100;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
+        let (mut game, _, _, _, _, _, _) = deploy_game(
+            starting_block, starting_timestamp, terminal_timestamp, 0
+        );
 
         // add a player to the game
         add_adventurer_to_game(ref game, 0, ItemId::Wand);
         // advance blockchain timestamp beyond terminal timestamp
-        starknet::testing::set_block_timestamp(terminal_timestamp + 1);
+        start_cheat_block_timestamp_global(terminal_timestamp + 1);
 
         // try to start a new game
         // should panic with 'terminal time reached'
@@ -1638,14 +1786,16 @@ mod tests {
         let starting_block = 1;
         let starting_timestamp = 1;
         let terminal_timestamp = 0;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
+        let (mut game, _, _, _, _, _, _) = deploy_game(
+            starting_block, starting_timestamp, terminal_timestamp, 0
+        );
 
         // add a player to the game
         add_adventurer_to_game(ref game, 0, ItemId::Wand);
 
         // advance blockchain timestamp to max u64
         let max_u64_timestamp = 18446744073709551615;
-        starknet::testing::set_block_timestamp(max_u64_timestamp);
+        start_cheat_block_timestamp_global(max_u64_timestamp);
 
         // verify we can still start a new game
         add_adventurer_to_game(ref game, 0, ItemId::Wand);
@@ -1657,9 +1807,11 @@ mod tests {
         let starting_block = 364063;
         let starting_timestamp = 1698678554;
         let terminal_timestamp = 0;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
+        let (mut game, _, _, _, _, _, _) = deploy_game(
+            starting_block, starting_timestamp, terminal_timestamp, 0
+        );
         add_adventurer_to_game(ref game, 1, ItemId::Wand);
-        testing::set_block_timestamp(starting_timestamp + DAY);
+        start_cheat_block_timestamp_global(starting_timestamp + DAY);
         add_adventurer_to_game(ref game, 1, ItemId::Wand);
     }
 
@@ -1671,11 +1823,12 @@ mod tests {
     //     let starting_block = 364063;
     //     let starting_timestamp = 1698678554;
     //     let terminal_timestamp = 0;
-    //     let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
+    //     let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_timestamp,
+    //     terminal_timestamp, 0);
     //     assert(game.can_play(1), 'should be able to play');
     //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
     //     assert(!game.can_play(1), 'should not be able to play');
-    //     testing::set_block_timestamp(starting_timestamp + DAY);
+    //     start_cheat_block_timestamp_global(starting_timestamp + DAY);
     //     assert(game.can_play(1), 'should be able to play again');
     // }
 
@@ -1690,31 +1843,33 @@ mod tests {
     //     let starting_block = 364063;
     //     let starting_timestamp = 1698678554;
     //     let terminal_timestamp = 0;
-    //     let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
+    //     let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_timestamp,
+    //     terminal_timestamp, 0);
     //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
     // }
 
     // TODO: re-enable this test once we move to Foundry
     // #[test]
     // #[available_gas(9000000000)]
-    // #[should_panic(expected: ('Token already used today', 'ENTRYPOINT_FAILED'))]
+    // #[should_panic(expected: ('Token already used today',  ))]
     // fn test_golden_token_double_play() {
     //     let golden_token_id = 1;
     //     let starting_block = 364063;
     //     let starting_timestamp = 1698678554;
     //     let terminal_timestamp = 0;
-    //     let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, terminal_timestamp);
+    //     let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_timestamp,
+    //     terminal_timestamp, 0);
     //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
 
     //     // roll blockchain forward 1 second less than a day
-    //     testing::set_block_timestamp(starting_timestamp + (DAY - 1));
+    //     start_cheat_block_timestamp_global(starting_timestamp + (DAY - 1));
 
     //     // try to play again with golden token which should cause panic
     //     add_adventurer_to_game(ref game, golden_token_id, ItemId::Wand);
     // }
 
     #[test]
-    #[should_panic(expected: ('Cant drop during starter beast', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Cant drop during starter beast',))]
     fn test_no_dropping_starter_weapon_during_starter_beast() {
         let mut game = new_adventurer(1000, 1696201757);
 
@@ -1737,7 +1892,7 @@ mod tests {
     fn test_different_starter_beasts() {
         let starting_block = 364063;
         let starting_timestamp = 1698678554;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_timestamp, 0);
+        let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_timestamp, 0, 0);
         let mut game_count = game.get_game_count();
         assert(game_count == 0, 'game count should be 0');
 
@@ -1770,17 +1925,17 @@ mod tests {
         );
         assert(
             starter_beast_game_three >= BeastId::Troll
-                && starter_beast_game_one <= BeastId::Skeleton,
+                && starter_beast_game_three <= BeastId::Skeleton,
             'wrong starter beast game 3'
         );
         assert(
             starter_beast_game_four >= BeastId::Troll
-                && starter_beast_game_one <= BeastId::Skeleton,
+                && starter_beast_game_four <= BeastId::Skeleton,
             'wrong starter beast game 4'
         );
         assert(
             starter_beast_game_five >= BeastId::Troll
-                && starter_beast_game_one <= BeastId::Skeleton,
+                && starter_beast_game_five <= BeastId::Skeleton,
             'wrong starter beast game 5'
         );
 
@@ -1837,7 +1992,8 @@ mod tests {
     }
 
     fn transfer_ownership(mut game: IGameDispatcher, from: ContractAddress, to: ContractAddress) {
-        // Some weird conflict when using the game interface ?? using direct ERC721Dispatcher for now. This is not a problem in blockexplorers, I suspect issue in Scarb compiler.
+        // Some weird conflict when using the game interface ?? using direct ERC721Dispatcher for
+        // now. This is not a problem in blockexplorers, I suspect issue in Scarb compiler.
         IERC721Dispatcher { contract_address: game.contract_address }
             .transfer_from(from, to, ADVENTURER_ID.into());
     }
@@ -1846,13 +2002,13 @@ mod tests {
     fn test_transfered_attack() {
         let mut game = new_adventurer(364063, 1698678554);
         transfer_ownership(game, OWNER(), OWNER_TWO());
-        testing::set_contract_address(OWNER_TWO());
+        start_cheat_caller_address_global(OWNER_TWO());
         game.attack(ADVENTURER_ID, false);
     }
 
 
     #[test]
-    #[should_panic(expected: ('Not authorized to act', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Not authorized to act',))]
     fn test_original_owner_attack() {
         let mut game = new_adventurer(364063, 1698678554);
         transfer_ownership(game, OWNER(), OWNER_TWO());
@@ -1861,7 +2017,7 @@ mod tests {
 
 
     #[test]
-    #[should_panic(expected: ('Not authorized to act', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Not authorized to act',))]
     fn test_original_owner_upgrade() {
         let mut game = new_adventurer_lvl2(364063, 1698678554, 0);
         transfer_ownership(game, OWNER(), OWNER_TWO());
@@ -1874,11 +2030,11 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Not authorized to act', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Not authorized to act',))]
     fn test_original_owner_explore() {
         let mut game = new_adventurer_lvl2(364063, 1698678554, 0);
         transfer_ownership(game, OWNER(), OWNER_TWO());
-        testing::set_contract_address(OWNER_TWO());
+        start_cheat_caller_address_global(OWNER_TWO());
 
         let shopping_cart = ArrayTrait::<ItemPurchase>::new();
         let stat_upgrades = Stats {
@@ -1886,17 +2042,17 @@ mod tests {
         };
         game.upgrade(ADVENTURER_ID, 0, stat_upgrades, shopping_cart.clone());
 
-        testing::set_contract_address(OWNER());
+        start_cheat_caller_address_global(OWNER());
 
         game.explore(ADVENTURER_ID, true);
     }
 
     #[test]
-    #[should_panic(expected: ('Not authorized to act', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Not authorized to act',))]
     fn test_original_owner_flee() {
         let mut game = new_adventurer_lvl2(364063, 1698678554, 0);
         transfer_ownership(game, OWNER(), OWNER_TWO());
-        testing::set_contract_address(OWNER_TWO());
+        start_cheat_caller_address_global(OWNER_TWO());
 
         let shopping_cart = ArrayTrait::<ItemPurchase>::new();
         let stat_upgrades = Stats {
@@ -1907,7 +2063,7 @@ mod tests {
         // go explore
         game.explore(ADVENTURER_ID, true);
 
-        testing::set_contract_address(OWNER());
+        start_cheat_caller_address_global(OWNER());
 
         game.flee(ADVENTURER_ID, true);
     }
@@ -1917,7 +2073,7 @@ mod tests {
     fn test_transfered_upgrade_explore_flee() {
         let mut game = new_adventurer_lvl2(123, 1696201757, 0);
         transfer_ownership(game, OWNER(), OWNER_TWO());
-        testing::set_contract_address(OWNER_TWO());
+        start_cheat_caller_address_global(OWNER_TWO());
 
         let shopping_cart = ArrayTrait::<ItemPurchase>::new();
         let stat_upgrades = Stats {
@@ -1937,104 +2093,12 @@ mod tests {
         transfer_ownership(game, OWNER(), OWNER_TWO());
     }
 
-
-    #[starknet::contract]
-    mod SnakeERC20Mock {
-        use openzeppelin::token::erc20::{ERC20Component, ERC20HooksEmptyImpl};
-        use starknet::ContractAddress;
-
-        component!(path: ERC20Component, storage: erc20, event: ERC20Event);
-
-        #[abi(embed_v0)]
-        impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
-        #[abi(embed_v0)]
-        impl ERC20MetadataImpl = ERC20Component::ERC20MetadataImpl<ContractState>;
-        impl InternalImpl = ERC20Component::InternalImpl<ContractState>;
-
-        #[storage]
-        struct Storage {
-            #[substorage(v0)]
-            erc20: ERC20Component::Storage
-        }
-
-        #[event]
-        #[derive(Drop, starknet::Event)]
-        enum Event {
-            #[flat]
-            ERC20Event: ERC20Component::Event
-        }
-
-        #[constructor]
-        fn constructor(
-            ref self: ContractState,
-            name: ByteArray,
-            symbol: ByteArray,
-            initial_supply: u256,
-            recipient: ContractAddress
-        ) {
-            self.erc20.initializer(name, symbol);
-            self.erc20.mint(recipient, initial_supply);
-        }
-    }
-
-    #[starknet::contract]
-    mod SnakeERC721Mock {
-        use openzeppelin::introspection::src5::SRC5Component;
-        use openzeppelin::token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
-        use starknet::ContractAddress;
-
-        component!(path: ERC721Component, storage: erc721, event: ERC721Event);
-        component!(path: SRC5Component, storage: src5, event: SRC5Event);
-
-        // ERC721
-        #[abi(embed_v0)]
-        impl ERC721Impl = ERC721Component::ERC721Impl<ContractState>;
-        #[abi(embed_v0)]
-        impl ERC721MetadataImpl =
-            ERC721Component::ERC721MetadataImpl<ContractState>;
-        impl ERC721InternalImpl = ERC721Component::InternalImpl<ContractState>;
-
-        // SRC5
-        #[abi(embed_v0)]
-        impl SRC5Impl = SRC5Component::SRC5Impl<ContractState>;
-
-        #[storage]
-        struct Storage {
-            #[substorage(v0)]
-            erc721: ERC721Component::Storage,
-            #[substorage(v0)]
-            src5: SRC5Component::Storage
-        }
-
-        #[event]
-        #[derive(Drop, starknet::Event)]
-        enum Event {
-            #[flat]
-            ERC721Event: ERC721Component::Event,
-            #[flat]
-            SRC5Event: SRC5Component::Event
-        }
-
-        #[constructor]
-        fn constructor(
-            ref self: ContractState,
-            name: ByteArray,
-            symbol: ByteArray,
-            base_uri: ByteArray,
-            recipient: ContractAddress,
-            token_id: u256
-        ) {
-            self.erc721.initializer(name, symbol, base_uri);
-            self.erc721.mint(recipient, token_id);
-        }
-    }
-
     #[test]
     fn test_set_adventurer_obituary() {
-        // Setup
+        // deploy_game
         let starting_block = 1000;
         let starting_time = 1696201757;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_time, 0);
+        let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_time, 0, 0);
 
         // Create a new adventurer
         let adventurer_id = 1;
@@ -2051,7 +2115,7 @@ mod tests {
         game.upgrade(adventurer_id, 0, stat_upgrades, shopping_cart.clone());
         game.explore(adventurer_id, true);
         let death_date = starting_time + 1000;
-        testing::set_block_timestamp(death_date);
+        start_cheat_block_timestamp_global(death_date);
         game.attack(adventurer_id, true);
 
         let mut metadata = game.get_adventurer_meta(adventurer_id);
@@ -2067,12 +2131,12 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('obituary already set', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('obituary already set',))]
     fn test_set_adventurer_obituary_twice() {
-        // Setup
+        // deploy_game
         let starting_block = 1000;
         let starting_time = 1696201757;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_time, 0);
+        let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_time, 0, 0);
 
         // Create a new adventurer
         let adventurer_id = 1;
@@ -2089,7 +2153,7 @@ mod tests {
         game.upgrade(adventurer_id, 0, stat_upgrades, shopping_cart.clone());
         game.explore(adventurer_id, true);
         let death_date = starting_time + 1000;
-        testing::set_block_timestamp(death_date);
+        start_cheat_block_timestamp_global(death_date);
         game.attack(adventurer_id, true);
 
         let mut metadata = game.get_adventurer_meta(adventurer_id);
@@ -2106,12 +2170,12 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('obituary window closed', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('obituary window closed',))]
     fn test_set_adventurer_obituary_after_window_closed() {
-        // Setup
+        // deploy_game
         let starting_block = 1000;
         let starting_time = 1696201757;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_time, 0);
+        let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_time, 0, 0);
 
         // Create a new adventurer
         let adventurer_id = 1;
@@ -2128,14 +2192,14 @@ mod tests {
         game.upgrade(adventurer_id, 0, stat_upgrades, shopping_cart.clone());
         game.explore(adventurer_id, true);
         let death_date = starting_time + 1000;
-        testing::set_block_timestamp(death_date);
+        start_cheat_block_timestamp_global(death_date);
         game.attack(adventurer_id, true);
 
         let mut metadata = game.get_adventurer_meta(adventurer_id);
         assert(metadata.death_date == death_date, 'Death date not set correctly');
 
         // increase the blockchain to 1s past the obituary window
-        testing::set_block_timestamp(
+        start_cheat_block_timestamp_global(
             death_date + (Game::OBITUARY_EXPIRY_DAYS.into() * Game::SECONDS_IN_DAY.into()) + 1
         );
 
@@ -2146,12 +2210,12 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected: ('Adventurer is still alive', 'ENTRYPOINT_FAILED'))]
+    #[should_panic(expected: ('Adventurer is still alive',))]
     fn test_set_adventurer_obituary_still_alive() {
-        // Setup
+        // deploy_game
         let starting_block = 1000;
         let starting_time = 1696201757;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_time, 0);
+        let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_time, 0, 0);
 
         // Create a new adventurer
         let adventurer_id = 1;
@@ -2168,10 +2232,10 @@ mod tests {
 
     #[test]
     fn test_dead_adventurer_metadata() {
-        // Setup
+        // deploy_game
         let starting_block = 1000;
         let starting_time = 1696201757;
-        let (mut game, _, _, _, _) = setup(starting_block, starting_time, 0);
+        let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_time, 0, 0);
 
         // Create a new adventurer
         let adventurer_id = 1;
@@ -2188,7 +2252,7 @@ mod tests {
         game.upgrade(adventurer_id, 0, stat_upgrades, shopping_cart.clone());
         game.explore(adventurer_id, true);
         let death_date = starting_time + 1000;
-        testing::set_block_timestamp(death_date);
+        start_cheat_block_timestamp_global(death_date);
         game.attack(adventurer_id, true);
 
         // check adventurer metadata to ensure birth date and death date are correct
@@ -2199,143 +2263,831 @@ mod tests {
 
     #[test]
     fn test_adventurer_death_ranking() {
-        // Setup
-        let shopping_cart = ArrayTrait::<ItemPurchase>::new();
-        let stat_upgrades = Stats {
-            strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 1, luck: 0
+        let mut state = Game::contract_state_for_testing();
+
+        // Create four adventurers
+        let mut adventurer1 = ImplAdventurer::new(ItemId::Wand);
+        let mut adventurer2 = ImplAdventurer::new(ItemId::Wand);
+        let mut adventurer3 = ImplAdventurer::new(ItemId::Wand);
+        let mut adventurer4 = ImplAdventurer::new(ItemId::Wand);
+        let mut adventurer5 = ImplAdventurer::new(ItemId::Wand);
+
+        // Set different XP values to create a ranking
+        adventurer1.xp = 50;
+        adventurer2.xp = 200;
+        adventurer3.xp = 300;
+        adventurer4.xp = 250;
+        adventurer5.xp = 225;
+
+        // Save adventurers to state
+        state._adventurer.write(1, adventurer1);
+        state._adventurer.write(2, adventurer2);
+        state._adventurer.write(3, adventurer3);
+        state._adventurer.write(4, adventurer4);
+        state._adventurer.write(5, adventurer5);
+
+        // Set metadata for each adventurer
+        let current_timestamp = 1000000;
+        let mut metadata = AdventurerMetadata {
+            birth_date: current_timestamp,
+            death_date: 0,
+            rank_at_death: 0,
+            item_specials_seed: 0,
+            level_seed: 0,
+            delay_stat_reveal: false,
+            golden_token_id: 0,
+            launch_tournament_winner_token_id: 0
         };
+
+        state._adventurer_meta.write(1, metadata);
+        state._adventurer_meta.write(2, metadata);
+        state._adventurer_meta.write(3, metadata);
+        state._adventurer_meta.write(4, metadata);
+        state._adventurer_meta.write(5, metadata);
+
+        let mut adventurer1 = state._adventurer.read(1);
+        _process_adventurer_death(ref state, ref adventurer1, 1, 0, 0, false);
+
+        let mut adventurer2 = state._adventurer.read(2);
+        _process_adventurer_death(ref state, ref adventurer2, 2, 0, 0, false);
+
+        let mut adventurer3 = state._adventurer.read(3);
+        _process_adventurer_death(ref state, ref adventurer3, 3, 0, 0, false);
+
+        let mut adventurer4 = state._adventurer.read(4);
+        _process_adventurer_death(ref state, ref adventurer4, 4, 0, 0, false);
+
+        // Check leaderboard
+        let leaderboard = state.get_leaderboard();
+        assert(leaderboard.first.adventurer_id.into() == 3, 'P3 should be 1st on LB');
+        assert(leaderboard.second.adventurer_id.into() == 4, 'P4 should be 2nd on LB');
+        assert(leaderboard.third.adventurer_id.into() == 2, 'P2 should be 3rd on LB');
+
+        // Check rank at death
+        let metadata1 = state._adventurer_meta.read(1);
+        let metadata2 = state._adventurer_meta.read(2);
+        let metadata3 = state._adventurer_meta.read(3);
+        let metadata4 = state._adventurer_meta.read(4);
+
+        // adventurer 1 technically finished first but their score wasn't above 100xp
+        // so they don't get a qualified rank
+        assert(metadata1.rank_at_death == 0, 'P1 should be death rank 0');
+
+        // adventurer 2 finished first and above 100xp so they get a death rank
+        assert(metadata2.rank_at_death == 1, 'P2 should be death rank 1');
+
+        // adventurer 3 finished higher than adventurer 2 so they now also get death rank 1
+        assert(metadata3.rank_at_death == 1, 'P3 should be death rank 1');
+
+        // verify adventurer 2 is still death rank 1 too
+        let metadata2 = state._adventurer_meta.read(2);
+        assert(metadata2.rank_at_death == 1, 'P2 should be death rank 1');
+
+        // adventurer 4 finishes above 100xp in 2nd place so they get death rank 2
+        assert(metadata4.rank_at_death == 2, 'P4 should be death rank 2');
+
+        // verify adventurer 2 and 3 still have rank 1
+        let metadata2 = state._adventurer_meta.read(2);
+        let metadata3 = state._adventurer_meta.read(3);
+        assert(metadata2.rank_at_death == 1, 'P2 should be death rank 1');
+        assert(metadata3.rank_at_death == 1, 'P3 should be death rank 1');
+
+        // adventurer 5 dies and finishes 3rd
+        let mut adventurer5 = state._adventurer.read(5);
+        _process_adventurer_death(ref state, ref adventurer5, 5, 0, 0, false);
+
+        // check leaderboard
+        let leaderboard = state.get_leaderboard();
+        assert(leaderboard.first.adventurer_id.into() == 3, 'P3 should be 1st on LB');
+        assert(leaderboard.second.adventurer_id.into() == 4, 'P4 should be 2nd on LB');
+        assert(leaderboard.third.adventurer_id.into() == 5, 'P5 should be 3rd on LB');
+
+        // assert death rank from meta data
+        let metadata5 = state._adventurer_meta.read(5);
+        assert(metadata5.rank_at_death == 3, 'P5 should be death rank 3');
+
+        // verify other adventurers still have same death rank
+        let metadata1 = state._adventurer_meta.read(1);
+        let metadata2 = state._adventurer_meta.read(2);
+        let metadata3 = state._adventurer_meta.read(3);
+        let metadata4 = state._adventurer_meta.read(4);
+        assert(metadata1.rank_at_death == 0, 'P1 should be death rank 0');
+        assert(metadata2.rank_at_death == 1, 'P2 should be death rank 1');
+        assert(metadata3.rank_at_death == 1, 'P3 should be death rank 1');
+        assert(metadata4.rank_at_death == 2, 'P4 should be death rank 2');
+    }
+
+    #[test]
+    #[should_panic(expected: ('launch tournament has ended',))]
+    fn test_genesis_tournament_ended() {
         let starting_block = 1000;
         let mut current_block_time = 1696201757;
-        let (mut game, _, _, _, _) = setup(starting_block, current_block_time, 0);
+
+        // use one week for launch tournament
+        let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
+        let (mut game, _, _, _, _, _, _) = deploy_game(
+            starting_block, current_block_time, 0, genesis_tournament_end
+        );
+
+        // set block timestamp to one second after the launch tournament end
+        start_cheat_block_timestamp_global(genesis_tournament_end + 1);
+        // try to enter launch tournament should panic
+        game
+            .enter_launch_tournament(
+                12, 123, ZERO_ADDRESS(), false, ZERO_ADDRESS(), 0, ZERO_ADDRESS()
+            );
+    }
+
+    #[test]
+    #[should_panic(expected: ('nft collection not eligible',))]
+    fn test_genesis_tournament_nonqualifying_collection() {
+        let starting_block = 1000;
+        let mut current_block_time = 1696201757;
+
+        // use one week for launch tournament
+        let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
+        let (mut game, _, _, _, _, _, _) = deploy_game(
+            starting_block, current_block_time, 0, genesis_tournament_end
+        );
+
+        // try to enter launch tournament should panic
+        game
+            .enter_launch_tournament(
+                12, 123, ZERO_ADDRESS(), false, ZERO_ADDRESS(), 0, ZERO_ADDRESS()
+            );
+    }
+
+    #[test]
+    #[should_panic(expected: ('not token owner',))]
+    fn test_genesis_tournament_not_token_owner() {
+        let starting_block = 1000;
+        let mut current_block_time = 1696201757;
+
+        // use one week for launch tournament
+        let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
+        let (mut game, _, _, _, _, blobert_dispatcher, _) = deploy_game(
+            starting_block, current_block_time, 0, genesis_tournament_end
+        );
+
+        // set caller to a different address than the token owner
+        start_cheat_caller_address_global(ARBITRARY_ADDRESS());
+
+        // try to enter tournament with a wallet that doesn't own the qualifying token
+        game
+            .enter_launch_tournament(
+                12,
+                123,
+                ZERO_ADDRESS(),
+                false,
+                blobert_dispatcher.contract_address,
+                1,
+                ZERO_ADDRESS()
+            );
+    }
+
+    #[test]
+    #[should_panic(expected: ('token already registered',))]
+    fn test_genesis_tournament_token_already_registered() {
+        let starting_block = 1000;
+        let mut current_block_time = 1696201757;
+
+        // use one week for launch tournament
+        let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
+        let (mut game, _, _, _, _, blobert_dispatcher, _) = deploy_game(
+            starting_block, current_block_time, 0, genesis_tournament_end
+        );
+
+        // Enter genesis tournament using token id 1
+        game
+            .enter_launch_tournament(
+                12,
+                123,
+                ZERO_ADDRESS(),
+                false,
+                blobert_dispatcher.contract_address,
+                1,
+                ZERO_ADDRESS()
+            );
+
+        // try to enter tournament with the same token id again
+        // should panic
+        game
+            .enter_launch_tournament(
+                12,
+                123,
+                ZERO_ADDRESS(),
+                false,
+                blobert_dispatcher.contract_address,
+                1,
+                ZERO_ADDRESS()
+            );
+    }
+
+    #[test]
+    fn test_enter_genesis_tournament_success() {
+        let starting_block = 1000;
+        let mut current_block_time = 1696201757;
+
+        // use one week for launch tournament
+        let genesis_tournament_end = current_block_time + 7 * 24 * 60 * 60;
+        let (mut game, _, _, _, _, blobert_dispatcher, _) = deploy_game(
+            starting_block, current_block_time, 0, genesis_tournament_end
+        );
+
+        // Enter genesis tournament using token id 1
+        let adventurer_ids = game
+            .enter_launch_tournament(
+                12,
+                123,
+                ZERO_ADDRESS(),
+                false,
+                blobert_dispatcher.contract_address,
+                1,
+                ZERO_ADDRESS()
+            );
+
+        // assert the claim resulted in 1 game being minted
+        assert(adventurer_ids.len() == 1, 'Wrong number of adventurer ids');
+
+        // get adventurer id details and assert they are correct
+        let adventurer_meta = game.get_adventurer_meta(*adventurer_ids.at(0));
+        let adventurer_name = game.get_adventurer_name(*adventurer_ids.at(0));
+        let adventurer = game.get_adventurer(*adventurer_ids.at(0));
+        assert(adventurer_name == 123, 'Name not set correctly');
+        assert(adventurer_meta.birth_date == current_block_time, 'birthdate not set correctly');
+        assert(adventurer.equipment.weapon.id == 12, 'Weapon not set correctly');
+        assert(adventurer.health == 90, 'Health not set correctly');
+    }
+
+    #[test]
+    fn test_get_and_set_adventurer_name() {
+        let mut state = Game::contract_state_for_testing();
+        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
+        state._adventurer.write(1, adventurer);
+        state._adventurer_name.write(1, 'test1');
+        let adventurer_name = state.get_adventurer_name(1);
+        assert(adventurer_name == 'test1', 'name not set correctly');
+
+        state.update_adventurer_name(1, 'test2');
+        let adventurer_name = state.get_adventurer_name(1);
+        assert(adventurer_name == 'test2', 'name not updated correctly');
+    }
+
+    #[test]
+    fn test_process_item_level_up_item_prefix_unlock() {
+        start_cheat_chain_id_global(TESTING_CHAIN_ID);
+        let mut state = Game::contract_state_for_testing();
+        _set_item_specials_seed(ref state, 1, 123);
+
+        // init adventurer with g19 wand
+        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
+        adventurer.equipment.weapon.xp = 361;
+
+        // set adventurer ID 1 to our adventurer
+        state._adventurer.write(1, adventurer);
+
+        // verify adventurer has been set
+        let mut adventurer = state.get_adventurer(1);
+        let prev_stat_upgrades_available = adventurer.stat_upgrades_available;
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
+        assert(adventurer.equipment.weapon.xp == 361, 'xp not set correctly');
+
+        // call internal _process_item_level_up function and verify results
+        let item_leveled_up_event = _process_item_level_up(
+            ref state, ref adventurer, 1, adventurer.equipment.weapon, 18, 19
+        );
+
+        // verify event details
+        assert(item_leveled_up_event.item_id == ItemId::Wand, 'item id is wrong');
+        assert(item_leveled_up_event.previous_level == 18, 'previous level is wrong');
+        assert(item_leveled_up_event.new_level == 19, 'new level is wrong');
+        assert(!item_leveled_up_event.suffix_unlocked, 'suffix should not be unlocked');
+        assert(item_leveled_up_event.prefixes_unlocked, 'prefixes should be unlocked');
+        assert(item_leveled_up_event.specials.special1 != 0, 'special1 should be set');
+        assert(item_leveled_up_event.specials.special2 != 0, 'special2 should be set');
+        assert(item_leveled_up_event.specials.special3 != 0, 'special3 should be set');
+        assert(
+            adventurer.stat_upgrades_available == prev_stat_upgrades_available,
+            'wrong stats available'
+        );
+    }
+
+    #[test]
+    fn test_process_item_level_up_item_suffix_unlock() {
+        start_cheat_chain_id_global(TESTING_CHAIN_ID);
+        let mut state = Game::contract_state_for_testing();
+        _set_item_specials_seed(ref state, 1, 123);
+
+        // init adventurer with g15 wand
+        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
+        adventurer.equipment.weapon.xp = 225;
+
+        // set adventurer ID 1 to our adventurer
+        state._adventurer.write(1, adventurer);
+
+        // verify adventurer has been set
+        let mut adventurer = state.get_adventurer(1);
+        let prev_stat_upgrades_available = adventurer.stat_upgrades_available;
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
+        assert(adventurer.equipment.weapon.xp == 225, 'xp not set correctly');
+
+        // call internal _process_item_level_up function and verify results
+        let item_leveled_up_event = _process_item_level_up(
+            ref state, ref adventurer, 1, adventurer.equipment.weapon, 14, 15
+        );
+
+        // verify event details
+        assert(item_leveled_up_event.item_id == ItemId::Wand, 'item id is wrong');
+        assert(item_leveled_up_event.previous_level == 14, 'previous level is wrong');
+        assert(item_leveled_up_event.new_level == 15, 'new level is wrong');
+        assert(item_leveled_up_event.suffix_unlocked, 'suffix should be unlocked');
+        assert(!item_leveled_up_event.prefixes_unlocked, 'prefix should not be unlocked');
+        assert(item_leveled_up_event.specials.special1 != 0, 'special1 should be set');
+        assert(item_leveled_up_event.specials.special2 == 0, 'special2 should be set');
+        assert(item_leveled_up_event.specials.special3 == 0, 'special3 should be set');
+        assert(
+            adventurer.stat_upgrades_available == prev_stat_upgrades_available,
+            'wrong stats available'
+        );
+    }
+
+    #[test]
+    fn test_process_item_level_up_no_specials_unlock() {
+        start_cheat_chain_id_global(TESTING_CHAIN_ID);
+        let mut state = Game::contract_state_for_testing();
+        _set_item_specials_seed(ref state, 1, 123);
+
+        // init adventurer with g14 wand
+        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
+        adventurer.equipment.weapon.xp = 200;
+
+        // set adventurer ID 1 to our adventurer
+        state._adventurer.write(1, adventurer);
+
+        // verify adventurer has been set
+        let mut adventurer = state.get_adventurer(1);
+        let prev_stat_upgrades_available = adventurer.stat_upgrades_available;
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
+        assert(adventurer.equipment.weapon.xp == 200, 'xp not set correctly');
+
+        // call internal _process_item_level_up function and verify results
+        let item_leveled_up_event = _process_item_level_up(
+            ref state, ref adventurer, 1, adventurer.equipment.weapon, 13, 14
+        );
+
+        // verify event details
+        assert(item_leveled_up_event.item_id == ItemId::Wand, 'item id is wrong');
+        assert(item_leveled_up_event.previous_level == 13, 'previous level is wrong');
+        assert(item_leveled_up_event.new_level == 14, 'new level is wrong');
+        assert(!item_leveled_up_event.suffix_unlocked, 'suffix should not be unlocked');
+        assert(!item_leveled_up_event.prefixes_unlocked, 'prefix should not be unlocked');
+        assert(item_leveled_up_event.specials.special1 == 0, 'special1 should not be set');
+        assert(item_leveled_up_event.specials.special2 == 0, 'special2 should not be set');
+        assert(item_leveled_up_event.specials.special3 == 0, 'special3 should not be set');
+        assert(
+            adventurer.stat_upgrades_available == prev_stat_upgrades_available,
+            'wrong stats available'
+        );
+    }
+
+    #[test]
+    fn test_process_item_level_up_greatness_20() {
+        start_cheat_chain_id_global(TESTING_CHAIN_ID);
+        let mut state = Game::contract_state_for_testing();
+        _set_item_specials_seed(ref state, 1, 123);
+
+        // initialize adventurer with a G18 wand
+        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
+        adventurer.equipment.weapon.xp = 400;
+
+        // set adventurer ID 1 to our adventurer
+        state._adventurer.write(1, adventurer);
+
+        // verify adventurer has been set
+        let mut adventurer = state.get_adventurer(1);
+        let prev_stat_upgrades_available = adventurer.stat_upgrades_available;
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
+        assert(adventurer.equipment.weapon.xp == 400, 'xp not set correctly');
+
+        // call internal _process_item_level_up function and verify results
+        let item_leveled_up_event = _process_item_level_up(
+            ref state, ref adventurer, 1, adventurer.equipment.weapon, 19, 20
+        );
+
+        // verify event details
+        assert(item_leveled_up_event.item_id == ItemId::Wand, 'item id is wrong');
+        assert(item_leveled_up_event.previous_level == 19, 'previous level is wrong');
+        assert(item_leveled_up_event.new_level == 20, 'new level is wrong');
+        assert(!item_leveled_up_event.suffix_unlocked, 'suffix should not be unlocked');
+        assert(!item_leveled_up_event.prefixes_unlocked, 'prefix should not be unlocked');
+        assert(item_leveled_up_event.specials.special1 != 0, 'special1 should be set');
+        assert(item_leveled_up_event.specials.special2 != 0, 'special2 should be set');
+        assert(item_leveled_up_event.specials.special3 != 0, 'special3 should be set');
+        assert(
+            adventurer.stat_upgrades_available == prev_stat_upgrades_available + 1,
+            'wrong stats available'
+        );
+    }
+
+    #[test]
+    fn test_process_item_level_up_item_suffix_and_prefix_unlock() {
+        start_cheat_chain_id_global(TESTING_CHAIN_ID);
+        let mut state = Game::contract_state_for_testing();
+        _set_item_specials_seed(ref state, 1, 123);
+
+        // init adventurer with g19 wand
+        let mut adventurer = ImplAdventurer::new(ItemId::Wand);
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
+        adventurer.equipment.weapon.xp = 361;
+
+        // set adventurer ID 1 to our adventurer
+        state._adventurer.write(1, adventurer);
+
+        // verify adventurer has been set
+        let mut adventurer = state.get_adventurer(1);
+        let prev_stat_upgrades_available = adventurer.stat_upgrades_available;
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon not set correctly');
+        assert(adventurer.equipment.weapon.xp == 361, 'xp not set correctly');
+
+        // call internal _process_item_level_up function and verify results
+        let item_leveled_up_event = _process_item_level_up(
+            ref state, ref adventurer, 1, adventurer.equipment.weapon, 14, 19
+        );
+
+        // verify event details
+        assert(item_leveled_up_event.item_id == ItemId::Wand, 'item id is wrong');
+        assert(item_leveled_up_event.previous_level == 14, 'previous level is wrong');
+        assert(item_leveled_up_event.new_level == 19, 'new level is wrong');
+        assert(item_leveled_up_event.suffix_unlocked, 'suffix should be unlocked');
+        assert(item_leveled_up_event.prefixes_unlocked, 'prefix should be unlocked');
+        assert(item_leveled_up_event.specials.special1 != 0, 'special1 should be set');
+        assert(item_leveled_up_event.specials.special2 != 0, 'special2 should be set');
+        assert(item_leveled_up_event.specials.special3 != 0, 'special3 should be set');
+        assert(
+            adventurer.stat_upgrades_available == prev_stat_upgrades_available,
+            'wrong stats available'
+        );
+    }
+
+    #[test]
+    fn test_vrf_premiums_address_can_withdraw_eth() {
+        let (mut game, _, eth_dispatcher, _, _, _, _) = deploy_game(0, 0, 0, 0);
+
+        // change caller to the VRF premiums address
+        start_cheat_caller_address_global(VRF_PREMIUMS_ADDRESS());
+
+        // verify it has ability to withdraw all ETH from the game contract
+        eth_dispatcher
+            .transfer_from(
+                game.contract_address, VRF_PREMIUMS_ADDRESS(), 10000000000000000000000000000000
+            );
+    }
+
+    #[test]
+    #[should_panic(expected: ('ERC20: insufficient allowance',))]
+    fn test_non_vrf_premiums_address_cannot_withdraw_eth() {
+        let (mut game, _, eth_dispatcher, _, _, _, _) = deploy_game(0, 0, 0, 0);
+
+        // change caller to the VRF premiums address
+        start_cheat_caller_address_global(ARBITRARY_ADDRESS());
+
+        // verify it has ability to withdraw all ETH from the game contract
+        eth_dispatcher
+            .transfer_from(
+                game.contract_address, ARBITRARY_ADDRESS(), 10000000000000000000000000000000
+            );
+    }
+
+    #[test]
+    #[should_panic(expected: ('ERC20: insufficient allowance',))]
+    fn test_non_vrf_premiums_address_cannot_withdraw_to_vrf_premiums_address() {
+        let (mut game, _, eth_dispatcher, _, _, _, _) = deploy_game(0, 0, 0, 0);
+
+        // change caller to the VRF premiums address
+        start_cheat_caller_address_global(ARBITRARY_ADDRESS());
+
+        // verify it has ability to withdraw all ETH from the game contract
+        eth_dispatcher
+            .transfer_from(
+                game.contract_address, VRF_PREMIUMS_ADDRESS(), 10000000000000000000000000000000
+            );
+    }
+
+    #[test]
+    fn test_record_client_provider_address() {
+        let (mut game, _, _, _, _, _, _) = deploy_game(0, 0, 0, 0);
+        let player1 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
+        // get adventurer metadata
+        let client_provider_address = game.get_client_provider(player1);
+        assert(client_provider_address == INTERFACE_ID(), 'wrong client provider address');
+    }
+
+    #[test]
+    fn test_golden_token_id_is_set() {
+        let (mut game, _, _, _, _, _, _) = deploy_game(0, 0, 0, 0);
+        let player1 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
+        let player2 = add_adventurer_to_game(ref game, 1, ItemId::Wand);
+        let player3 = add_adventurer_to_game(ref game, 160, ItemId::Wand);
+        let player1_meta = game.get_adventurer_meta(player1);
+        let player2_meta = game.get_adventurer_meta(player2);
+        let player3_meta = game.get_adventurer_meta(player3);
+
+        assert(player1_meta.golden_token_id == 0, 'golden token id should be 0');
+        assert(player2_meta.golden_token_id == 1, 'golden token id should be 1');
+        assert(player3_meta.golden_token_id == 160, 'golden token id should be 160');
+    }
+    #[test]
+    fn test_update_adventurer_name() {
+        // Deploy the game
+        let starting_block = 1000;
+        let starting_time = 1696201757;
+        let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_time, 0, 0);
 
         // Create a new adventurer
-        current_block_time += 777;
-        let player1_birth_date = current_block_time;
-        testing::set_block_timestamp(current_block_time);
-        let player1 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
-        game.attack(player1, false);
-        game.upgrade(player1, 0, stat_upgrades, shopping_cart.clone());
-        game.explore(player1, true);
-        current_block_time += 1000;
-        let player1_death_date = current_block_time;
-        testing::set_block_timestamp(current_block_time);
-        game.attack(player1, true);
+        let adventurer_id = add_adventurer_to_game(ref game, 0, ItemId::Wand);
 
-        // assert adventurer metadata and leaderboard
-        let player1_metadata = game.get_adventurer_meta(player1);
-        let leaderboard = game.get_leaderboard();
-        assert(player1_metadata.birth_date == player1_birth_date, 'Birth date not set correctly');
-        assert(player1_metadata.death_date == player1_death_date, 'Death date not set correctly');
-        assert(player1_metadata.rank_at_death == 1, 'Rank at death not set correctly');
-        assert(leaderboard.first.adventurer_id.into() == player1, 'player1 should be 1st place');
+        // Get the initial name
+        let initial_name = game.get_adventurer_name(adventurer_id);
 
-        // introduce second player (new top score)
-        current_block_time += 777;
-        let player2_birth_date = current_block_time;
-        testing::set_block_timestamp(current_block_time);
-        let player2 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
-        game.attack(player2, false);
-        game.upgrade(player2, 1, stat_upgrades, shopping_cart.clone());
-        game.explore(player2, true);
-        current_block_time += 777;
-        let player2_death_date = current_block_time;
-        testing::set_block_timestamp(current_block_time);
-        game.upgrade(player2, 1, stat_upgrades, shopping_cart.clone());
-        game.explore(player2, true);
-        game.attack(player2, true);
+        // Update the adventurer's name
+        let new_name: felt252 = 'New Adventurer Name';
+        game.update_adventurer_name(adventurer_id, new_name);
 
-        // assert adventurer metadata and leaderboard
-        let player1_metadata = game.get_adventurer_meta(player1);
-        let player2_metadata = game.get_adventurer_meta(player2);
-        let leaderboard = game.get_leaderboard();
-        assert(player2_metadata.birth_date == player2_birth_date, 'Birth date not set correctly');
-        assert(player2_metadata.death_date == player2_death_date, 'Death date not set correctly');
-        assert(player2_metadata.rank_at_death == 1, 'P2 should be death rank 1');
-        assert(player1_metadata.rank_at_death == 1, 'P1 should be death rank 1');
-        assert(leaderboard.first.adventurer_id.into() == player2, 'P2 should be 1st on LB');
-        assert(leaderboard.second.adventurer_id.into() == player1, 'P1 should be 2nd on LB');
+        // Get the updated name
+        let updated_name = game.get_adventurer_name(adventurer_id);
 
-        // introduce third player (new top score)
-        current_block_time += 777;
-        let player3_birth_date = current_block_time;
-        testing::set_block_timestamp(current_block_time);
-        let player3 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
-        game.attack(player3, false);
-        let stat_upgrades = Stats {
-            strength: 0, dexterity: 1, vitality: 0, intelligence: 0, wisdom: 0, charisma: 0, luck: 0
-        };
-        game.upgrade(player3, 1, stat_upgrades, shopping_cart.clone());
-        game.explore(player3, true);
-        game.flee(player3, true);
-        game.explore(player3, true);
-        game.upgrade(player3, 0, stat_upgrades, shopping_cart.clone());
-        game.explore(player3, true);
-        game.upgrade(player3, 0, stat_upgrades, shopping_cart.clone());
-        game.explore(player3, true);
-        game.attack(player3, true);
-        game.explore(player3, true);
-        game.upgrade(player3, 0, stat_upgrades, shopping_cart.clone());
-        game.explore(player3, true);
-        current_block_time += 777;
-        let player3_death_date = current_block_time;
-        testing::set_block_timestamp(current_block_time);
-        game.attack(player3, true);
+        // Assert that the name has been updated correctly
+        assert(initial_name != new_name, 'Name did not change');
+        assert(updated_name == new_name, 'Name not updated correctly');
+    }
 
-        // assert adventurer metadata and leaderboard
-        let player3_metadata = game.get_adventurer_meta(player3);
-        let player2_metadata = game.get_adventurer_meta(player2);
-        let player1_metadata = game.get_adventurer_meta(player1);
-        let leaderboard = game.get_leaderboard();
+    #[test]
+    #[should_panic(expected: ('Adventurer is dead',))]
+    fn test_update_adventurer_name_dead() {
+        start_cheat_chain_id_global(TESTING_CHAIN_ID);
+        let mut state = Game::contract_state_for_testing();
+        let new_adventurer = ImplAdventurer::new(ItemId::Wand);
+        // save adventurer to state
+        state._adventurer.write(1, new_adventurer);
+        // verify adventurer state
+        let mut adventurer = state.get_adventurer(1);
+        assert(adventurer.health == 100, 'health should be 100');
+        assert(adventurer.equipment.weapon.id == ItemId::Wand, 'weapon id should be wand');
+
+        // kill adventurer
+        adventurer.health = 0;
+        state._adventurer.write(1, adventurer);
+
+        // try to update adventurer name, should panic
+        state.update_adventurer_name(1, 'New Name');
+    }
+
+    #[test]
+    #[should_panic(expected: ('Not authorized to act',))]
+    fn test_update_adventurer_name_not_owner() {
+        let (mut game, _, _, _, _, _, _) = deploy_game(0, 0, 0, 0);
+        let adventurer_id = add_adventurer_to_game(ref game, 0, ItemId::Wand);
+
+        // change caller to a different address
+        start_cheat_caller_address_global(ARBITRARY_ADDRESS());
+
+        // try to change adventurer's name, should panic
+        game.update_adventurer_name(adventurer_id, 'New Name');
+    }
+
+    #[test]
+    #[should_panic(expected: ('Game has expired',))]
+    fn test_update_adventurer_name_game_expired() {
+        // deploy_game
+        let starting_block = 1000;
+        let starting_time = 1696201757;
+        let (mut game, _, _, _, _, _, _) = deploy_game(starting_block, starting_time, 0, 0);
+
+        // Create a new adventurer
+        let adventurer_id = 1;
+        add_adventurer_to_game(ref game, 0, ItemId::Wand);
+
+        let beyond_expiry_date = starting_time
+            + (GAME_EXPIRY_DAYS.into() * SECONDS_IN_DAY.into())
+            + 1;
+        start_cheat_block_timestamp_global(beyond_expiry_date);
+        game.update_adventurer_name(adventurer_id, 'New Name');
+    }
+
+    #[test]
+    fn test_initialize_launch_tournament() {
+        // Initialize the contract state for testing
+        let mut state = Game::contract_state_for_testing();
+
+        // Create a span of qualifying collections
+        let mut qualifying_collections = ArrayTrait::<LaunchTournamentCollections>::new();
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<1>(), games_per_token: 1
+                }
+            );
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<2>(), games_per_token: 2
+                }
+            );
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<3>(), games_per_token: 3
+                }
+            );
+        // Call the internal function
+        _initialize_launch_tournament(ref state, qualifying_collections.span());
+
+        // Verify the results
+        let collections_len = state._launch_tournament_collections.len();
+        assert(collections_len == 3, 'Wrong number of collections');
+
+        // Check each collection is properly stored
         assert(
-            player3_metadata.death_date == player3_death_date, 'P3 death date not set correctly'
+            state._launch_tournament_collections.at(0).read() == contract_address_const::<1>(),
+            'Wrong collection at index 0'
         );
         assert(
-            player3_metadata.birth_date == player3_birth_date, 'P3 birth date not set correctly'
-        );
-        assert(player3_metadata.rank_at_death == 1, 'P3 should be death rank 1');
-        assert(player2_metadata.rank_at_death == 1, 'P2 should be death rank 1');
-        assert(player1_metadata.rank_at_death == 1, 'P1 should be death rank 1');
-        assert(leaderboard.first.adventurer_id.into() == player3, 'P3 should be 1st on LB');
-        assert(leaderboard.second.adventurer_id.into() == player2, 'P2 should be 2nd on LB');
-        assert(leaderboard.third.adventurer_id.into() == player1, 'P1 should be 3rd on LB');
-
-        // introduce fourth player (2nd place finish)
-        current_block_time += 777;
-        let player4_birth_date = current_block_time;
-        testing::set_block_timestamp(current_block_time);
-        let player4 = add_adventurer_to_game(ref game, 0, ItemId::Wand);
-        game.attack(player4, false);
-        game.upgrade(player4, 0, stat_upgrades, shopping_cart.clone());
-        game.explore(player4, true);
-        game.upgrade(player4, 0, stat_upgrades, shopping_cart.clone());
-        game.explore(player4, true);
-        game.attack(player4, true);
-        game.explore(player4, true);
-        game.upgrade(player4, 0, stat_upgrades, shopping_cart.clone());
-        game.explore(player4, true);
-        current_block_time += 777;
-        let player4_death_date = current_block_time;
-        testing::set_block_timestamp(current_block_time);
-        game.attack(player4, true);
-
-        // assert adventurer metadata and leaderboard
-        let player1_metadata = game.get_adventurer_meta(player1);
-        let player2_metadata = game.get_adventurer_meta(player2);
-        let player3_metadata = game.get_adventurer_meta(player3);
-        let player4_metadata = game.get_adventurer_meta(player4);
-        let leaderboard = game.get_leaderboard();
-        assert(
-            player4_metadata.birth_date == player4_birth_date, 'P4 birth date not set correctly'
+            state._launch_tournament_collections.at(1).read() == contract_address_const::<2>(),
+            'Wrong collection at index 1'
         );
         assert(
-            player4_metadata.death_date == player4_death_date, 'P4 death date not set correctly'
+            state._launch_tournament_collections.at(2).read() == contract_address_const::<3>(),
+            'Wrong collection at index 2'
         );
-        assert(player4_metadata.rank_at_death == 2, 'P4 should be death rank 2');
-        assert(player3_metadata.rank_at_death == 1, 'P3 should be death rank 1');
-        assert(player2_metadata.rank_at_death == 1, 'P2 should be death rank 1');
-        assert(player1_metadata.rank_at_death == 1, 'P1 should be death rank 1');
-        assert(leaderboard.first.adventurer_id.into() == player3, 'P3 should be 1st on LB');
-        assert(leaderboard.second.adventurer_id.into() == player4, 'P4 should be 2nd on LB');
-        assert(leaderboard.third.adventurer_id.into() == player2, 'P2 should be 3rd on LB');
+
+        // Verify scores are initialized to 1
+        assert(
+            state._launch_tournament_scores.read(contract_address_const::<1>()) == 1,
+            'Wrong score for collection 1'
+        );
+        assert(
+            state._launch_tournament_scores.read(contract_address_const::<2>()) == 1,
+            'Wrong score for collection 2'
+        );
+        assert(
+            state._launch_tournament_scores.read(contract_address_const::<3>()) == 1,
+            'Wrong score for collection 3'
+        );
+
+        // Verify a non-qualifying collection has a score of 0
+        assert(
+            state._launch_tournament_scores.read(contract_address_const::<4>()) == 0,
+            'collection should have 0 score'
+        );
+
+        // assert the number of games per token is 1
+        assert(
+            state._launch_tournament_games_per_claim.read(contract_address_const::<1>()) == 1,
+            'games per token collection 1'
+        );
+
+        // assert the number of games per token is 2
+        assert(
+            state._launch_tournament_games_per_claim.read(contract_address_const::<2>()) == 2,
+            'games per token collection 2'
+        );
+
+        // assert the number of games per token is 3
+        assert(
+            state._launch_tournament_games_per_claim.read(contract_address_const::<3>()) == 3,
+            'games per token collection 3'
+        );
+    }
+
+    #[test]
+    fn test_settle_launch_tournament() {
+        // Initialize the contract state for testing
+        let mut state = Game::contract_state_for_testing();
+
+        // Create a span of qualifying collections
+        let mut qualifying_collections = ArrayTrait::<LaunchTournamentCollections>::new();
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<1>(), games_per_token: 1
+                }
+            );
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<2>(), games_per_token: 2
+                }
+            );
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<3>(), games_per_token: 3
+                }
+            );
+
+        // Initialize the launch tournament
+        _initialize_launch_tournament(ref state, qualifying_collections.span());
+
+        // Set different scores for each collection
+        state._launch_tournament_scores.write(contract_address_const::<1>(), 100);
+        state._launch_tournament_scores.write(contract_address_const::<2>(), 200);
+        state._launch_tournament_scores.write(contract_address_const::<3>(), 150);
+
+        // Set the tournament end time to a past timestamp
+        let current_timestamp = 1000000;
+        state._launch_tournament_end_time.write(current_timestamp - 1);
+
+        // Mock the block timestamp
+        start_cheat_block_timestamp_global(current_timestamp);
+
+        // Call the settle_launch_tournament function
+        state.settle_launch_tournament();
+
+        // Verify the results
+        let champions_dispatcher = state._launch_tournament_champions_dispatcher.read();
+        assert(
+            champions_dispatcher.contract_address == contract_address_const::<2>(),
+            'Wrong champion collection'
+        );
+    }
+    #[test]
+    #[should_panic(expected: ('tournament still active',))]
+    fn test_settle_launch_tournament_before_end() {
+        // Initialize the contract state for testing
+        let mut state = Game::contract_state_for_testing();
+
+        // Create a span of qualifying collections
+        let mut qualifying_collections = ArrayTrait::<LaunchTournamentCollections>::new();
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<1>(), games_per_token: 1
+                }
+            );
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<2>(), games_per_token: 2
+                }
+            );
+
+        // Initialize the launch tournament
+        _initialize_launch_tournament(ref state, qualifying_collections.span());
+
+        // Set the tournament end time to a future timestamp
+        let current_timestamp = 1000000;
+        state._launch_tournament_end_time.write(current_timestamp + 1000);
+
+        // Mock the block timestamp to be before the end time
+        start_cheat_block_timestamp_global(current_timestamp);
+
+        // Attempt to settle the tournament before it has ended (should panic)
+        state.settle_launch_tournament();
+    }
+
+    #[test]
+    #[should_panic(expected: ('tournament already settled',))]
+    fn test_settle_launch_tournament_twice() {
+        // Initialize the contract state for testing
+        let mut state = Game::contract_state_for_testing();
+
+        // Create a span of qualifying collections
+        let mut qualifying_collections = ArrayTrait::<LaunchTournamentCollections>::new();
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<1>(), games_per_token: 1
+                }
+            );
+        qualifying_collections
+            .append(
+                LaunchTournamentCollections {
+                    collection_address: contract_address_const::<2>(), games_per_token: 2
+                }
+            );
+
+        // Initialize the launch tournament
+        _initialize_launch_tournament(ref state, qualifying_collections.span());
+
+        // Set different scores for each collection
+        state._launch_tournament_scores.write(contract_address_const::<1>(), 100);
+        state._launch_tournament_scores.write(contract_address_const::<2>(), 200);
+
+        // Set the tournament end time to a past timestamp
+        let current_timestamp = 1000000;
+        state._launch_tournament_end_time.write(current_timestamp - 1);
+
+        // Mock the block timestamp
+        start_cheat_block_timestamp_global(current_timestamp);
+
+        // Settle the tournament for the first time
+        state.settle_launch_tournament();
+
+        // Attempt to settle the tournament again (should panic)
+        state.settle_launch_tournament();
     }
 }

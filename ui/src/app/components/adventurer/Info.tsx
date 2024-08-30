@@ -17,6 +17,8 @@ import { GameData } from "@/app/lib/data/GameData";
 import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
 import { calculateLevel } from "@/app/lib/utils";
 import { vitalityIncrease } from "@/app/lib/constants";
+import LootIconLoader from "@/app/components/icons/Loader";
+import AutoScrolling from "@/app/components/animations/AutoScrolling";
 
 interface InfoProps {
   adventurer: Adventurer | undefined;
@@ -232,20 +234,26 @@ export default function Info({
 
   const adventurerLevel = calculateLevel(adventurer?.xp ?? 0);
 
+  const scrollableRef = AutoScrolling();
+
   return (
     <>
       {adventurer?.id ? (
         <div className="flex flex-col w-full uppercase h-full p-2 border border-terminal-green">
-          <div className="relative flex justify-between w-full text-xl sm:text-2xl lg:text-3xl">
-            {formatAdventurer.name}
-            <span className="flex items-center text-terminal-yellow">
+          <div className="relative flex gap-2 w-full text-xl sm:text-2xl lg:text-3xl">
+            <span className="w-3/4 overflow-hidden" ref={scrollableRef}>
+              {formatAdventurer.name}
+            </span>
+            <span className="relative flex items-center text-terminal-yellow">
               <CoinIcon className="self-center mt-1 w-5 h-5 fill-current" />{" "}
               {formatAdventurer.gold
                 ? formatAdventurer.gold - (upgradeCost ?? 0)
                 : 0}
-              <span className="absolute top-0 right-[-20px] text-xs">
-                {formatAdventurer.gold === 511 ? "Full" : ""}
-              </span>
+              {upgradeCost! > 0 && (
+                <p className="absolute top-[-5px] sm:top-[-10px] right-[30px] sm:right-[-15px] text-xs sm:text-sm">
+                  -{upgradeCost}
+                </p>
+              )}
             </span>
             <span className="flex flex-row gap-1 items-center ">
               <HeartIcon className="self-center mt-1 w-5 h-5 fill-current" />{" "}
@@ -292,25 +300,32 @@ export default function Info({
           )}
 
           <div className="w-full flex flex-col gap-1 text-xs overflow-y-scroll default-scroll h-[500px]">
-            {bodyParts.map((part) => (
-              <ItemDisplay
-                item={
-                  filteredItems.find((item: Item) => {
-                    const { slot } = getItemData(item.item!);
-                    return slot === part && item.equipped;
-                  }) || NullItem
-                }
-                itemSlot={part}
-                handleDrop={handleDropItems}
-                gameContract={gameContract}
-                key={part}
-              />
-            ))}
+            {(profileExists && !data.itemsByProfileQuery) ||
+            (!profileExists && !data.itemsByAdventurerQuery) ? (
+              <div>
+                <LootIconLoader className="m-auto" size="w-10" />
+              </div>
+            ) : (
+              bodyParts.map((part) => (
+                <ItemDisplay
+                  item={
+                    filteredItems.find((item: Item) => {
+                      const { slot } = getItemData(item.item!);
+                      return slot === part && item.equipped;
+                    }) || NullItem
+                  }
+                  itemSlot={part}
+                  handleDrop={handleDropItems}
+                  gameContract={gameContract}
+                  key={part}
+                />
+              ))
+            )}
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-center border border-terminal-green xl:h-[500px]">
-          <QuestionMarkIcon className="w-1/2 h-1/2" />
+        <div className="flex items-center justify-center border border-terminal-green h-full">
+          <QuestionMarkIcon className="h-full" />
         </div>
       )}
     </>

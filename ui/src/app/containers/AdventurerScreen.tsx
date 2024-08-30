@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Contract } from "starknet";
+import { AccountInterface, Contract } from "starknet";
 import { AdventurersList } from "@/app/components/start/AdventurersList";
 import { CreateAdventurer } from "@/app/components/start/CreateAdventurer";
 import ButtonMenu from "@/app/components/menu/ButtonMenu";
@@ -28,6 +28,12 @@ interface AdventurerScreenProps {
   getBalances: () => Promise<void>;
   mintLords: (lordsAmount: number) => Promise<void>;
   costToPlay: bigint;
+  transferAdventurer: (
+    account: AccountInterface,
+    adventurerId: number,
+    from: string,
+    recipient: string
+  ) => Promise<void>;
 }
 
 /**
@@ -43,6 +49,7 @@ export default function AdventurerScreen({
   getBalances,
   mintLords,
   costToPlay,
+  transferAdventurer,
 }: AdventurerScreenProps) {
   const [activeMenu, setActiveMenu] = useState(0);
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
@@ -109,15 +116,14 @@ export default function AdventurerScreen({
   }, []);
 
   return (
-    <div className="flex flex-col gap-2 sm:gap-0 sm:flex-row flex-wrap h-full">
-      <div className="w-full sm:w-2/12">
+    <div className="flex flex-col sm:flex-row flex-wrap h-full">
+      <div className="w-full sm:w-2/12 h-10">
         <ButtonMenu
           buttonsData={menu}
           onSelected={(value) => setStartOption(value)}
           isActive={activeMenu == 0}
           setActiveMenu={setActiveMenu}
-          size={"xs"}
-          className="sm:flex-col"
+          className="sm:flex-col h-full"
         />
       </div>
 
@@ -138,9 +144,7 @@ export default function AdventurerScreen({
       )}
 
       {startOption === "choose adventurer" && (
-        <div className="flex flex-col sm:w-5/6 h-[500px] sm:h-full">
-          <p className="text-center text-xl sm:hidden uppercase">Adventurers</p>
-
+        <div className="flex flex-col sm:w-5/6 h-[500px] sm:h-full w-full">
           <AdventurersList
             isActive={activeMenu == 2}
             onEscape={() => setActiveMenu(0)}
@@ -148,6 +152,7 @@ export default function AdventurerScreen({
             gameContract={gameContract}
             adventurersCount={adventurersByOwnerCount}
             aliveAdventurersCount={aliveAdventurersByOwnerCount}
+            transferAdventurer={transferAdventurer}
           />
         </div>
       )}

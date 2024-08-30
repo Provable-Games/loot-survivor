@@ -9,6 +9,7 @@ import {
   parseU16,
   parseU256,
   parseU64,
+  parseU32,
   parseU8,
 } from "./parser.ts";
 
@@ -46,9 +47,12 @@ export const EQUIPMENT_CHANGED = eventKey("EquipmentChanged");
 
 export const NEW_HIGH_SCORE = eventKey("NewHighScore");
 export const REWARD_DISTRIBUTION = eventKey("RewardDistribution");
-export const GAME_ENTROPY_ROTATED = eventKey("GameEntropyRotatedEvent");
+export const RECEIVED_LEVEL_SEED = eventKey("ReceivedLevelSeed");
+export const NEW_COLLECTION_TOTAL = eventKey("NewCollectionTotal");
 
+// Tokens
 export const TRANSFER = eventKey("Transfer");
+export const CLAIMED_FREE_GAME = eventKey("ClaimedFreeGame");
 
 export const parseStats = combineParsers({
   strength: { index: 0, parser: parseU8 },
@@ -184,13 +188,15 @@ export const parseAdventurerMetadata = combineParsers({
   itemSpecialsSeed: { index: 3, parser: parseU16 },
   rankAtDeath: { index: 4, parser: parseU8 },
   delayStatReveal: { index: 5, parser: parseBoolean },
+  goldenTokenId: { index: 6, parser: parseU8 },
+  launchTournamentWinnerTokenId: { index: 7, parser: parseU32 },
 });
+
 export const parseStartGame = combineParsers({
   adventurerState: { index: 0, parser: parseAdventurerState },
   adventurerMeta: { index: 1, parser: parseAdventurerMetadata },
   name: { index: 2, parser: parseFelt252 },
-  goldenTokenId: { index: 3, parser: parseU256 },
-  customRenderer: { index: 4, parser: parseFelt252 },
+  customRenderer: { index: 3, parser: parseFelt252 },
 });
 
 export const parseBag = combineParsers({
@@ -331,12 +337,12 @@ export const parseItemsLeveledUp = combineParsers({
 export const parsePlayerReward = combineParsers({
   adventurerId: { index: 0, parser: parseFelt252 },
   rank: { index: 1, parser: parseU8 },
-  amount: { index: 2, parser: parseU256 },
+  amount: { index: 2, parser: parseU128 },
   address: { index: 3, parser: parseFelt252 },
 });
 
 export const parseClientReward = combineParsers({
-  amount: { index: 0, parser: parseU256 },
+  amount: { index: 0, parser: parseU128 },
   address: { index: 0, parser: parseFelt252 },
 });
 
@@ -345,7 +351,8 @@ export const parseRewardDistribution = combineParsers({
   secondPlace: { index: 1, parser: parsePlayerReward },
   thirdPlace: { index: 2, parser: parsePlayerReward },
   client: { index: 3, parser: parseClientReward },
-  dao: { index: 4, parser: parseU256 },
+  dao: { index: 4, parser: parseU128 },
+  pg: { index: 5, parser: parseU128 },
 });
 
 export const parseNewHighScore = combineParsers({
@@ -353,20 +360,27 @@ export const parseNewHighScore = combineParsers({
   rank: { index: 1, parser: parseU8 },
 });
 
-export const parseGameEntropyRotated = combineParsers({
-  prevHash: { index: 0, parser: parseFelt252 },
-  prevBlockNumber: { index: 1, parser: parseU64 },
-  prevBlockTimestamp: { index: 2, parser: parseU64 },
-  prevNextRotationBlock: { index: 3, parser: parseU64 },
-  newHash: { index: 4, parser: parseFelt252 },
-  newBlockNumber: { index: 5, parser: parseU64 },
-  newBlockTimestamp: { index: 6, parser: parseU64 },
-  newNextRotationBlock: { index: 7, parser: parseU64 },
-  blocksPerHour: { index: 8, parser: parseU64 },
+export const parseReceivedLevelSeed = combineParsers({
+  adventurerId: { index: 0, parser: parseFelt252 },
+  vrfAddress: { index: 1, parser: parseFelt252 },
+  seed: { index: 2, parser: parseU64 },
+  requestId: { index: 3, parser: parseU64 },
 });
 
 export const parseTransfer = combineParsers({
   fromAddress: { index: 0, parser: parseFelt252 },
   toAddress: { index: 1, parser: parseFelt252 },
   tokenId: { index: 2, parser: parseU256 },
+});
+
+export const parseClaimedFreeGame = combineParsers({
+  adventurerId: { index: 0, parser: parseFelt252 },
+  tokenAddress: { index: 1, parser: parseFelt252 },
+  tokenId: { index: 2, parser: parseU32 },
+});
+
+export const parseNewCollectionTotal = combineParsers({
+  collectionAddress: { index: 0, parser: parseFelt252 },
+  xp: { index: 1, parser: parseU32 },
+  gamesPlayed: { index: 2, parser: parseU32 },
 });

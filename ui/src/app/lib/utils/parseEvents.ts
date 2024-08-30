@@ -273,16 +273,17 @@ export async function parseEvents(
         const startGameData: StartGameEvent = {
           adventurerState: parseAdventurerState(raw.data.slice(0, 33)),
           adventurerMeta: {
-            birthDate: parseInt(raw.data[34]),
-            deathDate: parseInt(raw.data[35]),
+            birthDate: raw.data[34],
+            deathDate: raw.data[35],
             adventurerEntropy: parseInt(raw.data[36]),
             itemSpecialsSeed: parseInt(raw.data[37]),
             rankAtDeath: parseInt(raw.data[38]),
             delayStatReveal: convertToBoolean(parseInt(raw.data[39])),
+            goldenTokenId: parseInt(raw.data[40]),
+            launchTournamentWinnerTokenId: parseInt(raw.data[41]),
           },
-          name: parseInt(raw.data[36]),
-          goldenTokenId: parseInt(raw.data[37]),
-          customRenderer: raw.data[38],
+          name: parseInt(raw.data[42]),
+          customRenderer: raw.data[43],
         };
         const startGameEvent = processData(
           startGameData,

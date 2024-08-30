@@ -342,8 +342,6 @@ export default function transform({ header, events }: Block) {
                   item: checkExistsInt(item.itemId),
                   adventurerId: checkExistsInt(parseInt(as.adventurerId)),
                   special1: checkExistsInt(item.specials.special1),
-                  special2: checkExistsInt(item.specials.special2),
-                  special3: checkExistsInt(item.specials.special3),
                 },
               },
             };

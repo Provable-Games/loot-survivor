@@ -1,5 +1,3 @@
-version: '3.6'
-
 services:
   mongo:
     image: mongo:6.0.8
@@ -26,7 +24,7 @@ services:
 
 
   adventurers_indexer:
-    image: quay.io/apibara/sink-mongo:0.8.0
+    image: quay.io/apibara/sink-mongo:0.9.1
     depends_on:
       - etcd
       - mongo
@@ -45,7 +43,7 @@ services:
       - indexer
 
   battles_indexer:
-    image: quay.io/apibara/sink-mongo:0.8.0
+    image: quay.io/apibara/sink-mongo:0.9.1
     depends_on:
       - etcd
       - mongo
@@ -64,7 +62,7 @@ services:
       - indexer
 
   beasts_indexer:
-    image: quay.io/apibara/sink-mongo:0.8.0
+    image: quay.io/apibara/sink-mongo:0.9.1
     depends_on:
       - etcd
       - mongo
@@ -83,7 +81,7 @@ services:
       - indexer
 
   discoveries_indexer:
-    image: quay.io/apibara/sink-mongo:0.8.0
+    image: quay.io/apibara/sink-mongo:0.9.1
     depends_on:
       - etcd
       - mongo
@@ -102,7 +100,7 @@ services:
       - indexer
 
   items_indexer:
-    image: quay.io/apibara/sink-mongo:0.8.0
+    image: quay.io/apibara/sink-mongo:0.9.1
     depends_on:
       - etcd
       - mongo
@@ -121,7 +119,7 @@ services:
       - indexer
 
   scores_indexer:
-    image: quay.io/apibara/sink-mongo:0.8.0
+    image: quay.io/apibara/sink-mongo:0.9.1
     depends_on:
       - etcd
       - mongo
@@ -135,6 +133,63 @@ services:
     environment:
       PERSIST_TO_ETCD: http://etcd:2379
       SINK_ID: scores
+      AUTH_TOKEN: ${AUTH_TOKEN}
+    networks:
+      - indexer
+
+  tokens_indexer:
+    image: quay.io/apibara/sink-mongo:0.9.1
+    depends_on:
+      - etcd
+      - mongo
+    restart: always
+    command:
+      - run
+      - --allow-env=/data/env-sepolia
+      - /data/src/tokens.ts
+    volumes:
+      - ./:/data/
+    environment:
+      PERSIST_TO_ETCD: http://etcd:2379
+      SINK_ID: tokens
+      AUTH_TOKEN: ${AUTH_TOKEN}
+    networks:
+      - indexer
+
+  claimed_free_games_indexer:
+    image: quay.io/apibara/sink-mongo:0.9.1
+    depends_on:
+      - etcd
+      - mongo
+    restart: always
+    command:
+      - run
+      - --allow-env=/data/env-sepolia
+      - /data/src/claimedFreeGames.ts
+    volumes:
+      - ./:/data/
+    environment:
+      PERSIST_TO_ETCD: http://etcd:2379
+      SINK_ID: claimed_free_games
+      AUTH_TOKEN: ${AUTH_TOKEN}
+    networks:
+      - indexer
+
+  collection_totals_indexer:
+    image: quay.io/apibara/sink-mongo:0.9.1
+    depends_on:
+      - etcd
+      - mongo
+    restart: always
+    command:
+      - run
+      - --allow-env=/data/env-sepolia
+      - /data/src/collectionTotals.ts
+    volumes:
+      - ./:/data/
+    environment:
+      PERSIST_TO_ETCD: http://etcd:2379
+      SINK_ID: collection_totals
       AUTH_TOKEN: ${AUTH_TOKEN}
     networks:
       - indexer

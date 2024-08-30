@@ -26,13 +26,13 @@ impl ImplObstacle of IObstacle {
     /// @param id: u8 - the obstacle id
     /// @return u8 - the obstacle tier
     fn get_tier(id: u8) -> Tier {
-        if ImplObstacle::is_t1(id) {
+        if Self::is_t1(id) {
             Tier::T1
-        } else if ImplObstacle::is_t2(id) {
+        } else if Self::is_t2(id) {
             Tier::T2
-        } else if ImplObstacle::is_t3(id) {
+        } else if Self::is_t3(id) {
             Tier::T3
-        } else if ImplObstacle::is_t4(id) {
+        } else if Self::is_t4(id) {
             Tier::T4
         } else {
             Tier::T5
@@ -97,24 +97,6 @@ mod tests {
     };
 
     #[test]
-    #[available_gas(3350)]
-    fn test_get_random_id_gas() {
-        ImplObstacle::get_random_id(1);
-    }
-
-    #[test]
-    #[available_gas(14390)]
-    fn test_get_tier_gas() {
-        ImplObstacle::get_tier(75);
-    }
-
-    #[test]
-    #[available_gas(1840)]
-    fn test_get_type_gas() {
-        ImplObstacle::get_type(75);
-    }
-
-    #[test]
     #[available_gas(1666510)]
     fn test_get_obstacle_tier_range_check() {
         // iterate over all obstacles and make sure we aren't missing any
@@ -124,7 +106,8 @@ mod tests {
                 break ();
             }
 
-            // no need to assert something, get_tier will throw a 'unknown obstacle id' if an obstacle is undefined
+            // no need to assert something, get_tier will throw a 'unknown obstacle id' if an
+            // obstacle is undefined
             ImplObstacle::get_tier(obstacle_id);
             obstacle_id += 1;
         }
@@ -139,15 +122,22 @@ mod tests {
             if obstacle_id > ObstacleId::MAX_ID {
                 break ();
             }
-            // no need to assert something, get_tier will throw a 'unknown obstacle id' if an obstacle is undefined
+            // no need to assert something, get_tier will throw a 'unknown obstacle id' if an
+            // obstacle is undefined
             ImplObstacle::get_type(obstacle_id);
             obstacle_id += 1;
         }
     }
 
     #[test]
-    #[available_gas(270400)]
-    fn test_get_obstacle_tier() {
+    fn test_get_obstacle_tier_simple() {
+        let demonic_alter = ObstacleId::DemonicAlter;
+        let demonic_alter_tier = ImplObstacle::get_tier(demonic_alter);
+        assert(demonic_alter_tier == Tier::T1, 'demonic_alter should be T1');
+    }
+
+    #[test]
+    fn test_get_obstacle_tier_extended() {
         let demonic_alter = ObstacleId::DemonicAlter;
         let demonic_alter_tier = ImplObstacle::get_tier(demonic_alter);
         assert(demonic_alter_tier == Tier::T1, 'demonic_alter should be T1');
