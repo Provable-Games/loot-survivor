@@ -369,7 +369,8 @@ class StringFilter:
             "startsWith": self.startsWith,
             "endsWith": self.endsWith,
         }
-    
+
+
 @strawberry.input
 class HashFilter:
     eq: Optional[str] = None
@@ -1348,7 +1349,8 @@ class TokensFilter:
             "timestamp": self.timestamp.to_dict() if self.timestamp else None,
             "hash": self.hash.to_dict() if self.hash else None,
         }
-    
+
+
 @strawberry.input
 class BeastTokensFilter:
     token: Optional[HexValueFilter] = None
@@ -1763,7 +1765,8 @@ class TokensOrderByInput:
             "timestamp": self.timestamp.to_dict() if self.timestamp else None,
             "hash": self.hash.to_dict() if self.hash else None,
         }
-    
+
+
 @strawberry.input
 class BeastTokensOrderByInput:
     token: Optional[OrderByInput] = None
@@ -1802,7 +1805,7 @@ class ClaimedFreeGamesOrderByInput:
                 self.gameOwnerAddress.to_dict() if self.gameOwnerAddress else None
             ),
             "revealed": self.revealed.to_dict() if self.revealed else None,
-            "hash": self.hash.to_dict() if self.hash else None, 
+            "hash": self.hash.to_dict() if self.hash else None,
         }
 
 
@@ -2162,9 +2165,10 @@ class Token:
             tokenId=data["tokenId"],
             nftOwnerAddress=data["nftOwnerAddress"],
             timestamp=data["timestamp"],
-            hash=data["hash"]
+            hash=data["hash"],
         )
-    
+
+
 @strawberry.type
 class BeastToken:
     token: Optional[HexValue]
@@ -2180,7 +2184,7 @@ class BeastToken:
             tokenId=data["tokenId"],
             ownerAddress=data["ownerAddress"],
             timestamp=data["timestamp"],
-            hash=data["hash"]
+            hash=data["hash"],
         )
 
 
@@ -2201,8 +2205,9 @@ class ClaimedFreeGame:
             adventurerId=data["adventurerId"],
             gameOwnerAddress=data["gameOwnerAddress"],
             revealed=data["revealed"],
-            hash=data["hash"]
+            hash=data["hash"],
         )
+
 
 @strawberry.type
 class TokenWithFreeGameStatus:
@@ -2289,6 +2294,7 @@ def get_felt_filters(where: FeltValueFilter) -> List[Dict]:
         filter["$gte"] = where.gte
 
     return filter
+
 
 def get_hash_filters(where: HashFilter) -> Dict:
     filter = {}
@@ -2814,7 +2820,13 @@ async def get_collection_totals(
             sort_dir = -1
             break
 
-    query = db["collection_totals"].find[filter].skip(skip).limit(limit).sort(sort_var, sort_dir)
+    query = (
+        db["collection_totals"]
+        .find[filter]
+        .skip(skip)
+        .limit(limit)
+        .sort(sort_var, sort_dir)
+    )
 
     result = [CollectionTotal.from_mongo(t) for t in query]
 
@@ -2822,6 +2834,7 @@ async def get_collection_totals(
     await redis.set(cache_key, json.dumps([item.__dict__ for item in result]), ex=60)
 
     return result
+
 
 async def get_tokens(
     info,
@@ -2889,6 +2902,7 @@ async def get_tokens(
 
     return result
 
+
 async def get_beast_tokens(
     info,
     where: Optional[BeastTokensFilter] = {},
@@ -2904,9 +2918,7 @@ async def get_beast_tokens(
     orderBy_dict = orderBy.to_dict() if orderBy else {}
 
     # Create a unique cache key based on the query parameters
-    cache_key = (
-        f"beast_tokens:{json.dumps(where_dict)}:{limit}:{skip}:{json.dumps(orderBy_dict)}"
-    )
+    cache_key = f"beast_tokens:{json.dumps(where_dict)}:{limit}:{skip}:{json.dumps(orderBy_dict)}"
     cached_result = await redis.get(cache_key)
 
     if cached_result:
@@ -2946,7 +2958,9 @@ async def get_beast_tokens(
             sort_dir = -1
             break
 
-    query = db["beast_tokens"].find(filter).skip(skip).limit(limit).sort(sort_var, sort_dir)
+    query = (
+        db["beast_tokens"].find(filter).skip(skip).limit(limit).sort(sort_var, sort_dir)
+    )
 
     result = [BeastToken.from_mongo(t) for t in query]
 
@@ -2971,9 +2985,7 @@ async def get_free_games(
     orderBy_dict = orderBy.to_dict() if orderBy else {}
 
     # Create a unique cache key based on the query parameters
-    cache_key = (
-        f"claimed_free_games:{json.dumps(where_dict)}:{limit}:{skip}:{json.dumps(orderBy_dict)}"
-    )
+    cache_key = f"claimed_free_games:{json.dumps(where_dict)}:{limit}:{skip}:{json.dumps(orderBy_dict)}"
     cached_result = await redis.get(cache_key)
 
     if cached_result:
@@ -3014,7 +3026,11 @@ async def get_free_games(
             break
 
     query = (
-        db["claimed_free_games"].find(filter).skip(skip).limit(limit).sort(sort_var, sort_dir)
+        db["claimed_free_games"]
+        .find(filter)
+        .skip(skip)
+        .limit(limit)
+        .sort(sort_var, sort_dir)
     )
 
     result = [ClaimedFreeGame.from_mongo(t) for t in query]
@@ -3023,6 +3039,42 @@ async def get_free_games(
     await redis.set(cache_key, json.dumps([item.__dict__ for item in result]), ex=60)
 
     return result
+
+
+@strawberry.type
+class TokenCount:
+    token: HexValue
+    count: int
+
+
+async def count_claimed_free_games(
+    info, tokens: Optional[List[HexValue]] = None
+) -> List[TokenCount]:
+    redis = info.context["redis"]
+    db = info.context["db"]
+
+    results = []
+
+    # Add adventurerId to the filter if provided
+    for token in tokens:
+        filter = {"_cursor.to": None, "token": {"$eq": token}}
+        cache_key = f"count_claimed_games:{json.dumps(filter)}"
+
+        # Check if the result is in the cache
+        cached_count = await redis.get(cache_key)
+        if cached_count is not None:
+            count = int(cached_count)
+        else:
+            # If not in cache, query the database
+            count = db["claimed_free_games"].count_documents(filter)
+            # Store the result in the cache
+            await redis.set(
+                cache_key, count, ex=60
+            )  # Set an expiration time of 60 seconds
+
+        results.append(TokenCount(token=token, count=count))
+
+    return results
 
 
 # async def get_tokens_with_free_game_status(
@@ -3044,7 +3096,7 @@ async def get_free_games(
 #             TokenWithFreeGameStatus(**item)
 #             for item in json.loads(cached_result.decode("utf-8"))
 #         ]
-    
+
 #     # Separate filters for tokens and claimed_free_games
 #     token_filter = {"_cursor.to": None}
 #     free_game_filter = {"_cursor.to": None}
@@ -3385,6 +3437,9 @@ class Query:
     tokens: List[Token] = strawberry.field(resolver=get_tokens)
     beastTokens: List[BeastToken] = strawberry.field(resolver=get_beast_tokens)
     claimedFreeGames: List[ClaimedFreeGame] = strawberry.field(resolver=get_free_games)
+    countClaimedFreeGames: List[TokenCount] = strawberry.field(
+        resolver=count_claimed_free_games
+    )
     # tokensWithFreeGameStatus: List[TokenWithFreeGameStatus] = strawberry.field(
     #     resolver=get_tokens_with_free_game_status
     # )
