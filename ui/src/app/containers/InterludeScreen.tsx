@@ -25,7 +25,8 @@ interface InterludeScreenProps {
 
 export default function InterludeScreen({ type }: InterludeScreenProps) {
   const setOpenInterlude = useUIStore((state) => state.setOpenInterlude);
-  const entropyReady = useUIStore((state) => state.entropyReady);
+  const fetchUnlocksEntropy = useUIStore((state) => state.fetchUnlocksEntropy);
+  const adventurerLeveledUp = useUIStore((state) => state.adventurerLeveledUp);
 
   const [loadingMessage, setLoadingMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -104,7 +105,7 @@ export default function InterludeScreen({ type }: InterludeScreenProps) {
   ];
 
   useEffect(() => {
-    if (entropyReady) {
+    if (!adventurerLeveledUp && !fetchUnlocksEntropy) {
       setLoading(false);
     }
     const randomLoadingMessageIndex = Math.floor(
@@ -114,7 +115,7 @@ export default function InterludeScreen({ type }: InterludeScreenProps) {
 
     const randomHintIndex = Math.floor(Math.random() * tutorials.length);
     setCurrentHintIndex(randomHintIndex);
-  }, [entropyReady]);
+  }, [adventurerLeveledUp, fetchUnlocksEntropy]);
 
   return (
     <>
