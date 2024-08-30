@@ -1348,6 +1348,25 @@ class TokensFilter:
             "timestamp": self.timestamp.to_dict() if self.timestamp else None,
             "hash": self.hash.to_dict() if self.hash else None,
         }
+    
+@strawberry.input
+class BeastTokensFilter:
+    token: Optional[HexValueFilter] = None
+    tokenId: Optional[FeltValueFilter] = None
+    ownerAddress: Optional[HexValueFilter] = None
+    timestamp: Optional[DateTimeFilter] = None
+    hash: Optional[HashFilter] = None
+
+    def to_dict(self):
+        return {
+            "token": self.token.to_dict() if self.token else None,
+            "tokenId": self.tokenId.to_dict() if self.tokenId else None,
+            "ownerAddress": (
+                self.ownerAddress.to_dict() if self.ownerAddress else None
+            ),
+            "timestamp": self.timestamp.to_dict() if self.timestamp else None,
+            "hash": self.hash.to_dict() if self.hash else None,
+        }
 
 
 @strawberry.input
@@ -1744,6 +1763,25 @@ class TokensOrderByInput:
             "timestamp": self.timestamp.to_dict() if self.timestamp else None,
             "hash": self.hash.to_dict() if self.hash else None,
         }
+    
+@strawberry.input
+class BeastTokensOrderByInput:
+    token: Optional[OrderByInput] = None
+    tokenId: Optional[OrderByInput] = None
+    ownerAddress: Optional[OrderByInput] = None
+    timestamp: Optional[OrderByInput] = None
+    hash: Optional[OrderByInput] = None
+
+    def to_dict(self):
+        return {
+            "token": self.token.to_dict() if self.token else None,
+            "tokenId": self.tokenId.to_dict() if self.tokenId else None,
+            "ownerAddress": (
+                self.ownerAddress.to_dict() if self.ownerAddress else None
+            ),
+            "timestamp": self.timestamp.to_dict() if self.timestamp else None,
+            "hash": self.hash.to_dict() if self.hash else None,
+        }
 
 
 @strawberry.input
@@ -2123,6 +2161,24 @@ class Token:
             token=data["token"],
             tokenId=data["tokenId"],
             nftOwnerAddress=data["nftOwnerAddress"],
+            timestamp=data["timestamp"],
+            hash=data["hash"]
+        )
+    
+@strawberry.type
+class BeastToken:
+    token: Optional[HexValue]
+    tokenId: Optional[FeltValue]
+    ownerAddress: Optional[HexValue]
+    timestamp: Optional[str]
+    hash: Optional[str]
+
+    @classmethod
+    def from_mongo(cls, data):
+        return cls(
+            token=data["token"],
+            tokenId=data["tokenId"],
+            ownerAddress=data["ownerAddress"],
             timestamp=data["timestamp"],
             hash=data["hash"]
         )
@@ -2833,6 +2889,72 @@ async def get_tokens(
 
     return result
 
+async def get_beast_tokens(
+    info,
+    where: Optional[BeastTokensFilter] = {},
+    limit: Optional[int] = 10,
+    skip: Optional[int] = 0,
+    orderBy: Optional[BeastTokensOrderByInput] = {},
+) -> List[BeastToken]:
+    db = info.context["db"]
+    redis = info.context["redis"]
+
+    # Convert custom filter objects to dictionaries
+    where_dict = where.to_dict() if where else {}
+    orderBy_dict = orderBy.to_dict() if orderBy else {}
+
+    # Create a unique cache key based on the query parameters
+    cache_key = (
+        f"beast_tokens:{json.dumps(where_dict)}:{limit}:{skip}:{json.dumps(orderBy_dict)}"
+    )
+    cached_result = await redis.get(cache_key)
+
+    if cached_result:
+        cached_result = cached_result.decode("utf-8")  # Decode the byte string
+        return [BeastToken.from_mongo(item) for item in json.loads(cached_result)]
+
+    filter = {"_cursor.to": None}
+
+    if where:
+        processed_filters = process_filters(where)
+        for key, value in processed_filters.items():
+            if isinstance(value, StringFilter):
+                filter[key] = get_str_filters(value)
+            elif isinstance(value, HexValueFilter):
+                filter[key] = get_hex_filters(value)
+            elif isinstance(value, DateTimeFilter):
+                filter[key] = get_date_filters(value)
+            elif isinstance(value, FeltValueFilter):
+                filter[key] = get_felt_filters(value)
+            elif isinstance(value, BooleanFilter):
+                filter[key] = get_bool_filters(value)
+            elif isinstance(value, HashFilter):
+                filter[key] = get_hash_filters(value)
+
+    sort_options = {k: v for k, v in orderBy.__dict__.items() if v is not None}
+
+    sort_var = "updated_at"
+    sort_dir = -1
+
+    for key, value in sort_options.items():
+        if value.asc:
+            sort_var = key
+            sort_dir = 1
+            break
+        if value.desc:
+            sort_var = key
+            sort_dir = -1
+            break
+
+    query = db["beast_tokens"].find(filter).skip(skip).limit(limit).sort(sort_var, sort_dir)
+
+    result = [BeastToken.from_mongo(t) for t in query]
+
+    # Cache the result
+    await redis.set(cache_key, json.dumps([item.__dict__ for item in result]), ex=60)
+
+    return result
+
 
 async def get_free_games(
     info,
@@ -3261,6 +3383,7 @@ class Query:
     discoveries: List[Discovery] = strawberry.field(resolver=get_discoveries)
     battles: List[Battle] = strawberry.field(resolver=get_battles)
     tokens: List[Token] = strawberry.field(resolver=get_tokens)
+    beastTokens: List[BeastToken] = strawberry.field(resolver=get_beast_tokens)
     claimedFreeGames: List[ClaimedFreeGame] = strawberry.field(resolver=get_free_games)
     # tokensWithFreeGameStatus: List[TokenWithFreeGameStatus] = strawberry.field(
     #     resolver=get_tokens_with_free_game_status

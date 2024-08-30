@@ -54,8 +54,8 @@ export const cartridgeConnector = (
   lordsAddress: string,
   ethAddress: string
 ) =>
-  new CartridgeConnector(
-    [
+  new CartridgeConnector({
+    policies: [
       {
         target: gameAddress,
         method: "new_game",
@@ -85,6 +85,10 @@ export const cartridgeConnector = (
         method: "upgrade",
       },
       {
+        target: gameAddress,
+        method: "transfer_from",
+      },
+      {
         target: lordsAddress,
         method: "approve",
       },
@@ -97,10 +101,8 @@ export const cartridgeConnector = (
         method: "approve",
       },
     ],
-    {
-      paymaster: {
-        caller: shortString.encodeShortString("ANY_CALLER"),
-      },
-      theme: "loot-survivor",
-    }
-  ) as never as Connector;
+    paymaster: {
+      caller: shortString.encodeShortString("ANY_CALLER"),
+    },
+    theme: "loot-survivor",
+  }) as never as Connector;

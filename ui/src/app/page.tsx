@@ -155,6 +155,7 @@ function Home() {
   const setItemEntropy = useUIStore((state) => state.setItemEntropy);
   const openInterlude = useUIStore((state) => state.openInterlude);
   const setOpenInterlude = useUIStore((state) => state.setOpenInterlude);
+  const setG20Unlock = useUIStore((state) => state.setG20Unlock);
 
   const { contract: gameContract } = useContract({
     address: networkConfig[network!].gameAddress,
@@ -195,11 +196,14 @@ function Home() {
   const setDeathMessage = useLoadingStore((state) => state.setDeathMessage);
   const showDeathDialog = useUIStore((state) => state.showDeathDialog);
   const setStartOption = useUIStore((state) => state.setStartOption);
-  const entropyReady = useUIStore((state) => state.entropyReady);
   const setEntropyReady = useUIStore((state) => state.setEntropyReady);
   const fetchUnlocksEntropy = useUIStore((state) => state.fetchUnlocksEntropy);
   const setFetchUnlocksEntropy = useUIStore(
     (state) => state.setFetchUnlocksEntropy
+  );
+  const adventurerLeveledUp = useUIStore((state) => state.adventurerLeveledUp);
+  const setAdventurerLeveledUp = useUIStore(
+    (state) => state.setAdventurerLeveledUp
   );
   const adventurerEntropy = useUIStore((state) => state.adventurerEntropy);
   const [accountChainId, setAccountChainId] = useState<
@@ -305,7 +309,10 @@ function Home() {
     setIsMintingLords,
     setIsWithdrawing,
     setEntropyReady,
+    itemEntropy,
     setFetchUnlocksEntropy,
+    setAdventurerLeveledUp,
+    setG20Unlock,
     provider,
     network,
   });
@@ -513,7 +520,7 @@ function Home() {
         setScreen("upgrade");
       }
     }
-  }, [adventurer]);
+  }, [adventurer, adventurerLeveledUp]);
 
   const getAccountChainId = async () => {
     if (account) {
@@ -599,6 +606,7 @@ function Home() {
         );
         const entropy = adventurerMeta.level_seed;
         if (entropy !== BigInt(0)) {
+          setAdventurerLeveledUp(false);
           setAdventurerEntropy(BigInt(entropy.toString()));
           setEntropyReady(true);
           clearInterval(interval);
@@ -667,10 +675,10 @@ function Home() {
   }, [fetchUnlocksEntropy]);
 
   useEffect(() => {
-    if ((!entropyReady && hasStatUpgrades) || fetchUnlocksEntropy) {
+    if (adventurerLeveledUp || fetchUnlocksEntropy) {
       setOpenInterlude(true);
     }
-  }, [entropyReady, hasStatUpgrades, fetchUnlocksEntropy]);
+  }, [adventurerLeveledUp, fetchUnlocksEntropy]);
 
   return (
     <>

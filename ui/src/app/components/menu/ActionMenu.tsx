@@ -23,7 +23,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
     <div className={`relative ${className ?? ""} flex w-full h-full`}>
       {buttonsData.map((buttonData, index) => (
         <Button
-          key={buttonData.id}
+          key={index}
           ref={(ref) => (buttonRefs.current[index] = ref)}
           className={`flex flex-row gap-5 w-full h-full ${
             buttonData.className ?? ""

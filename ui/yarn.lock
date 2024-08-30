@@ -1875,20 +1875,20 @@
     "@babel/helper-validator-identifier" "^7.24.7"
     to-fast-properties "^2.0.0"
 
-"@cartridge/connector@^0.3.38":
-  version "0.3.38"
-  resolved "https://registry.yarnpkg.com/@cartridge/connector/-/connector-0.3.38.tgz#788d31429cd9b86a95887ed07b57922769f911f1"
-  integrity sha512-XvT1BJbIRaqM/3A71RWLQ8sSJUVdgHdeA6RK+XD4kwi8Rwzci412e3ixH+lE4b359rCdT2jWQC2E7xsXf8GvVA==
+"@cartridge/connector@^0.3.42":
+  version "0.3.42"
+  resolved "https://registry.yarnpkg.com/@cartridge/connector/-/connector-0.3.42.tgz#04afaa23797a6f36d6964c17c881101aa07f3867"
+  integrity sha512-d39UHxqiDqRCOp12SzrtCjMfquiY1w3T1VhY8LxPXO21aD7I5iER8TG0u/20d+1ZS7WeWRvb9nL/Tn7lJdOs+w==
   dependencies:
-    "@cartridge/controller" "^0.3.38"
+    "@cartridge/controller" "^0.3.42"
     "@starknet-react/core" "^2.1.5"
     starknet "^6.11.0"
     typescript "^5.4.5"
 
-"@cartridge/controller@^0.3.38":
-  version "0.3.38"
-  resolved "https://registry.yarnpkg.com/@cartridge/controller/-/controller-0.3.38.tgz#d9ee492c9d181d32fd904da8899c219020dfa747"
-  integrity sha512-jQdRFKxRsBNrky/JwAy49jTlTww0kt4Lslkml66TcSVB+qA0P74BZu5Bk7survvju/9Vhp0KE5AyRPUU42z/JQ==
+"@cartridge/controller@^0.3.42":
+  version "0.3.42"
+  resolved "https://registry.yarnpkg.com/@cartridge/controller/-/controller-0.3.42.tgz#e6976c540c0ad122ce05d52549c0a7c86d814afe"
+  integrity sha512-0khdrqJaxLhkbK5pMX1qzprjx2voDvObh6uVLc2yrL21dZ+48p0EmR2NrYIhUYxKF0LfBu/VsnA24CNy4F3F4Q==
   dependencies:
     "@cartridge/penpal" "^6.2.3"
     base64url "^3.0.1"

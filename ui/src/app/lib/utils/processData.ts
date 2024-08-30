@@ -176,6 +176,7 @@ export function processItemLevels(data: any) {
       special1: gameData.ITEM_SUFFIXES[item.specials.special1],
       special2: gameData.ITEM_NAME_PREFIXES[item.specials.special2],
       special3: gameData.ITEM_NAME_SUFFIXES[item.specials.special3],
+      newLevel: item.newLevel,
     });
   }
   return itemLevels;
