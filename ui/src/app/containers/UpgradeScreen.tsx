@@ -98,6 +98,8 @@ export default function UpgradeScreen({
   });
   const g20Unlock = useUIStore((state) => state.g20Unlock);
   const setG20Unlock = useUIStore((state) => state.setG20Unlock);
+  const adventurerEntropy = useUIStore((state) => state.adventurerEntropy);
+  const adventurerLeveledUp = useUIStore((state) => state.adventurerLeveledUp);
 
   const { play: clickPlay } = useUiSounds(soundSelector.click);
 
@@ -105,7 +107,11 @@ export default function UpgradeScreen({
 
   useEffect(() => {
     const fetchMarketItems = async () => {
-      if (entropyReady || onKatana || g20Unlock) {
+      if (
+        entropyReady ||
+        onKatana ||
+        (g20Unlock && !adventurerLeveledUp && adventurerEntropy !== BigInt(0))
+      ) {
         const marketItems = (await gameContract!.call("get_market", [
           adventurer?.id!,
         ])) as string[];

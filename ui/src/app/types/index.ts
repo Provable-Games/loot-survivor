@@ -159,6 +159,7 @@ export interface ProcessedItemLeveledUp {
   special1: string;
   special2: string;
   special3: string;
+  newLevel: number;
 }
 
 export interface AdventurerDied {
