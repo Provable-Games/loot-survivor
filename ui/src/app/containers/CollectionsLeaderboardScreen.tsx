@@ -23,7 +23,7 @@ export default function CollectionsLeaderboardScreen() {
   const client = useMemo(() => {
     return gameClient(networkConfig[network!].lsGQLURL);
   }, [network]);
-  const { data, refetch } = useQuery(getCollectionsTotals, {
+  const { data } = useQuery(getCollectionsTotals, {
     client: client,
     fetchPolicy: "network-only",
   });
