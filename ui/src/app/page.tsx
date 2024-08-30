@@ -667,8 +667,6 @@ function Home() {
     }
   }, [adventurerLeveledUp, fetchUnlocksEntropy]);
 
-  console.log(adventurerLeveledUp, fetchUnlocksEntropy);
-
   return (
     <>
       {openInterlude && !onKatana && (

@@ -2,12 +2,12 @@ export const networkConfig = {
   sepolia: {
     rpcUrl:
       "https://starknet-sepolia.blastapi.io/5ef61753-e7c1-4593-bc62-97fdf96f8de5",
-    lsGQLURL: "http://localhost:8080/graphql",
+    lsGQLURL: "https://ls-indexer-sepolia.provable.games/graphql",
     tokensGQLURL: "https://testnet.realms.world/api/graphql",
     ethAddress:
       "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
     gameAddress:
-      "0x0025e2f3ccb00472b2f353537fa40adafdefbb0bd7d02d0e68d6699a00ef8979",
+      "0x02e5a602219a2462c760b5d5b4526c06e1bba0fe729367cbf133a247d2a1bfbd",
     lordsAddress:
       "0x064fd80fcb41d00214430574a0aa19d21cc5d6452aeb4996f31b6e9ba4f466a0",
     beastsAddress:
