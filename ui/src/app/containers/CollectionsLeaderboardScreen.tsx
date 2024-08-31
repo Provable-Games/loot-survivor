@@ -54,13 +54,11 @@ export default function CollectionsLeaderboardScreen() {
       .sort((a, b) => b.xp - a.xp);
   }, [collectionsTotals]);
 
-  console.log(mergedCollections);
-
   // Calculate the maximum Total XP from all scores
   const maxTotalXP = Math.max(
     ...mergedCollections.map((score: any) => score.xp)
   );
-  console.log(maxTotalXP);
+
   const maxGamesPlayable = 1600; // Set this to the maximum possible XP
 
   return (

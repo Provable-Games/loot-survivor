@@ -2822,7 +2822,7 @@ async def get_collection_totals(
 
     query = (
         db["collection_totals"]
-        .find[filter]
+        .find(filter)
         .skip(skip)
         .limit(limit)
         .sort(sort_var, sort_dir)
