@@ -208,11 +208,11 @@ export function calculateLevel(xp: number) {
 
 export function processItemName(item: Item) {
   if (item) {
-    if (item.special2 && item.special3 && calculateLevel(item.xp ?? 0) >= 20) {
+    if (calculateLevel(item.xp ?? 0) >= 20) {
       return `${item.special2} ${item.special3} ${item.item} ${item.special1} +1`;
-    } else if (item.special2 && item.special1) {
+    } else if (calculateLevel(item.xp ?? 0) >= 19) {
       return `${item.special2} ${item.special3} ${item.item} ${item.special1}`;
-    } else if (item.special1) {
+    } else if (calculateLevel(item.xp ?? 0) >= 15) {
       return `${item.item} ${item.special1}`;
     } else {
       return `${item.item}`;

@@ -217,29 +217,38 @@ const initialRefetchFunctions: Record<QueryKey, () => Promise<any>> = {
 
 export const useQueriesStore = create<QueriesState>((set, get) => ({
   data: initialData,
-  setData: (queryKey, newData, attribute, index) => {
+  setData: (queryKey, newData, attribute?, index?) => {
     const gameData = new GameData();
     set((state) => {
-      if (typeof attribute === "string" && typeof index === "number") {
-        // This assumes the data structure always contains an array, like battles, discoveries, etc.
-        const existingData = state.data[queryKey];
-        const internalKey = gameData.QUERY_KEYS[queryKey];
+      const internalKey = gameData.QUERY_KEYS[queryKey];
 
-        if (!internalKey) {
-          console.error("Internal key mapping not found for:", queryKey);
-          return state;
+      if (!internalKey) {
+        console.error("Internal key mapping not found for:", queryKey);
+        return state;
+      }
+
+      const existingData = state.data[queryKey];
+
+      if (typeof index === "number") {
+        let targetArray = [
+          ...((existingData?.[
+            internalKey as keyof typeof existingData
+          ] as any[]) || []),
+        ];
+
+        // Ensure the array is long enough
+        while (targetArray.length <= index) {
+          targetArray.push({});
         }
 
-        if (!existingData) {
-          console.error("Existing data not found for:", queryKey);
-          return state;
-        }
-
-        const targetArray = [...existingData[internalKey]];
-
-        if (targetArray[index]) {
+        if (attribute === undefined) {
+          // Set full object at index
+          targetArray[index] = newData;
+        } else if (typeof attribute === "string") {
+          // Set specific attribute at index
           targetArray[index] = { ...targetArray[index], [attribute]: newData };
         }
+
         return {
           data: {
             ...state.data,

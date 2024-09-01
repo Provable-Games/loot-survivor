@@ -571,37 +571,10 @@ export function createSyscalls({
           );
           for (let itemsLeveledUpEvent of itemsLeveledUpEvents) {
             for (let itemLeveled of itemsLeveledUpEvent.data[1]) {
-              const ownedItemIndex =
-                queryData.itemsByAdventurerQuery?.items.findIndex(
-                  (item: Item) => item.item == itemLeveled.item
-                );
               if (itemLeveled.suffixUnlocked) {
-                setData(
-                  "itemsByAdventurerQuery",
-                  itemLeveled.special1,
-                  "special1",
-                  ownedItemIndex
-                );
                 if (itemEntropy === BigInt(0)) {
                   setFetchUnlocksEntropy(true);
                 }
-              }
-              if (itemLeveled.prefixesUnlocked) {
-                setData(
-                  "itemsByAdventurerQuery",
-                  itemLeveled.special2,
-                  "special2",
-                  ownedItemIndex
-                );
-                setData(
-                  "itemsByAdventurerQuery",
-                  itemLeveled.special3,
-                  "special3",
-                  ownedItemIndex
-                );
-              }
-              if (itemLeveled.newLevel === 20) {
-                setG20Unlock(true);
               }
             }
           }
