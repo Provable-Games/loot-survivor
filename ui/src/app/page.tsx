@@ -211,7 +211,9 @@ function Home() {
   >();
   const setUsername = useUIStore((state) => state.setUsername);
   const setIsController = useUIStore((state) => state.setIsController);
-  const setControllerAdmin = useUIStore((state) => state.setControllerAdmin);
+  const setControllerDelegate = useUIStore(
+    (state) => state.setControllerDelegate
+  );
 
   useEffect(() => {
     const init = async () => {
@@ -222,14 +224,14 @@ function Home() {
         connector as unknown as CartridgeConnector
       ).delegateAccount();
       setUsername(username || "");
-      setControllerAdmin(delegateAccount!.toString() || "");
+      setControllerDelegate(delegateAccount!.toString() || "");
     };
     if (connector?.id.includes("cartridge")) {
       setIsController(true);
       init();
     } else {
       setIsController(false);
-      setControllerAdmin("");
+      setControllerDelegate("");
       setUsername("");
     }
   }, [connector]);

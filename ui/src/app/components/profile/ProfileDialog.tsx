@@ -13,6 +13,7 @@ import Eth from "public/icons/eth.svg";
 import Lords from "public/icons/lords.svg";
 import { CartridgeIcon } from "@/app/components/icons/Icons";
 import { checkCartridgeConnector } from "@/app/lib/connectors";
+import CartridgeConnector from "@cartridge/connector";
 
 interface ProfileDialogprops {
   withdraw: (
@@ -42,8 +43,9 @@ export const ProfileDialog = ({
   const [copied, setCopied] = useState(false);
   const [copiedEth, setCopiedEth] = useState(false);
   const [copiedLords, setCopiedLords] = useState(false);
+  const [copiedDelegate, setCopiedDelegate] = useState(false);
   const username = useUIStore((state) => state.username);
-  const controllerAdmin = useUIStore((state) => state.controllerAdmin);
+  const controllerDelegate = useUIStore((state) => state.controllerDelegate);
   const handleOffboarded = useUIStore((state) => state.handleOffboarded);
   const { connector } = useConnect();
 
@@ -65,6 +67,12 @@ export const ProfileDialog = ({
     setTimeout(() => setCopiedEth(false), 2000);
   };
 
+  const handleCopyDelegate = () => {
+    copyToClipboard(controllerDelegate);
+    setCopiedDelegate(true);
+    setTimeout(() => setCopiedDelegate(false), 2000);
+  };
+
   return (
     <div className="fixed w-full h-full sm:w-3/4 sm:h-3/4 top-0 sm:top-1/8 bg-terminal-black border border-terminal-green flex flex-col items-center p-10 z-30">
       <button
@@ -80,35 +88,69 @@ export const ProfileDialog = ({
           {checkCartridgeConnector(connector) && (
             <CartridgeIcon className="w-10 h-10 fill-current" />
           )}
-          <h1 className="text-terminal-green text-4xl uppercase m-0">
-            {checkCartridgeConnector(connector)
-              ? username
-              : displayAddress(address!)}
-          </h1>
+          <div className="flex flex-row gap-2">
+            <h1 className="text-terminal-green text-4xl uppercase m-0">
+              {checkCartridgeConnector(connector)
+                ? username
+                : displayAddress(address!)}
+            </h1>
+            <div className="relative">
+              {copied && (
+                <span className="absolute top-[-20px] uppercase">Copied!</span>
+              )}
+              <Button onClick={handleCopy}>Copy</Button>
+            </div>
+          </div>
           {checkCartridgeConnector(connector) && (
             <h3 className="text-terminal-green text-2xl uppercase m-0">
               {displayAddress(address!)}
             </h3>
           )}
         </div>
-        <div className="flex flex-col sm:flex-row items- justify-center gap-2">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-5 sm:gap-2">
           {checkCartridgeConnector(connector) && (
-            <div className="flex flex-col items-center border border-terminal-green p-5 text-center sm:gap-10 z-1 h-[200px] sm:h-[400px] sm:w-1/3">
+            <div className="flex flex-col items-center border border-terminal-green p-2 sm:p-5 text-center sm:gap-10 z-1 h-[200px] sm:h-[400px] sm:w-1/3">
               <h2 className="text-terminal-green text-2xl sm:text-4xl uppercase m-0">
                 Withdraw
               </h2>
               <p className="sm:text-lg">
-                Withdraw to the Cartridge Controller admin account.
+                Withdraw to the Cartridge Controller delegate account.
               </p>
-              <p className="text-2xl uppercase">
-                {displayAddress(controllerAdmin)}
-              </p>
+              <div className="flex flex-col sm:gap-5">
+                <div className="flex flex-row items-center gap-2">
+                  <p className="text-2xl uppercase">
+                    {displayAddress(controllerDelegate)}
+                  </p>
+                  <div className="relative">
+                    {copiedDelegate && (
+                      <span className="absolute top-[-20px] uppercase">
+                        Copied!
+                      </span>
+                    )}
+                    <Button size={"xs"} onClick={handleCopyDelegate}>
+                      Copy
+                    </Button>
+                  </div>
+                </div>
+                <Button
+                  onClick={() =>
+                    (connector as unknown as CartridgeConnector).openMenu()
+                  }
+                >
+                  Change Settings
+                </Button>
+              </div>
               <Button
                 size={"lg"}
                 onClick={() =>
-                  withdraw(controllerAdmin, account!, ethBalance, lordsBalance)
+                  withdraw(
+                    controllerDelegate,
+                    account!,
+                    ethBalance,
+                    lordsBalance
+                  )
                 }
-                disabled={controllerAdmin === "0x0"}
+                disabled={controllerDelegate === "0x0"}
               >
                 Withdraw
               </Button>
@@ -119,19 +161,6 @@ export const ProfileDialog = ({
               <h2 className="text-terminal-green text-2xl sm:text-4xl uppercase m-0">
                 Topup
               </h2>
-              <div className="flex gap-2">
-                <span className="text-2xl uppercase">
-                  {displayAddress(address!)}
-                </span>
-                <div className="relative">
-                  {copied && (
-                    <span className="absolute top-[-20px] uppercase">
-                      Copied!
-                    </span>
-                  )}
-                  <Button onClick={handleCopy}>Copy</Button>
-                </div>
-              </div>
               <p className="hidden sm:block sm:text-lg">
                 Low on tokens? Copy the address and above and transfer tokens
                 from the wallet of your choice.

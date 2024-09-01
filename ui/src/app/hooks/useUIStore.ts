@@ -134,8 +134,8 @@ type State = {
   setUsername: (value: string) => void;
   isController: boolean;
   setIsController: (value: boolean) => void;
-  controllerAdmin: string;
-  setControllerAdmin: (value: string) => void;
+  controllerDelegate: string;
+  setControllerDelegate: (value: string) => void;
   tillDeath: boolean;
   setTillDeath: (value: boolean) => void;
   transferredAdventurerIds: number[];
@@ -248,8 +248,8 @@ const useUIStore = create<State>((set) => ({
   setUsername: (value) => set({ username: value }),
   isController: false,
   setIsController: (value) => set({ isController: value }),
-  controllerAdmin: "",
-  setControllerAdmin: (value) => set({ controllerAdmin: value }),
+  controllerDelegate: "",
+  setControllerDelegate: (value) => set({ controllerDelegate: value }),
   fetchUnlocksEntropy: false,
   setFetchUnlocksEntropy: (value) => set({ fetchUnlocksEntropy: value }),
   adventurerLeveledUp: false,
