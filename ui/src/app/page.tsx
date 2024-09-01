@@ -18,7 +18,7 @@ import useUIStore from "@/app/hooks/useUIStore";
 import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
 import { NotificationDisplay } from "@/app/components/notifications/NotificationDisplay";
 import { useMusic } from "@/app/hooks/useMusic";
-import { Menu, ZeroUpgrade, BurnerStorage, Adventurer } from "@/app/types";
+import { Menu, ZeroUpgrade, BurnerStorage } from "@/app/types";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import Profile from "@/app/containers/ProfileScreen";
 import { DeathDialog } from "@/app/components/adventurer/DeathDialog";
@@ -334,6 +334,8 @@ function Home() {
   const ownerVariables = useMemo(() => {
     return {
       owner: indexAddress(owner),
+      health: 0,
+      skip: 0,
     };
   }, [owner]);
 
@@ -501,16 +503,6 @@ function Home() {
   );
 
   const adventurers = adventurersData?.adventurers;
-
-  useEffect(() => {
-    if (adventurers && adventurers.length > 0) {
-      const latestAdventurer: Adventurer = adventurers[adventurers.length - 1];
-      if (latestAdventurer.health !== 0) {
-        setAdventurer(latestAdventurer);
-        handleSwitchAdventurer(latestAdventurer.id!);
-      }
-    }
-  }, [adventurers]);
 
   useEffect(() => {
     if (adventurer?.id && adventurer.health !== 0) {
@@ -695,6 +687,7 @@ function Home() {
           costToPlay={costToPlay}
           mintLords={mintLords}
           getBalances={getBalances}
+          adventurers={adventurers}
         />
       ) : (
         <>

@@ -22,7 +22,7 @@ const WalletSection = ({ step }: WalletSectionProps) => {
         <>
           <div className="absolute top-0 left-0 right-0 bottom-0 h-full w-full bg-black opacity-50 z-10" />
           {step > 1 && (
-            <div className="absolute flex flex-col w-1/2 top-1/4 right-1/4 z-20 items-center text-xl text-center">
+            <div className="absolute flex flex-col gap-5 w-1/2 top-1/4 right-1/4 z-20 items-center text-xl text-center">
               <span className="flex gap-5 items-center">
                 <p>
                   {isController ? (
@@ -37,6 +37,7 @@ const WalletSection = ({ step }: WalletSectionProps) => {
                   Copy
                 </Button>
               </span>
+              <Button onClick={() => disconnect()}>Disconnect</Button>
               <CompleteIcon />
             </div>
           )}

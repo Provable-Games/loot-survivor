@@ -10,6 +10,7 @@ import { ETH_PREFUND_AMOUNT } from "@/app/lib/constants";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 import { checkCartridgeConnector } from "@/app/lib/connectors";
 import { useConnect } from "@starknet-react/core";
+import { Adventurer } from "@/app/types";
 
 interface LoginProps {
   eth: number;
@@ -20,6 +21,7 @@ interface LoginProps {
   setScreen: (value: ScreenPage) => void;
   setSection: (value: Section) => void;
   getBalances: () => Promise<void>;
+  adventurers: Adventurer[];
 }
 
 const Login = ({
@@ -31,6 +33,7 @@ const Login = ({
   setScreen,
   setSection,
   getBalances,
+  adventurers,
 }: LoginProps) => {
   const { account } = useNetworkAccount();
   const [step, setStep] = useState(1);
@@ -40,12 +43,13 @@ const Login = ({
 
   const checkEnoughEth = eth >= parseInt(ETH_PREFUND_AMOUNT(network!)) - 1;
   const checkEnoughLords = lords > lordsGameCost;
+  const hasAdventurers = adventurers?.length > 0;
 
   useEffect(() => {
     if (
       account &&
       (checkEnoughEth || checkCartridgeConnector(connector)) &&
-      checkEnoughLords
+      (checkEnoughLords || hasAdventurers)
     ) {
       setScreen("start");
       handleOnboarded();
@@ -59,7 +63,7 @@ const Login = ({
     } else {
       setStep(1);
     }
-  }, [account, checkEnoughEth, checkEnoughLords]);
+  }, [account, checkEnoughEth, checkEnoughLords, hasAdventurers]);
 
   useEffect(() => {
     if (account) {

@@ -7,6 +7,7 @@ import TokenLoader from "@/app/components/animations/TokenLoader";
 import Intro from "@/app/components/onboarding/Intro";
 import Login from "@/app/components/onboarding/Login";
 import InfoBox from "@/app/components/onboarding/InfoBox";
+import { Adventurer } from "@/app/types";
 
 export type Section = "connect" | "eth" | "lords" | "arcade";
 
@@ -16,6 +17,7 @@ interface OnboardingProps {
   costToPlay: bigint;
   mintLords: (lordsAmount: number) => Promise<void>;
   getBalances: () => Promise<void>;
+  adventurers: Adventurer[];
 }
 
 const Onboarding = ({
@@ -24,6 +26,7 @@ const Onboarding = ({
   costToPlay,
   mintLords,
   getBalances,
+  adventurers,
 }: OnboardingProps) => {
   const isMuted = useUIStore((state) => state.isMuted);
   const setIsMuted = useUIStore((state) => state.setIsMuted);
@@ -82,6 +85,7 @@ const Onboarding = ({
             setScreen={setScreen}
             setSection={setSection}
             getBalances={getBalances}
+            adventurers={adventurers}
           />
         )}
       </div>
