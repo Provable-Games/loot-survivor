@@ -416,10 +416,10 @@ fn create_metadata(
     let base64_image = format!("data:image/svg+xml;base64,{}", bytes_base64_encode(image));
 
     let mut metadata = JsonImpl::new()
-        .add("name", "Survivor" + " #" + _adventurer_id)
+        .add("name", "Adventurer" + " #" + _adventurer_id)
         .add(
             "description",
-            "An NFT representing ownership of a game of Loot Survivor. These can be used to transfer or gift a game and change the address that player rewards are dispursed to. This NFT also serves as a simple, fully onchain viewer for your survivor stats."
+            "An NFT representing ownership of a game of Loot Survivor. This NFT also serves as a fully onchain viewer for Adventurer stats. Please be mindful that games of Loot Survivor expire after 10 days and the NFT renderer can be permissionlessly updated by the token owner to change the displayed image. The purpose of this feature is to allow the community to permissionlessly improve the NFT but this feature can be abused by a malicious actor to misrepresent the state of the Adventurer. The contract includes a uses_custom_renderer(adventurer_id) function that can be used to determine if the adventurer is using a custom renderer. When purchasing one of these NFTs, consider using this function to ensure the displayed stats are consistent with the game contract."
         )
         .add("image", base64_image);
 
