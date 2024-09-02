@@ -85,9 +85,10 @@ mod Game {
         constants::{
             messages, Rewards, REWARD_DISTRIBUTIONS_BP, COST_TO_PLAY, STARTER_BEAST_ATTACK_DAMAGE,
             MINIMUM_DAMAGE_FROM_BEASTS, MAINNET_CHAIN_ID, SEPOLIA_CHAIN_ID, KATANA_CHAIN_ID,
-            MINIMUM_SCORE_FOR_PAYOUTS, SECONDS_IN_DAY, TARGET_PRICE_USD_CENTS, VRF_COST_PER_GAME,
-            VRF_MAX_CALLBACK_MAINNET, VRF_MAX_CALLBACK_TESTNET, PRAGMA_LORDS_KEY,
-            PRAGMA_PUBLISH_DELAY, PRAGMA_NUM_WORDS, GAME_EXPIRY_DAYS, OBITUARY_EXPIRY_DAYS, MAX_U64
+            MINIMUM_SCORE_FOR_PAYOUTS, MINIMUM_SCORE_FOR_DEATH_RANK, SECONDS_IN_DAY,
+            TARGET_PRICE_USD_CENTS, VRF_COST_PER_GAME, VRF_MAX_CALLBACK_MAINNET,
+            VRF_MAX_CALLBACK_TESTNET, PRAGMA_LORDS_KEY, PRAGMA_PUBLISH_DELAY, PRAGMA_NUM_WORDS,
+            GAME_EXPIRY_DAYS, OBITUARY_EXPIRY_DAYS, MAX_U64
         },
         RenderContract::{
             IRenderContract, IRenderContractDispatcher, IRenderContractDispatcherTrait
@@ -3677,7 +3678,7 @@ mod Game {
         }
 
         // if player xp is higher than minimum score for payouts
-        if adventurer.xp >= MINIMUM_SCORE_FOR_PAYOUTS {
+        if adventurer.xp >= MINIMUM_SCORE_FOR_DEATH_RANK {
             // record rank at death for onchain fun
             _record_adventurer_rank_at_death(ref self, adventurer_id, player_rank);
         }
