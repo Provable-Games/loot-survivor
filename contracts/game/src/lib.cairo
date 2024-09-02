@@ -1742,11 +1742,11 @@ mod Game {
 
         // if the third place score is less than the minimum score for payouts
         if leaderboard.third.xp < MINIMUM_SCORE_FOR_PAYOUTS {
-            // burn the payment
-            payment_dispatcher
-                .transfer_from(
-                    get_caller_address(), contract_address_const::<0>(), cost_to_play.into()
-                );
+            // send tokens to PG address
+            // @dev this is expected to be a trivial amount and exists to remove incentive to play
+            // and die fast
+            let pg_address = self._pg_address.read();
+            payment_dispatcher.transfer_from(get_caller_address(), pg_address, cost_to_play.into());
         } else {
             // if payouts are active, calculate rewards
             let rewards = _get_reward_distribution(@self);
