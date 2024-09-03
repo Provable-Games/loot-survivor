@@ -78,7 +78,7 @@ mod tests {
     const DAY: u64 = 86400;
     const TESTING_CHAIN_ID: felt252 = 0x4c4f4f545355525649564f52;
     const LAUNCH_TOURNAMENT_GAMES_PER_COLLCTION: u16 = 300;
-    const LAUNCH_TOURNAMENT_START_DELAY_SECONDS: u64 = 7200;
+    const LAUNCH_TOURNAMENT_START_DELAY_SECONDS: u64 = 3600;
     const FREE_VRF_PROMOTION_DURATION_SECONDS: u64 = 25200;
 
     fn INTERFACE_ID() -> ContractAddress {
@@ -1947,6 +1947,18 @@ mod tests {
         let death_date = starting_time + 1000;
         start_cheat_block_timestamp_global(death_date);
         game.attack(adventurer_id, true);
+        //game.upgrade(adventurer_id, 0, stat_upgrades.clone(), shopping_cart.clone());
+        game.explore(adventurer_id, true);
+        game.upgrade(adventurer_id, 0, stat_upgrades.clone(), shopping_cart.clone());
+        game.explore(adventurer_id, true);
+        game.attack(adventurer_id, true);
+
+        // get updated adventurer state
+        let adventurer = game.get_adventurer(adventurer_id);
+        // assert adventurer is dead
+        assert(adventurer.health == 0, 'Adventurer is still alive');
+
+
 
         // check adventurer metadata to ensure birth date and death date are correct
         let mut metadata = game.get_adventurer_meta(adventurer_id);
@@ -2083,7 +2095,7 @@ mod tests {
         );
 
         // set block timestamp to one second after the launch tournament end
-        start_cheat_block_timestamp_global(current_block_time + genesis_tournament_duration + 100);
+        start_cheat_block_timestamp_global(current_block_time + genesis_tournament_duration + LAUNCH_TOURNAMENT_START_DELAY_SECONDS + 1);
         // try to enter launch tournament should panic
         game
             .enter_launch_tournament(
