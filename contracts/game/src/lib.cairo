@@ -1273,6 +1273,12 @@ mod Game {
         fn is_launch_tournament_active(self: @ContractState) -> bool {
             _is_launch_tournament_active(self)
         }
+        fn get_launch_tournament_winner(self: @ContractState) -> ContractAddress {
+            _get_launch_tournament_winner(self)
+        }
+        fn get_launch_tournament_end_time(self: @ContractState) -> u64 {
+            _launch_tournament_end_time(self)
+        }
     }
 
     // ------------------------------------------ //
@@ -3615,13 +3621,17 @@ mod Game {
         assert(!_is_launch_tournament_active(self), messages::TOURNAMENT_STILL_ACTIVE);
     }
 
-    fn _is_launch_tournament_active(self: @ContractState) -> bool {
-        let current_timestamp = starknet::get_block_info().unbox().block_timestamp;
+    fn _launch_tournament_end_time(self: @ContractState) -> u64 {
         let genesis_timestamp = self._genesis_timestamp.read();
         let start_delay = self._launch_tournament_start_delay_seconds.read();
         let duration = self._launch_tournament_duration_seconds.read();
-        let launch_promotion_end_timestamp = genesis_timestamp + duration + start_delay;
-        current_timestamp <= launch_promotion_end_timestamp
+        genesis_timestamp + duration + start_delay
+    }
+
+    fn _is_launch_tournament_active(self: @ContractState) -> bool {
+        let current_timestamp = starknet::get_block_info().unbox().block_timestamp;
+        let launch_tournament_end_time = _launch_tournament_end_time(self);
+        current_timestamp <= launch_tournament_end_time
     }
 
     fn _initialize_launch_tournament(
@@ -3690,7 +3700,7 @@ mod Game {
         poseidon_hash_span(hash_span.span())
     }
 
-    fn _get_tournament_winner(self: @ContractState) -> ContractAddress {
+    fn _get_launch_tournament_winner(self: @ContractState) -> ContractAddress {
         self._launch_tournament_champions_dispatcher.read().contract_address
     }
 
