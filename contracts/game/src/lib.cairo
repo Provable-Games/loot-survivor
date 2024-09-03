@@ -1019,7 +1019,7 @@ mod Game {
             let hash = message.get_message_hash(mint_from);
 
             // verify signature
-            let is_valid_signature_felt = DualCaseAccount { contract_address: get_caller_address() }
+            let is_valid_signature_felt = DualCaseAccount { contract_address: mint_from }
                 .is_valid_signature(hash, signature);
 
             // Check either 'VALID' or True for backwards compatibility
