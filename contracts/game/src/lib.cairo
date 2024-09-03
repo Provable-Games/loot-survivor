@@ -245,7 +245,8 @@ mod Game {
     /// @param vrf_payments_address: the address of the VRF payments
     /// @param launch_tournament_games_per_collection: the number of games per collection for the
     /// launch tournament
-    /// @param launch_tournament_start_delay_seconds: the delay before the launch tournament claims starts
+    /// @param launch_tournament_start_delay_seconds: the delay before the launch tournament claims
+    /// starts
     /// @param free_vrf_promotion_duration_seconds: the duration of the free VRF promotion
     #[constructor]
     fn constructor(
@@ -1313,7 +1314,14 @@ mod Game {
         );
 
         _start_game(
-            ref self, ItemId::ShortSword, 'GLHF', contract_address_const::<0>(), true, 0, 0, pg_address
+            ref self,
+            ItemId::ShortSword,
+            'GLHF',
+            contract_address_const::<0>(),
+            true,
+            0,
+            0,
+            pg_address
         );
     }
     fn _free_vrf_promotion_active(self: @ContractState) -> bool {
