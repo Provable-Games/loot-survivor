@@ -1660,7 +1660,7 @@ mod tests {
             'wrong starter beast game 1'
         );
         assert(
-            starter_beast_game_two >= BeastId::Troll && starter_beast_game_one <= BeastId::Skeleton,
+            starter_beast_game_two >= BeastId::Troll && starter_beast_game_two <= BeastId::Skeleton,
             'wrong starter beast game 2'
         );
         assert(
@@ -2766,8 +2766,14 @@ mod tests {
     #[test]
     #[should_panic(expected: ('tournament already settled',))]
     fn test_settle_launch_tournament_twice() {
+        let launch_tournament_duration_seconds = 604800;
+        let contract_deploy_time = 1725391638;
+        start_cheat_block_timestamp_global(contract_deploy_time);
+
         // Initialize the contract state for testing
         let mut state = Game::contract_state_for_testing();
+        state._genesis_timestamp.write(contract_deploy_time);
+        state._launch_tournament_duration_seconds.write(launch_tournament_duration_seconds);
 
         // Create a span of qualifying collections
         let mut qualifying_collections = ArrayTrait::<LaunchTournamentCollections>::new();
@@ -2791,12 +2797,9 @@ mod tests {
         state._launch_tournament_scores.write(contract_address_const::<1>(), 100);
         state._launch_tournament_scores.write(contract_address_const::<2>(), 200);
 
-        // Set the tournament end time to a past timestamp
-        let current_timestamp = 1000000;
-        state._launch_tournament_duration_seconds.write(current_timestamp - 1);
-
-        // Mock the block timestamp
-        start_cheat_block_timestamp_global(current_timestamp);
+        start_cheat_block_timestamp_global(
+            contract_deploy_time + launch_tournament_duration_seconds + 1
+        );
 
         // Settle the tournament for the first time
         state.settle_launch_tournament();
