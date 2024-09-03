@@ -4,6 +4,7 @@ mod game {
     mod renderer;
     mod encoding;
     mod RenderContract;
+    mod snip12_controller_claim;
 }
 mod tests {
     mod test_game;
@@ -68,6 +69,7 @@ mod Game {
     use openzeppelin::token::erc721::{ERC721Component, ERC721HooksEmptyImpl};
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::introspection::interface::{ISRC5Dispatcher, ISRC5DispatcherTrait};
+    use openzeppelin::account::dual_account::{DualCaseAccount, DualCaseAccountABI};
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
@@ -84,6 +86,7 @@ mod Game {
             IGame, IERC721Mixin, IBeasts, IBeastsDispatcher, IBeastsDispatcherTrait,
             IDelegateAccountDispatcher, IDelegateAccountDispatcherTrait
         },
+        snip12_controller_claim::{Message, OffchainMessageHashImpl, SNIP12Metadata},
         constants::{
             messages, Rewards, REWARD_DISTRIBUTIONS_BP, COST_TO_PLAY, STARTER_BEAST_ATTACK_DAMAGE,
             MINIMUM_DAMAGE_FROM_BEASTS, MAINNET_CHAIN_ID, SEPOLIA_CHAIN_ID, KATANA_CHAIN_ID,
@@ -969,6 +972,69 @@ mod Game {
             }
         }
 
+
+        /// @title Enter Launch Tournament with Signature
+        /// @notice Allows an adventurer to enter the launch tournament using qualifying NFTs from a
+        /// separate account after verifying the signature.
+        /// @param weapon A u8 representing the weapon to start the game with.
+        /// @param name A felt252 representing the name of the adventurer.
+        /// @param custom_renderer A ContractAddress representing the custom renderer to use for the
+        /// adventurer.
+        /// @param delay_stat_reveal A bool representing whether to delay the stat reveal.
+        /// @param collection_address A ContractAddress representing the address of the NFT
+        /// collection.
+        /// @param token_id a u32 representing the token ID of the NFT.
+        /// @param mint_from A ContractAddress representing the address that will be used for
+        /// qualifying collections @param mint_to A ContractAddress representing the address to mint
+        /// the games to.
+        /// @param signature An Array of felt252 representing the signature of the NFT owner.
+        /// @return An Array of felt252 representing the adventurer IDs of the adventurers that were
+        /// minted
+        fn enter_launch_tournament_with_signature(
+            ref self: ContractState,
+            weapon: u8,
+            name: felt252,
+            custom_renderer: ContractAddress,
+            delay_stat_reveal: bool,
+            collection_address: ContractAddress,
+            token_id: u32,
+            mint_from: ContractAddress,
+            mint_to: ContractAddress,
+            signature: Array<felt252>
+        ) -> Array<felt252> {
+            // generate message hash
+            let message = Message { recipient: mint_to };
+
+            // generate signed message using mint_from address
+            let hash = message.get_message_hash(mint_from);
+
+            // verify signature
+            let is_valid_signature_felt = DualCaseAccount { contract_address: get_caller_address() }
+                .is_valid_signature(hash, signature);
+
+            // Check either 'VALID' or True for backwards compatibility
+            let is_valid_signature = is_valid_signature_felt == starknet::VALIDATED
+                || is_valid_signature_felt == 1;
+            assert(is_valid_signature, 'Invalid signature');
+
+            // assert caller is the same as mint_to address
+            assert(get_caller_address() == mint_to, 'Caller != mint_to');
+
+            // Call internal function with mint_from as the mint_from which we have verified the
+            // caller has access to
+            _enter_launch_tournament(
+                ref self,
+                weapon,
+                name,
+                custom_renderer,
+                delay_stat_reveal,
+                collection_address,
+                token_id,
+                mint_to,
+                mint_from
+            )
+        }
+
         /// @title Enter Genesis Tournament
         /// @notice Allows an adventurer to enter the launch tournament.
         /// @param weapon A u8 representing the weapon to start the game with.
@@ -991,85 +1057,17 @@ mod Game {
             token_id: u32,
             mint_to: ContractAddress
         ) -> Array<felt252> {
-            // assert game terminal time has not been reached
-            _assert_launch_tournament_is_active(@self);
-
-            // assert the nft collection is part of the set of free game nft collections
-            _assert_is_qualifying_nft(@self, collection_address);
-
-            // assert caller owns nft
-            _assert_nft_ownership(@self, collection_address, token_id);
-
-            // get hash of collection and token id
-            let token_hash = _get_token_hash(@self, collection_address, token_id);
-
-            // assert token has not already claimed free game
-            _assert_token_not_claimed(@self, token_hash);
-
-            // assert the total number of games for this collection is below the tournament limit
-            let games_claimed_for_collection = self
-                ._launch_tournament_game_counts
-                .read(collection_address);
-
-            let max_games_per_collection = self._launch_tournament_games_per_collection.read();
-
-            assert(
-                games_claimed_for_collection < max_games_per_collection,
-                messages::COLLECTION_OUT_OF_GAMES
-            );
-
-            // get the number of games allowed per collection
-            let max_claimable_games = self
-                ._launch_tournament_games_per_claim
-                .read(collection_address);
-
-            // adjust for the case where the collection doesn't have enough games remaining to claim
-            // the full amount of games they are allowed
-            let claimable_games = if games_claimed_for_collection
-                + max_claimable_games.into() > max_games_per_collection {
-                // if there aren't enough games remaining to claim the max, claim the remaining
-                max_games_per_collection - games_claimed_for_collection.into()
-            } else {
-                // if there are enough games remaining, claim max
-                max_claimable_games.into()
-            };
-
-            // increment game count for this collection
-            self
-                ._launch_tournament_game_counts
-                .write(collection_address, games_claimed_for_collection + claimable_games);
-
-            // set token as claimed
-            self._launch_tournament_claimed_games.write(token_hash, true);
-
-            // iterate over the number of claimable games
-            let mut adventurer_ids: Array<felt252> = ArrayTrait::<felt252>::new();
-            let mut claim_count = 0;
-            loop {
-                if claim_count == claimable_games {
-                    break;
-                }
-
-                // mint/start the game
-                let adventurer_id = _start_game(
-                    ref self, weapon, name, custom_renderer, delay_stat_reveal, 0, 0, mint_to
-                );
-
-                // record the collection the adventurer is playing for
-                self._launch_tournament_participants.write(adventurer_id, collection_address);
-
-                // emit claimed free game event
-                __event_ClaimedFreeGame(ref self, adventurer_id, collection_address, token_id);
-
-                // add adventurer id to array of new game ids
-                adventurer_ids.append(adventurer_id);
-
-                // increment game index
-                claim_count += 1;
-            };
-
-            // return the array of new game ids
-            adventurer_ids
+            _enter_launch_tournament(
+                ref self,
+                weapon,
+                name,
+                custom_renderer,
+                delay_stat_reveal,
+                collection_address,
+                token_id,
+                mint_to,
+                get_caller_address(),
+            )
         }
 
         fn receive_random_words(
@@ -1267,6 +1265,96 @@ mod Game {
     // ------------------------------------------ //
     // ------------ Internal Functions ---------- //
     // ------------------------------------------ //
+
+    fn _enter_launch_tournament(
+        ref self: ContractState,
+        weapon: u8,
+        name: felt252,
+        custom_renderer: ContractAddress,
+        delay_stat_reveal: bool,
+        collection_address: ContractAddress,
+        token_id: u32,
+        mint_to: ContractAddress,
+        owner: ContractAddress
+    ) -> Array<felt252> {
+        // assert game terminal time has not been reached
+        _assert_launch_tournament_is_active(@self);
+
+        // assert the nft collection is part of the set of free game nft collections
+        _assert_is_qualifying_nft(@self, collection_address);
+
+        // assert caller owns nft
+        _assert_nft_ownership(@self, collection_address, token_id, owner);
+
+        // get hash of collection and token id
+        let token_hash = _get_token_hash(@self, collection_address, token_id);
+
+        // assert token has not already claimed free game
+        _assert_token_not_claimed(@self, token_hash);
+
+        // assert the total number of games for this collection is below the tournament limit
+        let games_claimed_for_collection = self
+            ._launch_tournament_game_counts
+            .read(collection_address);
+
+        let max_games_per_collection = self._launch_tournament_games_per_collection.read();
+
+        assert(
+            games_claimed_for_collection < max_games_per_collection,
+            messages::COLLECTION_OUT_OF_GAMES
+        );
+
+        // get the number of games allowed per collection
+        let max_claimable_games = self._launch_tournament_games_per_claim.read(collection_address);
+
+        // adjust for the case where the collection doesn't have enough games remaining to claim
+        // the full amount of games they are allowed
+        let claimable_games = if games_claimed_for_collection
+            + max_claimable_games.into() > max_games_per_collection {
+            // if there aren't enough games remaining to claim the max, claim the remaining
+            max_games_per_collection - games_claimed_for_collection.into()
+        } else {
+            // if there are enough games remaining, claim max
+            max_claimable_games.into()
+        };
+
+        // increment game count for this collection
+        self
+            ._launch_tournament_game_counts
+            .write(collection_address, games_claimed_for_collection + claimable_games);
+
+        // set token as claimed
+        self._launch_tournament_claimed_games.write(token_hash, true);
+
+        // iterate over the number of claimable games
+        let mut adventurer_ids: Array<felt252> = ArrayTrait::<felt252>::new();
+        let mut claim_count = 0;
+        loop {
+            if claim_count == claimable_games {
+                break;
+            }
+
+            // mint/start the game
+            let adventurer_id = _start_game(
+                ref self, weapon, name, custom_renderer, delay_stat_reveal, 0, 0, mint_to
+            );
+
+            // record the collection the adventurer is playing for
+            self._launch_tournament_participants.write(adventurer_id, collection_address);
+
+            // emit claimed free game event
+            __event_ClaimedFreeGame(ref self, adventurer_id, collection_address, token_id);
+
+            // add adventurer id to array of new game ids
+            adventurer_ids.append(adventurer_id);
+
+            // increment game index
+            claim_count += 1;
+        };
+
+        // return the array of new game ids
+        adventurer_ids
+    }
 
     /// @title Get Adventurer Renderer
     /// @notice Retrieves the renderer for an adventurer.
@@ -1544,7 +1632,7 @@ mod Game {
         // if beast beast level is above collectible threshold
         if beast.combat_spec.level >= BEAST_SPECIAL_NAME_LEVEL_UNLOCK.into()
             && _network_supports_vrf() {
-                            // mint beast to owner of the adventurer or controller delegate if set 
+            // mint beast to owner of the adventurer or controller delegate if set
             let mint_to_address = _get_delegate_or_owner(@self, adventurer_id);
             _mint_beast(@self, beast, mint_to_address);
         }
@@ -3515,11 +3603,14 @@ mod Game {
     }
 
     fn _assert_nft_ownership(
-        self: @ContractState, nft_collection_address: ContractAddress, token_id: u32
+        self: @ContractState,
+        nft_collection_address: ContractAddress,
+        token_id: u32,
+        caller: ContractAddress
     ) {
         let erc721_dispatcher = IERC721Dispatcher { contract_address: nft_collection_address };
-        let owner = erc721_dispatcher.owner_of(token_id.into());
-        assert(owner == get_caller_address(), messages::NOT_TOKEN_OWNER);
+        let token_owner = erc721_dispatcher.owner_of(token_id.into());
+        assert(caller == token_owner, messages::NOT_TOKEN_OWNER);
     }
 
     fn _get_token_hash(

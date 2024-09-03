@@ -64,6 +64,18 @@ trait IGame<TContractState> {
         token_id: u32,
         mint_to: ContractAddress
     ) -> Array<felt252>;
+    fn enter_launch_tournament_with_signature(
+        ref self: TContractState,
+        weapon: u8,
+        name: felt252,
+        custom_renderer: ContractAddress,
+        delay_stat_reveal: bool,
+        collection_address: ContractAddress,
+        token_id: u32,
+        mint_from: ContractAddress,
+        mint_to: ContractAddress,
+        signature: Array<felt252>
+    ) -> Array<felt252>;
     fn settle_launch_tournament(ref self: TContractState);
     // ------ View Functions ------
 
