@@ -94,7 +94,8 @@ mod Game {
             TARGET_PRICE_USD_CENTS, VRF_COST_PER_GAME, VRF_MAX_CALLBACK_MAINNET,
             VRF_MAX_CALLBACK_TESTNET, PRAGMA_LORDS_KEY, PRAGMA_PUBLISH_DELAY, PRAGMA_NUM_WORDS,
             GAME_EXPIRY_DAYS, OBITUARY_EXPIRY_DAYS, MAX_U64,
-            CONTROLLER_DELEGATE_ACCOUNT_INTERFACE_ID
+            CONTROLLER_DELEGATE_ACCOUNT_INTERFACE_ID, DAO_CONTRACT_REWARD_ADVENTURER,
+            PG_CONTRACT_REWARD_ADVENTURER
         },
         RenderContract::{
             IRenderContract, IRenderContractDispatcher, IRenderContractDispatcherTrait
@@ -151,10 +152,11 @@ mod Game {
         _bag: Map::<felt252, Bag>,
         _beasts_dispatcher: IBeastsDispatcher,
         _cost_to_play: u128,
-        _dao: ContractAddress,
         _default_renderer: ContractAddress,
         _eth_dispatcher: IERC20Dispatcher,
+        _free_vrf_promotion_duration_seconds: u64,
         _game_count: felt252,
+        _genesis_timestamp: u64,
         _golden_token_dispatcher: IERC721Dispatcher,
         _golden_token_last_use: Map::<u32, u64>,
         _launch_tournament_champions_dispatcher: IERC721Dispatcher,
@@ -162,14 +164,14 @@ mod Game {
         _launch_tournament_collections: Vec<ContractAddress>,
         _launch_tournament_games_per_claim: Map::<ContractAddress, u8>,
         _launch_tournament_games_per_collection: u16,
-        _launch_tournament_end_time: u64,
+        _launch_tournament_duration_seconds: u64,
         _launch_tournament_participants: Map::<felt252, ContractAddress>,
         _launch_tournament_scores: Map::<ContractAddress, u32>,
+        _launch_tournament_start_delay_seconds: u64,
         _launch_tournament_game_counts: Map::<ContractAddress, u16>,
         _leaderboard: Leaderboard,
         _payment_token_dispatcher: IERC20Dispatcher,
         _oracle_dispatcher: IPragmaABIDispatcher,
-        _pg_address: ContractAddress,
         _previous_free_game_timestamp: Map::<(ContractAddress, u32), u64>,
         _terminal_timestamp: u64,
         _vrf_dispatcher: IRandomnessDispatcher,
@@ -239,7 +241,7 @@ mod Game {
     /// @param oracle_address: the address of the oracle
     /// @param render_contract: the address of the render contract
     /// @param qualifying_collections: the qualifying collections for the launch tournament
-    /// @param launch_tournament_end_timestamp: the timestamp of the launch tournament end
+    /// @param launch_tournament_duration_seconds: the duration of the launch tournament in seconds
     /// @param vrf_payments_address: the address of the VRF payments
     /// @param launch_tournament_games_per_collection: the number of games per collection for the
     /// launch tournament
@@ -257,9 +259,11 @@ mod Game {
         oracle_address: ContractAddress,
         render_contract: ContractAddress,
         qualifying_collections: Array<LaunchTournamentCollections>,
-        launch_tournament_end_timestamp: u64,
+        launch_tournament_duration_seconds: u64,
         vrf_payments_address: ContractAddress,
-        launch_tournament_games_per_collection: u16
+        launch_tournament_games_per_collection: u16,
+        launch_tournament_start_delay_seconds: u64,
+        free_vrf_promotion_duration_seconds: u64
     ) {
         if payment_token.is_non_zero() {
             let payment_dispatcher = IERC20Dispatcher { contract_address: payment_token };
@@ -276,14 +280,6 @@ mod Game {
             // @dev this is used by pragma to access their vrf premiums
             eth_dispatcher.approve(vrf_payments_address, Bounded::<u256>::MAX);
             // @dev the only reason ETH should be in the contract is to cover VRF costs
-        }
-
-        if dao_address.is_non_zero() {
-            self._dao.write(dao_address);
-        }
-
-        if pg_address.is_non_zero() {
-            self._pg_address.write(pg_address);
         }
 
         if beasts_address.is_non_zero() {
@@ -309,8 +305,16 @@ mod Game {
             self._default_renderer.write(render_contract);
         }
 
-        if launch_tournament_end_timestamp != 0 {
-            self._launch_tournament_end_time.write(launch_tournament_end_timestamp);
+        self._genesis_timestamp.write(get_block_timestamp());
+
+        if launch_tournament_duration_seconds != 0 {
+            self._launch_tournament_duration_seconds.write(launch_tournament_duration_seconds);
+        }
+
+        if launch_tournament_start_delay_seconds != 0 {
+            self
+                ._launch_tournament_start_delay_seconds
+                .write(launch_tournament_start_delay_seconds);
         }
 
         if launch_tournament_games_per_collection != 0 {
@@ -334,11 +338,18 @@ mod Game {
             self._vrf_premiums_address.write(vrf_payments_address);
         }
 
+        if free_vrf_promotion_duration_seconds != 0 {
+            self._free_vrf_promotion_duration_seconds.write(free_vrf_promotion_duration_seconds);
+        }
+
         // @dev base uri isn't used in the current implementation
         self.erc721.initializer("Loot Survivor", "LSVR", "https://token.lootsurvivor.io/");
 
         // initialize launch tournament
         _initialize_launch_tournament(ref self, qualifying_collections.span());
+
+        // mint genesis adventurers
+        _mint_genesis_adventurers(ref self, dao_address, pg_address);
     }
 
     // ------------------------------------------ //
@@ -395,11 +406,7 @@ mod Game {
                     _process_payment_and_distribute_rewards(ref self, client_reward_address);
                 }
 
-                // get current timestamp
-                let current_timestamp = starknet::get_block_info().unbox().block_timestamp;
-                // check if timestamp is within launch promotion period
-                if current_timestamp > self._launch_tournament_end_time.read() {
-                    // pay for vrf
+                if !_free_vrf_promotion_active(@self) {
                     _pay_for_vrf(@self);
                 }
             }
@@ -1260,11 +1267,53 @@ mod Game {
         ) -> bool {
             _free_game_available(self, token_type, token_id)
         }
+        fn free_vrf_promotion_active(self: @ContractState) -> bool {
+            _free_vrf_promotion_active(self)
+        }
+        fn is_launch_tournament_active(self: @ContractState) -> bool {
+            _is_launch_tournament_active(self)
+        }
     }
 
     // ------------------------------------------ //
     // ------------ Internal Functions ---------- //
     // ------------------------------------------ //
+
+    fn _mint_genesis_adventurers(
+        ref self: ContractState, dao_address: ContractAddress, pg_address: ContractAddress
+    ) {
+        _start_game(
+            ref self,
+            ItemId::Wand,
+            'Genesis Adventurer',
+            contract_address_const::<0>(),
+            true,
+            0,
+            0,
+            pg_address
+        );
+
+        _start_game(
+            ref self,
+            ItemId::Wand,
+            'Bibliomancer',
+            contract_address_const::<0>(),
+            true,
+            0,
+            0,
+            dao_address
+        );
+
+        _start_game(
+            ref self, ItemId::Wand, 'PG', contract_address_const::<0>(), true, 0, 0, pg_address
+        );
+    }
+    fn _free_vrf_promotion_active(self: @ContractState) -> bool {
+        let current_timestamp = starknet::get_block_info().unbox().block_timestamp;
+        let genesis_timestamp = self._genesis_timestamp.read();
+        let free_vrf_promotion_duration_seconds = self._free_vrf_promotion_duration_seconds.read();
+        current_timestamp <= genesis_timestamp + free_vrf_promotion_duration_seconds
+    }
 
     fn _enter_launch_tournament(
         ref self: ContractState,
@@ -1821,6 +1870,14 @@ mod Game {
             / (response.price * 100000000)
     }
 
+    fn _get_dao_address(self: @ContractState) -> ContractAddress {
+        _get_owner(self, DAO_CONTRACT_REWARD_ADVENTURER.into())
+    }
+
+    fn _get_pg_address(self: @ContractState) -> ContractAddress {
+        _get_owner(self, PG_CONTRACT_REWARD_ADVENTURER.into())
+    }
+
     /// @title Process Payment and Distribute Rewards
     /// @notice Processes the payment and distributes the rewards to the appropriate addresses.
     /// @dev This function is called when the payment is processed and the rewards are distributed.
@@ -1838,7 +1895,7 @@ mod Game {
             // send tokens to PG address
             // @dev this is expected to be a trivial amount and exists to remove incentive to play
             // and die fast
-            let pg_address = self._pg_address.read();
+            let pg_address = _get_pg_address(@self);
             payment_dispatcher.transfer_from(get_caller_address(), pg_address, cost_to_play.into());
         } else {
             // if payouts are active, calculate rewards
@@ -1858,14 +1915,14 @@ mod Game {
             }
 
             if rewards.BIBLIO != 0 {
-                let dao_address = self._dao.read();
+                let dao_address = _get_dao_address(@self);
                 payment_dispatcher
                     .transfer_from(get_caller_address(), dao_address, rewards.BIBLIO.into());
             }
 
             // if pg is not zero, transfer rewards
             if rewards.PG != 0 {
-                let pg_address = self._pg_address.read();
+                let pg_address = _get_pg_address(@self);
                 payment_dispatcher
                     .transfer_from(get_caller_address(), pg_address, rewards.PG.into());
             }
@@ -3479,11 +3536,19 @@ mod Game {
     fn _assert_is_dead(self: Adventurer) {
         assert(self.health == 0, messages::ADVENTURER_IS_ALIVE);
     }
+
+    fn _is_genesis_adventurer(adventurer_id: felt252) -> bool {
+        adventurer_id == 1 || adventurer_id == 2 || adventurer_id == 3
+    }
     fn _is_expired(self: @ContractState, adventurer_id: felt252,) -> bool {
-        let current_time = get_block_timestamp();
-        let birth_date = _load_adventurer_metadata(self, adventurer_id).birth_date;
-        let expiry_time = birth_date + (GAME_EXPIRY_DAYS.into() * SECONDS_IN_DAY.into());
-        current_time > expiry_time
+        if _is_genesis_adventurer(adventurer_id) {
+            false
+        } else {
+            let current_time = get_block_timestamp();
+            let birth_date = _load_adventurer_metadata(self, adventurer_id).birth_date;
+            let expiry_time = birth_date + (GAME_EXPIRY_DAYS.into() * SECONDS_IN_DAY.into());
+            current_time > expiry_time
+        }
     }
     fn _assert_valid_starter_weapon(starting_weapon: u8) {
         assert(
@@ -3552,7 +3617,10 @@ mod Game {
 
     fn _is_launch_tournament_active(self: @ContractState) -> bool {
         let current_timestamp = starknet::get_block_info().unbox().block_timestamp;
-        let launch_promotion_end_timestamp = self._launch_tournament_end_time.read();
+        let genesis_timestamp = self._genesis_timestamp.read();
+        let start_delay = self._launch_tournament_start_delay_seconds.read();
+        let duration = self._launch_tournament_duration_seconds.read();
+        let launch_promotion_end_timestamp = genesis_timestamp + duration + start_delay;
         current_timestamp <= launch_promotion_end_timestamp
     }
 

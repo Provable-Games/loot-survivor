@@ -14,11 +14,13 @@ const PRAGMA_LORDS_KEY: felt252 = 'LORDS/USD'; // felt252 conversion of "LORDS/U
 const PRAGMA_PUBLISH_DELAY: u8 = 0;
 const PRAGMA_NUM_WORDS: u8 = 1;
 const GAME_EXPIRY_DAYS: u8 = 10;
-const OBITUARY_EXPIRY_DAYS: u8 = 10;
+const OBITUARY_EXPIRY_DAYS: u8 = 1;
 const MAX_U64: u64 = 0xffffffffffffffff;
 const STARTER_BEAST_ATTACK_DAMAGE: u16 = 10;
 const CONTROLLER_DELEGATE_ACCOUNT_INTERFACE_ID: felt252 =
     0x406350870d0cf6ca3332d174788fdcfa803e21633b124b746629775b9a294c;
+const DAO_CONTRACT_REWARD_ADVENTURER: u8 = 2;
+const PG_CONTRACT_REWARD_ADVENTURER: u8 = 3;
 
 mod messages {
     const NOT_ENOUGH_GOLD: felt252 = 'Not enough gold';
