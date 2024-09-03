@@ -2675,10 +2675,11 @@ mod tests {
         let launch_tournament_duration_seconds = 604800;
         let contract_deploy_time = 1725391638;
         start_cheat_block_timestamp_global(contract_deploy_time);
-    
+
         // Initialize the contract state for testing
         let mut state = Game::contract_state_for_testing();
         state._launch_tournament_duration_seconds.write(launch_tournament_duration_seconds);
+        state._genesis_timestamp.write(contract_deploy_time);
 
         // Create a span of qualifying collections
         let mut qualifying_collections = ArrayTrait::<LaunchTournamentCollections>::new();
@@ -2710,7 +2711,9 @@ mod tests {
         state._launch_tournament_scores.write(contract_address_const::<3>(), 150);
 
         // Mock the block timestamp
-        start_cheat_block_timestamp_global(contract_deploy_time + launch_tournament_duration_seconds + 1);
+        start_cheat_block_timestamp_global(
+            contract_deploy_time + launch_tournament_duration_seconds + 1
+        );
 
         // Call the settle_launch_tournament function
         state.settle_launch_tournament();
@@ -2725,8 +2728,14 @@ mod tests {
     #[test]
     #[should_panic(expected: ('tournament still active',))]
     fn test_settle_launch_tournament_before_end() {
+        let launch_tournament_duration_seconds = 604800;
+        let contract_deploy_time = 1725391638;
+        start_cheat_block_timestamp_global(contract_deploy_time);
+
         // Initialize the contract state for testing
         let mut state = Game::contract_state_for_testing();
+        state._genesis_timestamp.write(contract_deploy_time);
+        state._launch_tournament_duration_seconds.write(launch_tournament_duration_seconds);
 
         // Create a span of qualifying collections
         let mut qualifying_collections = ArrayTrait::<LaunchTournamentCollections>::new();
@@ -2745,13 +2754,10 @@ mod tests {
 
         // Initialize the launch tournament
         _initialize_launch_tournament(ref state, qualifying_collections.span());
-
-        // Set the tournament end time to a future timestamp
-        let current_timestamp = 1000000;
-        state._launch_tournament_duration_seconds.write(current_timestamp + 1000);
-
-        // Mock the block timestamp to be before the end time
-        start_cheat_block_timestamp_global(current_timestamp);
+        // Mock the block timestamp to be before the end of the launch tournament
+        start_cheat_block_timestamp_global(
+            contract_deploy_time + launch_tournament_duration_seconds - 1
+        );
 
         // Attempt to settle the tournament before it has ended (should panic)
         state.settle_launch_tournament();
