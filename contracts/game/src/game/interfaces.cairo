@@ -193,10 +193,16 @@ trait IERC721Mixin<TState> {
 }
 
 #[starknet::interface]
-trait ILeetLoot<T> {
+trait IBeasts<T> {
     fn mint(
         ref self: T, to: ContractAddress, beast: u8, prefix: u8, suffix: u8, level: u16, health: u16
     );
     fn isMinted(self: @T, beast: u8, prefix: u8, suffix: u8) -> bool;
     fn getMinter(self: @T) -> ContractAddress;
+}
+
+#[starknet::interface]
+trait IDelegateAccount<TContractState> {
+    fn set_delegate_account(ref self: TContractState, delegate_address: ContractAddress);
+    fn delegate_account(self: @TContractState) -> ContractAddress;
 }

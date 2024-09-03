@@ -17,6 +17,8 @@ const GAME_EXPIRY_DAYS: u8 = 10;
 const OBITUARY_EXPIRY_DAYS: u8 = 10;
 const MAX_U64: u64 = 0xffffffffffffffff;
 const STARTER_BEAST_ATTACK_DAMAGE: u16 = 10;
+const CONTROLLER_DELEGATE_ACCOUNT_INTERFACE_ID: felt252 =
+    0x406350870d0cf6ca3332d174788fdcfa803e21633b124b746629775b9a294c;
 
 mod messages {
     const NOT_ENOUGH_GOLD: felt252 = 'Not enough gold';
