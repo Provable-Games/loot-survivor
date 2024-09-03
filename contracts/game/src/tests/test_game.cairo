@@ -788,20 +788,20 @@ mod tests {
         // get valid item from market
         let market_items = @game.get_market(adventurer_id);
         let item_id = *market_items.at(0);
-        let mut shoppping_cart = ArrayTrait::<ItemPurchase>::new();
+        let mut shopping_cart = ArrayTrait::<ItemPurchase>::new();
 
-        shoppping_cart.append(ItemPurchase { item_id: item_id, equip: true });
+        shopping_cart.append(ItemPurchase { item_id: item_id, equip: true });
 
         // upgrade adventurer and don't buy anything
-        let mut empty_shoppping_cart = ArrayTrait::<ItemPurchase>::new();
+        let mut empty_shopping_cart = ArrayTrait::<ItemPurchase>::new();
         let stat_upgrades = Stats {
             strength: 0, dexterity: 0, vitality: 0, intelligence: 0, wisdom: 0, charisma: 1, luck: 0
         };
-        game.upgrade(adventurer_id, 0, stat_upgrades, empty_shoppping_cart.clone());
+        game.upgrade(adventurer_id, 0, stat_upgrades, empty_shopping_cart.clone());
 
         // after upgrade try to buy item
         // should panic with message 'Market is closed'
-        game.upgrade(adventurer_id, 0, stat_upgrades, shoppping_cart);
+        game.upgrade(adventurer_id, 0, stat_upgrades, shopping_cart);
     }
 
     #[test]
@@ -2672,8 +2672,13 @@ mod tests {
 
     #[test]
     fn test_settle_launch_tournament() {
+        let launch_tournament_duration_seconds = 604800;
+        let contract_deploy_time = 1725391638;
+        start_cheat_block_timestamp_global(contract_deploy_time);
+    
         // Initialize the contract state for testing
         let mut state = Game::contract_state_for_testing();
+        state._launch_tournament_duration_seconds.write(launch_tournament_duration_seconds);
 
         // Create a span of qualifying collections
         let mut qualifying_collections = ArrayTrait::<LaunchTournamentCollections>::new();
@@ -2704,12 +2709,8 @@ mod tests {
         state._launch_tournament_scores.write(contract_address_const::<2>(), 200);
         state._launch_tournament_scores.write(contract_address_const::<3>(), 150);
 
-        // Set the tournament end time to a past timestamp
-        let current_timestamp = 1000000;
-        state._launch_tournament_duration_seconds.write(current_timestamp - 1);
-
         // Mock the block timestamp
-        start_cheat_block_timestamp_global(current_timestamp);
+        start_cheat_block_timestamp_global(contract_deploy_time + launch_tournament_duration_seconds + 1);
 
         // Call the settle_launch_tournament function
         state.settle_launch_tournament();
