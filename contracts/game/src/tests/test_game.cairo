@@ -1958,8 +1958,6 @@ mod tests {
         // assert adventurer is dead
         assert(adventurer.health == 0, 'Adventurer is still alive');
 
-
-
         // check adventurer metadata to ensure birth date and death date are correct
         let mut metadata = game.get_adventurer_meta(adventurer_id);
         assert(metadata.death_date == death_date, 'Death date not set correctly');
@@ -2095,7 +2093,12 @@ mod tests {
         );
 
         // set block timestamp to one second after the launch tournament end
-        start_cheat_block_timestamp_global(current_block_time + genesis_tournament_duration + LAUNCH_TOURNAMENT_START_DELAY_SECONDS + 1);
+        start_cheat_block_timestamp_global(
+            current_block_time
+                + genesis_tournament_duration
+                + LAUNCH_TOURNAMENT_START_DELAY_SECONDS
+                + 1
+        );
         // try to enter launch tournament should panic
         game
             .enter_launch_tournament(
