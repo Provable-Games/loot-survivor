@@ -22,7 +22,7 @@ RUN apt-get update \
 RUN git clone --branch main https://github.com/Provable-Games/loot-survivor.git && cd loot-survivor
 
 # Install scarb v2.6.5
-RUN curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | bash -s -- -v 2.6.5
+RUN curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | bash -s -- -v 2.7.1
 
 # Change working directory to loot-survivor repo
 WORKDIR /root/loot-survivor
@@ -32,11 +32,11 @@ RUN /root/.local/bin/scarb build
 
 # Install starkli v0.3.3
 RUN curl https://get.starkli.sh | bash
-RUN /root/.starkli/bin/starkliup -v 0.2.9
+RUN /root/.starkli/bin/starkliup -v 0.3.4
 
 # Install DOJO
 RUN curl -L https://install.dojoengine.org | bash
-RUN /root/.dojo/bin/dojoup -v v0.7.4
+RUN /root/.dojo/bin/dojoup -v 1.0.0-alpha.9
 
 # Copy the start script
 COPY katana_start.sh /root/katana_start.sh
