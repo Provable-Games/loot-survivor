@@ -106,6 +106,7 @@ export interface SyscallsProps {
   setG20Unlock: (value: boolean) => void;
   provider: ProviderInterface;
   network: Network;
+  isFreeVrfPromotionActive: boolean;
 }
 
 function handleEquip(
@@ -224,6 +225,7 @@ export function createSyscalls({
   setG20Unlock,
   provider,
   network,
+  isFreeVrfPromotionActive,
 }: SyscallsProps) {
   const gameData = new GameData();
 
@@ -314,7 +316,7 @@ export function createSyscalls({
     const enoughEth = ethBalance > dollarPrice;
     const enoughLords = lordsBalance > BigInt(costToPlay ?? 0);
 
-    if (!enoughEth) {
+    if (!enoughEth && !isFreeVrfPromotionActive) {
       showTopUpDialog(true);
       setTopUpAccount("eth");
     } else if (!enoughLords) {

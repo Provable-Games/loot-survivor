@@ -216,6 +216,8 @@ function Home() {
   const setControllerDelegate = useUIStore(
     (state) => state.setControllerDelegate
   );
+  const [isFreeVrfPromotionActive, setIsFreeVrfPromotionActive] =
+    useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -320,6 +322,7 @@ function Home() {
     setG20Unlock,
     provider,
     network,
+    isFreeVrfPromotionActive,
   });
 
   const playState = useMemo(
@@ -676,6 +679,14 @@ function Home() {
       setOpenInterlude(true);
     }
   }, [adventurerLeveledUp, fetchUnlocksEntropy]);
+
+  useEffect(() => {
+    const fetchTournamentActive = async () => {
+      const result = await gameContract!.call("free_vrf_promotion_active", []);
+      setIsFreeVrfPromotionActive(result as boolean);
+    };
+    fetchTournamentActive();
+  }, []);
 
   return (
     <>
