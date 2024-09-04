@@ -35,9 +35,7 @@ vrf_premiums_address=0
 
 # extract account details from katana logs
 output=$(head -n 1 ~/katana.log | jq -r '.fields.message | fromjson | .accounts[0] | .[0], .[-1].private_key')
-account_address_decimal=$(echo "$output" | head -n 1)
-account_address=$(echo "obase=16; ibase=10; $account_address_decimal" | bc | tr '[:upper:]' '[:lower:]')
-full_account_address="0x${account_address}"
+account_address=$(echo "$output" | head -n 1)
 private_key=$(echo "$output" | tail -n 1)
 
 # fetch katana account for easy usage with starkli
