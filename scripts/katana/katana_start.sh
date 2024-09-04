@@ -45,7 +45,7 @@ starkli account fetch --force --output /katana/starkli_account $account_address
 game_class_hash=$(starkli declare --watch /root/loot-survivor/target/dev/game_Game.contract_class.json --private-key $private_key --compiler-version 2.7.1 2>/dev/null)
 
 # deploy game
-game_contract=$(starkli deploy --watch $game_class_hash $lords_contract $eth_contract $dao_address $pg_address $beasts_address $golden_token_address $terminal_timestamp $randomness_contract $oracle_address $renderer_contract $qualifying_collections $launch_promotion_end_timestamp $vrf_premiums_address --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null)
+game_contract=$(starkli deploy --watch $game_class_hash $lords_contract $eth_contract $dao_address $pg_address $beasts_address $golden_token_address $terminal_timestamp $randomness_contract $oracle_address $renderer_contract $qualifying_collections $launch_promotion_end_timestamp $vrf_premiums_address --account $STARKNET_ACCOUNT --private-key $private_key --max-fee 0.01 2>/dev/null)
 
 # Export game_contract and private key and publish to .bashrc
 export game_contract
