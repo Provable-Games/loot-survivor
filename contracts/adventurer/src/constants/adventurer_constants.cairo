@@ -48,8 +48,8 @@ const BEAST_SPECIAL_NAME_LEVEL_UNLOCK: u8 = 19;
 const XP_FOR_DISCOVERIES: u8 = 1;
 
 // controls how much faster items level up compared to the player
-const ITEM_XP_MULTIPLIER_BEASTS: u8 = 2;
-const ITEM_XP_MULTIPLIER_OBSTACLES: u8 = 1;
+const ITEM_XP_MULTIPLIER_BEASTS: u8 = 4;
+const ITEM_XP_MULTIPLIER_OBSTACLES: u8 = 2;
 
 const TWO_POW_64_NZ: NonZero<u128> = 0x10000000000000000;
 const TWO_POW_32_NZ: NonZero<u64> = 0x100000000;
