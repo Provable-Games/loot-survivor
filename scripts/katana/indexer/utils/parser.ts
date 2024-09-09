@@ -16,6 +16,8 @@ export const parseU128: Parser<string> = (data, startingFrom) => {
   };
 };
 
+export const parseU32 = parseU128;
+
 export const parseU64 = parseU128;
 
 export const parseU256: Parser<string> = (data, startingFrom) => {
