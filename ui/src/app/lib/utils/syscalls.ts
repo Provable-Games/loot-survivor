@@ -279,6 +279,154 @@ export function createSyscalls({
     showDeathDialog(true);
   };
 
+  // Helper functions
+  const checkBalances = async (costToPlay?: number) => {
+    const result = await pragmaContract.call("get_data_median", [
+      DataType.SpotEntry("19514442401534788"),
+    ]);
+    const dollarToWei = BigInt(1) * BigInt(10) ** BigInt(18);
+    const ethToWei = (result as PragmaPrice).price / BigInt(10) ** BigInt(8);
+    const dollarPrice = dollarToWei / ethToWei;
+
+    return {
+      enoughEth: ethBalance > dollarPrice,
+      enoughLords: lordsBalance > BigInt(costToPlay ?? 0),
+      dollarPrice,
+    };
+  };
+
+  const executeSpawn = async (formData: FormData, spawnCalls: Call[]) => {
+    startLoading(
+      "Create",
+      "Spawning Adventurer",
+      "adventurersByOwnerQuery",
+      undefined
+    );
+
+    const isArcade = checkArcadeConnector(connector!);
+    try {
+      const tx = await handleSubmitCalls(
+        account,
+        spawnCalls,
+        isArcade,
+        Number(ethBalance),
+        showTopUpDialog,
+        setTopUpAccount,
+        network
+      );
+      addTransaction({
+        hash: tx?.transaction_hash,
+        metadata: {
+          method: `Spawn ${formData.name}`,
+        },
+      });
+      const receipt = await provider?.waitForTransaction(tx?.transaction_hash, {
+        retryInterval: getWaitRetryInterval(network!),
+      });
+      // Handle if the tx was reverted
+      if (
+        (receipt as RevertedTransactionReceiptResponse).execution_status ===
+        "REVERTED"
+      ) {
+        throw new Error(
+          (receipt as RevertedTransactionReceiptResponse).revert_reason
+        );
+      }
+      // Here we need to process the StartGame event first and use the output for AmbushedByBeast event
+      const startGameEvents = await parseEvents(
+        receipt as InvokeTransactionReceiptResponse,
+        undefined,
+        beastsContract.address,
+        "StartGame"
+      );
+      const events = await parseEvents(
+        receipt as InvokeTransactionReceiptResponse,
+        {
+          name: formData["name"],
+          startBlock: startGameEvents[0].data[0].startBlock,
+          revealBlock: startGameEvents[0].data[0].revealBlock,
+          createdTime: new Date(),
+        }
+      );
+      const adventurerState = events.find(
+        (event) => event.name === "AmbushedByBeast"
+      ).data[0];
+      setData("adventurersByOwnerQuery", {
+        adventurers: [
+          ...(queryData.adventurersByOwnerQuery?.adventurers ?? []),
+          adventurerState,
+        ],
+      });
+      setData("adventurerByIdQuery", {
+        adventurers: [adventurerState],
+      });
+      setAdventurer(adventurerState);
+      setData("latestDiscoveriesQuery", {
+        discoveries: [
+          events.find((event) => event.name === "AmbushedByBeast").data[1],
+        ],
+      });
+      setData("beastQuery", {
+        beasts: [
+          events.find((event) => event.name === "AmbushedByBeast").data[2],
+        ],
+      });
+      setData("battlesByBeastQuery", {
+        battles: [
+          events.find((event) => event.name === "AmbushedByBeast").data[3],
+        ],
+      });
+      setData("itemsByAdventurerQuery", {
+        items: [
+          {
+            item: adventurerState.weapon,
+            adventurerId: adventurerState["id"],
+            owner: true,
+            equipped: true,
+            ownerAddress: adventurerState["owner"],
+            xp: 0,
+            special1: null,
+            special2: null,
+            special3: null,
+            isAvailable: false,
+            purchasedTime: null,
+            timestamp: new Date(),
+          },
+        ],
+      });
+      stopLoading(`You have spawned ${formData.name}!`, false, "Create");
+      setAdventurer(adventurerState);
+      setScreen("play");
+      !onKatana && getEthBalance();
+    } catch (e) {
+      console.log(e);
+      stopLoading(e, true);
+    }
+  };
+
+  const addApprovalCalls = (
+    spawnCalls: Call[],
+    dollarPrice: bigint,
+    costToPlay?: number
+  ) => [
+    ...spawnCalls,
+    {
+      contractAddress: ethContract?.address ?? "",
+      entrypoint: "approve",
+      calldata: [gameContract?.address ?? "", dollarPrice.toString(), "0"],
+    },
+    {
+      contractAddress: lordsContract?.address ?? "",
+      entrypoint: "approve",
+      calldata: [gameContract?.address ?? "", costToPlay!.toString(), "0"],
+    },
+  ];
+
+  const handleInsufficientFunds = (currency: "eth" | "lords") => {
+    showTopUpDialog(true);
+    setTopUpAccount(currency);
+  };
+
   const spawn = async (
     formData: FormData,
     goldenTokenId: string,
@@ -301,157 +449,26 @@ export function createSyscalls({
     };
 
     addToCalls(mintAdventurerTx);
-
     let spawnCalls = [...calls, mintAdventurerTx];
 
-    const result = await pragmaContract.call("get_data_median", [
-      DataType.SpotEntry("19514442401534788"),
-    ]);
-    const dollarToWei = BigInt(1) * BigInt(10) ** BigInt(18);
-    const ethToWei = (result as PragmaPrice).price / BigInt(10) ** BigInt(8);
-    const dollarPrice = dollarToWei / ethToWei;
-
-    const enoughEth = ethBalance > dollarPrice;
-    const enoughLords = lordsBalance > BigInt(costToPlay ?? 0);
-
-    if (!enoughEth) {
-      showTopUpDialog(true);
-      setTopUpAccount("eth");
-    } else if (!enoughLords) {
-      showTopUpDialog(true);
-      setTopUpAccount("lords");
-    } else {
-      if (!onKatana && goldenTokenId === "0") {
-        const approvePragmaEthSpendingTx = {
-          contractAddress: ethContract?.address ?? "",
-          entrypoint: "approve",
-          calldata: [gameContract?.address ?? "", dollarPrice!.toString(), "0"],
-        };
-
-        const approveLordsSpendingTx = {
-          contractAddress: lordsContract?.address ?? "",
-          entrypoint: "approve",
-          calldata: [gameContract?.address ?? "", costToPlay!.toString(), "0"],
-        };
-
-        spawnCalls = [
-          ...calls,
-          approvePragmaEthSpendingTx,
-          approveLordsSpendingTx,
-          mintAdventurerTx,
-        ];
-      }
-
-      startLoading(
-        "Create",
-        "Spawning Adventurer",
-        "adventurersByOwnerQuery",
-        undefined
+    if (!onKatana) {
+      const { enoughEth, enoughLords, dollarPrice } = await checkBalances(
+        costToPlay
       );
 
-      const isArcade = checkArcadeConnector(connector!);
-      try {
-        const tx = await handleSubmitCalls(
-          account,
-          spawnCalls,
-          isArcade,
-          Number(ethBalance),
-          showTopUpDialog,
-          setTopUpAccount,
-          network
-        );
-        addTransaction({
-          hash: tx?.transaction_hash,
-          metadata: {
-            method: `Spawn ${formData.name}`,
-          },
-        });
-        const receipt = await provider?.waitForTransaction(
-          tx?.transaction_hash,
-          {
-            retryInterval: getWaitRetryInterval(network!),
-          }
-        );
-        // Handle if the tx was reverted
-        if (
-          (receipt as RevertedTransactionReceiptResponse).execution_status ===
-          "REVERTED"
-        ) {
-          throw new Error(
-            (receipt as RevertedTransactionReceiptResponse).revert_reason
-          );
-        }
-        // Here we need to process the StartGame event first and use the output for AmbushedByBeast event
-        const startGameEvents = await parseEvents(
-          receipt as InvokeTransactionReceiptResponse,
-          undefined,
-          beastsContract.address,
-          "StartGame"
-        );
-        const events = await parseEvents(
-          receipt as InvokeTransactionReceiptResponse,
-          {
-            name: formData["name"],
-            startBlock: startGameEvents[0].data[0].startBlock,
-            revealBlock: startGameEvents[0].data[0].revealBlock,
-            createdTime: new Date(),
-          }
-        );
-        const adventurerState = events.find(
-          (event) => event.name === "AmbushedByBeast"
-        ).data[0];
-        setData("adventurersByOwnerQuery", {
-          adventurers: [
-            ...(queryData.adventurersByOwnerQuery?.adventurers ?? []),
-            adventurerState,
-          ],
-        });
-        setData("adventurerByIdQuery", {
-          adventurers: [adventurerState],
-        });
-        setAdventurer(adventurerState);
-        setData("latestDiscoveriesQuery", {
-          discoveries: [
-            events.find((event) => event.name === "AmbushedByBeast").data[1],
-          ],
-        });
-        setData("beastQuery", {
-          beasts: [
-            events.find((event) => event.name === "AmbushedByBeast").data[2],
-          ],
-        });
-        setData("battlesByBeastQuery", {
-          battles: [
-            events.find((event) => event.name === "AmbushedByBeast").data[3],
-          ],
-        });
-        setData("itemsByAdventurerQuery", {
-          items: [
-            {
-              item: adventurerState.weapon,
-              adventurerId: adventurerState["id"],
-              owner: true,
-              equipped: true,
-              ownerAddress: adventurerState["owner"],
-              xp: 0,
-              special1: null,
-              special2: null,
-              special3: null,
-              isAvailable: false,
-              purchasedTime: null,
-              timestamp: new Date(),
-            },
-          ],
-        });
-        stopLoading(`You have spawned ${formData.name}!`, false, "Create");
-        setAdventurer(adventurerState);
-        setScreen("play");
-        !onKatana && getEthBalance();
-      } catch (e) {
-        console.log(e);
-        stopLoading(e, true);
+      if (!enoughEth) {
+        return handleInsufficientFunds("eth");
+      }
+      if (!enoughLords) {
+        return handleInsufficientFunds("lords");
+      }
+
+      if (goldenTokenId === "0") {
+        spawnCalls = addApprovalCalls(spawnCalls, dollarPrice, costToPlay);
       }
     }
+
+    await executeSpawn(formData, spawnCalls);
   };
 
   const explore = async (till_beast: boolean) => {
