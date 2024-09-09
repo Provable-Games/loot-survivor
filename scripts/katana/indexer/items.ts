@@ -300,54 +300,21 @@ export default function transform({ header, events }: Block) {
         const as = value.adventurerState;
         console.log("ITEMS_LEVELED_UP", "->", "ITEMS UPDATES");
         const result = value.items.map((item) => {
-          if (item.prefixesUnlocked && item.suffixUnlocked) {
-            return {
-              entity: {
+          return {
+            entity: {
+              item: checkExistsInt(item.itemId),
+              adventurerId: checkExistsInt(parseInt(as.adventurerId)),
+            },
+            update: {
+              $set: {
                 item: checkExistsInt(item.itemId),
                 adventurerId: checkExistsInt(parseInt(as.adventurerId)),
+                special1: checkExistsInt(item.specials.special1),
+                special2: checkExistsInt(item.specials.special2),
+                special3: checkExistsInt(item.specials.special3),
               },
-              update: {
-                $set: {
-                  item: checkExistsInt(item.itemId),
-                  adventurerId: checkExistsInt(parseInt(as.adventurerId)),
-                  special1: checkExistsInt(item.specials.special1),
-                  special2: checkExistsInt(item.specials.special2),
-                  special3: checkExistsInt(item.specials.special3),
-                },
-              },
-            };
-          } else if (item.prefixesUnlocked) {
-            return {
-              entity: {
-                item: checkExistsInt(item.itemId),
-                adventurerId: checkExistsInt(parseInt(as.adventurerId)),
-              },
-              update: {
-                $set: {
-                  item: checkExistsInt(item.itemId),
-                  adventurerId: checkExistsInt(parseInt(as.adventurerId)),
-                  special2: checkExistsInt(item.specials.special2),
-                  special3: checkExistsInt(item.specials.special3),
-                },
-              },
-            };
-          } else if (item.suffixUnlocked) {
-            return {
-              entity: {
-                item: checkExistsInt(item.itemId),
-                adventurerId: checkExistsInt(parseInt(as.adventurerId)),
-              },
-              update: {
-                $set: {
-                  item: checkExistsInt(item.itemId),
-                  adventurerId: checkExistsInt(parseInt(as.adventurerId)),
-                  special1: checkExistsInt(item.specials.special1),
-                  special2: checkExistsInt(item.specials.special2),
-                  special3: checkExistsInt(item.specials.special3),
-                },
-              },
-            };
-          }
+            },
+          };
         });
         const filteredResult = result.filter((value) => value !== undefined);
         return filteredResult;
@@ -399,8 +366,8 @@ export default function transform({ header, events }: Block) {
         const { value } = parseTransfer(event.data, 0);
         console.log("TRANSFER", "->", "ITEMS UPDATES");
         return updateItemsOwner({
-          adventurerId: value.toAddress,
-          newOwner: value.fromAddress,
+          adventurerId: value.tokenId,
+          newOwner: value.toAddress,
           timestamp: new Date().toISOString(),
         });
       }
