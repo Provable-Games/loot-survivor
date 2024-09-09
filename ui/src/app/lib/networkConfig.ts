@@ -63,7 +63,7 @@ export const networkConfig = {
     tokensGQLURL: "",
     ethAddress: "0x0",
     gameAddress:
-      "0x0785d0746e96f54a58bf590ea3dc7b6f7f58e6e25d9af1a32a08eb4435de3357",
+      "0x071a169e58c88ac4bd462bffaa04d53ce575321edd5634d7e381bf26357a9883",
     lordsAddress: "0x0",
     beastsAddress: "0x0",
     goldenTokenAddress: "0x0",
