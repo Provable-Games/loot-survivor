@@ -106,6 +106,7 @@ export interface SyscallsProps {
   setG20Unlock: (value: boolean) => void;
   provider: ProviderInterface;
   network: Network;
+  freeVRF: boolean;
 }
 
 function handleEquip(
@@ -224,6 +225,7 @@ export function createSyscalls({
   setG20Unlock,
   provider,
   network,
+  freeVRF,
 }: SyscallsProps) {
   const gameData = new GameData();
 
@@ -456,7 +458,7 @@ export function createSyscalls({
         costToPlay
       );
 
-      if (!enoughEth) {
+      if (!enoughEth && !freeVRF) {
         return handleInsufficientFunds("eth");
       }
       if (!enoughLords) {

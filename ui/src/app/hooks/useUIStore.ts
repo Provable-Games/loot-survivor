@@ -142,6 +142,8 @@ type State = {
   setTransferredAdventurerIds: (value: number[]) => void;
   openInterlude: boolean;
   setOpenInterlude: (value: boolean) => void;
+  freeVRF: boolean;
+  setFreeVRF: (value: boolean) => void;
 };
 
 const useUIStore = create<State>((set) => ({
@@ -263,6 +265,8 @@ const useUIStore = create<State>((set) => ({
     set({ transferredAdventurerIds: value }),
   openInterlude: false,
   setOpenInterlude: (value) => set({ openInterlude: value }),
+  freeVRF: false,
+  setFreeVRF: (value) => set({ freeVRF: value }),
 }));
 
 export default useUIStore;

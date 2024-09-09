@@ -158,6 +158,8 @@ function Home() {
   const openInterlude = useUIStore((state) => state.openInterlude);
   const setOpenInterlude = useUIStore((state) => state.setOpenInterlude);
   const setG20Unlock = useUIStore((state) => state.setG20Unlock);
+  const freeVRF = useUIStore((state) => state.freeVRF);
+  const setFreeVRF = useUIStore((state) => state.setFreeVRF);
 
   const { contract: gameContract } = useContract({
     address: networkConfig[network!].gameAddress,
@@ -317,6 +319,7 @@ function Home() {
     setG20Unlock,
     provider,
     network,
+    freeVRF,
   });
 
   const playState = useMemo(
@@ -673,6 +676,15 @@ function Home() {
       setOpenInterlude(true);
     }
   }, [adventurerLeveledUp, fetchUnlocksEntropy]);
+
+  useEffect(() => {
+    const fetchFreeVRF = async () => {
+      await gameContract!.call("free_vrf_promotion_active", []).then((res) => {
+        setFreeVRF(res as boolean);
+      });
+    };
+    fetchFreeVRF();
+  }, []);
 
   return (
     <>
