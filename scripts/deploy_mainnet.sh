@@ -48,13 +48,11 @@ qualifying_collections="$num_qualifying_collections $bloberts_address $blobert_c
 
 pragma_multisig=0x02d10bBF2cC27a2404E4E1dB2B2FBCf26B0Aa8BDaF3de16e0BfEE12699bc337a
 
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// TODO: UPDATE THESE SETTINGS BEFORE FULL RELEASE
 launch_tournament_duration_seconds=2592000 // 30 days
 launch_tournament_games_per_collection=1600 
 game_start_delay=14400 // 4hrs
-free_vrf_promotion_duration_seconds=604800
-//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+free_vrf_promotion_duration_seconds=604800 // 1 week
+
 # Source env vars
 ENV_FILE="/workspaces/loot-survivor/.env"
 source $ENV_FILE
