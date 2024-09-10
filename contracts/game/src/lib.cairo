@@ -172,7 +172,7 @@ mod Game {
         _leaderboard: Leaderboard,
         _payment_token_dispatcher: IERC20Dispatcher,
         _oracle_dispatcher: IPragmaABIDispatcher,
-        _previous_free_game_timestamp: Map::<(ContractAddress, u32), u64>,
+        _previous_free_game_timestamp: Map::<(ContractAddress, u128), u64>,
         _terminal_timestamp: u64,
         _vrf_dispatcher: IRandomnessDispatcher,
         _vrf_premiums_address: ContractAddress,
@@ -377,7 +377,7 @@ mod Game {
         /// starter beast is defeated
         /// @param custom_renderer A ContractAddress to use for rendering
         /// the NFT. Provide 0 to use the default renderer.
-        /// @param launch_tournament_winner_token_id A u32 representing the id of a token that won
+        /// @param launch_tournament_winner_token_id A u128 representing the id of a token that won
         /// the launch tournament
         /// @param mint_to A ContractAddress representing the address to mint the adventurer to.
         /// @return A felt252 representing the adventurer id.
@@ -389,7 +389,7 @@ mod Game {
             golden_token_id: u8,
             delay_reveal: bool,
             custom_renderer: ContractAddress,
-            launch_tournament_winner_token_id: u32,
+            launch_tournament_winner_token_id: u128,
             mint_to: ContractAddress
         ) -> felt252 {
             // don't process payment distributions on Katana
@@ -993,7 +993,7 @@ mod Game {
         /// @param delay_stat_reveal A bool representing whether to delay the stat reveal.
         /// @param collection_address A ContractAddress representing the address of the NFT
         /// collection.
-        /// @param token_id a u32 representing the token ID of the NFT.
+        /// @param token_id a u128 representing the token ID of the NFT.
         /// @param mint_from A ContractAddress representing the address that will be used for
         /// qualifying collections @param mint_to A ContractAddress representing the address to mint
         /// the games to.
@@ -1007,7 +1007,7 @@ mod Game {
             custom_renderer: ContractAddress,
             delay_stat_reveal: bool,
             collection_address: ContractAddress,
-            token_id: u32,
+            token_id: u128,
             mint_from: ContractAddress,
             mint_to: ContractAddress,
             signature: Array<felt252>
@@ -1054,7 +1054,7 @@ mod Game {
         /// @param delay_stat_reveal A bool representing whether to delay the stat reveal.
         /// @param collection_address A ContractAddress representing the address of the NFT
         /// collection.
-        /// @param token_id a u32 representing the token ID of the NFT.
+        /// @param token_id a u128 representing the token ID of the NFT.
         /// @param mint_to A ContractAddress representing the address to mint the adventurer to.
         /// @return An Array of felt252 representing the adventurer IDs of the adventurers that were
         fn enter_launch_tournament(
@@ -1064,7 +1064,7 @@ mod Game {
             custom_renderer: ContractAddress,
             delay_stat_reveal: bool,
             collection_address: ContractAddress,
-            token_id: u32,
+            token_id: u128,
             mint_to: ContractAddress
         ) -> Array<felt252> {
             _enter_launch_tournament(
@@ -1266,7 +1266,7 @@ mod Game {
         }
 
         fn free_game_available(
-            self: @ContractState, token_type: FreeGameTokenType, token_id: u32
+            self: @ContractState, token_type: FreeGameTokenType, token_id: u128
         ) -> bool {
             _free_game_available(self, token_type, token_id)
         }
@@ -1338,7 +1338,7 @@ mod Game {
         custom_renderer: ContractAddress,
         delay_stat_reveal: bool,
         collection_address: ContractAddress,
-        token_id: u32,
+        token_id: u128,
         mint_to: ContractAddress,
         owner: ContractAddress
     ) -> Array<felt252> {
@@ -1982,7 +1982,7 @@ mod Game {
     /// @param delay_stat_reveal A bool representing whether to delay the stat reveal until the
     /// starter beast is defeated.
     /// @param golden_token_id A u8 representing the golden token id of the adventurer.
-    /// @param launch_tournament_winner_token_id A u32 representing the token id of the launch
+    /// @param launch_tournament_winner_token_id A u128 representing the token id of the launch
     /// @param mint_to A ContractAddress representing the address to mint the adventurer to.
     /// @return A felt252 representing the adventurer id.
     fn _start_game(
@@ -1992,7 +1992,7 @@ mod Game {
         custom_renderer: ContractAddress,
         delay_stat_reveal: bool,
         golden_token_id: u8,
-        launch_tournament_winner_token_id: u32,
+        launch_tournament_winner_token_id: u128,
         mint_to: ContractAddress
     ) -> felt252 {
         // assert game terminal time has not been reached
@@ -3693,7 +3693,7 @@ mod Game {
     fn _assert_nft_ownership(
         self: @ContractState,
         nft_collection_address: ContractAddress,
-        token_id: u32,
+        token_id: u128,
         caller: ContractAddress
     ) {
         let erc721_dispatcher = IERC721Dispatcher { contract_address: nft_collection_address };
@@ -3702,7 +3702,7 @@ mod Game {
     }
 
     fn _get_token_hash(
-        self: @ContractState, collection_address: ContractAddress, token_id: u32
+        self: @ContractState, collection_address: ContractAddress, token_id: u128
     ) -> felt252 {
         let mut hash_span = ArrayTrait::<felt252>::new();
         hash_span.append(collection_address.into());
@@ -4196,7 +4196,7 @@ mod Game {
     struct ClaimedFreeGame {
         adventurer_id: felt252,
         collection_address: ContractAddress,
-        token_id: u32
+        token_id: u128
     }
 
     #[derive(Drop, starknet::Event)]
@@ -4641,7 +4641,7 @@ mod Game {
         ref self: ContractState,
         adventurer_id: felt252,
         collection_address: ContractAddress,
-        token_id: u32
+        token_id: u128
     ) {
         self.emit(ClaimedFreeGame { adventurer_id, collection_address, token_id });
     }
@@ -4653,7 +4653,7 @@ mod Game {
     }
 
     fn _free_game_available(
-        self: @ContractState, token_type: FreeGameTokenType, token_id: u32
+        self: @ContractState, token_type: FreeGameTokenType, token_id: u128
     ) -> bool {
         _last_usage(self, token_type, token_id) + token_type.get_cooldown() <= get_block_timestamp()
     }
@@ -4663,7 +4663,7 @@ mod Game {
     /// @param token_type The type of the token
     /// @param token_id The ID of the token
     fn _pay_with_special_token(
-        ref self: ContractState, token_type: FreeGameTokenType, token_id: u32
+        ref self: ContractState, token_type: FreeGameTokenType, token_id: u128
     ) {
         // assert caller owns token
         let token_dispatcher = _get_token_dispatcher(@self, token_type);
@@ -4722,7 +4722,7 @@ mod Game {
     /// @param token_type The type of the token
     /// @param token_id The ID of the token
     /// @return The last usage timestamp
-    fn _last_usage(self: @ContractState, token_type: FreeGameTokenType, token_id: u32) -> u64 {
+    fn _last_usage(self: @ContractState, token_type: FreeGameTokenType, token_id: u128) -> u64 {
         let token_address = _get_token_address(self, token_type);
         self._previous_free_game_timestamp.read((token_address, token_id))
     }

@@ -20,7 +20,7 @@ trait IGame<TContractState> {
         golden_token_id: u8,
         delay_reveal: bool,
         custom_renderer: ContractAddress,
-        launch_tournament_winner_token_id: u32,
+        launch_tournament_winner_token_id: u128,
         mint_to: ContractAddress
     ) -> felt252;
     fn explore(
@@ -61,7 +61,7 @@ trait IGame<TContractState> {
         custom_renderer: ContractAddress,
         delay_stat_reveal: bool,
         collection_address: ContractAddress,
-        token_id: u32,
+        token_id: u128,
         mint_to: ContractAddress
     ) -> Array<felt252>;
     fn enter_launch_tournament_with_signature(
@@ -71,7 +71,7 @@ trait IGame<TContractState> {
         custom_renderer: ContractAddress,
         delay_stat_reveal: bool,
         collection_address: ContractAddress,
-        token_id: u32,
+        token_id: u128,
         mint_from: ContractAddress,
         mint_to: ContractAddress,
         signature: Array<felt252>
@@ -133,7 +133,7 @@ trait IGame<TContractState> {
     fn get_leaderboard(self: @TContractState) -> Leaderboard;
     fn get_cost_to_play(self: @TContractState) -> u128;
     fn free_game_available(
-        self: @TContractState, token_type: FreeGameTokenType, token_id: u32
+        self: @TContractState, token_type: FreeGameTokenType, token_id: u128
     ) -> bool;
     fn uses_custom_renderer(self: @TContractState, adventurer_id: felt252) -> bool;
     fn get_adventurer_renderer(self: @TContractState, adventurer_id: felt252) -> ContractAddress;
