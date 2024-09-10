@@ -78,7 +78,7 @@ mod tests {
     const DAY: u64 = 86400;
     const TESTING_CHAIN_ID: felt252 = 0x4c4f4f545355525649564f52;
     const LAUNCH_TOURNAMENT_GAMES_PER_COLLCTION: u16 = 300;
-    const start_delay_seconds: u64 = 3600;
+    const start_delay_seconds: u64 = 0;
     const FREE_VRF_PROMOTION_DURATION_SECONDS: u64 = 25200;
 
     fn INTERFACE_ID() -> ContractAddress {
