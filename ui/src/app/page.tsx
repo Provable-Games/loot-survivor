@@ -227,7 +227,7 @@ function Home() {
       setUsername(username || "");
       setControllerDelegate("");
     };
-    if (connector?.id.includes("cartridge")) {
+    if (connector?.id.includes("controller")) {
       setIsController(true);
       init();
     } else {

@@ -73,9 +73,17 @@ export const AdventurerListCard = ({
         });
 
         // Set validAddress based on the current subdomain
-        if (subdomain === ".ctrl" && ctrlAddress) {
+        if (
+          subdomain === ".ctrl" &&
+          ctrlAddress &&
+          !transferAddress.startsWith("0x")
+        ) {
           setValidAddress(ctrlAddress);
-        } else if (subdomain === "" && starknetIdAddress) {
+        } else if (
+          subdomain === "" &&
+          starknetIdAddress &&
+          !transferAddress.startsWith("0x")
+        ) {
           setValidAddress(starknetIdAddress);
         } else {
           // If not a Starknet ID, validate as a regular address
