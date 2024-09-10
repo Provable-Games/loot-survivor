@@ -245,8 +245,7 @@ mod Game {
     /// @param vrf_payments_address: the address of the VRF payments
     /// @param launch_tournament_games_per_collection: the number of games per collection for the
     /// launch tournament
-    /// @param start_delay_seconds: the delay before the launch tournament claims
-    /// starts
+    /// @param start_delay_seconds: the delay before the contract starts accepting games
     /// @param free_vrf_promotion_duration_seconds: the duration of the free VRF promotion
     #[constructor]
     fn constructor(
