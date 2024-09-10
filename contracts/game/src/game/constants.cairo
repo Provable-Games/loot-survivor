@@ -79,6 +79,7 @@ mod messages {
     const FREE_GAME_UNAVAILABLE: felt252 = 'free game not yet available';
     const NOT_PARTICIPATED_IN_TOURNAMENT: felt252 = 'not tournament participant';
     const COLLECTION_OUT_OF_GAMES: felt252 = 'collection out of games';
+    const GAME_NOT_LIVE: felt252 = 'game not live';
 }
 
 #[derive(Drop, Copy)]

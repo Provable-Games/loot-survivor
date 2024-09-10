@@ -24,7 +24,7 @@ vrf_premiums_address=0x06a519DCcd7Ed4D1aACD3975691AEEae47bF7f9F5b62Ed7C2D929D2E2
 launch_tournament_duration_seconds=86400
 launch_tournament_games_per_collection=300
 launch_tournament_winner_token_id=0
-launch_tournament_start_delay_seconds=3600
+start_delay_seconds=3600
 free_vrf_promotion_duration_seconds=604800
 mint_to=0
 
@@ -46,7 +46,7 @@ game_class_hash=$(starkli declare --watch /workspaces/loot-survivor/target/dev/g
 renderer_contract=$(starkli deploy --watch $renderer_class_hash --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null)
 
 # deploy game
-game_contract=$(starkli deploy --watch $game_class_hash $lords_contract $eth_contract $dao_address $pg_address $beasts_address $golden_token_address $terminal_timestamp $randomness_contract $oracle_address $renderer_contract $qualifying_collections $launch_tournament_duration_seconds $vrf_premiums_address $launch_tournament_games_per_collection $launch_tournament_start_delay_seconds $free_vrf_promotion_duration_seconds --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null)
+game_contract=$(starkli deploy --watch $game_class_hash $lords_contract $eth_contract $dao_address $pg_address $beasts_address $golden_token_address $terminal_timestamp $randomness_contract $oracle_address $renderer_contract $qualifying_collections $launch_tournament_duration_seconds $vrf_premiums_address $launch_tournament_games_per_collection $start_delay_seconds $free_vrf_promotion_duration_seconds --account $STARKNET_ACCOUNT --private-key $PRIVATE_KEY --max-fee 0.01 2>/dev/null)
 
 # mint lords
 echo "minting lords"

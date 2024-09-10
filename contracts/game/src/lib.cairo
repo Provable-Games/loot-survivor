@@ -167,7 +167,7 @@ mod Game {
         _launch_tournament_duration_seconds: u64,
         _launch_tournament_participants: Map::<felt252, ContractAddress>,
         _launch_tournament_scores: Map::<ContractAddress, u32>,
-        _launch_tournament_start_delay_seconds: u64,
+        _start_delay_seconds: u64,
         _launch_tournament_game_counts: Map::<ContractAddress, u16>,
         _leaderboard: Leaderboard,
         _payment_token_dispatcher: IERC20Dispatcher,
@@ -245,7 +245,7 @@ mod Game {
     /// @param vrf_payments_address: the address of the VRF payments
     /// @param launch_tournament_games_per_collection: the number of games per collection for the
     /// launch tournament
-    /// @param launch_tournament_start_delay_seconds: the delay before the launch tournament claims
+    /// @param start_delay_seconds: the delay before the launch tournament claims
     /// starts
     /// @param free_vrf_promotion_duration_seconds: the duration of the free VRF promotion
     #[constructor]
@@ -265,7 +265,7 @@ mod Game {
         launch_tournament_duration_seconds: u64,
         vrf_payments_address: ContractAddress,
         launch_tournament_games_per_collection: u16,
-        launch_tournament_start_delay_seconds: u64,
+        start_delay_seconds: u64,
         free_vrf_promotion_duration_seconds: u64
     ) {
         if payment_token.is_non_zero() {
@@ -314,10 +314,8 @@ mod Game {
             self._launch_tournament_duration_seconds.write(launch_tournament_duration_seconds);
         }
 
-        if launch_tournament_start_delay_seconds != 0 {
-            self
-                ._launch_tournament_start_delay_seconds
-                .write(launch_tournament_start_delay_seconds);
+        if start_delay_seconds != 0 {
+            self._start_delay_seconds.write(start_delay_seconds);
         }
 
         if launch_tournament_games_per_collection != 0 {
@@ -413,6 +411,9 @@ mod Game {
                     _pay_for_vrf(@self);
                 }
             }
+
+            // assert game is live
+            _assert_game_is_live(@self);
 
             // start the game
             let adventurer_id = _start_game(
@@ -1344,6 +1345,9 @@ mod Game {
     ) -> Array<felt252> {
         // assert game terminal time has not been reached
         _assert_launch_tournament_is_active(@self);
+
+        // assert game is live
+        _assert_game_is_live(@self);
 
         // assert the nft collection is part of the set of free game nft collections
         _assert_is_qualifying_nft(@self, collection_address);
@@ -3282,7 +3286,6 @@ mod Game {
     /// @param self A reference to the ContractState object.
     /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
     /// @return The bag.
-    #[inline(always)]
     fn _load_bag(self: @ContractState, adventurer_id: felt252) -> Bag {
         self._bag.read(adventurer_id)
     }
@@ -3293,7 +3296,6 @@ mod Game {
     /// @param self A reference to the ContractState object.
     /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
     /// @param bag A reference to the bag.
-    #[inline(always)]
     fn _save_bag(ref self: ContractState, adventurer_id: felt252, bag: Bag) {
         self._bag.write(adventurer_id, bag);
     }
@@ -3398,7 +3400,6 @@ mod Game {
     /// @param self A reference to the ContractState object.
     /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
     /// @param adventurer_meta A reference to the adventurer metadata.
-    #[inline(always)]
     fn _save_adventurer_metadata(
         ref self: ContractState, adventurer_id: felt252, adventurer_meta: AdventurerMetadata
     ) {
@@ -3412,7 +3413,6 @@ mod Game {
     /// @param self A reference to the ContractState object.
     /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
     /// @param name A felt252 representing the name of the adventurer.
-    #[inline(always)]
     fn _save_adventurer_name(ref self: ContractState, adventurer_id: felt252, name: felt252) {
         self._adventurer_name.write(adventurer_id, name);
     }
@@ -3631,9 +3631,25 @@ mod Game {
         assert(!_is_launch_tournament_active(self), messages::TOURNAMENT_STILL_ACTIVE);
     }
 
+    fn _assert_game_is_live(self: @ContractState) {
+        assert(_is_game_live(self), messages::GAME_NOT_LIVE);
+    }
+
+    fn _is_game_live(self: @ContractState) -> bool {
+        let current_timestamp = starknet::get_block_info().unbox().block_timestamp;
+        // get genesis timestamp
+        let genesis_timestamp = self._genesis_timestamp.read();
+        // get start delay
+        let start_delay = self._start_delay_seconds.read();
+        // get game start time
+        let game_start_time = genesis_timestamp + start_delay;
+        // assert current timestamp is greater than or equal to game start time
+        current_timestamp >= game_start_time
+    }
+
     fn _launch_tournament_end_time(self: @ContractState) -> u64 {
         let genesis_timestamp = self._genesis_timestamp.read();
-        let start_delay = self._launch_tournament_start_delay_seconds.read();
+        let start_delay = self._start_delay_seconds.read();
         let duration = self._launch_tournament_duration_seconds.read();
         genesis_timestamp + duration + start_delay
     }
@@ -3790,12 +3806,10 @@ mod Game {
         }
     }
 
-    #[inline(always)]
     fn _get_level_seed(self: @ContractState, adventurer_id: felt252) -> u64 {
         _load_adventurer_metadata(self, adventurer_id).level_seed
     }
 
-    #[inline(always)]
     fn _is_top_score(self: @ContractState, score: u16) -> bool {
         if score > self._leaderboard.read().third.xp {
             true
@@ -3804,7 +3818,6 @@ mod Game {
         }
     }
 
-    #[inline(always)]
     fn _get_owner(self: @ContractState, adventurer_id: felt252) -> ContractAddress {
         self.erc721.ERC721_owners.read(adventurer_id.into())
     }
