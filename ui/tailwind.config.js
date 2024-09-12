@@ -6,10 +6,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        "terminal-green": "rgba(173, 216, 230, 1)", // base UI green
-        "terminal-green-75": "rgba(173, 216, 230, 0.75)", // 70% opacity
-        "terminal-green-50": "rgba(173, 216, 230, 0.5)", // 50% opacity
-        "terminal-green-25": "rgba(173, 216, 230, 0.25)", // 25% opacity
+        "terminal-green": "rgba(74, 246, 38, 1)", // base UI green
+        "terminal-green-75": "rgba(74, 246, 38, 0.75)", // 70% opacity
+        "terminal-green-50": "rgba(74, 246, 38, 0.5)", // 50% opacity
+        "terminal-green-25": "rgba(74, 246, 38, 0.25)", // 25% opacity
         "terminal-yellow": "rgba(255, 176, 0, 1)", // base UI yellow
         "terminal-yellow-75": "rgba(255, 176, 0, 0.75)", // 70% opacity
         "terminal-yellow-50": "rgba(255, 176, 0, 0.5)", // 50% opacity

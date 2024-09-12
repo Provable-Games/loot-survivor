@@ -1,11 +1,11 @@
-import React, { useMemo } from "react";
-import { formatXP, padAddress } from "@/app/lib/utils";
-import { collectionData, maxGamesPlayable } from "@/app/lib/constants";
-import { useQuery } from "@apollo/client";
 import { getCollectionsTotals } from "@/app/hooks/graphql/queries";
-import { gameClient } from "@/app/lib/clients";
-import { networkConfig } from "@/app/lib/networkConfig";
 import useUIStore from "@/app/hooks/useUIStore";
+import { gameClient } from "@/app/lib/clients";
+import { collectionData, maxGamesPlayable } from "@/app/lib/constants";
+import { networkConfig } from "@/app/lib/networkConfig";
+import { formatXP, padAddress } from "@/app/lib/utils";
+import { useQuery } from "@apollo/client";
+import React, { useMemo } from "react";
 
 interface CollectionTotal {
   xp: number;
@@ -114,19 +114,7 @@ const ScoreGraph: React.FC<ScoreGraphProps> = ({
                         (score.gamesPlayed / maxGamesPlayable) * 100
                       }%`,
                     }}
-                  >
-                    {score.gamesPlayed > 0 && (
-                      <span
-                        className={`text-xl absolute left-1/2 transform -translate-x-1/2 ${
-                          (score.gamesPlayed / maxGamesPlayable) * 100 <= 50
-                            ? "bottom-full"
-                            : "top-0"
-                        }`}
-                      >{`${Math.round(
-                        (score.gamesPlayed / maxGamesPlayable) * 100
-                      )}%`}</span>
-                    )}
-                  </div>
+                  />
                   {score.xp > 0 && (
                     <span className="text-xl absolute top-0 left-0 right-0">
                       {formatXP(score.xp)} XP
@@ -160,21 +148,7 @@ const ScoreGraph: React.FC<ScoreGraphProps> = ({
                     style={{
                       width: `${(score.gamesPlayed / maxGamesPlayable) * 100}%`,
                     }}
-                  >
-                    {score.gamesPlayed > 0 && (
-                      <span
-                        className={`text-xl absolute top-1/2 transform -translate-y-1/2 ${
-                          (score.xp / maxTotalXP) * 100 <= 10 && "hidden"
-                        } ${
-                          (score.gamesPlayed / maxGamesPlayable) * 100 <= 50
-                            ? "left-full"
-                            : "right-0"
-                        }`}
-                      >{`${Math.round(
-                        (score.gamesPlayed / maxGamesPlayable) * 100
-                      )}%`}</span>
-                    )}
-                  </div>
+                  />
                   {score.xp > 0 && (
                     <span
                       className={`text-xl absolute right-1 top-1/2 transform -translate-y-1/2 ${
