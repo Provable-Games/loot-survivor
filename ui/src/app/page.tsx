@@ -1,103 +1,72 @@
 "use client";
-import { useConnect, useContract, useProvider } from "@starknet-react/core";
-import { sepolia } from "@starknet-react/chains";
-import { constants } from "starknet";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import Beasts from "@/app/abi/Beasts.json";
+import EthBalanceFragment from "@/app/abi/EthBalanceFragment.json";
+import Game from "@/app/abi/Game.json";
+import Lords from "@/app/abi/Lords.json";
+import Pragma from "@/app/abi/Pragma.json";
+import { DeathDialog } from "@/app/components/adventurer/DeathDialog";
+import Player from "@/app/components/adventurer/Player";
+import TokenLoader from "@/app/components/animations/TokenLoader";
+import EncounterDialog from "@/app/components/encounters/EnounterDialog";
+import WalletSelect from "@/app/components/intro/WalletSelect";
+import ScreenMenu from "@/app/components/menu/ScreenMenu";
+import Header from "@/app/components/navigation/Header";
+import MobileHeader from "@/app/components/navigation/MobileHeader";
+import NetworkSwitchError from "@/app/components/navigation/NetworkSwitchError";
+import Settings from "@/app/components/navigation/Settings";
+import { TxActivity } from "@/app/components/navigation/TxActivity";
+import { NotificationDisplay } from "@/app/components/notifications/NotificationDisplay";
+import { SpecialBeast } from "@/app/components/notifications/SpecialBeast";
+import { ProfileDialog } from "@/app/components/profile/ProfileDialog";
 import ActionsScreen from "@/app/containers/ActionsScreen";
 import AdventurerScreen from "@/app/containers/AdventurerScreen";
-import InventoryScreen from "@/app/containers/InventoryScreen";
-import LeaderboardScreen from "@/app/containers/LeaderboardScreen";
 import EncountersScreen from "@/app/containers/EncountersScreen";
 import GuideScreen from "@/app/containers/GuideScreen";
-import UpgradeScreen from "@/app/containers/UpgradeScreen";
-import { indexAddress, padAddress } from "@/app/lib/utils";
-import { TxActivity } from "@/app/components/navigation/TxActivity";
-import useLoadingStore from "@/app/hooks/useLoadingStore";
-import useAdventurerStore from "@/app/hooks/useAdventurerStore";
-import useUIStore from "@/app/hooks/useUIStore";
-import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
-import { NotificationDisplay } from "@/app/components/notifications/NotificationDisplay";
-import { useMusic } from "@/app/hooks/useMusic";
-import { Menu, ZeroUpgrade, BurnerStorage } from "@/app/types";
-import { useQueriesStore } from "@/app/hooks/useQueryStore";
+import InterludeScreen from "@/app/containers/InterludeScreen";
+import InventoryScreen from "@/app/containers/InventoryScreen";
+import LeaderboardScreen from "@/app/containers/LeaderboardScreen";
 import Profile from "@/app/containers/ProfileScreen";
-import { DeathDialog } from "@/app/components/adventurer/DeathDialog";
-import WalletSelect from "@/app/components/intro/WalletSelect";
-import Settings from "@/app/components/navigation/Settings";
-import MobileHeader from "@/app/components/navigation/MobileHeader";
-import Player from "@/app/components/adventurer/Player";
-import useCustomQuery from "@/app/hooks/useCustomQuery";
-import { useQuery } from "@apollo/client";
-import { goldenTokenClient } from "@/app/lib/clients";
+import TopUp from "@/app/containers/TopUp";
+import UpgradeScreen from "@/app/containers/UpgradeScreen";
+import { useController } from "@/app/context/ControllerContext";
 import {
   getAdventurerById,
   getAdventurersByOwner,
-  getLatestDiscoveries,
-  getLastBeastDiscovery,
-  getBeast,
   getBattlesByBeast,
-  getItemsByAdventurer,
-  getLatestMarketItems,
+  getBeast,
   getGoldenTokensByOwner,
+  getItemsByAdventurer,
+  getLastBeastDiscovery,
+  getLatestDiscoveries,
+  getLatestMarketItems,
 } from "@/app/hooks/graphql/queries";
-import NetworkSwitchError from "@/app/components/navigation/NetworkSwitchError";
-import { useSyscalls } from "@/app/lib/utils/syscalls";
-import Game from "@/app/abi/Game.json";
-import Lords from "@/app/abi/Lords.json";
-import EthBalanceFragment from "@/app/abi/EthBalanceFragment.json";
-import Beasts from "@/app/abi/Beasts.json";
-import Pragma from "@/app/abi/Pragma.json";
-import ScreenMenu from "@/app/components/menu/ScreenMenu";
-import { checkArcadeConnector } from "@/app/lib/connectors";
-import Header from "@/app/components/navigation/Header";
-import { fetchBalances, fetchEthBalance } from "@/app/lib/balances";
-import useTransactionManager from "@/app/hooks/useTransactionManager";
-import { SpecialBeast } from "@/app/components/notifications/SpecialBeast";
-import Storage from "@/app/lib/storage";
-import Onboarding from "./containers/Onboarding";
+import useAdventurerStore from "@/app/hooks/useAdventurerStore";
 import useControls from "@/app/hooks/useControls";
-import { networkConfig } from "@/app/lib/networkConfig";
+import useCustomQuery from "@/app/hooks/useCustomQuery";
+import useLoadingStore from "@/app/hooks/useLoadingStore";
+import { useMusic } from "@/app/hooks/useMusic";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
-import { useController } from "@/app/context/ControllerContext";
-import EncounterDialog from "@/app/components/encounters/EnounterDialog";
-import { ProfileDialog } from "@/app/components/profile/ProfileDialog";
-import TokenLoader from "@/app/components/animations/TokenLoader";
-import CartridgeConnector from "@cartridge/connector";
+import { useQueriesStore } from "@/app/hooks/useQueryStore";
+import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
+import useTransactionManager from "@/app/hooks/useTransactionManager";
+import useUIStore, { ScreenPage } from "@/app/hooks/useUIStore";
+import { fetchBalances, fetchEthBalance } from "@/app/lib/balances";
+import { goldenTokenClient } from "@/app/lib/clients";
+import { checkArcadeConnector } from "@/app/lib/connectors";
 import { VRF_WAIT_TIME } from "@/app/lib/constants";
-import InterludeScreen from "@/app/containers/InterludeScreen";
+import { networkConfig } from "@/app/lib/networkConfig";
+import Storage from "@/app/lib/storage";
+import { indexAddress, padAddress } from "@/app/lib/utils";
+import { useSyscalls } from "@/app/lib/utils/syscalls";
+import { BurnerStorage, Menu, ZeroUpgrade } from "@/app/types";
+import { useQuery } from "@apollo/client";
+import CartridgeConnector from "@cartridge/connector";
+import { sepolia } from "@starknet-react/chains";
+import { useConnect, useContract, useProvider } from "@starknet-react/core";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { constants } from "starknet";
 import CollectionsLeaderboardScreen from "./containers/CollectionsLeaderboardScreen";
-import TopUp from "@/app/containers/TopUp";
-
-const allMenuItems: Menu[] = [
-  { id: 1, label: "Start", screen: "start", disabled: false },
-  { id: 2, label: "Play", screen: "play", disabled: false },
-  { id: 3, label: "Inventory", screen: "inventory", disabled: false },
-  { id: 4, label: "Upgrade", screen: "upgrade", disabled: false },
-  { id: 5, label: "Leaderboard", screen: "leaderboard", disabled: false },
-  { id: 6, label: "Travel Log", screen: "encounters", disabled: false },
-  { id: 7, label: "Guide", screen: "guide", disabled: false },
-  {
-    id: 8,
-    label: "Tournament",
-    screen: "collections leaderboard",
-    disabled: false,
-  },
-];
-
-const mobileMenuItems: Menu[] = [
-  { id: 1, label: "Start", screen: "start", disabled: false },
-  { id: 2, label: "Play", screen: "play", disabled: false },
-  { id: 3, label: "Inventory", screen: "inventory", disabled: false },
-  { id: 4, label: "Upgrade", screen: "upgrade", disabled: false },
-  { id: 5, label: "Travel Log", screen: "encounters", disabled: false },
-  { id: 6, label: "Guide", screen: "guide", disabled: false },
-  {
-    id: 7,
-    label: "Collections",
-    screen: "collections leaderboard",
-    disabled: false,
-  },
-];
+import Onboarding from "./containers/Onboarding";
 
 export default function Main() {
   return (
@@ -160,6 +129,86 @@ function Home() {
   const setG20Unlock = useUIStore((state) => state.setG20Unlock);
   const freeVRF = useUIStore((state) => state.freeVRF);
   const setFreeVRF = useUIStore((state) => state.setFreeVRF);
+
+  const allMenuItems: Menu[] = useMemo(
+    () => [
+      { id: 1, label: "Start", screen: "start" as ScreenPage, disabled: false },
+      { id: 2, label: "Play", screen: "play" as ScreenPage, disabled: false },
+      {
+        id: 3,
+        label: "Inventory",
+        screen: "inventory" as ScreenPage,
+        disabled: false,
+      },
+      {
+        id: 4,
+        label: "Upgrade",
+        screen: "upgrade" as ScreenPage,
+        disabled: false,
+      },
+      {
+        id: 5,
+        label: "Leaderboard",
+        screen: "leaderboard" as ScreenPage,
+        disabled: false,
+      },
+      {
+        id: 6,
+        label: "Travel Log",
+        screen: "encounters" as ScreenPage,
+        disabled: false,
+      },
+      { id: 7, label: "Guide", screen: "guide" as ScreenPage, disabled: false },
+      ...(onKatana
+        ? []
+        : [
+            {
+              id: 8,
+              label: "Tournament",
+              screen: "collections leaderboard" as ScreenPage,
+              disabled: false,
+            },
+          ]),
+    ],
+    [onKatana]
+  );
+
+  const mobileMenuItems: Menu[] = useMemo(
+    () => [
+      { id: 1, label: "Start", screen: "start" as ScreenPage, disabled: false },
+      { id: 2, label: "Play", screen: "play" as ScreenPage, disabled: false },
+      {
+        id: 3,
+        label: "Inventory",
+        screen: "inventory" as ScreenPage,
+        disabled: false,
+      },
+      {
+        id: 4,
+        label: "Upgrade",
+        screen: "upgrade" as ScreenPage,
+        disabled: false,
+      },
+      {
+        id: 5,
+        label: "Travel Log",
+        screen: "encounters" as ScreenPage,
+        disabled: false,
+      },
+      { id: 6, label: "Guide", screen: "guide" as ScreenPage, disabled: false },
+      ...(onKatana
+        ? []
+        : [
+            {
+              id: 7,
+              label: "Tournament",
+              screen: "collections leaderboard" as ScreenPage,
+              disabled: false,
+            },
+          ]),
+    ],
+    [onKatana]
+  );
 
   const { contract: gameContract } = useContract({
     address: networkConfig[network!].gameAddress,
