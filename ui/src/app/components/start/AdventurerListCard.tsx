@@ -50,43 +50,57 @@ export const AdventurerListCard = ({
     ctrl: null,
     starknetId: null,
   });
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationAction, setConfirmationAction] = useState<
+    "send" | "addToCart" | null
+  >(null);
 
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
 
   useEffect(() => {
     const validateAddress = async () => {
+      let ctrlAddress = null;
+      let starknetIdAddress = null;
+
+      // Try to resolve Starknet ID with .ctrl
       try {
-        // Try to resolve Starknet ID with .ctrl
         const ctrlId = transferAddress + ".ctrl.stark";
-        const ctrlAddress = await starknetIdNavigator.getAddressFromStarkName(
-          ctrlId
-        );
+        ctrlAddress = await starknetIdNavigator.getAddressFromStarkName(ctrlId);
+      } catch (e) {
+        console.log("Failed to resolve .ctrl address:", e);
+      }
 
-        // Try to resolve Starknet ID without subdomain
+      // Try to resolve Starknet ID without subdomain
+      try {
         const starknetId = transferAddress + ".stark";
-        const starknetIdAddress =
-          await starknetIdNavigator.getAddressFromStarkName(starknetId);
+        starknetIdAddress = await starknetIdNavigator.getAddressFromStarkName(
+          starknetId
+        );
+      } catch (e) {
+        console.log("Failed to resolve .stark address:", e);
+      }
 
-        setResolvedAddresses({
-          ctrl: ctrlAddress || null,
-          starknetId: starknetIdAddress || null,
-        });
+      setResolvedAddresses({
+        ctrl: ctrlAddress,
+        starknetId: starknetIdAddress,
+      });
 
-        // Set validAddress based on the current subdomain
-        if (
-          subdomain === ".ctrl" &&
-          ctrlAddress &&
-          !transferAddress.startsWith("0x")
-        ) {
-          setValidAddress(ctrlAddress);
-        } else if (
-          subdomain === "" &&
-          starknetIdAddress &&
-          !transferAddress.startsWith("0x")
-        ) {
-          setValidAddress(starknetIdAddress);
-        } else {
-          // If not a Starknet ID, validate as a regular address
+      // Set validAddress based on the current subdomain
+      if (
+        subdomain === ".ctrl" &&
+        ctrlAddress &&
+        !transferAddress.startsWith("0x")
+      ) {
+        setValidAddress(ctrlAddress);
+      } else if (
+        subdomain === "" &&
+        starknetIdAddress &&
+        !transferAddress.startsWith("0x")
+      ) {
+        setValidAddress(starknetIdAddress);
+      } else {
+        // If not a Starknet ID, validate as a regular address
+        try {
           const paddedAddress = padAddress(transferAddress.toLowerCase());
           if (paddedAddress.length === 66 && transferAddress.startsWith("0x")) {
             const parsedAddress = validateAndParseAddress(paddedAddress);
@@ -94,15 +108,15 @@ export const AdventurerListCard = ({
           } else {
             setValidAddress(false);
           }
+        } catch (e) {
+          console.log("Failed to validate address:", e);
+          setValidAddress(false);
         }
-      } catch {
-        setValidAddress(false);
-        setResolvedAddresses({ ctrl: null, starknetId: null });
       }
     };
 
     validateAddress();
-  }, [transferAddress, subdomain, starknetIdNavigator]);
+  }, [transferAddress, subdomain]);
 
   const addToCalls = useTransactionCartStore((state) => state.addToCalls);
 
@@ -113,6 +127,21 @@ export const AdventurerListCard = ({
       calldata: [address!, recipient, adventurer?.id?.toString() ?? "", "0"],
     };
     addToCalls(transferTx);
+  };
+
+  const handleConfirmAction = () => {
+    if (confirmationAction === "send") {
+      transferAdventurer(
+        account!,
+        adventurer?.id!,
+        address!,
+        validAddress as string
+      );
+    } else if (confirmationAction === "addToCart") {
+      handleAddTransferTx(validAddress as string);
+    }
+    setShowConfirmation(false);
+    setIsTransferOpen(false);
   };
 
   return (
@@ -198,13 +227,8 @@ export const AdventurerListCard = ({
                     <Button
                       size={"lg"}
                       onClick={() => {
-                        transferAdventurer(
-                          account!,
-                          adventurer?.id!,
-                          address!,
-                          validAddress as string
-                        );
-                        setIsTransferOpen(false);
+                        setConfirmationAction("send");
+                        setShowConfirmation(true);
                       }}
                       disabled={!validAddress}
                     >
@@ -214,14 +238,42 @@ export const AdventurerListCard = ({
                       size={"lg"}
                       variant={"ghost"}
                       onClick={() => {
-                        handleAddTransferTx(transferAddress);
-                        setIsTransferOpen(false);
+                        setConfirmationAction("addToCart");
+                        setShowConfirmation(true);
                       }}
                       disabled={!validAddress}
                     >
                       Add to Cart
                     </Button>
                   </div>
+                  {showConfirmation && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                      <div className="bg-terminal-black border border-terminal-green p-4 rounded-lg max-w-md w-full">
+                        <div className="mb-4">
+                          <h1 className="text-xl font-bold">Confirm Action</h1>
+                        </div>
+                        <p className="mb-2">
+                          Are you sure you want to{" "}
+                          {confirmationAction === "send"
+                            ? "send"
+                            : "add to cart"}{" "}
+                          this adventurer?
+                        </p>
+                        <p className="mb-4">
+                          Recipient address: {validAddress}
+                        </p>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            onClick={() => setShowConfirmation(false)}
+                            variant="secondary"
+                          >
+                            Cancel
+                          </Button>
+                          <Button onClick={handleConfirmAction}>Confirm</Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </>

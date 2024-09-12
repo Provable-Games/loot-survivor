@@ -429,7 +429,11 @@ export function createSyscalls({
     {
       contractAddress: lordsContract?.address ?? "",
       entrypoint: "approve",
-      calldata: [gameContract?.address ?? "", costToPlay!.toString(), "0"],
+      calldata: [
+        gameContract?.address ?? "",
+        (costToPlay! * 1.1)!.toString(),
+        "0",
+      ],
     },
     ...spawnCalls,
   ];
@@ -484,6 +488,8 @@ export function createSyscalls({
         );
       }
     }
+
+    console.log(spawnCalls);
 
     await executeSpawn(formData, spawnCalls);
   };

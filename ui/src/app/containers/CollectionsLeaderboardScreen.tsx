@@ -152,8 +152,8 @@ const ScoreGraph: React.FC<ScoreGraphProps> = ({
                   {score.xp > 0 && (
                     <span
                       className={`text-xl absolute right-1 top-1/2 transform -translate-y-1/2 ${
-                        (score.xp / maxTotalXP) * 100 <= 90
-                          ? "right-[-20px] text-terminal-green"
+                        (score.xp / maxTotalXP) * 100 <= 30
+                          ? "right-[-40px] text-terminal-green"
                           : ""
                       }`}
                     >

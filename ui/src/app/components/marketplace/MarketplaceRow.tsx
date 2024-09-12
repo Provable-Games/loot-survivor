@@ -146,6 +146,20 @@ const MarketplaceRow = ({
     upgradeHandler(undefined, undefined, newPurchases);
   };
 
+  const handleUnequipPurchase = () => {
+    const itemKey = getKeyFromValue(gameData.ITEMS, item?.item ?? "") ?? "0";
+
+    const newPurchases = purchaseItems.map((purchaseItem) => {
+      if (purchaseItem.item === itemKey) {
+        return { ...purchaseItem, equip: "0" };
+      }
+      return purchaseItem;
+    });
+
+    setPurchaseItems(newPurchases);
+    upgradeHandler(undefined, undefined, newPurchases);
+  };
+
   const purchaseNoEquipItems = purchaseItems.filter(
     (item) => item.equip === "0"
   ).length;
@@ -174,6 +188,17 @@ const MarketplaceRow = ({
       (pi) =>
         pi.item === getKeyFromValue(gameData.ITEMS, item?.item ?? "") &&
         pi.equip === "1"
+    );
+
+  const showUnequip =
+    (singlePurchaseExists(item.item ?? "") ||
+      checkPurchased(item.item ?? "")) &&
+    !emptySlot &&
+    slot === "Weapon" &&
+    !purchaseItems.some(
+      (pi) =>
+        pi.item === getKeyFromValue(gameData.ITEMS, item?.item ?? "") &&
+        pi.equip === "0"
     );
 
   return (
@@ -270,7 +295,7 @@ const MarketplaceRow = ({
               ? "Inventory Full"
               : "Purchase"}
           </Button>
-          {showEquip && (
+          {showEquip ? (
             <Button
               onClick={() => handleEquipPurchase()}
               className="sm:h-10 sm:w-16 h-auto sm:w-auto text-terminal-green"
@@ -278,6 +303,16 @@ const MarketplaceRow = ({
             >
               Equip
             </Button>
+          ) : showUnequip ? (
+            <Button
+              onClick={() => handleUnequipPurchase()}
+              className="sm:h-10 sm:w-16 h-auto sm:w-auto text-terminal-green"
+              variant="token"
+            >
+              Unequip
+            </Button>
+          ) : (
+            <></>
           )}
         </div>
       </td>
