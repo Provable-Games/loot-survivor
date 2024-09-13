@@ -1,25 +1,26 @@
-import { useEffect, useState } from "react";
-import { AccountInterface, Contract } from "starknet";
+import ButtonMenu from "@/app/components/menu/ButtonMenu";
 import { AdventurersList } from "@/app/components/start/AdventurersList";
 import { CreateAdventurer } from "@/app/components/start/CreateAdventurer";
-import ButtonMenu from "@/app/components/menu/ButtonMenu";
-import { useQueriesStore } from "@/app/hooks/useQueryStore";
-import useAdventurerStore from "@/app/hooks/useAdventurerStore";
-import { NullAdventurer, FormData } from "@/app/types";
-import useUIStore from "@/app/hooks/useUIStore";
-import useCustomQuery from "@/app/hooks/useCustomQuery";
 import {
   getAdventurersByOwnerCount,
   getAliveAdventurersCount,
 } from "@/app/hooks/graphql/queries";
-import { indexAddress, padAddress } from "@/app/lib/utils";
+import useAdventurerStore from "@/app/hooks/useAdventurerStore";
+import useCustomQuery from "@/app/hooks/useCustomQuery";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
+import { useQueriesStore } from "@/app/hooks/useQueryStore";
+import useUIStore from "@/app/hooks/useUIStore";
+import { indexAddress, padAddress } from "@/app/lib/utils";
+import { FormData, NullAdventurer } from "@/app/types";
+import { useEffect, useState } from "react";
+import { AccountInterface, Contract } from "starknet";
 
 interface AdventurerScreenProps {
   spawn: (
     formData: FormData,
     goldenTokenId: string,
-    revenueAddress: string
+    revenueAddresses: string[],
+    costToPlay?: number
   ) => Promise<void>;
   handleSwitchAdventurer: (adventurerId: number) => Promise<void>;
   lordsBalance?: bigint;

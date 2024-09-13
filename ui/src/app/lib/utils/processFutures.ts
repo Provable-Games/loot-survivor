@@ -28,7 +28,7 @@ interface Beast {
   xp: number;
 }
 
-interface Encounter {
+export interface Encounter {
   encounter: string;
   id?: bigint;
   type: string;
@@ -44,7 +44,6 @@ interface Encounter {
   damage?: number;
   xp: number;
 }
-
 
 interface CombatResult {
   totalDamage: number;
@@ -65,12 +64,16 @@ interface TreeNode {
   explore: TreeNode | undefined;
   state: Adventurer;
   encounter?: Encounter;
+  battleDetails?: BattleEvent[];
+  fleeDetails?: BattleEvent[];
 }
 
 export interface Step {
   encounter: Encounter;
   previousDecision: string;
   adventurer: Adventurer;
+  battleDetails?: BattleEvent[];
+  fleeDetails?: BattleEvent[];
 }
 
 export const getOutcomesWithPath = (tree: TreeNode): Step[][] => {
@@ -85,6 +88,8 @@ export const getOutcomesWithPath = (tree: TreeNode): Step[][] => {
       encounter: node.encounter!,
       previousDecision,
       adventurer: node.state,
+      battleDetails: node.fight?.battleDetails,
+      fleeDetails: node.flee?.fleeDetails,
     };
 
     if (!node.flee && !node.fight && !node.explore) {
@@ -244,6 +249,8 @@ export const getDecisionTree = (
     explore: undefined,
     state: adventurer,
     encounter: currentEncounter,
+    battleDetails: [],
+    fleeDetails: [],
   };
   recurseTree(
     tree,
@@ -343,6 +350,7 @@ export const processBeastEncounterCombat = (
     explore: undefined,
     state: battleState,
     encounter: nextEncounter,
+    battleDetails: battleResult.events,
   };
 
   return fightNode;
@@ -394,6 +402,7 @@ export const processBeastEncounterFlee = (
     explore: undefined,
     state: fleeState,
     encounter: nextEncounter,
+    fleeDetails: fleeResult.events,
   };
 
   return fleeNode;
@@ -1378,8 +1387,6 @@ export function simulateBattle(
       rnd4_u8,
       adventurer?.level
     );
-
-    console.log(`Beast Attack (Beast health: ${beastHealth})): `, beastCounter)
 
     events.push({
       type: "beast_attack",

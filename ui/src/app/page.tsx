@@ -867,7 +867,7 @@ function Home() {
                 {screen === "wallet" && <WalletSelect />}
 
                 {encounterTable && (
-                  <div className="absolute top-1/2 right-1/2 transform -translate-x-1/2 -translate-y-1/2  z-10">
+                  <div className="absolute top-0 sm:top-1/2 sm:right-1/2 sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2  z-10">
                     <EncounterDialog />
                   </div>
                 )}

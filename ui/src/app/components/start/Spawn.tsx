@@ -1,28 +1,28 @@
-import { useState, useEffect } from "react";
-import { CallData, Contract } from "starknet";
-import { useConnect } from "@starknet-react/core";
-import Image from "next/image";
-import { TypeAnimation } from "react-type-animation";
-import { MdClose } from "react-icons/md";
+import { Button } from "@/app/components/buttons/Button";
 import { WalletTutorial } from "@/app/components/intro/WalletTutorial";
 import { TxActivity } from "@/app/components/navigation/TxActivity";
-import useUIStore from "@/app/hooks/useUIStore";
 import useLoadingStore from "@/app/hooks/useLoadingStore";
-import { battle } from "@/app/lib/constants";
-import { FormData, GameToken } from "@/app/types";
-import { Button } from "@/app/components/buttons/Button";
-import { getArcadeConnectors, getWalletConnectors } from "@/app/lib/connectors";
-import Lords from "public/icons/lords.svg";
-import { indexAddress, formatLords } from "@/app/lib/utils";
-import { networkConfig } from "@/app/lib/networkConfig";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
+import useUIStore from "@/app/hooks/useUIStore";
+import { getArcadeConnectors, getWalletConnectors } from "@/app/lib/connectors";
+import { battle } from "@/app/lib/constants";
+import { networkConfig } from "@/app/lib/networkConfig";
+import { formatLords, indexAddress } from "@/app/lib/utils";
+import { FormData, GameToken } from "@/app/types";
+import { useConnect } from "@starknet-react/core";
+import Image from "next/image";
+import Lords from "public/icons/lords.svg";
+import { useEffect, useState } from "react";
+import { MdClose } from "react-icons/md";
+import { TypeAnimation } from "react-type-animation";
+import { CallData, Contract } from "starknet";
 
 export interface SpawnProps {
   formData: FormData;
   spawn: (
     formData: FormData,
     goldenTokenId: string,
-    revenueAddress: string,
+    revenueAddresses: string[],
     costToPlay?: number
   ) => Promise<void>;
   handleBack: () => void;
@@ -81,7 +81,7 @@ export const Spawn = ({
     await spawn(
       formData,
       "0",
-      networkConfig[network!].revenueAddress,
+      networkConfig[network!].revenueAddresses,
       lordsGameCost
     );
     if (!onKatana) {
@@ -94,7 +94,7 @@ export const Spawn = ({
     await spawn(
       formData,
       usableToken,
-      networkConfig[network!].revenueAddress,
+      networkConfig[network!].revenueAddresses,
       lordsGameCost
     );
     await getBalances();

@@ -1,42 +1,42 @@
-import { ReactElement, JSXElementConstructor, useMemo } from "react";
-import {
-  InvokeTransactionReceiptResponse,
-  Contract,
-  AccountInterface,
-  RevertedTransactionReceiptResponse,
-  ProviderInterface,
-} from "starknet";
+import { processNotifications } from "@/app/components/notifications/NotificationHandler";
+import { QueryData, QueryKey } from "@/app/hooks/useQueryStore";
+import { Network, ScreenPage } from "@/app/hooks/useUIStore";
+import { AdventurerClass } from "@/app/lib/classes";
+import { checkArcadeConnector } from "@/app/lib/connectors";
+import { getWaitRetryInterval } from "@/app/lib/constants";
 import { GameData } from "@/app/lib/data/GameData";
 import {
-  Adventurer,
-  Call,
-  FormData,
-  NullAdventurer,
-  UpgradeStats,
-  TransactionParams,
-  Item,
-  ItemPurchase,
-  Battle,
-  Beast,
-  SpecialBeast,
-  Discovery,
-  PragmaPrice,
-} from "@/app/types";
-import {
-  getKeyFromValue,
-  stringToFelt,
-  indexAddress,
   DataType,
+  getKeyFromValue,
+  getRandomInt,
+  indexAddress,
+  stringToFelt,
 } from "@/app/lib/utils";
 import { parseEvents } from "@/app/lib/utils/parseEvents";
-import { processNotifications } from "@/app/components/notifications/NotificationHandler";
+import {
+  Adventurer,
+  Battle,
+  Beast,
+  Call,
+  Discovery,
+  FormData,
+  Item,
+  ItemPurchase,
+  NullAdventurer,
+  PragmaPrice,
+  SpecialBeast,
+  TransactionParams,
+  UpgradeStats,
+} from "@/app/types";
 import { Connector } from "@starknet-react/core";
-import { checkArcadeConnector } from "@/app/lib/connectors";
-import { QueryData, QueryKey } from "@/app/hooks/useQueryStore";
-import { AdventurerClass } from "@/app/lib/classes";
-import { ScreenPage } from "@/app/hooks/useUIStore";
-import { getWaitRetryInterval } from "@/app/lib/constants";
-import { Network } from "@/app/hooks/useUIStore";
+import { JSXElementConstructor, ReactElement, useMemo } from "react";
+import {
+  AccountInterface,
+  Contract,
+  InvokeTransactionReceiptResponse,
+  ProviderInterface,
+  RevertedTransactionReceiptResponse,
+} from "starknet";
 
 export interface SyscallsProps {
   gameContract: Contract;
@@ -446,14 +446,17 @@ export function createSyscalls({
   const spawn = async (
     formData: FormData,
     goldenTokenId: string,
-    revenueAddress: string,
+    revenueAddresses: string[],
     costToPlay?: number
   ) => {
+    const randomInt = getRandomInt(0, revenueAddresses.length - 1);
+    const selectedRevenueAddress = revenueAddresses[randomInt];
+
     const mintAdventurerTx = {
       contractAddress: gameContract?.address ?? "",
       entrypoint: "new_game",
       calldata: [
-        revenueAddress,
+        selectedRevenueAddress,
         getKeyFromValue(gameData.ITEMS, formData.startingWeapon) ?? "",
         stringToFelt(formData.name).toString(),
         goldenTokenId,
