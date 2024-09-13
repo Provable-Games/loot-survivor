@@ -510,7 +510,7 @@ const Paths = () => {
                 </table>
               </div>
               <div className="flex flex-col">
-                <p className="uppercase ml-2">Flee Details</p>
+                <p className="uppercase ml-2">Flee Attacks</p>
                 <table className="border-separate border-spacing-0 w-full sm:text-sm xl:text-sm 2xl:text-sm block overflow-x-scroll sm:overflow-y-scroll default-scroll p-2">
                   <thead
                     className="border border-terminal-green sticky top-0 bg-terminal-black uppercase"
