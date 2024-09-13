@@ -68,7 +68,7 @@ const Intro = () => {
                   setNetwork(network! as Network);
                 }}
               >
-                Play on {network}
+                Play for Real
               </Button>
             </div>
           </div>
@@ -87,7 +87,7 @@ const Intro = () => {
                   setNetwork("katana");
                 }}
               >
-                Play on Testnet
+                Play for Free
               </Button>
             </div>
           </div>

@@ -82,13 +82,13 @@ module.exports = {
             appearance: "none",
             width: "20px",
             height: "20px",
-            "background-color": "rgba(173, 216, 230, 1)",
+            "background-color": "rgba(74, 246, 38, 1)",
             cursor: "pointer",
           },
           "&::-moz-range-thumb": {
             width: "20px",
             height: "20px",
-            "background-color": "rgba(173, 216, 230, 1)",
+            "background-color": "rgba(74, 246, 38, 1)",
             cursor: "pointer",
           },
           "&::-webkit-slider-runnable-track": {

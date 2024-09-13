@@ -10,7 +10,7 @@ input[type="text"] {
   font-weight  : 400;
   text-shadow  : rgb(173, 216, 230, 0.9) 1px 0 10px;
   animation    : textShadow 0.3s infinite;
-  outline-color: rgba(173, 216, 230, 1);
+  outline-color: rgba(74, 246, 38, 1);
 }
 
 input[type='number']::-webkit-inner-spin-button,

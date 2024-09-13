@@ -57,7 +57,7 @@ export default function Head() {
       />
       {/* PWA */}
       <link rel="manifest" href="/manifest.json" />
-      <meta name="theme-color" content="#add8e6" />
+      <meta name="theme-color" content="#33FF33" />
       <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     </>
   );
