@@ -1,11 +1,14 @@
-import { useState, useEffect, useRef, ChangeEvent } from "react";
+import { Button } from "@/app/components/buttons/Button";
+import {
+  CoinIcon,
+  HeartIcon,
+  PotionArrowIcon,
+} from "@/app/components/icons/Icons";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
+import { vitalityIncrease } from "@/app/lib/constants";
 import { getPotionPrice } from "@/app/lib/utils";
 import { UpgradeStats } from "@/app/types";
-import { CoinIcon } from "@/app/components/icons/Icons";
-import { vitalityIncrease } from "@/app/lib/constants";
-import { HeartIcon, PotionArrowIcon } from "@/app/components/icons/Icons";
-import { Button } from "@/app/components/buttons/Button";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 
 interface PurchaseHealthProps {
   upgradeTotalCost: number;
@@ -91,14 +94,17 @@ const PurchaseHealth = ({
   return (
     <div className="flex flex-col sm:flex-row sm:gap-5 items-center justify-center w-full">
       <span className="flex flex-row gap-5 items-center uppercase">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-row gap-2">
           <div className="flex flex-row items-center">
-            <p className="text-lg text-terminal-green">Potion Cost:</p>
+            <p className="hidden sm:flex text-lg text-terminal-green">
+              Potion Cost:
+            </p>
+            <p className="sm:hidden text-lg text-terminal-green">Cost:</p>
             <CoinIcon className="mt-2 sm:mt-1 w-10 h-10 sm:w-8 sm:h-8 fill-current text-terminal-green" />
             <p className="text-lg text-terminal-green">{potionCost}</p>
           </div>
           <div className="flex flex-row items-center">
-            <p className="text-lg text-terminal-green">Potion Cost Next Lvl:</p>
+            <p className="text-lg text-terminal-green">Next Lvl:</p>
             <CoinIcon className="mt-2 sm:mt-1 w-10 h-10 sm:w-8 sm:h-8 fill-current text-terminal-green" />
             <p className="text-lg text-terminal-green">{potionCostNextLvl}</p>
           </div>
