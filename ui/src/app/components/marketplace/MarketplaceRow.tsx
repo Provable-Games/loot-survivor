@@ -1,17 +1,17 @@
-import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/app/components/buttons/Button";
+import EfficacyDisplay from "@/app/components/icons/EfficacyIcon";
+import { CoinIcon } from "@/app/components/icons/Icons";
+import LootIcon from "@/app/components/icons/LootIcon";
+import useAdventurerStore from "@/app/hooks/useAdventurerStore";
+import { GameData } from "@/app/lib/data/GameData";
 import {
   getItemData,
   getItemPrice,
   getKeyFromValue,
   removeSpaces,
 } from "@/app/lib/utils";
-import useAdventurerStore from "@/app/hooks/useAdventurerStore";
-import LootIcon from "@/app/components/icons/LootIcon";
-import { Item, ItemPurchase, UpgradeStats, NullAdventurer } from "@/app/types";
-import { CoinIcon } from "@/app/components/icons/Icons";
-import EfficacyDisplay from "@/app/components/icons/EfficacyIcon";
-import { GameData } from "@/app/lib/data/GameData";
+import { Item, ItemPurchase, NullAdventurer, UpgradeStats } from "@/app/types";
+import { useCallback, useEffect, useState } from "react";
 
 interface MarketplaceRowProps {
   item: Item;
@@ -121,6 +121,7 @@ const MarketplaceRow = ({
         (i) => gameData.ITEMS[parseInt(i.item)] !== item.item
       );
       setPurchaseItems(newItems);
+      upgradeHandler(undefined, undefined, newItems);
     } else {
       const newPurchase = {
         item: getKeyFromValue(gameData.ITEMS, item?.item ?? "") ?? "0",
