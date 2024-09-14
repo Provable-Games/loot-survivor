@@ -1,17 +1,18 @@
-import { useEffect, useState } from "react";
-import { Button } from "@/app/components/buttons/Button";
-import { Adventurer } from "@/app/types";
 import Info from "@/app/components/adventurer/Info";
+import { Button } from "@/app/components/buttons/Button";
+import useAdventurerStore from "@/app/hooks/useAdventurerStore";
+import useNetworkAccount from "@/app/hooks/useNetworkAccount";
+import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
+import { padAddress } from "@/app/lib/utils";
+import { Adventurer } from "@/app/types";
+import { useProvider } from "@starknet-react/core";
+import { ChangeEvent, useEffect, useState } from "react";
 import {
   AccountInterface,
+  constants,
   Contract,
   validateAndParseAddress,
-  constants,
 } from "starknet";
-import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
-import { useAccount, useProvider } from "@starknet-react/core";
-import useAdventurerStore from "@/app/hooks/useAdventurerStore";
-import { padAddress } from "@/app/lib/utils";
 import { StarknetIdNavigator } from "starknetid.js";
 import { CartridgeIcon, StarknetIdIcon } from "../icons/Icons";
 
@@ -25,6 +26,11 @@ export interface AdventurerListCardProps {
     from: string,
     recipient: string
   ) => Promise<void>;
+  changeAdventurerName: (
+    account: AccountInterface,
+    adventurerId: number,
+    name: string
+  ) => Promise<void>;
 }
 
 export const AdventurerListCard = ({
@@ -32,8 +38,9 @@ export const AdventurerListCard = ({
   gameContract,
   handleSwitchAdventurer,
   transferAdventurer,
+  changeAdventurerName,
 }: AdventurerListCardProps) => {
-  const { account, address } = useAccount();
+  const { account, address } = useNetworkAccount();
   const { provider } = useProvider();
   const starknetIdNavigator = new StarknetIdNavigator(
     provider,
@@ -54,6 +61,10 @@ export const AdventurerListCard = ({
   const [confirmationAction, setConfirmationAction] = useState<
     "send" | "addToCart" | null
   >(null);
+
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [adventurerName, setAdventurerName] = useState("");
+  const [isMaxLength, setIsMaxLength] = useState(false);
 
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
 
@@ -144,6 +155,18 @@ export const AdventurerListCard = ({
     setIsTransferOpen(false);
   };
 
+  const handleNameChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const value = e.target.value;
+    setAdventurerName(value.slice(0, 31));
+    if (value.length >= 31) {
+      setIsMaxLength(true);
+    } else {
+      setIsMaxLength(false);
+    }
+  };
+
   return (
     <>
       {adventurer && (
@@ -163,9 +186,17 @@ export const AdventurerListCard = ({
             size={"lg"}
             variant={"token"}
             onClick={() => setIsTransferOpen(!isTransferOpen)}
-            className={`w-1/2 ${isTransferOpen && "animate-pulse"}`}
+            className={`w-1/4 ${isTransferOpen && "animate-pulse"}`}
           >
             Transfer
+          </Button>
+          <Button
+            size={"lg"}
+            variant={"token"}
+            onClick={() => setIsEditOpen(!isEditOpen)}
+            className="w-1/4"
+          >
+            Edit
           </Button>
           {isTransferOpen && (
             <>
@@ -278,9 +309,46 @@ export const AdventurerListCard = ({
               </div>
             </>
           )}
+          {isEditOpen && (
+            <>
+              <div className="absolute bottom-20 bg-terminal-black border border-terminal-green flex flex-col gap-2 items-center justify-center w-3/4 p-2">
+                <div className="flex flex-row items-center justify-center w-full">
+                  <span className="uppercase text-2xl text-center flex-grow">
+                    Change Adventurer Name
+                  </span>
+                </div>
+                <div className="relative flex flex-col w-full items-center justify-center gap-10">
+                  <input
+                    type="text"
+                    value={adventurerName}
+                    onChange={handleNameChange}
+                    className="p-1 h-12 text-2xl w-3/4 bg-terminal-black border border-terminal-green animate-pulse transform uppercase"
+                  />
+                  {isMaxLength && (
+                    <p className="absolute top-14">MAX LENGTH!</p>
+                  )}
+                  <div className="flex flex-row gap-2 items-center">
+                    <Button
+                      size={"lg"}
+                      onClick={() =>
+                        changeAdventurerName(
+                          account!,
+                          adventurer.id!,
+                          adventurerName
+                        )
+                      }
+                      disabled={adventurerName === ""}
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
-      {isTransferOpen && (
+      {(isTransferOpen || isEditOpen) && (
         <div className="absolute inset-0 bg-terminal-black/75 z-[1]" />
       )}
       <Info adventurer={adventurer} gameContract={gameContract} />

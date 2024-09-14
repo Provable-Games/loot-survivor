@@ -1,5 +1,5 @@
+import { checkExistsInt, computeHash, getLevelFromXp } from "./encode.ts";
 import { parseAdventurerState } from "./events.ts";
-import { computeHash, checkExistsInt, getLevelFromXp } from "./encode.ts";
 
 export function insertAdventurer({
   id,
@@ -230,6 +230,22 @@ export function updateAdventurerOwner({
         ...entity,
         owner: checkExistsInt(BigInt(newOwner).toString(16)),
         timestamp,
+      },
+    },
+  };
+}
+
+export function updateAdventurerName({ adventurerId, adventurerName }: any) {
+  const entity = {
+    id: checkExistsInt(parseInt(adventurerId)),
+  };
+
+  return {
+    entity,
+    update: {
+      $set: {
+        ...entity,
+        name: checkExistsInt(BigInt(adventurerName).toString(16)),
       },
     },
   };

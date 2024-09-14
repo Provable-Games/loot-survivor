@@ -1597,6 +1597,54 @@ export function createSyscalls({
     }
   };
 
+  const changeAdventurerName = async (
+    account: AccountInterface,
+    adventurerId: number,
+    name: string
+  ) => {
+    try {
+      console.log(account);
+      startLoading(
+        "Change Name",
+        "Changing Adventurer Name",
+        undefined,
+        undefined
+      );
+
+      const changeNameTx = {
+        contractAddress: gameContract?.address ?? "",
+        entrypoint: "update_adventurer_name",
+        calldata: [
+          adventurerId.toString() ?? "",
+          stringToFelt(name).toString(),
+        ],
+      };
+
+      const { transaction_hash } = await account.execute([
+        ...calls,
+        changeNameTx,
+      ]);
+
+      const result = await provider.waitForTransaction(transaction_hash, {
+        retryInterval: getWaitRetryInterval(network!),
+      });
+
+      if (!result) {
+        throw new Error("Transaction did not complete successfully.");
+      }
+
+      setData("adventurersByOwnerQuery", {
+        adventurers: [adventurer],
+      });
+
+      getBalances();
+      stopLoading("Changed Adventurer Name", false, "Change Name");
+    } catch (error) {
+      console.error(error);
+      stopLoading(error, true);
+    }
+  };
+
   return {
     spawn,
     explore,
@@ -1607,6 +1655,7 @@ export function createSyscalls({
     mintLords,
     withdraw,
     transferAdventurer,
+    changeAdventurerName,
   };
 }
 

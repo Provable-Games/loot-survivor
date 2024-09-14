@@ -324,6 +324,7 @@ function Home() {
     mintLords,
     withdraw,
     transferAdventurer,
+    changeAdventurerName,
   } = useSyscalls({
     gameContract: gameContract!,
     ethContract: ethContract!,
@@ -833,6 +834,7 @@ function Home() {
                     mintLords={mintLords}
                     costToPlay={costToPlay}
                     transferAdventurer={transferAdventurer}
+                    changeAdventurerName={changeAdventurerName}
                   />
                 )}
                 {screen === "play" && (
