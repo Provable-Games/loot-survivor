@@ -56,7 +56,12 @@ import { checkArcadeConnector } from "@/app/lib/connectors";
 import { VRF_WAIT_TIME } from "@/app/lib/constants";
 import { networkConfig } from "@/app/lib/networkConfig";
 import Storage from "@/app/lib/storage";
-import { indexAddress, padAddress } from "@/app/lib/utils";
+import {
+  calculateChaBoostRemoved,
+  calculateVitBoostRemoved,
+  indexAddress,
+  padAddress,
+} from "@/app/lib/utils";
 import { useSyscalls } from "@/app/lib/utils/syscalls";
 import { BurnerStorage, Menu, ZeroUpgrade } from "@/app/types";
 import { useQuery } from "@apollo/client";
@@ -65,6 +70,7 @@ import { sepolia } from "@starknet-react/chains";
 import { useConnect, useContract, useProvider } from "@starknet-react/core";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { constants } from "starknet";
+import { StatRemovalWarning } from "./components/adventurer/StatRemovalWarning";
 import CollectionsLeaderboardScreen from "./containers/CollectionsLeaderboardScreen";
 import Onboarding from "./containers/Onboarding";
 
@@ -735,6 +741,49 @@ function Home() {
     fetchFreeVRF();
   }, []);
 
+  const vitBoostRemoved = useUIStore((state) => state.vitBoostRemoved);
+  const setVitBoostRemoved = useUIStore((state) => state.setVitBoostRemoved);
+  const chaBoostRemoved = useUIStore((state) => state.chaBoostRemoved);
+  const setChaBoostRemoved = useUIStore((state) => state.setChaBoostRemoved);
+  const purchaseItems = useUIStore((state) => state.purchaseItems);
+  const equipItems = useUIStore((state) => state.equipItems);
+  const dropItems = useUIStore((state) => state.dropItems);
+  const adventurerItems = useQueriesStore(
+    (state) => state.data.itemsByAdventurerQuery?.items || []
+  );
+
+  const [statRemovalWarning, setStatRemovalWarning] = useState<
+    "vitality" | "charisma" | ""
+  >("");
+
+  useEffect(() => {
+    const chaBoostRemoved = calculateChaBoostRemoved(
+      purchaseItems,
+      adventurer!,
+      adventurerItems,
+      equipItems,
+      dropItems
+    );
+    setChaBoostRemoved(chaBoostRemoved);
+
+    const vitBoostRemoved = calculateVitBoostRemoved(
+      purchaseItems,
+      adventurer!,
+      adventurerItems,
+      equipItems,
+      dropItems
+    );
+    setVitBoostRemoved(vitBoostRemoved);
+  }, [purchaseItems, adventurer, adventurerItems, equipItems, dropItems]);
+
+  useEffect(() => {
+    if (vitBoostRemoved > 0) {
+      setStatRemovalWarning("vitality");
+    } else if (chaBoostRemoved > 0) {
+      setStatRemovalWarning("charisma");
+    }
+  }, [vitBoostRemoved, chaBoostRemoved]);
+
   return (
     <>
       {openInterlude && !onKatana && (
@@ -768,6 +817,14 @@ function Home() {
                 lordsContract={lordsContract!}
                 ethContract={ethContract!}
                 showTopUpDialog={showTopUpDialog}
+              />
+            )}
+            {statRemovalWarning && (
+              <StatRemovalWarning
+                statWarning={statRemovalWarning}
+                handleConfirmAction={() => {
+                  setStatRemovalWarning("");
+                }}
               />
             )}
             {!spawnLoader && hash && (

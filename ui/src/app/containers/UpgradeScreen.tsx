@@ -23,8 +23,6 @@ import useUIStore from "@/app/hooks/useUIStore";
 import { vitalityIncrease } from "@/app/lib/constants";
 import { GameData } from "@/app/lib/data/GameData";
 import {
-  calculateChaBoostRemoved,
-  calculateVitBoostRemoved,
   getItemData,
   getItemPrice,
   getPotionPrice,
@@ -80,14 +78,11 @@ export default function UpgradeScreen({
   const setUpgrades = useUIStore((state) => state.setUpgrades);
   const purchaseItems = useUIStore((state) => state.purchaseItems);
   const setPurchaseItems = useUIStore((state) => state.setPurchaseItems);
-  const equipItems = useUIStore((state) => state.equipItems);
   const dropItems = useUIStore((state) => state.dropItems);
   const entropyReady = useUIStore((state) => state.entropyReady);
   const onKatana = useUIStore((state) => state.onKatana);
   const chaBoostRemoved = useUIStore((state) => state.chaBoostRemoved);
   const vitBoostRemoved = useUIStore((state) => state.vitBoostRemoved);
-  const setVitBoostRemoved = useUIStore((state) => state.setVitBoostRemoved);
-  const setChaBoostRemoved = useUIStore((state) => state.setChaBoostRemoved);
   const pendingMessage = useLoadingStore((state) => state.pendingMessage);
   const [summary, setSummary] = useState<UpgradeSummary>({
     Stats: { ...ZeroUpgrade },
@@ -236,26 +231,6 @@ export default function UpgradeScreen({
   const adventurerItems = useQueriesStore(
     (state) => state.data.itemsByAdventurerQuery?.items || []
   );
-
-  useEffect(() => {
-    const chaBoostRemoved = calculateChaBoostRemoved(
-      purchaseItems,
-      adventurer!,
-      adventurerItems,
-      equipItems,
-      dropItems
-    );
-    setChaBoostRemoved(chaBoostRemoved);
-
-    const vitBoostRemoved = calculateVitBoostRemoved(
-      purchaseItems,
-      adventurer!,
-      adventurerItems,
-      equipItems,
-      dropItems
-    );
-    setVitBoostRemoved(vitBoostRemoved);
-  }, [purchaseItems, adventurer, adventurerItems, equipItems, dropItems]);
 
   useEffect(() => {
     setTotalVitality((adventurer?.vitality ?? 0) + selectedVitality);
