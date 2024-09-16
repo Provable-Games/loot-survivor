@@ -20,7 +20,7 @@ export const StatRemovalWarning = ({
         {statWarning === "vitality" ? (
           <>
             <p className="mb-2">
-              Removing vitality will reduce your max health by 15hp per vitality
+              Removing vitality will reduce your max health by 15hp per point
               removed.
             </p>
             <p className="mb-2 uppercase">
@@ -30,7 +30,7 @@ export const StatRemovalWarning = ({
           </>
         ) : (
           <p className="mb-2">
-            Removing charisma will reduce your max health by 15hp per vitality
+            Removing charisma will increase market prices by 1 gold per point
             removed.
           </p>
         )}
