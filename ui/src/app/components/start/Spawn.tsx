@@ -3,20 +3,20 @@ import SpriteAnimation from "@/app/components/animations/SpriteAnimation";
 import { Button } from "@/app/components/buttons/Button";
 import { DownArrowIcon, ProfileIcon } from "@/app/components/icons/Icons";
 import { TxActivity } from "@/app/components/navigation/TxActivity";
+import { getDeadAdventurersByXPPaginated } from "@/app/hooks/graphql/queries";
+import useCustomQuery from "@/app/hooks/useCustomQuery";
 import useLoadingStore from "@/app/hooks/useLoadingStore";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 import { soundSelector, useUiSounds } from "@/app/hooks/useUiSound";
 import useUIStore from "@/app/hooks/useUIStore";
-import { getArcadeConnectors, getWalletConnectors } from "@/app/lib/connectors";
 import { battle } from "@/app/lib/constants";
 import { networkConfig } from "@/app/lib/networkConfig";
 import { displayAddress } from "@/app/lib/utils";
-import { FormData, GameToken } from "@/app/types";
-import { useConnect } from "@starknet-react/core";
+import { Adventurer, FormData, GameToken } from "@/app/types";
 import Image from "next/image";
 import Eth from "public/icons/eth-3.svg";
 import Lords from "public/icons/lords.svg";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TypeAnimation } from "react-type-animation";
 import { CallData, Contract } from "starknet";
 
@@ -48,7 +48,6 @@ export const Spawn = ({
   mintLords,
   costToPlay,
 }: SpawnProps) => {
-  const [showWalletTutorial, setShowWalletTutorial] = useState(false);
   const [paymentInitiated, setPaymentInitiated] = useState(false);
   const [formFilled, setFormFilled] = useState(false);
   const [usableToken, setUsableToken] = useState<string>("0");
@@ -57,7 +56,6 @@ export const Spawn = ({
   const isWrongNetwork = useUIStore((state) => state.isWrongNetwork);
   const loading = useLoadingStore((state) => state.loading);
   const estimatingFee = useUIStore((state) => state.estimatingFee);
-  const onMainnet = useUIStore((state) => state.onMainnet);
   const network = useUIStore((state) => state.network);
   const onKatana = useUIStore((state) => state.onKatana);
   const resetNotification = useLoadingStore((state) => state.resetNotification);
@@ -71,15 +69,6 @@ export const Spawn = ({
   }, [formData]);
 
   const { account } = useNetworkAccount();
-  const { connectors, connect } = useConnect();
-
-  const walletConnectors = getWalletConnectors(connectors);
-  const arcadeConnectors = getArcadeConnectors(connectors);
-
-  const handleButtonClick = () => {
-    setShowWalletTutorial(true);
-  };
-
   const lordsGameCost = Number(costToPlay);
 
   const handleSubmitLords = async () => {
@@ -94,8 +83,6 @@ export const Spawn = ({
       await getBalances();
     }
   };
-
-  const checkEnoughLords = lordsBalance! >= BigInt(25000000000000000000);
 
   const tokens = goldenTokenData?.getERC721Tokens;
   const goldenTokens: number[] = tokens?.map(
@@ -145,6 +132,31 @@ export const Spawn = ({
     }
   };
 
+  const aliveAdventurersVariables = useMemo(() => {
+    return {
+      skip: 0,
+    };
+  }, []);
+
+  const adventurersByXPdata = useCustomQuery(
+    network,
+    "adventurersByXPQuery",
+    getDeadAdventurersByXPPaginated,
+    aliveAdventurersVariables
+  );
+
+  const adventurers: Adventurer[] = adventurersByXPdata?.adventurers ?? [];
+
+  const calculatePayout = (rank: number, lords: number) => {
+    if (rank === 1) {
+      return lords * 0.27;
+    } else if (rank === 2) {
+      return lords * 0.18;
+    } else if (rank === 3) {
+      return lords * 3.9825;
+    }
+  };
+
   return (
     <div className="flex flex-col w-full h-full justify-center">
       <span className="sm:hidden absolute top-0 h-20 w-full">
@@ -180,8 +192,8 @@ export const Spawn = ({
                 <>
                   <div className="flex flex-row w-full h-full">
                     <div className="flex flex-col items-center justify-center gap-10 w-1/4 no-text-shadow">
-                      <div className="flex flex-col border border-terminal-green b-5 bg-terminal-black text-terminal-green/75 uppercase w-full">
-                        <h1 className="m-0 p-2 text-2xl">Breakdown</h1>
+                      <div className="flex flex-col border border-terminal-green b-5 bg-terminal-black uppercase w-full">
+                        <h1 className="m-0 p-2 text-2xl">Game Prices</h1>
                         <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green">
                           <div className="flex flex-row gap-2 items-center">
                             <p className="text-2xl">Base Fee</p>
@@ -195,10 +207,10 @@ export const Spawn = ({
                               Update Price
                             </Button>
                             <span className="flex flex-row gap-1 items-center">
-                              <Lords className="self-center sm:w-4 sm:h-4  h-3 w-3 fill-current" />
-                              <p>59</p>
+                              <Lords className="self-center sm:w-5 sm:h-5  h-3 w-3 fill-current" />
+                              <p className="text-xl">59</p>
                             </span>
-                            <p>($3.10)</p>
+                            <p className="text-lg">($3.10)</p>
                           </div>
                         </div>
                         <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green">
@@ -207,8 +219,8 @@ export const Spawn = ({
                             <p className="text-terminal-green/50">Paid Now</p>
                           </div>
                           <div className="flex flex-row gap-2 items-center">
-                            <Eth className="self-center sm:w-5 sm:h-5  h-3 w-3 fill-current" />
-                            <p>$0.50</p>
+                            <Eth className="self-center sm:w-6 sm:h-6  h-3 w-3 fill-current" />
+                            <p className="text-lg">$0.50</p>
                           </div>
                         </div>
                         <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green">
@@ -217,8 +229,11 @@ export const Spawn = ({
                             <p className="text-terminal-green/50">Paid Later</p>
                           </div>
                           <div className="flex flex-row gap-2 items-center">
-                            <Eth className="self-center sm:w-5 sm:h-5  h-3 w-3 fill-current" />
-                            <p>$0.10</p>
+                            <p className="text-lg text-terminal-green/50">
+                              Estimated
+                            </p>
+                            <Eth className="self-center sm:w-6 sm:h-6  h-3 w-3 fill-current" />
+                            <p className="text-lg">$0.10</p>
                           </div>
                         </div>
                         <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green bg-terminal-green/75 text-terminal-black">
@@ -226,20 +241,22 @@ export const Spawn = ({
                           <p className="text-2xl">$3.60</p>
                         </div>
                       </div>
-                      <div className="flex flex-col border border-terminal-green b-5 bg-terminal-black text-terminal-green/75 uppercase w-full">
-                        <h1 className="m-0 p-2 text-2xl">Base Fee Payouts</h1>
+                      <div className="flex flex-col border border-terminal-green b-5 bg-terminal-black text-terminal-green uppercase w-full">
+                        <h1 className="m-0 p-2 text-2xl">Payouts</h1>
                         <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green">
                           <div className="flex flex-row gap-2 items-center">
-                            <p className="text-2xl">1st</p>
-                            <p className="text-2xl whitespace-nowrap text-left text-ellipsis overflow-hidden w-32">
-                              Await
+                            <p className="text-2xl">
+                              1<sup className="text-sm">st</sup>
                             </p>
-                            <p className="text-terminal-green/50">
-                              {displayAddress("0x0")}
+                            <p className="text-lg whitespace-nowrap text-left text-ellipsis overflow-hidden w-40">
+                              {adventurers[0]?.name ?? ""}
+                            </p>
+                            <p className="text-terminal-green/50 text-sm">
+                              {displayAddress(adventurers[0]?.owner ?? "0x0")}
                             </p>
                           </div>
-                          <div className="flex flex-row gap-2 items-center">
-                            <p className="text-2xl">+</p>
+                          <div className="flex flex-row items-center">
+                            <sup className="text-2xl">+</sup>
                             <span className="flex flex-row gap-1 items-center">
                               <Lords className="self-center sm:w-4 sm:h-4  h-3 w-3 fill-current" />
                               <p>15.93</p>
@@ -249,16 +266,18 @@ export const Spawn = ({
                         </div>
                         <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green">
                           <div className="flex flex-row gap-2 items-center">
-                            <p className="text-2xl">2nd</p>
-                            <p className="text-2xl whitespace-nowrap text-left text-ellipsis overflow-hidden w-32">
-                              Goldemar
+                            <p className="text-2xl">
+                              2<sup className="text-sm">nd</sup>
                             </p>
-                            <p className="text-terminal-green/50">
-                              {displayAddress("0x0")}
+                            <p className="text-lg whitespace-nowrap text-left text-ellipsis overflow-hidden  w-40">
+                              {adventurers[1]?.name ?? ""}
+                            </p>
+                            <p className="text-terminal-green/50 text-sm">
+                              {displayAddress(adventurers[1]?.owner ?? "0x0")}
                             </p>
                           </div>
-                          <div className="flex flex-row gap-2 items-center">
-                            <p className="text-2xl">+</p>
+                          <div className="flex flex-row items-center">
+                            <sup className="text-2xl">+</sup>
                             <span className="flex flex-row gap-1 items-center">
                               <Lords className="self-center sm:w-4 sm:h-4  h-3 w-3 fill-current" />
                               <p>15.93</p>
@@ -268,16 +287,18 @@ export const Spawn = ({
                         </div>
                         <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green">
                           <div className="flex flex-row gap-2 items-center">
-                            <p className="text-2xl">3rd</p>
-                            <p className="text-2xl whitespace-nowrap text-left text-ellipsis overflow-hidden w-32">
-                              Influence Crewmate #10322
+                            <p className="text-2xl">
+                              3<sup className="text-sm">rd</sup>
                             </p>
-                            <p className="text-terminal-green/50">
-                              {displayAddress("0x0")}
+                            <p className="text-lg whitespace-nowrap text-left text-ellipsis overflow-hidden w-40">
+                              {adventurers[2]?.name ?? ""}
+                            </p>
+                            <p className="text-terminal-green/50 text-sm">
+                              {displayAddress(adventurers[2]?.owner ?? "0x0")}
                             </p>
                           </div>
-                          <div className="flex flex-row gap-2 items-center">
-                            <p className="text-2xl">+</p>
+                          <div className="flex flex-row items-center">
+                            <sup className="text-2xl">+</sup>
                             <span className="flex flex-row gap-1 items-center">
                               <Lords className="self-center sm:w-4 sm:h-4  h-3 w-3 fill-current" />
                               <p>15.93</p>
@@ -287,15 +308,15 @@ export const Spawn = ({
                         </div>
                         <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green">
                           <div className="flex flex-row gap-2 items-center">
-                            <p className="text-2xl w-40 whitespace-nowrap text-left text-ellipsis overflow-hidden">
-                              Client Provider
-                            </p>
-                            <p className="text-terminal-green/50">
-                              {displayAddress("0x0")}
+                            <p className="text-lg w-60 whitespace-nowrap text-left text-ellipsis overflow-hidden">
+                              Client Provider{" "}
+                              <sub className="text-xs">
+                                PG + Biblio + BT + Await
+                              </sub>
                             </p>
                           </div>
-                          <div className="flex flex-row gap-2 items-center">
-                            <p className="text-2xl">+</p>
+                          <div className="flex flex-row items-center">
+                            <sup className="text-2xl">+</sup>
                             <span className="flex flex-row gap-1 items-center">
                               <Lords className="self-center sm:w-4 sm:h-4  h-3 w-3 fill-current" />
                               <p>15.93</p>
@@ -305,15 +326,16 @@ export const Spawn = ({
                         </div>
                         <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green">
                           <div className="flex flex-row gap-2 items-center">
-                            <p className="text-2xl w-40 whitespace-nowrap text-left text-ellipsis overflow-hidden">
-                              Creator
+                            <p className="text-2xl w-48 whitespace-nowrap text-left text-ellipsis overflow-hidden">
+                              Creator{" "}
+                              <sub className="text-xs">Provable Games</sub>
                             </p>
                             <p className="text-terminal-green/50">
                               {displayAddress("0x0")}
                             </p>
                           </div>
-                          <div className="flex flex-row gap-2 items-center">
-                            <p className="text-2xl">+</p>
+                          <div className="flex flex-row items-center">
+                            <sup className="text-2xl">+</sup>
                             <span className="flex flex-row gap-1 items-center">
                               <Lords className="self-center sm:w-4 sm:h-4  h-3 w-3 fill-current" />
                               <p>15.93</p>
@@ -339,7 +361,7 @@ export const Spawn = ({
                             <p className="uppercase text-4xl">IN</p>
                           </div>
                           <div className="flex flex-col gap-5 items-center justify-center w-1/3 h-full">
-                            <h1 className="m-0 text-6xl uppercase">
+                            <h1 className="absolute top-20 m-0 text-6xl uppercase">
                               Start Here
                             </h1>
 
@@ -408,7 +430,9 @@ export const Spawn = ({
                                           }
                                           target="_blank"
                                         >
-                                          <Button variant={"token"}>Buy</Button>
+                                          <Button size={"md"} variant={"token"}>
+                                            Buy
+                                          </Button>
                                         </a>
                                       </span>
                                     </>
@@ -447,8 +471,8 @@ export const Spawn = ({
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center justify-center w-1/4">
-                      <div className="relative flex flex-col bg-terminal-black border-4 border-terminal-green w-full">
+                    <div className="flex items-center justify-start w-1/4">
+                      <div className="relative flex flex-col bg-terminal-black border-4 border-terminal-green w-3/4">
                         <div className={`flex flex-row`}>
                           {["str", "dex", "int", "vit", "wis", "cha"].map(
                             (stat) => (
@@ -481,99 +505,6 @@ export const Spawn = ({
                       </div>
                     </div>
                   </div>
-                  {/* <div className="flex flex-col gap-2">
-                <Button
-                  size={"xl"}
-                  disabled={
-                    !formFilled ||
-                    !account ||
-                    isWrongNetwork ||
-                    loading ||
-                    estimatingFee ||
-                    !checkEnoughLords
-                  }
-                  onClick={() => handleSubmitLords()}
-                  className="relative"
-                >
-                  <div className="flex flex-row items-center gap-5 w-full h-full">
-                    <p className="whitespace-nowrap w-3/4 mr-5">
-                      {checkEnoughLords
-                        ? formFilled
-                          ? "Play With Lords Tokens"
-                          : "Fill details"
-                        : "Not enough Lords"}
-                    </p>
-                    <span className="absolute flex flex-row right-5">
-                      {formatLords(lordsGameCost)}
-                      <Lords className="self-center sm:w-5 sm:h-5  h-3 w-3 fill-current" />
-                    </span>
-                  </div>
-                </Button>
-
-                <div className="flex flex-row items-center gap-2 w-full">
-                  <Button
-                    onClick={() => handleSubmitGoldenToken()}
-                    size={"xl"}
-                    disabled={
-                      !formFilled ||
-                      !account ||
-                      isWrongNetwork ||
-                      loading ||
-                      estimatingFee ||
-                      !goldenTokenExists ||
-                      usableToken === "0"
-                    }
-                    className="relative w-full"
-                  >
-                    <div className="flex flex-row items-center gap-1 w-full h-full">
-                      <p className="whitespace-nowrap w-3/4">
-                        {goldenTokenExists
-                          ? usableToken !== "0"
-                            ? formFilled
-                              ? "Play With Golden Token"
-                              : "Fill details"
-                            : "No Usable Tokens"
-                          : "No Golden Tokens"}
-                      </p>
-                      <div className="absolute right-3 w-6 h-6 sm:w-8 sm:h-8">
-                        <Image
-                          src={"/golden-token.png"}
-                          alt="Golden Token"
-                          fill={true}
-                        />
-                      </div>
-                    </div>
-                  </Button>
-                  {onMainnet && (
-                    <a
-                      href={networkConfig[network!].goldenTokenMintUrl}
-                      target="_blank"
-                    >
-                      <Button type="button" className="text-black">
-                        Buy
-                      </Button>
-                    </a>
-                  )}
-                </div>
-              </div>
-              {!checkEnoughLords && (
-                <Button
-                  onClick={async () => {
-                    if (onMainnet) {
-                      const avnuLords = `https://app.avnu.fi/en?tokenFrom=${indexAddress(
-                        networkConfig[network!].ethAddress ?? ""
-                      )}&tokenTo=${indexAddress(
-                        networkConfig[network!].lordsAddress ?? ""
-                      )}&amount=0.001`;
-                      window.open(avnuLords, "_blank");
-                    } else {
-                      await mintLords(lordsGameCost);
-                    }
-                  }}
-                >
-                  Buy Lords
-                </Button>
-              )} */}
                 </>
               ) : (
                 <Button
