@@ -387,7 +387,6 @@ function Home() {
   );
 
   const { play, stop } = useMusic(playState, {
-    volume: 0.5,
     loop: true,
   });
 

@@ -1,19 +1,22 @@
+import NftCard from "@/app/components/adventurer/NftCard";
+import SpriteAnimation from "@/app/components/animations/SpriteAnimation";
 import { Button } from "@/app/components/buttons/Button";
-import { WalletTutorial } from "@/app/components/intro/WalletTutorial";
+import { DownArrowIcon, ProfileIcon } from "@/app/components/icons/Icons";
 import { TxActivity } from "@/app/components/navigation/TxActivity";
 import useLoadingStore from "@/app/hooks/useLoadingStore";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
+import { soundSelector, useUiSounds } from "@/app/hooks/useUiSound";
 import useUIStore from "@/app/hooks/useUIStore";
 import { getArcadeConnectors, getWalletConnectors } from "@/app/lib/connectors";
 import { battle } from "@/app/lib/constants";
 import { networkConfig } from "@/app/lib/networkConfig";
-import { formatLords, indexAddress } from "@/app/lib/utils";
+import { displayAddress } from "@/app/lib/utils";
 import { FormData, GameToken } from "@/app/types";
 import { useConnect } from "@starknet-react/core";
 import Image from "next/image";
+import Eth from "public/icons/eth-3.svg";
 import Lords from "public/icons/lords.svg";
 import { useEffect, useState } from "react";
-import { MdClose } from "react-icons/md";
 import { TypeAnimation } from "react-type-animation";
 import { CallData, Contract } from "starknet";
 
@@ -46,8 +49,11 @@ export const Spawn = ({
   costToPlay,
 }: SpawnProps) => {
   const [showWalletTutorial, setShowWalletTutorial] = useState(false);
+  const [paymentInitiated, setPaymentInitiated] = useState(false);
   const [formFilled, setFormFilled] = useState(false);
   const [usableToken, setUsableToken] = useState<string>("0");
+  const [isHoveringLords, setIsHoveringLords] = useState(false);
+  const [isHoveringGolden, setIsHoveringGolden] = useState(false);
   const isWrongNetwork = useUIStore((state) => state.isWrongNetwork);
   const loading = useLoadingStore((state) => state.loading);
   const estimatingFee = useUIStore((state) => state.estimatingFee);
@@ -89,17 +95,6 @@ export const Spawn = ({
     }
   };
 
-  const handleSubmitGoldenToken = async () => {
-    resetNotification();
-    await spawn(
-      formData,
-      usableToken,
-      networkConfig[network!].revenueAddresses,
-      lordsGameCost
-    );
-    await getBalances();
-  };
-
   const checkEnoughLords = lordsBalance! >= BigInt(25000000000000000000);
 
   const tokens = goldenTokenData?.getERC721Tokens;
@@ -108,6 +103,7 @@ export const Spawn = ({
   );
 
   const goldenTokenExists = goldenTokens?.length > 0;
+  // const goldenTokenExists = true;
 
   const getUsableGoldenToken = async (tokenIds: number[]) => {
     // Loop through contract calls to see if the token is usable, if none then return 0
@@ -123,86 +119,369 @@ export const Spawn = ({
     }
   };
 
+  const { play: spawnPlay } = useUiSounds(soundSelector.spawn);
+  const { play: coinPlay } = useUiSounds(soundSelector.coin);
+
   useEffect(() => {
     getUsableGoldenToken(goldenTokens ?? []);
   }, []);
 
+  const handlePayment = async (goldenToken: boolean) => {
+    spawnPlay();
+    coinPlay();
+    resetNotification();
+    setPaymentInitiated(true);
+    try {
+      await spawn(
+        formData,
+        goldenToken ? usableToken : "0",
+        networkConfig[network!].revenueAddresses,
+        lordsGameCost
+      );
+      await getBalances();
+    } catch (error) {
+      console.error(error);
+      setPaymentInitiated(false);
+    }
+  };
+
   return (
     <div className="flex flex-col w-full h-full justify-center">
-      {showWalletTutorial && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1/2 h-4/5 z-20 bg-terminal-black overflow-y-auto flex flex-col items-center gap-4">
-          <Button
-            onClick={() => setShowWalletTutorial(false)}
-            className="text-red-500 hover:text-red-700"
-            variant={"ghost"}
-          >
-            <MdClose size={20} />
-          </Button>
-          <WalletTutorial />
-        </div>
-      )}
       <span className="sm:hidden absolute top-0 h-20 w-full">
         <TxActivity />
       </span>
       <div className="flex flex-col h-full p-2">
-        <Image
-          className="mx-auto absolute object-cover sm:py-4 sm:px-8"
-          src={"/scenes/intro/beast.png"}
-          alt="adventurer facing beast"
-          fill
-        />
+        {paymentInitiated ? (
+          <>
+            <Image
+              className="mx-auto absolute object-cover sm:py-4 sm:px-8"
+              src={"/scenes/intro/beast.png"}
+              alt="adventurer facing beast"
+              fill
+            />
+            <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+              <TypeAnimation
+                sequence={[battle]}
+                wrapper="span"
+                cursor={true}
+                speed={40}
+                style={{ fontSize: "2em" }}
+              />
+            </span>
+          </>
+        ) : (
+          <>
+            <div className="absolute inset-0 bg-black" />
+            <div className="absolute inset-0 left-0 right-0 flex flex-col items-center text-center gap-4 z-10 p-20">
+              <span className="hidden sm:block">
+                <TxActivity />
+              </span>
+              {!onKatana ? (
+                <>
+                  <div className="flex flex-row w-full h-full">
+                    <div className="flex flex-col items-center justify-center gap-10 w-1/4 no-text-shadow">
+                      <div className="flex flex-col border border-terminal-green b-5 bg-terminal-black text-terminal-green/75 uppercase w-full">
+                        <h1 className="m-0 p-2 text-2xl">Breakdown</h1>
+                        <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green">
+                          <div className="flex flex-row gap-2 items-center">
+                            <p className="text-2xl">Base Fee</p>
+                            <p className="text-terminal-green/50">Paid Now</p>
+                          </div>
+                          <div className="flex flex-row gap-2 items-center">
+                            <Button
+                              size={"xxs"}
+                              className="bg-terminal-green/75"
+                            >
+                              Update Price
+                            </Button>
+                            <span className="flex flex-row gap-1 items-center">
+                              <Lords className="self-center sm:w-4 sm:h-4  h-3 w-3 fill-current" />
+                              <p>59</p>
+                            </span>
+                            <p>($3.10)</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green">
+                          <div className="flex flex-row gap-2 items-center">
+                            <p className="text-2xl">Randomness</p>
+                            <p className="text-terminal-green/50">Paid Now</p>
+                          </div>
+                          <div className="flex flex-row gap-2 items-center">
+                            <Eth className="self-center sm:w-5 sm:h-5  h-3 w-3 fill-current" />
+                            <p>$0.50</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green">
+                          <div className="flex flex-row gap-2 items-center">
+                            <p className="text-2xl">Gas</p>
+                            <p className="text-terminal-green/50">Paid Later</p>
+                          </div>
+                          <div className="flex flex-row gap-2 items-center">
+                            <Eth className="self-center sm:w-5 sm:h-5  h-3 w-3 fill-current" />
+                            <p>$0.10</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green bg-terminal-green/75 text-terminal-black">
+                          <p className="text-2xl">Total</p>
+                          <p className="text-2xl">$3.60</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col border border-terminal-green b-5 bg-terminal-black text-terminal-green/75 uppercase w-full">
+                        <h1 className="m-0 p-2 text-2xl">Base Fee Payouts</h1>
+                        <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green">
+                          <div className="flex flex-row gap-2 items-center">
+                            <p className="text-2xl">1st</p>
+                            <p className="text-2xl whitespace-nowrap text-left text-ellipsis overflow-hidden w-32">
+                              Await
+                            </p>
+                            <p className="text-terminal-green/50">
+                              {displayAddress("0x0")}
+                            </p>
+                          </div>
+                          <div className="flex flex-row gap-2 items-center">
+                            <p className="text-2xl">+</p>
+                            <span className="flex flex-row gap-1 items-center">
+                              <Lords className="self-center sm:w-4 sm:h-4  h-3 w-3 fill-current" />
+                              <p>15.93</p>
+                            </span>
+                            <p>($0.85)</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green">
+                          <div className="flex flex-row gap-2 items-center">
+                            <p className="text-2xl">2nd</p>
+                            <p className="text-2xl whitespace-nowrap text-left text-ellipsis overflow-hidden w-32">
+                              Goldemar
+                            </p>
+                            <p className="text-terminal-green/50">
+                              {displayAddress("0x0")}
+                            </p>
+                          </div>
+                          <div className="flex flex-row gap-2 items-center">
+                            <p className="text-2xl">+</p>
+                            <span className="flex flex-row gap-1 items-center">
+                              <Lords className="self-center sm:w-4 sm:h-4  h-3 w-3 fill-current" />
+                              <p>15.93</p>
+                            </span>
+                            <p>($0.85)</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green">
+                          <div className="flex flex-row gap-2 items-center">
+                            <p className="text-2xl">3rd</p>
+                            <p className="text-2xl whitespace-nowrap text-left text-ellipsis overflow-hidden w-32">
+                              Influence Crewmate #10322
+                            </p>
+                            <p className="text-terminal-green/50">
+                              {displayAddress("0x0")}
+                            </p>
+                          </div>
+                          <div className="flex flex-row gap-2 items-center">
+                            <p className="text-2xl">+</p>
+                            <span className="flex flex-row gap-1 items-center">
+                              <Lords className="self-center sm:w-4 sm:h-4  h-3 w-3 fill-current" />
+                              <p>15.93</p>
+                            </span>
+                            <p>($0.85)</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green">
+                          <div className="flex flex-row gap-2 items-center">
+                            <p className="text-2xl w-40 whitespace-nowrap text-left text-ellipsis overflow-hidden">
+                              Client Provider
+                            </p>
+                            <p className="text-terminal-green/50">
+                              {displayAddress("0x0")}
+                            </p>
+                          </div>
+                          <div className="flex flex-row gap-2 items-center">
+                            <p className="text-2xl">+</p>
+                            <span className="flex flex-row gap-1 items-center">
+                              <Lords className="self-center sm:w-4 sm:h-4  h-3 w-3 fill-current" />
+                              <p>15.93</p>
+                            </span>
+                            <p>($0.85)</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green">
+                          <div className="flex flex-row gap-2 items-center">
+                            <p className="text-2xl w-40 whitespace-nowrap text-left text-ellipsis overflow-hidden">
+                              Creator
+                            </p>
+                            <p className="text-terminal-green/50">
+                              {displayAddress("0x0")}
+                            </p>
+                          </div>
+                          <div className="flex flex-row gap-2 items-center">
+                            <p className="text-2xl">+</p>
+                            <span className="flex flex-row gap-1 items-center">
+                              <Lords className="self-center sm:w-4 sm:h-4  h-3 w-3 fill-current" />
+                              <p>15.93</p>
+                            </span>
+                            <p>($0.85)</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center w-1/2">
+                      <div className="w-full h-full bg-black">
+                        <div className="flex flex-row h-full">
+                          <div className="flex flex-col items-center justify-center w-1/3 h-full">
+                            <SpriteAnimation
+                              frameWidth={200}
+                              frameHeight={200}
+                              columns={8}
+                              rows={1}
+                              frameRate={5}
+                              className="coin-sprite"
+                            />
+                            <DownArrowIcon className="self-center rotate-90 w-32" />
+                            <p className="uppercase text-4xl">IN</p>
+                          </div>
+                          <div className="flex flex-col gap-5 items-center justify-center w-1/3 h-full">
+                            <h1 className="m-0 text-6xl uppercase">
+                              Start Here
+                            </h1>
 
-        <div className="absolute top-1/3 left-0 right-0 flex flex-col items-center text-center gap-4 z-10">
-          <TypeAnimation
-            sequence={[battle]}
-            wrapper="span"
-            cursor={true}
-            speed={40}
-            style={{ fontSize: "2em" }}
-          />
-          <span className="hidden sm:block">
-            <TxActivity />
-          </span>
-          {!account ? (
-            <>
-              <div className="flex flex-col gap-5 items-center justify-center">
-                <div className="flex flex-col gap-2">
-                  {walletConnectors.map((connector, index) => (
-                    <Button
-                      onClick={() => connect({ connector })}
-                      disabled={!formFilled}
-                      key={index}
-                      className="w-full"
-                    >
-                      {connector.id === "braavos" || connector.id === "argentX"
-                        ? `Connect ${connector.id}`
-                        : connector.id === "argentWebWallet"
-                        ? "Login With Email"
-                        : "Login with Cartridge Controller"}
-                    </Button>
-                  ))}
-                  <Button onClick={handleButtonClick}>
-                    I don&apos;t have a wallet
-                  </Button>
-                </div>
-                <p className="text-xl">Arcade Accounts</p>
-                <div className="flex flex-col items-center justify-center sm:flex-row gap-2 overflow-auto h-[300px] sm:h-full w-full sm:w-[400px]">
-                  {arcadeConnectors.map((connector, index) => (
-                    <Button
-                      onClick={() => connect({ connector })}
-                      disabled={!formFilled}
-                      key={index}
-                      className="w-1/3"
-                    >
-                      Connect {connector.id}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </>
-          ) : !onKatana ? (
-            <>
-              <div className="flex flex-col gap-2">
+                            <div
+                              className="border-8 border-terminal-green w-full h-1/3 cursor-pointer"
+                              onMouseEnter={() => setIsHoveringLords(true)}
+                              onMouseLeave={() => setIsHoveringLords(false)}
+                              onClick={() => handlePayment(false)}
+                            >
+                              <div className="flex flex-row h-full">
+                                <div className="w-1/4 border-r-8 border-terminal-green bg-terminal-yellow/25" />
+                                <div
+                                  className={`flex flex-col gap-2 justify-center w-3/4 p-2 uppercase ${
+                                    isHoveringLords
+                                      ? "text-terminal-black bg-terminal-green animate-pulseFast"
+                                      : "bg-terminal-green/20"
+                                  }`}
+                                >
+                                  <span className="flex flex-row gap-1 items-center justify-center">
+                                    <Lords className="self-center sm:w-16 sm:h-16  h-3 w-3 fill-current" />
+                                    <p className="text-6xl no-text-shadow">
+                                      59
+                                    </p>
+                                  </span>
+                                  <span className="relative h-24 w-full">
+                                    <Image
+                                      src={
+                                        isHoveringLords
+                                          ? "/insert-lords-hover.png"
+                                          : "/insert-lords.png"
+                                      }
+                                      alt="insert-lords"
+                                      fill
+                                    />
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div
+                              className="border-8 border-terminal-green w-full h-1/3 cursor-pointer"
+                              onMouseEnter={() => setIsHoveringGolden(true)}
+                              onMouseLeave={() => setIsHoveringGolden(false)}
+                              onClick={() => {
+                                if (goldenTokenExists) {
+                                  handlePayment(true);
+                                }
+                              }}
+                            >
+                              <div className="flex flex-row h-full">
+                                <div className="w-1/4 border-r-8 border-terminal-green bg-terminal-yellow/25" />
+                                <div
+                                  className={`relative flex flex-col gap-2 items-center justify-center w-3/4 p-2 uppercase ${
+                                    isHoveringGolden && goldenTokenExists
+                                      ? "text-terminal-black bg-terminal-green animate-pulseFast"
+                                      : "bg-terminal-green/20"
+                                  }`}
+                                >
+                                  {!goldenTokenExists && (
+                                    <>
+                                      <span className="absolute inset-0 w-full h-full bg-black/75 z-10" />
+                                      <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
+                                        <a
+                                          href={
+                                            networkConfig[network!]
+                                              .goldenTokenMintUrl
+                                          }
+                                          target="_blank"
+                                        >
+                                          <Button variant={"token"}>Buy</Button>
+                                        </a>
+                                      </span>
+                                    </>
+                                  )}
+                                  <span className="relative h-24 w-3/4">
+                                    <Image
+                                      src={"/golden-token.png"}
+                                      alt="golden-token"
+                                      fill
+                                    />
+                                  </span>
+                                  <span className="relative h-24 w-full">
+                                    <Image
+                                      src={
+                                        isHoveringGolden && goldenTokenExists
+                                          ? "/insert-golden-token-hover.png"
+                                          : "/insert-golden-token.png"
+                                      }
+                                      alt="insert-lords"
+                                      fill
+                                    />
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-center justify-center w-1/3 h-full">
+                            <span className="relative w-32 h-32 mt-14">
+                              <ProfileIcon className="text-terminal-green" />
+                            </span>
+                            <span className="flex flex-col">
+                              <DownArrowIcon className="self-center rotate-[-90deg] w-32" />
+                              <p className="uppercase text-4xl">OUT</p>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center w-1/4">
+                      <div className="relative flex flex-col bg-terminal-black border-4 border-terminal-green w-full">
+                        <div className={`flex flex-row`}>
+                          {["str", "dex", "int", "vit", "wis", "cha"].map(
+                            (stat) => (
+                              <span
+                                key={stat}
+                                className={`w-full flex flex-col text-center`}
+                              >
+                                <p>{stat.toUpperCase()}</p>
+                                <p>?</p>
+                              </span>
+                            )
+                          )}
+                        </div>
+                        <NftCard
+                          name={formData.name}
+                          weapon={formData.startingWeapon}
+                        />
+                        <Button
+                          className="absolute top-1/2 left-1/2 transform -translate-y-1/2 -translate-x-1/2 w-1/2 h-20"
+                          variant={"token"}
+                          onClick={() => {
+                            window.open(
+                              networkConfig[network!].adventurerViewer,
+                              "_blank"
+                            );
+                          }}
+                        >
+                          View Collection
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  {/* <div className="flex flex-col gap-2">
                 <Button
                   size={"xl"}
                   disabled={
@@ -294,32 +573,36 @@ export const Spawn = ({
                 >
                   Buy Lords
                 </Button>
+              )} */}
+                </>
+              ) : (
+                <Button
+                  size={"xl"}
+                  disabled={
+                    !formFilled ||
+                    !account ||
+                    isWrongNetwork ||
+                    loading ||
+                    estimatingFee
+                  }
+                  onClick={() => handleSubmitLords()}
+                  className="relative"
+                >
+                  <div className="flex flex-row items-center gap-1 w-full h-full">
+                    {formFilled ? "Play as Guest" : "Fill details"}
+                  </div>
+                </Button>
               )}
-            </>
-          ) : (
-            <Button
-              size={"xl"}
-              disabled={
-                !formFilled ||
-                !account ||
-                isWrongNetwork ||
-                loading ||
-                estimatingFee
-              }
-              onClick={() => handleSubmitLords()}
-              className="relative"
-            >
-              <div className="flex flex-row items-center gap-1 w-full h-full">
-                {formFilled ? "Play as Guest" : "Fill details"}
-              </div>
+            </div>
+          </>
+        )}
+        {!paymentInitiated && (
+          <div className="absolute bottom-10 left-0 right-0 flex flex-col items-center gap-4 z-10 pb-8">
+            <Button size={"sm"} variant={"default"} onClick={handleBack}>
+              Back
             </Button>
-          )}
-        </div>
-        <div className="absolute bottom-10 left-0 right-0 flex flex-col items-center gap-4 z-10 pb-8">
-          <Button size={"sm"} variant={"default"} onClick={handleBack}>
-            Back
-          </Button>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

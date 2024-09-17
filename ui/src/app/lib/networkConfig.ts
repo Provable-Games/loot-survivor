@@ -23,6 +23,8 @@ export const networkConfig = {
     appUrl: "https://sepolia.lootsurvivor.io",
     beastsViewer: "https://testnet.realms.world/collection/beasts",
     goldenTokenMintUrl: "https://testnet.realms.world/collection/goldenToken",
+    adventurerViewer:
+      "https://market.realms.world/collection/0x018108b32cea514a78ef1b0e4a0753e855cdf620bc0565202c02456f618c4dc4",
     blockExplorerUrl: "https://sepolia.voyager.online/",
     faucetUrl: "https://blastapi.io/faucets/starknet-sepolia-eth",
     masterAccount: "0x0",
@@ -55,7 +57,10 @@ export const networkConfig = {
     appUrl: "https://lootsurvivor.io/",
     beastsViewer:
       "https://market.realms.world/token/0x0158160018d590d93528995b340260e65aedd76d28a686e9daa5c4e8fad0c5dd",
-    goldenTokenMintUrl: "https://realms.world/collection/goldenToken",
+    goldenTokenMintUrl:
+      "https://market.realms.world/collection/0x04f5e296c805126637552cf3930e857f380e7c078e8f00696de4fc8545356b1d",
+    adventurerViewer:
+      "https://market.realms.world/collection/0x018108b32cea514a78ef1b0e4a0753e855cdf620bc0565202c02456f618c4dc4",
     blockExplorerUrl: "https://voyager.online/",
     faucetUrl: "https://blastapi.io/faucets/starknet-sepolia-eth",
     masterAccount: "0x0",
@@ -78,6 +83,8 @@ export const networkConfig = {
     appUrl: "https://lootsurvivor.io",
     beastsViewer: "",
     goldenTokenMintUrl: "",
+    adventurerViewer:
+      "https://market.realms.world/collection/0x018108b32cea514a78ef1b0e4a0753e855cdf620bc0565202c02456f618c4dc4",
     blockExplorerUrl: "",
     faucetUrl: "",
     masterAccount:
@@ -104,6 +111,8 @@ export const networkConfig = {
     appUrl: "http://localhost:3000/",
     beastsViewer: "",
     goldenTokenMintUrl: "",
+    adventurerViewer:
+      "https://market.realms.world/collection/0x018108b32cea514a78ef1b0e4a0753e855cdf620bc0565202c02456f618c4dc4",
     blockExplorerUrl: "",
     faucetUrl: "",
     masterAccount:
