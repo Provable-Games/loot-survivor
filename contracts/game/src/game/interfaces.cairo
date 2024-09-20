@@ -1,6 +1,6 @@
 use starknet::ContractAddress;
 
-use game::FreeGameTokenType;
+use super::game::FreeGameTokenType;
 use beasts::beast::Beast;
 use market::market::{ItemPurchase};
 use adventurer::{

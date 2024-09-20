@@ -1,21 +1,3 @@
-mod game {
-    mod constants;
-    mod interfaces;
-    mod renderer;
-    mod encoding;
-    mod RenderContract;
-    mod snip12_controller_claim;
-}
-mod tests {
-    mod test_game;
-    mod mock_randomness;
-    mod oz_constants;
-    mod mocks {
-        mod erc20_mocks;
-        mod erc721_mocks;
-    }
-}
-
 const SECONDS_IN_DAY: u64 = 86400;
 const SECONDS_IN_MONTH: u64 = 2592000;
 
@@ -81,7 +63,7 @@ mod Game {
     use pragma_lib::types::{AggregationMode, DataType, PragmaPricesResponse};
 
     use super::{FreeGameTokenType, ImplFreeGameTokenType, LaunchTournamentCollections};
-    use super::game::{
+    use super::super::{
         interfaces::{
             IGame, IERC721Mixin, IBeasts, IBeastsDispatcher, IBeastsDispatcherTrait,
             IDelegateAccountDispatcher, IDelegateAccountDispatcherTrait
