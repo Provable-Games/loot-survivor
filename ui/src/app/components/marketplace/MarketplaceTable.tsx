@@ -42,7 +42,15 @@ const MarketplaceTable = ({
     (state) => state.data.latestMarketItemsQuery?.items || []
   );
 
-  const headings = ["Item", "Tier", "Slot", "Type", "Cost", "Actions"];
+  const headings = [
+    "Item",
+    "Tier",
+    "Slot",
+    "Type",
+    "Special",
+    "Cost",
+    "Actions",
+  ];
 
   const headingToKeyMapping: { [key: string]: string } = {
     Item: "item",

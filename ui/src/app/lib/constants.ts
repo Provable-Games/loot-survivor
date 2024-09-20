@@ -84,7 +84,7 @@ export const collectionData = [
   {
     avatar: "/collections/Ducks-Everywhere.png",
     name: "Ducks Everywhere",
-    token: "0x04fa864a706e3403fd17ac8df307f22eafa21b778b73353abf69a622e47a2003",
+    token: "0x058949fa2955b10b3a82521934e8b0505dc0b7ba929c3049622ae91d2c52e194",
   },
   {
     avatar: "/collections/Everai.png",
@@ -117,3 +117,5 @@ export const collectionData = [
     token: "0x07ae27a31bb6526e3de9cf02f081f6ce0615ac12a6d7b85ee58b8ad7947a2809",
   },
 ];
+
+export const maxGamesPlayable = 1600;

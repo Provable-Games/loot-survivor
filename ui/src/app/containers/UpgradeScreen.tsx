@@ -1,15 +1,3 @@
-import { useEffect, useState } from "react";
-import { Contract } from "starknet";
-import {
-  getItemData,
-  getValueFromKey,
-  getItemPrice,
-  getPotionPrice,
-} from "@/app/lib/utils";
-import { GameData } from "@/app/lib/data/GameData";
-import useLoadingStore from "@/app/hooks/useLoadingStore";
-import useAdventurerStore from "@/app/hooks/useAdventurerStore";
-import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
 import Info from "@/app/components/adventurer/Info";
 import { Button } from "@/app/components/buttons/Button";
 import {
@@ -21,26 +9,34 @@ import {
   ScrollIcon,
 } from "@/app/components/icons/Icons";
 import PurchaseHealth from "@/app/components/upgrade/PurchaseHealth";
-import MarketplaceScreen from "@/app/containers/MarketplaceScreen";
-import { UpgradeNav } from "@/app/components/upgrade/UpgradeNav";
-import useUIStore from "@/app/hooks/useUIStore";
-import {
-  UpgradeStats,
-  ZeroUpgrade,
-  UpgradeSummary,
-  ItemPurchase,
-  Attribute,
-} from "@/app/types";
-import Summary from "@/app/components/upgrade/Summary";
-import {
-  calculateVitBoostRemoved,
-  calculateChaBoostRemoved,
-} from "@/app/lib/utils";
-import { useQueriesStore } from "@/app/hooks/useQueryStore";
-import { useController } from "@/app/context/ControllerContext";
-import { useUiSounds, soundSelector } from "@/app/hooks/useUiSound";
-import { vitalityIncrease } from "@/app/lib/constants";
 import StatCard from "@/app/components/upgrade/StatCard";
+import Summary from "@/app/components/upgrade/Summary";
+import { UpgradeNav } from "@/app/components/upgrade/UpgradeNav";
+import MarketplaceScreen from "@/app/containers/MarketplaceScreen";
+import { useController } from "@/app/context/ControllerContext";
+import useAdventurerStore from "@/app/hooks/useAdventurerStore";
+import useLoadingStore from "@/app/hooks/useLoadingStore";
+import { useQueriesStore } from "@/app/hooks/useQueryStore";
+import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
+import { soundSelector, useUiSounds } from "@/app/hooks/useUiSound";
+import useUIStore from "@/app/hooks/useUIStore";
+import { vitalityIncrease } from "@/app/lib/constants";
+import { GameData } from "@/app/lib/data/GameData";
+import {
+  getItemData,
+  getItemPrice,
+  getPotionPrice,
+  getValueFromKey,
+} from "@/app/lib/utils";
+import {
+  Attribute,
+  ItemPurchase,
+  UpgradeStats,
+  UpgradeSummary,
+  ZeroUpgrade,
+} from "@/app/types";
+import { useEffect, useState } from "react";
+import { Contract } from "starknet";
 
 interface UpgradeScreenProps {
   upgrade: (
@@ -82,14 +78,11 @@ export default function UpgradeScreen({
   const setUpgrades = useUIStore((state) => state.setUpgrades);
   const purchaseItems = useUIStore((state) => state.purchaseItems);
   const setPurchaseItems = useUIStore((state) => state.setPurchaseItems);
-  const equipItems = useUIStore((state) => state.equipItems);
   const dropItems = useUIStore((state) => state.dropItems);
   const entropyReady = useUIStore((state) => state.entropyReady);
   const onKatana = useUIStore((state) => state.onKatana);
   const chaBoostRemoved = useUIStore((state) => state.chaBoostRemoved);
   const vitBoostRemoved = useUIStore((state) => state.vitBoostRemoved);
-  const setVitBoostRemoved = useUIStore((state) => state.setVitBoostRemoved);
-  const setChaBoostRemoved = useUIStore((state) => state.setChaBoostRemoved);
   const pendingMessage = useLoadingStore((state) => state.pendingMessage);
   const [summary, setSummary] = useState<UpgradeSummary>({
     Stats: { ...ZeroUpgrade },
@@ -238,26 +231,6 @@ export default function UpgradeScreen({
   const adventurerItems = useQueriesStore(
     (state) => state.data.itemsByAdventurerQuery?.items || []
   );
-
-  useEffect(() => {
-    const chaBoostRemoved = calculateChaBoostRemoved(
-      purchaseItems,
-      adventurer!,
-      adventurerItems,
-      equipItems,
-      dropItems
-    );
-    setChaBoostRemoved(chaBoostRemoved);
-
-    const vitBoostRemoved = calculateVitBoostRemoved(
-      purchaseItems,
-      adventurer!,
-      adventurerItems,
-      equipItems,
-      dropItems
-    );
-    setVitBoostRemoved(vitBoostRemoved);
-  }, [purchaseItems, adventurer, adventurerItems, equipItems, dropItems]);
 
   useEffect(() => {
     setTotalVitality((adventurer?.vitality ?? 0) + selectedVitality);

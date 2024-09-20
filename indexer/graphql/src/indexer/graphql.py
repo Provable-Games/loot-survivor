@@ -68,9 +68,14 @@ def parse_string(value):
 
 
 def serialize_string(value):
-    # Assuming the input is a hexadecimal string
-    # Convert it back to bytes and then to a UTF-8 string
-    return bytes.fromhex(str(value)).decode("utf-8")
+    if value is None:
+        return None
+    try:
+        # Try to decode as UTF-8
+        return bytes.fromhex(str(value)).decode("utf-8")
+    except UnicodeDecodeError:
+        # If UTF-8 decoding fails, return the original hexadecimal string
+        return str(value)
 
 
 def parse_class(value):
@@ -3543,20 +3548,6 @@ async def run_graphql_api(
     view = IndexerGraphQLView(db, redis, api_key, schema=schema)
 
     app = web.Application()
-
-    # Setup CORS with the specific origin
-    # cors = aiohttp_cors.setup(
-    #     app,
-    #     defaults={
-    #         origin: aiohttp_cors.ResourceOptions(
-    #             allow_credentials=True,
-    #             expose_headers="*",
-    #             allow_headers="*",
-    #             allow_methods=["POST", "GET"],
-    #         )
-    #         for origin in allowed_origins
-    #     },
-    # )
 
     cors = aiohttp_cors.setup(
         app,

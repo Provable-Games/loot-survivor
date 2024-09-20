@@ -1,17 +1,17 @@
-import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/app/components/buttons/Button";
+import EfficacyDisplay from "@/app/components/icons/EfficacyIcon";
+import { CoinIcon } from "@/app/components/icons/Icons";
+import LootIcon from "@/app/components/icons/LootIcon";
+import useAdventurerStore from "@/app/hooks/useAdventurerStore";
+import { GameData } from "@/app/lib/data/GameData";
 import {
   getItemData,
   getItemPrice,
   getKeyFromValue,
   removeSpaces,
 } from "@/app/lib/utils";
-import useAdventurerStore from "@/app/hooks/useAdventurerStore";
-import LootIcon from "@/app/components/icons/LootIcon";
-import { Item, ItemPurchase, UpgradeStats, NullAdventurer } from "@/app/types";
-import { CoinIcon } from "@/app/components/icons/Icons";
-import EfficacyDisplay from "@/app/components/icons/EfficacyIcon";
-import { GameData } from "@/app/lib/data/GameData";
+import { Item, ItemPurchase, NullAdventurer, UpgradeStats } from "@/app/types";
+import { useCallback, useEffect, useState } from "react";
 
 interface MarketplaceRowProps {
   item: Item;
@@ -121,6 +121,7 @@ const MarketplaceRow = ({
         (i) => gameData.ITEMS[parseInt(i.item)] !== item.item
       );
       setPurchaseItems(newItems);
+      upgradeHandler(undefined, undefined, newItems);
     } else {
       const newPurchase = {
         item: getKeyFromValue(gameData.ITEMS, item?.item ?? "") ?? "0",
@@ -138,6 +139,20 @@ const MarketplaceRow = ({
     const newPurchases = purchaseItems.map((purchaseItem) => {
       if (purchaseItem.item === itemKey) {
         return { ...purchaseItem, equip: "1" };
+      }
+      return purchaseItem;
+    });
+
+    setPurchaseItems(newPurchases);
+    upgradeHandler(undefined, undefined, newPurchases);
+  };
+
+  const handleUnequipPurchase = () => {
+    const itemKey = getKeyFromValue(gameData.ITEMS, item?.item ?? "") ?? "0";
+
+    const newPurchases = purchaseItems.map((purchaseItem) => {
+      if (purchaseItem.item === itemKey) {
+        return { ...purchaseItem, equip: "0" };
       }
       return purchaseItem;
     });
@@ -176,6 +191,17 @@ const MarketplaceRow = ({
         pi.equip === "1"
     );
 
+  const showUnequip =
+    (singlePurchaseExists(item.item ?? "") ||
+      checkPurchased(item.item ?? "")) &&
+    !emptySlot &&
+    slot === "Weapon" &&
+    !purchaseItems.some(
+      (pi) =>
+        pi.item === getKeyFromValue(gameData.ITEMS, item?.item ?? "") &&
+        pi.equip === "0"
+    );
+
   return (
     <tr
       className={
@@ -197,6 +223,33 @@ const MarketplaceRow = ({
           <p className="hidden sm:block">{type}</p>
           <EfficacyDisplay size="w-5" className="h-5 sm:w-8" type={type} />
         </div>
+      </td>
+
+      <td className="text-center">
+        {item.item === "Bronze Ring" && `No Special Effect`}
+        {item.item === "Silver Ring" && `+1 Luck | +20 Luck GR20`}
+        {item.item === "Gold Ring" && "3% Beast Gold"}
+        {item.item === "Platinum Ring" && "3% Name Match Dmg"}
+        {item.item === "Titanium Ring" && "3% Crit Dmg"}
+
+        {item.item === "Pendant" && (
+          <div className="flex flex-row items-center justify-center gap-2">
+            <p>3% Hide</p>
+            <EfficacyDisplay size="w-5" className="h-5 sm:w-8" type={"Hide"} />
+          </div>
+        )}
+        {item.item === "Necklace" && (
+          <div className="flex flex-row items-center justify-center gap-2">
+            <p>3% Metal</p>
+            <EfficacyDisplay size="w-5" className="h-5 sm:w-8" type={"Metal"} />
+          </div>
+        )}
+        {item.item === "Amulet" && (
+          <div className="flex flex-row items-center justify-center gap-2">
+            <p>3% Cloth</p>
+            <EfficacyDisplay size="w-5" className="h-5 sm:w-8" type={"Cloth"} />
+          </div>
+        )}
       </td>
       <td className="text-center">
         <div className="flex flex-row items-center justify-center">
@@ -243,7 +296,7 @@ const MarketplaceRow = ({
               ? "Inventory Full"
               : "Purchase"}
           </Button>
-          {showEquip && (
+          {showEquip ? (
             <Button
               onClick={() => handleEquipPurchase()}
               className="sm:h-10 sm:w-16 h-auto sm:w-auto text-terminal-green"
@@ -251,6 +304,16 @@ const MarketplaceRow = ({
             >
               Equip
             </Button>
+          ) : showUnequip ? (
+            <Button
+              onClick={() => handleUnequipPurchase()}
+              className="sm:h-10 sm:w-16 h-auto sm:w-auto text-terminal-green"
+              variant="token"
+            >
+              Unequip
+            </Button>
+          ) : (
+            <></>
           )}
         </div>
       </td>

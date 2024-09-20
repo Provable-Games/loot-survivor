@@ -2,5 +2,9 @@
   "editor.wordWrap": "on",
   "cairo1.enableLanguageServer": true,
   "cairo1.enableScarb": true,
-  "cairo1.languageServerPath": "/Users/os/.asdf/shims/scarb-cairo-language-server"
+  "cairo1.languageServerPath": "/Users/os/.asdf/shims/scarb-cairo-language-server",
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit"
+  }
 }

@@ -1,5 +1,12 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Contract, AccountInterface, validateChecksumAddress } from "starknet";
+import {
+  Contract,
+  AccountInterface,
+  validateAndParseAddress,
+  constants,
+} from "starknet";
+import { StarknetIdNavigator } from "starknetid.js";
+import { useProvider } from "@starknet-react/core";
 import { Button } from "@/app/components/buttons/Button";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
 import {
@@ -7,6 +14,8 @@ import {
   HeartIcon,
   SkullIcon,
   ClockIcon,
+  CartridgeIcon,
+  StarknetIdIcon,
 } from "@/app/components/icons/Icons";
 import useUIStore from "@/app/hooks/useUIStore";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
@@ -43,9 +52,16 @@ export const AdventurersList = ({
   aliveAdventurersCount,
   transferAdventurer,
 }: AdventurerListProps) => {
+  const { provider } = useProvider();
+  const starknetIdNavigator = new StarknetIdNavigator(
+    provider,
+    constants.StarknetChainId.SN_MAIN
+  );
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showZeroHealth, setShowZeroHealth] = useState(true);
   const [isTransferOpen, setIsTransferOpen] = useState(false);
+  const [adventurerForTransfer, setAdventurerForTransfer] =
+    useState<Adventurer | null>(null);
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const network = useUIStore((state) => state.network);
   const { account, address } = useNetworkAccount();
@@ -59,18 +75,19 @@ export const AdventurersList = ({
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
 
   const [transferAddress, setTransferAddress] = useState("");
-
-  const validAddress = (() => {
-    const paddedAddress = padAddress(transferAddress);
-    if (paddedAddress.length !== 66 || !transferAddress.startsWith("0x")) {
-      return false;
-    }
-    try {
-      return validateChecksumAddress(paddedAddress);
-    } catch {
-      return false;
-    }
-  })();
+  const [validAddress, setValidAddress] = useState<string | false>(false);
+  const [subdomain, setSubdomain] = useState(".ctrl");
+  const [resolvedAddresses, setResolvedAddresses] = useState<{
+    ctrl: string | null;
+    starknetId: string | null;
+  }>({
+    ctrl: null,
+    starknetId: null,
+  });
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationAction, setConfirmationAction] = useState<
+    "send" | "addToCart" | null
+  >(null);
 
   const addToCalls = useTransactionCartStore((state) => state.addToCalls);
 
@@ -82,6 +99,67 @@ export const AdventurersList = ({
     };
     addToCalls(transferTx);
   };
+
+  useEffect(() => {
+    const validateAddress = async () => {
+      let ctrlAddress = null;
+      let starknetIdAddress = null;
+
+      // Try to resolve Starknet ID with .ctrl
+      try {
+        const ctrlId = transferAddress + ".ctrl.stark";
+        ctrlAddress = await starknetIdNavigator.getAddressFromStarkName(ctrlId);
+      } catch (e) {
+        console.log("Failed to resolve .ctrl address:", e);
+      }
+
+      // Try to resolve Starknet ID without subdomain
+      try {
+        const starknetId = transferAddress + ".stark";
+        starknetIdAddress = await starknetIdNavigator.getAddressFromStarkName(
+          starknetId
+        );
+      } catch (e) {
+        console.log("Failed to resolve .stark address:", e);
+      }
+
+      setResolvedAddresses({
+        ctrl: ctrlAddress,
+        starknetId: starknetIdAddress,
+      });
+
+      // Set validAddress based on the current subdomain
+      if (
+        subdomain === ".ctrl" &&
+        ctrlAddress &&
+        !transferAddress.startsWith("0x")
+      ) {
+        setValidAddress(ctrlAddress);
+      } else if (
+        subdomain === "" &&
+        starknetIdAddress &&
+        !transferAddress.startsWith("0x")
+      ) {
+        setValidAddress(starknetIdAddress);
+      } else {
+        // If not a Starknet ID, validate as a regular address
+        try {
+          const paddedAddress = padAddress(transferAddress.toLowerCase());
+          if (paddedAddress.length === 66 && transferAddress.startsWith("0x")) {
+            const parsedAddress = validateAndParseAddress(paddedAddress);
+            setValidAddress(parsedAddress);
+          } else {
+            setValidAddress(false);
+          }
+        } catch (e) {
+          console.log("Failed to validate address:", e);
+          setValidAddress(false);
+        }
+      }
+    };
+
+    validateAddress();
+  }, [transferAddress, subdomain]);
 
   const adventurersVariables = useMemo(() => {
     return {
@@ -165,6 +243,21 @@ export const AdventurersList = ({
     [selectedIndex, adventurers]
   );
 
+  const handleConfirmAction = () => {
+    if (confirmationAction === "send") {
+      transferAdventurer(
+        account!,
+        adventurerForTransfer?.id!,
+        address!,
+        validAddress as string
+      );
+    } else if (confirmationAction === "addToCart") {
+      handleAddTransferTx(validAddress as string, adventurerForTransfer?.id!);
+    }
+    setShowConfirmation(false);
+    setIsTransferOpen(false);
+  };
+
   return (
     <div className="flex flex-col items-center h-full">
       {formatAdventurersCount > 0 ? (
@@ -227,7 +320,10 @@ export const AdventurersList = ({
                                 size={"lg"}
                                 variant={"contrast"}
                                 className="border border-terminal-green"
-                                onClick={() => setIsTransferOpen(true)}
+                                onClick={() => {
+                                  setAdventurerForTransfer(adventurer);
+                                  setIsTransferOpen(true);
+                                }}
                               >
                                 Transfer
                               </Button>
@@ -302,7 +398,42 @@ export const AdventurersList = ({
                     >
                       Back
                     </Button>
-                    <span className="uppercase text-2xl">Enter Address</span>
+                    <div className="flex flex-row items-center justify-between w-full">
+                      <div className="w-1/4"></div>
+                      <span className="uppercase text-2xl">Enter Address</span>
+                      <span className="flex flex-row w-1/4 justify-end gap-2">
+                        <Button
+                          onClick={() => setSubdomain(".ctrl")}
+                          variant={
+                            subdomain === ".ctrl" || resolvedAddresses.ctrl
+                              ? "default"
+                              : "ghost"
+                          }
+                          className={
+                            subdomain !== ".ctrl" && resolvedAddresses.ctrl
+                              ? "animate-pulse"
+                              : ""
+                          }
+                        >
+                          <CartridgeIcon className="w-6 h-6" />
+                        </Button>
+                        <Button
+                          onClick={() => setSubdomain("")}
+                          variant={
+                            subdomain === "" || resolvedAddresses.starknetId
+                              ? "default"
+                              : "ghost"
+                          }
+                          className={
+                            subdomain !== "" && resolvedAddresses.starknetId
+                              ? "animate-pulse"
+                              : ""
+                          }
+                        >
+                          <StarknetIdIcon className="w-6 h-6" />
+                        </Button>
+                      </span>
+                    </div>
                     <div className="flex flex-col w-full items-center justify-center gap-10">
                       <input
                         type="text"
@@ -321,14 +452,10 @@ export const AdventurersList = ({
                       <div className="flex flex-row gap-2 items-center">
                         <Button
                           size={"lg"}
-                          onClick={() =>
-                            transferAdventurer(
-                              account!,
-                              adventurers[selectedIndex].id!,
-                              address!,
-                              transferAddress
-                            )
-                          }
+                          onClick={() => {
+                            setConfirmationAction("send");
+                            setShowConfirmation(true);
+                          }}
                           disabled={!validAddress}
                         >
                           Send
@@ -336,17 +463,47 @@ export const AdventurersList = ({
                         <Button
                           size={"lg"}
                           variant={"ghost"}
-                          onClick={() =>
-                            handleAddTransferTx(
-                              transferAddress,
-                              adventurers[selectedIndex].id!
-                            )
-                          }
+                          onClick={() => {
+                            setConfirmationAction("addToCart");
+                            setShowConfirmation(true);
+                          }}
                           disabled={!validAddress}
                         >
                           Add to Cart
                         </Button>
                       </div>
+                      {showConfirmation && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                          <div className="bg-terminal-black border border-terminal-green p-4 rounded-lg max-w-md w-full">
+                            <div className="mb-4">
+                              <h1 className="text-xl font-bold">
+                                Confirm Action
+                              </h1>
+                            </div>
+                            <p className="mb-2">
+                              Are you sure you want to{" "}
+                              {confirmationAction === "send"
+                                ? "send"
+                                : "add to cart"}{" "}
+                              this adventurer?
+                            </p>
+                            <p className="mb-4">
+                              Recipient address: {validAddress}
+                            </p>
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                onClick={() => setShowConfirmation(false)}
+                                variant="secondary"
+                              >
+                                Cancel
+                              </Button>
+                              <Button onClick={handleConfirmAction}>
+                                Confirm
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

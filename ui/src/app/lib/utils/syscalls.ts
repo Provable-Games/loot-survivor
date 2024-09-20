@@ -1,42 +1,42 @@
-import { ReactElement, JSXElementConstructor, useMemo } from "react";
-import {
-  InvokeTransactionReceiptResponse,
-  Contract,
-  AccountInterface,
-  RevertedTransactionReceiptResponse,
-  ProviderInterface,
-} from "starknet";
+import { processNotifications } from "@/app/components/notifications/NotificationHandler";
+import { QueryData, QueryKey } from "@/app/hooks/useQueryStore";
+import { Network, ScreenPage } from "@/app/hooks/useUIStore";
+import { AdventurerClass } from "@/app/lib/classes";
+import { checkArcadeConnector } from "@/app/lib/connectors";
+import { getWaitRetryInterval } from "@/app/lib/constants";
 import { GameData } from "@/app/lib/data/GameData";
 import {
-  Adventurer,
-  Call,
-  FormData,
-  NullAdventurer,
-  UpgradeStats,
-  TransactionParams,
-  Item,
-  ItemPurchase,
-  Battle,
-  Beast,
-  SpecialBeast,
-  Discovery,
-  PragmaPrice,
-} from "@/app/types";
-import {
-  getKeyFromValue,
-  stringToFelt,
-  indexAddress,
   DataType,
+  getKeyFromValue,
+  getRandomInt,
+  indexAddress,
+  stringToFelt,
 } from "@/app/lib/utils";
 import { parseEvents } from "@/app/lib/utils/parseEvents";
-import { processNotifications } from "@/app/components/notifications/NotificationHandler";
+import {
+  Adventurer,
+  Battle,
+  Beast,
+  Call,
+  Discovery,
+  FormData,
+  Item,
+  ItemPurchase,
+  NullAdventurer,
+  PragmaPrice,
+  SpecialBeast,
+  TransactionParams,
+  UpgradeStats,
+} from "@/app/types";
 import { Connector } from "@starknet-react/core";
-import { checkArcadeConnector } from "@/app/lib/connectors";
-import { QueryData, QueryKey } from "@/app/hooks/useQueryStore";
-import { AdventurerClass } from "@/app/lib/classes";
-import { ScreenPage } from "@/app/hooks/useUIStore";
-import { getWaitRetryInterval } from "@/app/lib/constants";
-import { Network } from "@/app/hooks/useUIStore";
+import { JSXElementConstructor, ReactElement, useMemo } from "react";
+import {
+  AccountInterface,
+  Contract,
+  InvokeTransactionReceiptResponse,
+  ProviderInterface,
+  RevertedTransactionReceiptResponse,
+} from "starknet";
 
 export interface SyscallsProps {
   gameContract: Contract;
@@ -106,6 +106,7 @@ export interface SyscallsProps {
   setG20Unlock: (value: boolean) => void;
   provider: ProviderInterface;
   network: Network;
+  freeVRF: boolean;
 }
 
 function handleEquip(
@@ -224,6 +225,7 @@ export function createSyscalls({
   setG20Unlock,
   provider,
   network,
+  freeVRF,
 }: SyscallsProps) {
   const gameData = new GameData();
 
@@ -279,17 +281,186 @@ export function createSyscalls({
     showDeathDialog(true);
   };
 
+  // Helper functions
+  const checkBalances = async (costToPlay?: number) => {
+    const result = await pragmaContract.call("get_data_median", [
+      DataType.SpotEntry("19514442401534788"),
+    ]);
+    const dollarToWei = BigInt(5) * BigInt(10) ** BigInt(17);
+    const ethToWei = (result as PragmaPrice).price / BigInt(10) ** BigInt(8);
+    const dollarPrice = dollarToWei / ethToWei;
+
+    return {
+      enoughEth: ethBalance > dollarPrice,
+      enoughLords: lordsBalance > BigInt(costToPlay ?? 0),
+      dollarPrice,
+    };
+  };
+
+  const executeSpawn = async (formData: FormData, spawnCalls: Call[]) => {
+    startLoading(
+      "Create",
+      "Spawning Adventurer",
+      "adventurersByOwnerQuery",
+      undefined
+    );
+
+    const isArcade = checkArcadeConnector(connector!);
+    try {
+      const tx = await handleSubmitCalls(
+        account,
+        spawnCalls,
+        isArcade,
+        Number(ethBalance),
+        showTopUpDialog,
+        setTopUpAccount,
+        network
+      );
+      addTransaction({
+        hash: tx?.transaction_hash,
+        metadata: {
+          method: `Spawn ${formData.name}`,
+        },
+      });
+      const receipt = await provider?.waitForTransaction(tx?.transaction_hash, {
+        retryInterval: getWaitRetryInterval(network!),
+      });
+      // Handle if the tx was reverted
+      if (
+        (receipt as RevertedTransactionReceiptResponse).execution_status ===
+        "REVERTED"
+      ) {
+        throw new Error(
+          (receipt as RevertedTransactionReceiptResponse).revert_reason
+        );
+      }
+      // Here we need to process the StartGame event first and use the output for AmbushedByBeast event
+      const startGameEvents = await parseEvents(
+        receipt as InvokeTransactionReceiptResponse,
+        undefined,
+        beastsContract.address,
+        "StartGame"
+      );
+      const events = await parseEvents(
+        receipt as InvokeTransactionReceiptResponse,
+        {
+          name: formData["name"],
+          startBlock: startGameEvents[0].data[0].startBlock,
+          revealBlock: startGameEvents[0].data[0].revealBlock,
+          createdTime: new Date(),
+        }
+      );
+      const adventurerState = events.find(
+        (event) => event.name === "AmbushedByBeast"
+      ).data[0];
+      setData("adventurersByOwnerQuery", {
+        adventurers: [
+          ...(queryData.adventurersByOwnerQuery?.adventurers ?? []),
+          adventurerState,
+        ],
+      });
+      setData("adventurerByIdQuery", {
+        adventurers: [adventurerState],
+      });
+      setAdventurer(adventurerState);
+      setData("latestDiscoveriesQuery", {
+        discoveries: [
+          events.find((event) => event.name === "AmbushedByBeast").data[1],
+        ],
+      });
+      setData("beastQuery", {
+        beasts: [
+          events.find((event) => event.name === "AmbushedByBeast").data[2],
+        ],
+      });
+      setData("battlesByBeastQuery", {
+        battles: [
+          events.find((event) => event.name === "AmbushedByBeast").data[3],
+        ],
+      });
+      setData("itemsByAdventurerQuery", {
+        items: [
+          {
+            item: adventurerState.weapon,
+            adventurerId: adventurerState["id"],
+            owner: true,
+            equipped: true,
+            ownerAddress: adventurerState["owner"],
+            xp: 0,
+            special1: null,
+            special2: null,
+            special3: null,
+            isAvailable: false,
+            purchasedTime: null,
+            timestamp: new Date(),
+          },
+        ],
+      });
+      stopLoading(`You have spawned ${formData.name}!`, false, "Create");
+      setAdventurer(adventurerState);
+      setScreen("play");
+      !onKatana && getEthBalance();
+    } catch (e) {
+      console.log(e);
+      stopLoading(e, true);
+    }
+  };
+
+  const addApprovalCalls = (
+    spawnCalls: Call[],
+    dollarPrice: bigint,
+    freeVRF: boolean,
+    costToPlay?: number,
+    goldenTokenId?: string
+  ) => [
+    ...(freeVRF
+      ? []
+      : [
+          {
+            contractAddress: ethContract?.address ?? "",
+            entrypoint: "approve",
+            calldata: [
+              gameContract?.address ?? "",
+              dollarPrice.toString(),
+              "0",
+            ],
+          },
+        ]),
+    ...(goldenTokenId === "0"
+      ? [
+          {
+            contractAddress: lordsContract?.address ?? "",
+            entrypoint: "approve",
+            calldata: [
+              gameContract?.address ?? "",
+              (costToPlay! * 1.1)!.toString(),
+              "0",
+            ],
+          },
+        ]
+      : []),
+    ...spawnCalls,
+  ];
+
+  const handleInsufficientFunds = (currency: "eth" | "lords") => {
+    showTopUpDialog(true);
+    setTopUpAccount(currency);
+  };
+
   const spawn = async (
     formData: FormData,
     goldenTokenId: string,
-    revenueAddress: string,
+    revenueAddresses: string[],
     costToPlay?: number
   ) => {
+    const randomInt = getRandomInt(0, revenueAddresses.length - 1);
+    const selectedRevenueAddress = revenueAddresses[randomInt];
+
     const mintAdventurerTx = {
       contractAddress: gameContract?.address ?? "",
       entrypoint: "new_game",
       calldata: [
-        revenueAddress,
+        selectedRevenueAddress,
         getKeyFromValue(gameData.ITEMS, formData.startingWeapon) ?? "",
         stringToFelt(formData.name).toString(),
         goldenTokenId,
@@ -301,157 +472,30 @@ export function createSyscalls({
     };
 
     addToCalls(mintAdventurerTx);
-
     let spawnCalls = [...calls, mintAdventurerTx];
 
-    const result = await pragmaContract.call("get_data_median", [
-      DataType.SpotEntry("19514442401534788"),
-    ]);
-    const dollarToWei = BigInt(1) * BigInt(10) ** BigInt(18);
-    const ethToWei = (result as PragmaPrice).price / BigInt(10) ** BigInt(8);
-    const dollarPrice = dollarToWei / ethToWei;
-
-    const enoughEth = ethBalance > dollarPrice;
-    const enoughLords = lordsBalance > BigInt(costToPlay ?? 0);
-
-    if (!enoughEth) {
-      showTopUpDialog(true);
-      setTopUpAccount("eth");
-    } else if (!enoughLords) {
-      showTopUpDialog(true);
-      setTopUpAccount("lords");
-    } else {
-      if (!onKatana && goldenTokenId === "0") {
-        const approvePragmaEthSpendingTx = {
-          contractAddress: ethContract?.address ?? "",
-          entrypoint: "approve",
-          calldata: [gameContract?.address ?? "", dollarPrice!.toString(), "0"],
-        };
-
-        const approveLordsSpendingTx = {
-          contractAddress: lordsContract?.address ?? "",
-          entrypoint: "approve",
-          calldata: [gameContract?.address ?? "", costToPlay!.toString(), "0"],
-        };
-
-        spawnCalls = [
-          ...calls,
-          approvePragmaEthSpendingTx,
-          approveLordsSpendingTx,
-          mintAdventurerTx,
-        ];
-      }
-
-      startLoading(
-        "Create",
-        "Spawning Adventurer",
-        "adventurersByOwnerQuery",
-        undefined
+    if (!onKatana) {
+      const { enoughEth, enoughLords, dollarPrice } = await checkBalances(
+        costToPlay
       );
 
-      const isArcade = checkArcadeConnector(connector!);
-      try {
-        const tx = await handleSubmitCalls(
-          account,
-          spawnCalls,
-          isArcade,
-          Number(ethBalance),
-          showTopUpDialog,
-          setTopUpAccount,
-          network
-        );
-        addTransaction({
-          hash: tx?.transaction_hash,
-          metadata: {
-            method: `Spawn ${formData.name}`,
-          },
-        });
-        const receipt = await provider?.waitForTransaction(
-          tx?.transaction_hash,
-          {
-            retryInterval: getWaitRetryInterval(network!),
-          }
-        );
-        // Handle if the tx was reverted
-        if (
-          (receipt as RevertedTransactionReceiptResponse).execution_status ===
-          "REVERTED"
-        ) {
-          throw new Error(
-            (receipt as RevertedTransactionReceiptResponse).revert_reason
-          );
-        }
-        // Here we need to process the StartGame event first and use the output for AmbushedByBeast event
-        const startGameEvents = await parseEvents(
-          receipt as InvokeTransactionReceiptResponse,
-          undefined,
-          beastsContract.address,
-          "StartGame"
-        );
-        const events = await parseEvents(
-          receipt as InvokeTransactionReceiptResponse,
-          {
-            name: formData["name"],
-            startBlock: startGameEvents[0].data[0].startBlock,
-            revealBlock: startGameEvents[0].data[0].revealBlock,
-            createdTime: new Date(),
-          }
-        );
-        const adventurerState = events.find(
-          (event) => event.name === "AmbushedByBeast"
-        ).data[0];
-        setData("adventurersByOwnerQuery", {
-          adventurers: [
-            ...(queryData.adventurersByOwnerQuery?.adventurers ?? []),
-            adventurerState,
-          ],
-        });
-        setData("adventurerByIdQuery", {
-          adventurers: [adventurerState],
-        });
-        setAdventurer(adventurerState);
-        setData("latestDiscoveriesQuery", {
-          discoveries: [
-            events.find((event) => event.name === "AmbushedByBeast").data[1],
-          ],
-        });
-        setData("beastQuery", {
-          beasts: [
-            events.find((event) => event.name === "AmbushedByBeast").data[2],
-          ],
-        });
-        setData("battlesByBeastQuery", {
-          battles: [
-            events.find((event) => event.name === "AmbushedByBeast").data[3],
-          ],
-        });
-        setData("itemsByAdventurerQuery", {
-          items: [
-            {
-              item: adventurerState.weapon,
-              adventurerId: adventurerState["id"],
-              owner: true,
-              equipped: true,
-              ownerAddress: adventurerState["owner"],
-              xp: 0,
-              special1: null,
-              special2: null,
-              special3: null,
-              isAvailable: false,
-              purchasedTime: null,
-              timestamp: new Date(),
-            },
-          ],
-        });
-        stopLoading(`You have spawned ${formData.name}!`, false, "Create");
-        setAdventurer(adventurerState);
-        setScreen("play");
-        !onKatana && getEthBalance();
-      } catch (e) {
-        console.log(e);
-        stopLoading(e, true);
+      if (!enoughEth && !freeVRF) {
+        return handleInsufficientFunds("eth");
       }
+      if (!enoughLords && goldenTokenId === "0") {
+        return handleInsufficientFunds("lords");
+      }
+
+      spawnCalls = addApprovalCalls(
+        spawnCalls,
+        dollarPrice,
+        freeVRF,
+        costToPlay,
+        goldenTokenId
+      );
     }
+
+    await executeSpawn(formData, spawnCalls);
   };
 
   const explore = async (till_beast: boolean) => {
@@ -587,6 +631,10 @@ export function createSyscalls({
           );
           for (let itemsLeveledUpEvent of itemsLeveledUpEvents) {
             for (let itemLeveled of itemsLeveledUpEvent.data[1]) {
+              const ownedItemIndex =
+                queryData.itemsByAdventurerQuery?.items.findIndex(
+                  (item: Item) => item.item == itemLeveled.item
+                );
               if (itemLeveled.suffixUnlocked) {
                 if (itemEntropy === BigInt(0)) {
                   setFetchUnlocksEntropy(true);
@@ -595,6 +643,24 @@ export function createSyscalls({
               if (itemLeveled.newLevel === 20) {
                 setG20Unlock(true);
               }
+              setData(
+                "itemsByAdventurerQuery",
+                itemLeveled.special1,
+                "special1",
+                ownedItemIndex
+              );
+              setData(
+                "itemsByAdventurerQuery",
+                itemLeveled.special2,
+                "special2",
+                ownedItemIndex
+              );
+              setData(
+                "itemsByAdventurerQuery",
+                itemLeveled.special3,
+                "special3",
+                ownedItemIndex
+              );
             }
           }
         }
@@ -805,6 +871,10 @@ export function createSyscalls({
         );
         for (let itemsLeveledUpEvent of itemsLeveledUpEvents) {
           for (let itemLeveled of itemsLeveledUpEvent.data[1]) {
+            const ownedItemIndex =
+              queryData.itemsByAdventurerQuery?.items.findIndex(
+                (item: Item) => item.item == itemLeveled.item
+              );
             if (itemLeveled.suffixUnlocked) {
               if (itemEntropy === BigInt(0)) {
                 setFetchUnlocksEntropy(true);
@@ -813,6 +883,24 @@ export function createSyscalls({
             if (itemLeveled.newLevel === 20) {
               setG20Unlock(true);
             }
+            setData(
+              "itemsByAdventurerQuery",
+              itemLeveled.special1,
+              "special1",
+              ownedItemIndex
+            );
+            setData(
+              "itemsByAdventurerQuery",
+              itemLeveled.special2,
+              "special2",
+              ownedItemIndex
+            );
+            setData(
+              "itemsByAdventurerQuery",
+              itemLeveled.special3,
+              "special3",
+              ownedItemIndex
+            );
           }
         }
 
@@ -1477,6 +1565,8 @@ export function createSyscalls({
     recipient: string
   ) => {
     try {
+      startLoading("Transfer", "Transferring Adventurer", undefined, undefined);
+
       const transferTx = {
         contractAddress: gameContract?.address ?? "",
         entrypoint: "transfer_from",
@@ -1496,10 +1586,15 @@ export function createSyscalls({
         throw new Error("Transaction did not complete successfully.");
       }
 
+      setData("adventurersByOwnerQuery", {
+        adventurers: [adventurer],
+      });
+
       getBalances();
+      stopLoading("Transferred Adventurer", false, "Transfer");
     } catch (error) {
       console.error(error);
-      throw error;
+      stopLoading(error, true);
     }
   };
 

@@ -1,9 +1,9 @@
 import { Button } from "@/app/components/buttons/Button";
+import { SoundOffIcon, SoundOnIcon } from "@/app/components/icons/Icons";
+import { soundSelector, useUiSounds } from "@/app/hooks/useUiSound";
+import useUIStore, { Network } from "@/app/hooks/useUIStore";
 import Profile from "public/icons/profile.svg";
 import QuestionMark from "public/icons/question-mark.svg";
-import useUIStore, { Network } from "@/app/hooks/useUIStore";
-import { SoundOffIcon, SoundOnIcon } from "@/app/components/icons/Icons";
-import { useUiSounds, soundSelector } from "@/app/hooks/useUiSound";
 
 const Intro = () => {
   const {
@@ -14,7 +14,6 @@ const Intro = () => {
     setIsMuted,
     isMuted,
   } = useUIStore();
-
   const { play: clickPlay } = useUiSounds(soundSelector.click);
 
   let network = "";
@@ -69,7 +68,7 @@ const Intro = () => {
                   setNetwork(network! as Network);
                 }}
               >
-                Play on {network}
+                Play for Real
               </Button>
             </div>
           </div>
@@ -87,9 +86,8 @@ const Intro = () => {
                   handleOnboarded();
                   setNetwork("katana");
                 }}
-                disabled={true}
               >
-                Play on Testnet
+                Play for Free
               </Button>
             </div>
           </div>

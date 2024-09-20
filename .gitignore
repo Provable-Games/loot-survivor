@@ -14,7 +14,6 @@ keys
 account
 ls1.5.pem
 
-.env
 katana.log
 scripts/katana/katana/
 .snfoundry_cache/.prev_tests_failed

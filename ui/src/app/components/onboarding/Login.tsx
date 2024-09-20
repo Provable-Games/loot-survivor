@@ -11,6 +11,7 @@ import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 import { checkCartridgeConnector } from "@/app/lib/connectors";
 import { useConnect } from "@starknet-react/core";
 import { Adventurer } from "@/app/types";
+import { Button } from "@/app/components/buttons/Button";
 
 interface LoginProps {
   eth: number;
@@ -73,6 +74,17 @@ const Login = ({
 
   return (
     <>
+      {account && (
+        <Button
+          className="fixed top-1 right-1 sm:top-20 sm:right-20 xl:px-5"
+          onClick={() => {
+            setScreen("start");
+            handleOnboarded();
+          }}
+        >
+          Skip
+        </Button>
+      )}
       <div className="hidden sm:flex flex-row h-5/6 gap-5">
         <div className="flex flex-col items-center w-1/3">
           <h2 className="m-0">1</h2>

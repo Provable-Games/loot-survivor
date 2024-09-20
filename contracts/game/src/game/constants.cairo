@@ -7,7 +7,7 @@ const MINIMUM_SCORE_FOR_PAYOUTS: u16 = 64;
 const MINIMUM_SCORE_FOR_DEATH_RANK: u16 = 100;
 const SECONDS_IN_DAY: u32 = 86400;
 const TARGET_PRICE_USD_CENTS: u16 = 300;
-const VRF_COST_PER_GAME: u32 = 100000000; // 1$ with 8 decimals
+const VRF_COST_PER_GAME: u32 = 50000000; // $0.50 with 8 decimals
 const VRF_MAX_CALLBACK_MAINNET: u32 = 10000000; // $0.10
 const VRF_MAX_CALLBACK_TESTNET: u32 = 300000000; // $3.00
 const PRAGMA_LORDS_KEY: felt252 = 'LORDS/USD'; // felt252 conversion of "LORDS/USD"
@@ -79,6 +79,7 @@ mod messages {
     const FREE_GAME_UNAVAILABLE: felt252 = 'free game not yet available';
     const NOT_PARTICIPATED_IN_TOURNAMENT: felt252 = 'not tournament participant';
     const COLLECTION_OUT_OF_GAMES: felt252 = 'collection out of games';
+    const GAME_NOT_LIVE: felt252 = 'game not live';
 }
 
 #[derive(Drop, Copy)]

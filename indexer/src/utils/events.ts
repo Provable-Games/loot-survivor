@@ -343,7 +343,7 @@ export const parsePlayerReward = combineParsers({
 
 export const parseClientReward = combineParsers({
   amount: { index: 0, parser: parseU128 },
-  address: { index: 0, parser: parseFelt252 },
+  address: { index: 1, parser: parseFelt252 },
 });
 
 export const parseRewardDistribution = combineParsers({

@@ -1,16 +1,16 @@
-import { ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-import BN from "bn.js";
-import { z } from "zod";
-import { Adventurer, Item, ItemPurchase } from "@/app/types";
-import { GameData } from "@/app/lib/data/GameData";
 import {
-  itemCharismaDiscount,
+  deathMessages,
   itemBasePrice,
+  itemCharismaDiscount,
   itemMinimumPrice,
   potionBasePrice,
 } from "@/app/lib/constants";
-import { deathMessages } from "@/app/lib/constants";
+import { GameData } from "@/app/lib/data/GameData";
+import { Adventurer, Item, ItemPurchase } from "@/app/types";
+import BN from "bn.js";
+import { ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+import { z } from "zod";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -629,3 +629,9 @@ export const DataType = {
 
 export const removeSpaces = (str: string): string =>
   str?.replace(/\s+/g, "") ?? "";
+
+export function getRandomInt(min: number, max: number): number {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}

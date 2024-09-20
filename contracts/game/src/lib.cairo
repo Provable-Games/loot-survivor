@@ -167,12 +167,12 @@ mod Game {
         _launch_tournament_duration_seconds: u64,
         _launch_tournament_participants: Map::<felt252, ContractAddress>,
         _launch_tournament_scores: Map::<ContractAddress, u32>,
-        _launch_tournament_start_delay_seconds: u64,
+        _start_delay_seconds: u64,
         _launch_tournament_game_counts: Map::<ContractAddress, u16>,
         _leaderboard: Leaderboard,
         _payment_token_dispatcher: IERC20Dispatcher,
         _oracle_dispatcher: IPragmaABIDispatcher,
-        _previous_free_game_timestamp: Map::<(ContractAddress, u32), u64>,
+        _previous_free_game_timestamp: Map::<(ContractAddress, u128), u64>,
         _terminal_timestamp: u64,
         _vrf_dispatcher: IRandomnessDispatcher,
         _vrf_premiums_address: ContractAddress,
@@ -245,8 +245,7 @@ mod Game {
     /// @param vrf_payments_address: the address of the VRF payments
     /// @param launch_tournament_games_per_collection: the number of games per collection for the
     /// launch tournament
-    /// @param launch_tournament_start_delay_seconds: the delay before the launch tournament claims
-    /// starts
+    /// @param start_delay_seconds: the delay before the contract starts accepting games
     /// @param free_vrf_promotion_duration_seconds: the duration of the free VRF promotion
     #[constructor]
     fn constructor(
@@ -265,7 +264,7 @@ mod Game {
         launch_tournament_duration_seconds: u64,
         vrf_payments_address: ContractAddress,
         launch_tournament_games_per_collection: u16,
-        launch_tournament_start_delay_seconds: u64,
+        start_delay_seconds: u64,
         free_vrf_promotion_duration_seconds: u64
     ) {
         if payment_token.is_non_zero() {
@@ -314,10 +313,8 @@ mod Game {
             self._launch_tournament_duration_seconds.write(launch_tournament_duration_seconds);
         }
 
-        if launch_tournament_start_delay_seconds != 0 {
-            self
-                ._launch_tournament_start_delay_seconds
-                .write(launch_tournament_start_delay_seconds);
+        if start_delay_seconds != 0 {
+            self._start_delay_seconds.write(start_delay_seconds);
         }
 
         if launch_tournament_games_per_collection != 0 {
@@ -377,7 +374,7 @@ mod Game {
         /// starter beast is defeated
         /// @param custom_renderer A ContractAddress to use for rendering
         /// the NFT. Provide 0 to use the default renderer.
-        /// @param launch_tournament_winner_token_id A u32 representing the id of a token that won
+        /// @param launch_tournament_winner_token_id A u128 representing the id of a token that won
         /// the launch tournament
         /// @param mint_to A ContractAddress representing the address to mint the adventurer to.
         /// @return A felt252 representing the adventurer id.
@@ -389,7 +386,7 @@ mod Game {
             golden_token_id: u8,
             delay_reveal: bool,
             custom_renderer: ContractAddress,
-            launch_tournament_winner_token_id: u32,
+            launch_tournament_winner_token_id: u128,
             mint_to: ContractAddress
         ) -> felt252 {
             // don't process payment distributions on Katana
@@ -413,6 +410,9 @@ mod Game {
                     _pay_for_vrf(@self);
                 }
             }
+
+            // assert game is live
+            _assert_game_is_live(@self);
 
             // start the game
             let adventurer_id = _start_game(
@@ -993,7 +993,7 @@ mod Game {
         /// @param delay_stat_reveal A bool representing whether to delay the stat reveal.
         /// @param collection_address A ContractAddress representing the address of the NFT
         /// collection.
-        /// @param token_id a u32 representing the token ID of the NFT.
+        /// @param token_id a u128 representing the token ID of the NFT.
         /// @param mint_from A ContractAddress representing the address that will be used for
         /// qualifying collections @param mint_to A ContractAddress representing the address to mint
         /// the games to.
@@ -1007,7 +1007,7 @@ mod Game {
             custom_renderer: ContractAddress,
             delay_stat_reveal: bool,
             collection_address: ContractAddress,
-            token_id: u32,
+            token_id: u128,
             mint_from: ContractAddress,
             mint_to: ContractAddress,
             signature: Array<felt252>
@@ -1054,7 +1054,7 @@ mod Game {
         /// @param delay_stat_reveal A bool representing whether to delay the stat reveal.
         /// @param collection_address A ContractAddress representing the address of the NFT
         /// collection.
-        /// @param token_id a u32 representing the token ID of the NFT.
+        /// @param token_id a u128 representing the token ID of the NFT.
         /// @param mint_to A ContractAddress representing the address to mint the adventurer to.
         /// @return An Array of felt252 representing the adventurer IDs of the adventurers that were
         fn enter_launch_tournament(
@@ -1064,7 +1064,7 @@ mod Game {
             custom_renderer: ContractAddress,
             delay_stat_reveal: bool,
             collection_address: ContractAddress,
-            token_id: u32,
+            token_id: u128,
             mint_to: ContractAddress
         ) -> Array<felt252> {
             _enter_launch_tournament(
@@ -1266,7 +1266,7 @@ mod Game {
         }
 
         fn free_game_available(
-            self: @ContractState, token_type: FreeGameTokenType, token_id: u32
+            self: @ContractState, token_type: FreeGameTokenType, token_id: u128
         ) -> bool {
             _free_game_available(self, token_type, token_id)
         }
@@ -1281,6 +1281,11 @@ mod Game {
         }
         fn get_launch_tournament_end_time(self: @ContractState) -> u64 {
             _launch_tournament_end_time(self)
+        }
+        fn get_start_time(self: @ContractState) -> u64 {
+            let genesis_timestamp = self._genesis_timestamp.read();
+            let start_delay = self._start_delay_seconds.read();
+            genesis_timestamp + start_delay
         }
     }
 
@@ -1338,12 +1343,15 @@ mod Game {
         custom_renderer: ContractAddress,
         delay_stat_reveal: bool,
         collection_address: ContractAddress,
-        token_id: u32,
+        token_id: u128,
         mint_to: ContractAddress,
         owner: ContractAddress
     ) -> Array<felt252> {
         // assert game terminal time has not been reached
         _assert_launch_tournament_is_active(@self);
+
+        // assert game is live
+        _assert_game_is_live(@self);
 
         // assert the nft collection is part of the set of free game nft collections
         _assert_is_qualifying_nft(@self, collection_address);
@@ -1982,7 +1990,7 @@ mod Game {
     /// @param delay_stat_reveal A bool representing whether to delay the stat reveal until the
     /// starter beast is defeated.
     /// @param golden_token_id A u8 representing the golden token id of the adventurer.
-    /// @param launch_tournament_winner_token_id A u32 representing the token id of the launch
+    /// @param launch_tournament_winner_token_id A u128 representing the token id of the launch
     /// @param mint_to A ContractAddress representing the address to mint the adventurer to.
     /// @return A felt252 representing the adventurer id.
     fn _start_game(
@@ -1992,7 +2000,7 @@ mod Game {
         custom_renderer: ContractAddress,
         delay_stat_reveal: bool,
         golden_token_id: u8,
-        launch_tournament_winner_token_id: u32,
+        launch_tournament_winner_token_id: u128,
         mint_to: ContractAddress
     ) -> felt252 {
         // assert game terminal time has not been reached
@@ -3282,7 +3290,6 @@ mod Game {
     /// @param self A reference to the ContractState object.
     /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
     /// @return The bag.
-    #[inline(always)]
     fn _load_bag(self: @ContractState, adventurer_id: felt252) -> Bag {
         self._bag.read(adventurer_id)
     }
@@ -3293,7 +3300,6 @@ mod Game {
     /// @param self A reference to the ContractState object.
     /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
     /// @param bag A reference to the bag.
-    #[inline(always)]
     fn _save_bag(ref self: ContractState, adventurer_id: felt252, bag: Bag) {
         self._bag.write(adventurer_id, bag);
     }
@@ -3398,7 +3404,6 @@ mod Game {
     /// @param self A reference to the ContractState object.
     /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
     /// @param adventurer_meta A reference to the adventurer metadata.
-    #[inline(always)]
     fn _save_adventurer_metadata(
         ref self: ContractState, adventurer_id: felt252, adventurer_meta: AdventurerMetadata
     ) {
@@ -3412,7 +3417,6 @@ mod Game {
     /// @param self A reference to the ContractState object.
     /// @param adventurer_id A felt252 representing the unique ID of the adventurer.
     /// @param name A felt252 representing the name of the adventurer.
-    #[inline(always)]
     fn _save_adventurer_name(ref self: ContractState, adventurer_id: felt252, name: felt252) {
         self._adventurer_name.write(adventurer_id, name);
     }
@@ -3631,9 +3635,25 @@ mod Game {
         assert(!_is_launch_tournament_active(self), messages::TOURNAMENT_STILL_ACTIVE);
     }
 
+    fn _assert_game_is_live(self: @ContractState) {
+        assert(_is_game_live(self), messages::GAME_NOT_LIVE);
+    }
+
+    fn _is_game_live(self: @ContractState) -> bool {
+        let current_timestamp = starknet::get_block_info().unbox().block_timestamp;
+        // get genesis timestamp
+        let genesis_timestamp = self._genesis_timestamp.read();
+        // get start delay
+        let start_delay = self._start_delay_seconds.read();
+        // get game start time
+        let game_start_time = genesis_timestamp + start_delay;
+        // assert current timestamp is greater than or equal to game start time
+        current_timestamp >= game_start_time
+    }
+
     fn _launch_tournament_end_time(self: @ContractState) -> u64 {
         let genesis_timestamp = self._genesis_timestamp.read();
-        let start_delay = self._launch_tournament_start_delay_seconds.read();
+        let start_delay = self._start_delay_seconds.read();
         let duration = self._launch_tournament_duration_seconds.read();
         genesis_timestamp + duration + start_delay
     }
@@ -3693,7 +3713,7 @@ mod Game {
     fn _assert_nft_ownership(
         self: @ContractState,
         nft_collection_address: ContractAddress,
-        token_id: u32,
+        token_id: u128,
         caller: ContractAddress
     ) {
         let erc721_dispatcher = IERC721Dispatcher { contract_address: nft_collection_address };
@@ -3702,7 +3722,7 @@ mod Game {
     }
 
     fn _get_token_hash(
-        self: @ContractState, collection_address: ContractAddress, token_id: u32
+        self: @ContractState, collection_address: ContractAddress, token_id: u128
     ) -> felt252 {
         let mut hash_span = ArrayTrait::<felt252>::new();
         hash_span.append(collection_address.into());
@@ -3790,12 +3810,10 @@ mod Game {
         }
     }
 
-    #[inline(always)]
     fn _get_level_seed(self: @ContractState, adventurer_id: felt252) -> u64 {
         _load_adventurer_metadata(self, adventurer_id).level_seed
     }
 
-    #[inline(always)]
     fn _is_top_score(self: @ContractState, score: u16) -> bool {
         if score > self._leaderboard.read().third.xp {
             true
@@ -3804,7 +3822,6 @@ mod Game {
         }
     }
 
-    #[inline(always)]
     fn _get_owner(self: @ContractState, adventurer_id: felt252) -> ContractAddress {
         self.erc721.ERC721_owners.read(adventurer_id.into())
     }
@@ -4196,7 +4213,7 @@ mod Game {
     struct ClaimedFreeGame {
         adventurer_id: felt252,
         collection_address: ContractAddress,
-        token_id: u32
+        token_id: u128
     }
 
     #[derive(Drop, starknet::Event)]
@@ -4641,7 +4658,7 @@ mod Game {
         ref self: ContractState,
         adventurer_id: felt252,
         collection_address: ContractAddress,
-        token_id: u32
+        token_id: u128
     ) {
         self.emit(ClaimedFreeGame { adventurer_id, collection_address, token_id });
     }
@@ -4653,7 +4670,7 @@ mod Game {
     }
 
     fn _free_game_available(
-        self: @ContractState, token_type: FreeGameTokenType, token_id: u32
+        self: @ContractState, token_type: FreeGameTokenType, token_id: u128
     ) -> bool {
         _last_usage(self, token_type, token_id) + token_type.get_cooldown() <= get_block_timestamp()
     }
@@ -4663,7 +4680,7 @@ mod Game {
     /// @param token_type The type of the token
     /// @param token_id The ID of the token
     fn _pay_with_special_token(
-        ref self: ContractState, token_type: FreeGameTokenType, token_id: u32
+        ref self: ContractState, token_type: FreeGameTokenType, token_id: u128
     ) {
         // assert caller owns token
         let token_dispatcher = _get_token_dispatcher(@self, token_type);
@@ -4722,7 +4739,7 @@ mod Game {
     /// @param token_type The type of the token
     /// @param token_id The ID of the token
     /// @return The last usage timestamp
-    fn _last_usage(self: @ContractState, token_type: FreeGameTokenType, token_id: u32) -> u64 {
+    fn _last_usage(self: @ContractState, token_type: FreeGameTokenType, token_id: u128) -> u64 {
         let token_address = _get_token_address(self, token_type);
         self._previous_free_game_timestamp.read((token_address, token_id))
     }

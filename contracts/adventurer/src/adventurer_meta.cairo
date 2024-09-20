@@ -9,7 +9,7 @@ struct AdventurerMetadata {
     rank_at_death: u8, // 2 bits in storage
     delay_stat_reveal: bool, // 1 bit in storage
     golden_token_id: u8, // 8 bits in storage
-    launch_tournament_winner_token_id: u32, // 32 bits in storage
+    launch_tournament_winner_token_id: u128, // 32 bits in storage
 }
 
 impl PackingAdventurerMetadata of StorePacking<AdventurerMetadata, felt252> {
@@ -23,6 +23,11 @@ impl PackingAdventurerMetadata of StorePacking<AdventurerMetadata, felt252> {
             0
         };
 
+        // downsize launch tournament winner token id to 32 bits so we can fit it in our storage
+        let launch_tournament_token_id_u32 = value
+            .launch_tournament_winner_token_id % U32_MAX
+            .into();
+
         (value.birth_date.into()
             + value.death_date.into() * TWO_POW_64
             + value.level_seed.into() * TWO_POW_128
@@ -30,7 +35,7 @@ impl PackingAdventurerMetadata of StorePacking<AdventurerMetadata, felt252> {
             + value.rank_at_death.into() * TWO_POW_208
             + delay_stat_reveal * TWO_POW_210
             + value.golden_token_id.into() * TWO_POW_211
-            + value.launch_tournament_winner_token_id.into() * TWO_POW_219)
+            + launch_tournament_token_id_u32.into() * TWO_POW_219)
             .try_into()
             .unwrap()
     }
@@ -89,7 +94,7 @@ impl ImplAdventurerMetadata of IAdventurerMetadata {
         birth_date: u64,
         delay_stat_reveal: bool,
         golden_token_id: u8,
-        launch_tournament_winner_token_id: u32
+        launch_tournament_winner_token_id: u128
     ) -> AdventurerMetadata {
         AdventurerMetadata {
             birth_date,
@@ -111,6 +116,7 @@ const TWO_POW_8_NZ: NonZero<u256> = 0x100;
 const TWO_POW_16: u256 = 0x10000;
 const TWO_POW_16_NZ: NonZero<u256> = 0x10000;
 const TWO_POW_32_NZ: NonZero<u256> = 0x100000000;
+const U32_MAX: u32 = 0xffffffff;
 const TWO_POW_64: u256 = 0x10000000000000000;
 const TWO_POW_64_NZ: NonZero<u256> = 0x10000000000000000;
 const TWO_POW_128: u256 = 0x100000000000000000000000000000000;
@@ -126,6 +132,7 @@ const TWO_POW_219: u256 = 0x8000000000000000000000000000000000000000000000000000
 #[cfg(test)]
 mod tests {
     use super::{AdventurerMetadata, PackingAdventurerMetadata, ImplAdventurerMetadata};
+    const U128_MAX: u128 = 0xffffffffffffffffffffffffffffffff;
     const U64_MAX: u64 = 0xffffffffffffffff;
     const U32_MAX: u32 = 0xffffffff;
     const U16_MAX: u16 = 0xffff;
@@ -143,7 +150,7 @@ mod tests {
             rank_at_death: U2_MAX,
             delay_stat_reveal: true,
             golden_token_id: U8_MAX,
-            launch_tournament_winner_token_id: U32_MAX,
+            launch_tournament_winner_token_id: U128_MAX,
         };
         let packed = PackingAdventurerMetadata::pack(meta);
         let unpacked: AdventurerMetadata = PackingAdventurerMetadata::unpack(packed);
@@ -157,10 +164,65 @@ mod tests {
         assert(meta.rank_at_death == unpacked.rank_at_death, 'rank at death should be max u2');
         assert(meta.delay_stat_reveal == unpacked.delay_stat_reveal, 'delay reveal should be true');
         assert(meta.golden_token_id == unpacked.golden_token_id, 'golden token should be max');
+        assert(unpacked.launch_tournament_winner_token_id == 0, 'champ token should be 0');
+
+        // max value -1 case
+        let meta = AdventurerMetadata {
+            birth_date: U64_MAX - 1,
+            death_date: U64_MAX - 1,
+            level_seed: U64_MAX - 1,
+            item_specials_seed: U16_MAX - 1,
+            rank_at_death: U2_MAX - 1,
+            delay_stat_reveal: true,
+            golden_token_id: U8_MAX - 1,
+            launch_tournament_winner_token_id: U128_MAX - 1,
+        };
+        let packed = PackingAdventurerMetadata::pack(meta);
+        let unpacked: AdventurerMetadata = PackingAdventurerMetadata::unpack(packed);
+        assert(meta.birth_date == unpacked.birth_date, 'start time should be max u64');
+        assert(meta.death_date == unpacked.death_date, 'end time should be max u64');
+        assert(meta.level_seed == unpacked.level_seed, 'level seed should be max u64');
         assert(
-            meta.launch_tournament_winner_token_id == unpacked.launch_tournament_winner_token_id,
+            meta.item_specials_seed == unpacked.item_specials_seed,
+            'item specials should be max u16'
+        );
+        assert(meta.rank_at_death == unpacked.rank_at_death, 'rank at death should be max u2');
+        assert(meta.delay_stat_reveal == unpacked.delay_stat_reveal, 'delay reveal should be true');
+        assert(meta.golden_token_id == unpacked.golden_token_id, 'golden token should be max');
+        println!("launch tourny token id: {}", unpacked.launch_tournament_winner_token_id);
+        assert(
+            unpacked.launch_tournament_winner_token_id == (U32_MAX.into() - 1),
             'champ token should be max'
         );
+
+        // middle value case
+        let meta = AdventurerMetadata {
+            birth_date: U32_MAX.into(),
+            death_date: U32_MAX.into(),
+            level_seed: U32_MAX.into(),
+            item_specials_seed: 500,
+            rank_at_death: 2,
+            delay_stat_reveal: true,
+            golden_token_id: 160,
+            launch_tournament_winner_token_id: 4000,
+        };
+        let packed = PackingAdventurerMetadata::pack(meta);
+        let unpacked: AdventurerMetadata = PackingAdventurerMetadata::unpack(packed);
+        assert(meta.birth_date == unpacked.birth_date, 'start time should be same');
+        assert(meta.death_date == unpacked.death_date, 'end time should be same');
+        assert(meta.level_seed == unpacked.level_seed, 'level seed should be same');
+        assert(
+            meta.item_specials_seed == unpacked.item_specials_seed, 'item specials should be same'
+        );
+        assert(meta.rank_at_death == unpacked.rank_at_death, 'rank at death should be same');
+        assert(meta.delay_stat_reveal == unpacked.delay_stat_reveal, 'delay reveal should be same');
+        assert(meta.golden_token_id == unpacked.golden_token_id, 'golden token should be same');
+        println!("launch tourny token id: {}", unpacked.launch_tournament_winner_token_id);
+        assert(
+            unpacked.launch_tournament_winner_token_id == meta.launch_tournament_winner_token_id,
+            'champ token should be same'
+        );
+
         // zero case
         let meta = AdventurerMetadata {
             birth_date: 0,

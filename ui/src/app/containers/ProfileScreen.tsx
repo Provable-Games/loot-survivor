@@ -1,11 +1,11 @@
+import Info from "@/app/components/adventurer/Info";
+import { Button } from "@/app/components/buttons/Button";
+import EncountersScreen from "@/app/containers/EncountersScreen";
+import { useQueriesStore } from "@/app/hooks/useQueryStore";
+import useUIStore from "@/app/hooks/useUIStore";
+import { NullAdventurer } from "@/app/types";
 import { useState } from "react";
 import { Contract } from "starknet";
-import Info from "@/app/components/adventurer/Info";
-import { useQueriesStore } from "@/app/hooks/useQueryStore";
-import { Button } from "@/app/components/buttons/Button";
-import useUIStore from "@/app/hooks/useUIStore";
-import EncountersScreen from "@/app/containers/EncountersScreen";
-import { NullAdventurer } from "@/app/types";
 
 interface ProfileProps {
   gameContract: Contract;

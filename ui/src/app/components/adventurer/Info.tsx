@@ -1,24 +1,22 @@
-import { useMemo } from "react";
-import { Contract } from "starknet";
-import { Adventurer, NullAdventurer, NullItem } from "@/app/types";
-import {
-  HeartIcon,
-  CoinIcon,
-  QuestionMarkIcon,
-} from "@/app/components/icons/Icons";
 import { ItemDisplay } from "@/app/components/adventurer/ItemDisplay";
 import LevelBar from "@/app/components/adventurer/LevelBar";
-import { getItemData, getKeyFromValue } from "@/app/lib/utils";
-import { useQueriesStore } from "@/app/hooks/useQueryStore";
-import useUIStore from "@/app/hooks/useUIStore";
-import { Item } from "@/app/types";
-import { HealthCountDown } from "@/app/components/CountDown";
-import { GameData } from "@/app/lib/data/GameData";
-import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
-import { calculateLevel } from "@/app/lib/utils";
-import { vitalityIncrease } from "@/app/lib/constants";
-import LootIconLoader from "@/app/components/icons/Loader";
 import AutoScrolling from "@/app/components/animations/AutoScrolling";
+import { HealthCountDown } from "@/app/components/CountDown";
+import {
+  CoinIcon,
+  HeartIcon,
+  QuestionMarkIcon,
+} from "@/app/components/icons/Icons";
+import LootIconLoader from "@/app/components/icons/Loader";
+import { useQueriesStore } from "@/app/hooks/useQueryStore";
+import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
+import useUIStore from "@/app/hooks/useUIStore";
+import { vitalityIncrease } from "@/app/lib/constants";
+import { GameData } from "@/app/lib/data/GameData";
+import { calculateLevel, getItemData, getKeyFromValue } from "@/app/lib/utils";
+import { Adventurer, Item, NullAdventurer, NullItem } from "@/app/types";
+import { useMemo } from "react";
+import { Contract } from "starknet";
 
 interface InfoProps {
   adventurer: Adventurer | undefined;
@@ -281,7 +279,7 @@ export default function Info({
               {attributes.map((attribute) => (
                 <div
                   key={attribute.key}
-                  className="flex flex-wrap justify-between p-1 bg-terminal-green text-terminal-black w-full border border-terminal-black relative"
+                  className="flex flex-wrap justify-between p-1 bg-terminal-green text-terminal-black w-full border border-terminal-black relative whitespace-nowrap"
                 >
                   {attribute.key}
                   <span className="flex flex-row items-center">

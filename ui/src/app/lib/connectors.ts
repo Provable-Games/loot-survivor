@@ -15,10 +15,10 @@ export const getArcadeConnectors = (connectors: Connector[]) => {
 };
 
 export const getWalletConnectors = (connectors: Connector[]) =>
-  connectors.filter((connector) => connector.id !== "cartridge");
+  connectors.filter((connector) => connector.id !== "controller");
 
 export const checkCartridgeConnector = (connector?: Connector) => {
-  return connector?.id === "cartridge";
+  return connector?.id === "controller";
 };
 
 export const providerInterfaceCamel = (provider: string) => {

@@ -59,6 +59,7 @@ import Cartridge from "public/icons/cartridge.svg";
 import PotionArrow from "public/icons/potion-arrow.svg";
 import Eye from "public/icons/eye.svg";
 import Clock from "public/icons/clock.svg";
+import StarknetId from "public/icons/starknet-id.svg";
 
 const ClothIcon = Cloth;
 const HideIcon = Hide;
@@ -122,6 +123,7 @@ const SettingsIcon = Settings;
 
 const CompleteIcon = Complete;
 const CartridgeIcon = Cartridge;
+const StarknetIdIcon = StarknetId;
 
 export {
   ClothIcon,
@@ -184,4 +186,5 @@ export {
   QuestionMarkIcon,
   CompleteIcon,
   CartridgeIcon,
+  StarknetIdIcon,
 };

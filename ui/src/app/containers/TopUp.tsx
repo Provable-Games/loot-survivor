@@ -39,29 +39,14 @@ const TopUp = ({
 }: TopUpProps) => {
   const { address } = useNetworkAccount();
   const { connector } = useConnect();
-  const onSepolia = useUIStore((state) => state.onSepolia);
   const topUpAccount = useUIStore((state) => state.topUpAccount);
   const username = useUIStore((state) => state.username);
   const [copied, setCopied] = useState(false);
-  const [copiedLords, setCopiedLords] = useState(false);
-  const [copiedEth, setCopiedEth] = useState(false);
 
   const handleCopy = () => {
     copyToClipboard(padAddress(address!));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleCopyLords = () => {
-    copyToClipboard(lordsContract.address);
-    setCopiedLords(true);
-    setTimeout(() => setCopiedLords(false), 2000);
-  };
-
-  const handleCopyEth = () => {
-    copyToClipboard(ethContract.address);
-    setCopiedEth(true);
-    setTimeout(() => setCopiedEth(false), 2000);
   };
 
   return (
@@ -122,23 +107,6 @@ const TopUp = ({
                 {formatNumber(parseInt(lordsBalance.toString()) / 10 ** 18)}
               </p>
             </span>
-            {onSepolia ? (
-              <Button onClick={() => mintLords()}>Mint Lords</Button>
-            ) : (
-              <>
-                <span className="uppercase">
-                  {displayAddress(lordsContract.address)}
-                </span>
-                <Button size={"xs"} onClick={handleCopyLords}>
-                  Copy
-                </Button>
-                {copiedLords && (
-                  <span className="absolute right-[-50px] uppercase">
-                    Copied!
-                  </span>
-                )}
-              </>
-            )}
           </div>
           <span className="flex flex-col relative">
             <div className="flex flex-col gap-2 items-center">
@@ -148,19 +116,6 @@ const TopUp = ({
                   Current Balance:{" "}
                   {formatNumber(parseInt(ethBalance.toString()) / 10 ** 18)}
                 </p>
-              </span>
-              <span className="flex flex-row items-center gap-2 relative">
-                <span className="uppercase">
-                  {displayAddress(ethContract.address)}
-                </span>
-                <Button size={"xs"} onClick={handleCopyEth}>
-                  Copy
-                </Button>
-                {copiedEth && (
-                  <span className="absolute right-[-50px] uppercase">
-                    Copied!
-                  </span>
-                )}
               </span>
             </div>
           </span>

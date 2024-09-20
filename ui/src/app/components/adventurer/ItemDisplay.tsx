@@ -1,17 +1,21 @@
+import { InventoryDisplay } from "@/app/components/adventurer/InventoryDisplay";
+import { Button } from "@/app/components/buttons/Button";
+import Efficacyicon from "@/app/components/icons/EfficacyIcon";
+import { DownArrowIcon, SwapIcon } from "@/app/components/icons/Icons";
+import LootIcon from "@/app/components/icons/LootIcon";
+import { useQueriesStore } from "@/app/hooks/useQueryStore";
+import useUIStore from "@/app/hooks/useUIStore";
+import { GameData } from "@/app/lib/data/GameData";
+import {
+  calculateLevel,
+  getItemData,
+  getKeyFromValue,
+  getValueFromKey,
+  processItemName,
+} from "@/app/lib/utils";
+import { Item } from "@/app/types";
 import React, { useEffect, useState } from "react";
 import { Contract } from "starknet";
-import { Item } from "@/app/types";
-import LootIcon from "@/app/components/icons/LootIcon";
-import Efficacyicon from "@/app/components/icons/EfficacyIcon";
-import { processItemName, calculateLevel, getItemData } from "@/app/lib/utils";
-import ItemBar from "@/app/components/adventurer/ItemBar";
-import { GameData } from "@/app/lib/data/GameData";
-import { getKeyFromValue, getValueFromKey } from "@/app/lib/utils";
-import { SwapIcon, DownArrowIcon } from "@/app/components/icons/Icons";
-import { Button } from "@/app/components/buttons/Button";
-import useUIStore from "@/app/hooks/useUIStore";
-import { InventoryDisplay } from "@/app/components/adventurer/InventoryDisplay";
-import { useQueriesStore } from "@/app/hooks/useQueryStore";
 
 interface ItemDisplayProps {
   item: Item;
@@ -163,15 +167,41 @@ export const ItemDisplay = ({
               ref={scrollableRef}
             >
               <div className="flex flex-col justify-center text-xs sm:text-sm w-full h-full whitespace-normal">
-                <div className="flex flex-row font-semibold text-xs space-x-3">
-                  <span className="self-center">
-                    {item &&
-                      `Tier ${tier ?? 0}
-                  `}
-                  </span>
-                  <span className="whitespace-nowrap w-1/2">
-                    <ItemBar xp={item.xp ?? 0} />
-                  </span>
+                <div className="flex flex-row justify-between font-semibold text-xs space-x-3">
+                  <div>
+                    <span>
+                      {item &&
+                        `Tier ${tier ?? 0} |
+                      `}
+                    </span>
+                    <span>
+                      {item &&
+                        ` Power: ${(6 - tier) * calculateLevel(item.xp ?? 0)} |
+                      `}
+                    </span>
+                    <span>
+                      {item && ` Greatness: ${calculateLevel(item.xp ?? 0)}`}
+                    </span>
+                  </div>
+                  <div>
+                    {/* <span>
+                      {item &&
+                        ` Current XP: 
+                          ${
+                            calculateLevel(item.xp ?? 0) > 1
+                              ? Math.floor(calculateLevel(item.xp ?? 0)) ** 2
+                              : 0
+                          } |`}
+                    </span> */}
+                    <span>
+                      {item &&
+                        calculateLevel(item.xp ?? 0) !== 20 &&
+                        `XP to Next Lvl: ${
+                          Math.floor(calculateLevel(item.xp ?? 0) + 1) ** 2 -
+                          (item.xp ?? 0)
+                        }`}
+                    </span>
+                  </div>
                   <span className="text-xxs sm:text-sm">{boost}</span>
                 </div>
                 <span className="flex flex-row justify-between gap-5">

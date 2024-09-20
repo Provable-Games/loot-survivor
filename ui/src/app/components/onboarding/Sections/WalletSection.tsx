@@ -19,7 +19,7 @@ const WalletSection = ({ step }: WalletSectionProps) => {
 
   const walletConnectors = getWalletConnectors(connectors);
   const cartridgeConnector = connectors.find(
-    (connector) => connector.id === "cartridge"
+    (connector) => connector.id === "controller"
   );
 
   return (

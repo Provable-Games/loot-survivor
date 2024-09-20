@@ -78,7 +78,7 @@ mod tests {
     const DAY: u64 = 86400;
     const TESTING_CHAIN_ID: felt252 = 0x4c4f4f545355525649564f52;
     const LAUNCH_TOURNAMENT_GAMES_PER_COLLCTION: u16 = 300;
-    const LAUNCH_TOURNAMENT_START_DELAY_SECONDS: u64 = 3600;
+    const start_delay_seconds: u64 = 0;
     const FREE_VRF_PROMOTION_DURATION_SECONDS: u64 = 25200;
 
     fn INTERFACE_ID() -> ContractAddress {
@@ -285,7 +285,7 @@ mod tests {
         calldata.append(launch_promotion_duration_seconds.into());
         calldata.append(VRF_PREMIUMS_ADDRESS().into());
         calldata.append(LAUNCH_TOURNAMENT_GAMES_PER_COLLCTION.into());
-        calldata.append(LAUNCH_TOURNAMENT_START_DELAY_SECONDS.into());
+        calldata.append(start_delay_seconds.into());
         calldata.append(FREE_VRF_PROMOTION_DURATION_SECONDS.into());
         let contract = declare("Game").unwrap();
         let (contract_address, _) = contract.deploy(@calldata).unwrap();
@@ -2094,10 +2094,7 @@ mod tests {
 
         // set block timestamp to one second after the launch tournament end
         start_cheat_block_timestamp_global(
-            current_block_time
-                + genesis_tournament_duration
-                + LAUNCH_TOURNAMENT_START_DELAY_SECONDS
-                + 1
+            current_block_time + genesis_tournament_duration + start_delay_seconds + 1
         );
         // try to enter launch tournament should panic
         game

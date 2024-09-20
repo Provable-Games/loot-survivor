@@ -1,49 +1,49 @@
-import { useCallback, useRef, useState, useEffect } from "react";
-import { Contract } from "starknet";
-import { useDisconnect, useConnect } from "@starknet-react/core";
-import useAdventurerStore from "@/app/hooks/useAdventurerStore";
-import { useQueriesStore } from "@/app/hooks/useQueryStore";
-import useUIStore from "@/app/hooks/useUIStore";
-import { useUiSounds, soundSelector } from "@/app/hooks/useUiSound";
-import Logo from "public/icons/logo.svg";
-import Eth from "public/icons/eth.svg";
-import Lords from "public/icons/lords.svg";
+import { getApibaraStatus } from "@/app/api/api";
 import { Button } from "@/app/components/buttons/Button";
 import {
-  formatNumber,
-  displayAddress,
-  indexAddress,
-  processItemName,
-  getItemData,
-  getItemPrice,
-} from "@/app/lib/utils";
-import {
+  CartIcon,
+  CartridgeIcon,
+  GithubIcon,
+  SettingsIcon,
   SoundOffIcon,
   SoundOnIcon,
-  CartIcon,
-  SettingsIcon,
-  GithubIcon,
-  CartridgeIcon,
 } from "@/app/components/icons/Icons";
+import ApibaraStatus from "@/app/components/navigation/ApibaraStatus";
 import TransactionCart from "@/app/components/navigation/TransactionCart";
 import TransactionHistory from "@/app/components/navigation/TransactionHistory";
+import { useController } from "@/app/context/ControllerContext";
+import useAdventurerStore from "@/app/hooks/useAdventurerStore";
+import useLoadingStore from "@/app/hooks/useLoadingStore";
+import useNetworkAccount from "@/app/hooks/useNetworkAccount";
+import { useQueriesStore } from "@/app/hooks/useQueryStore";
+import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
+import useUIStore from "@/app/hooks/useUIStore";
+import { soundSelector, useUiSounds } from "@/app/hooks/useUiSound";
+import { checkCartridgeConnector } from "@/app/lib/connectors";
+import { vitalityIncrease } from "@/app/lib/constants";
+import { networkConfig } from "@/app/lib/networkConfig";
 import {
+  displayAddress,
+  formatNumber,
+  getItemData,
+  getItemPrice,
+  indexAddress,
+  processItemName,
+} from "@/app/lib/utils";
+import {
+  Call,
   Item,
+  NullAdventurer,
   NullItem,
   UpgradeStats,
   ZeroUpgrade,
-  Call,
-  NullAdventurer,
 } from "@/app/types";
-import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
-import { getApibaraStatus } from "@/app/api/api";
-import ApibaraStatus from "@/app/components/navigation/ApibaraStatus";
-import { checkCartridgeConnector } from "@/app/lib/connectors";
-import { networkConfig } from "@/app/lib/networkConfig";
-import useNetworkAccount from "@/app/hooks/useNetworkAccount";
-import useLoadingStore from "@/app/hooks/useLoadingStore";
-import { useController } from "@/app/context/ControllerContext";
-import { vitalityIncrease } from "@/app/lib/constants";
+import { useConnect, useDisconnect } from "@starknet-react/core";
+import Eth from "public/icons/eth.svg";
+import Logo from "public/icons/logo.svg";
+import Lords from "public/icons/lords.svg";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Contract } from "starknet";
 
 export interface HeaderProps {
   multicall: (

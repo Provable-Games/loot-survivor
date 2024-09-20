@@ -70,12 +70,14 @@ export interface Item {
   special2?: string; // Second special on the item (i.e Grasp)
   special3?: string; // Third special on the item (i.e Demon)
   xp?: number; // Experience of the item
+  level?: number;
   slot?: string; // Item slot location
   tier?: number; // Tier of the item
   type?: string; // Type of the item
   lastUpdatedTime?: Date; // Block time the item was last updated
   timestamp?: Date; // Indexer timestamp of event process
 }
+
 export interface Battle {
   adventurerId?: number; // Adventurer ID
   adventurerHealth?: number; // Health of the adventurer
@@ -223,6 +225,13 @@ export interface ButtonData {
 export interface ItemPurchase {
   item: string;
   equip: string;
+}
+
+export interface ItemPurchaseObject {
+  tier: number;
+  type: string;
+  slot: string;
+  equip: boolean;
 }
 
 export interface UpgradeStats {

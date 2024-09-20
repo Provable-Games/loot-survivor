@@ -38,3 +38,21 @@ db.scores.createIndex({ "_cursor.from": 1 });
 db.scores.createIndex({ "_cursor.to": 1 });
 db.scores.createIndex({ "xp": -1});
 db.scores.createIndex({ "rank": -1});
+
+// claimed free games
+db.claimed_free_games.createIndex({ "_cursor.to": 1, "token": 1 });
+db.claimed_free_games.createIndex({ "_cursor.from": 1 });
+db.claimed_free_games.createIndex({ "_cursor.to": 1 });
+db.claimed_free_games.createIndex({ "token": 1});
+db.claimed_free_games.createIndex({ "gameOwnerAddress": 1, "token": 1 })
+db.claimed_free_games.createIndex({ "hash": 1 })
+
+// collection totals
+db.collection_totals.createIndex({ "_cursor.from": 1 });
+db.collection_totals.createIndex({ "_cursor.to": 1 });
+
+// tokens
+db.tokens.createIndex({ "_cursor.to": 1, "nftOwnerAddress": 1 });
+db.tokens.createIndex({ "_cursor.from": 1 });
+db.tokens.createIndex({ "_cursor.to": 1 });
+db.tokens.createIndex({ "nftOwnerAddress": 1 });

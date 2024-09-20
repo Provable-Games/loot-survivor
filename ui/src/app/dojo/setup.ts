@@ -21,7 +21,8 @@ export async function setup({ rpcUrl, network, setCreateBurner }: SetupProps) {
     ),
     accountClassHash: networkConfig[network!].accountClassHash,
     rpcProvider: dojoProvider,
-    feeTokenAddress: "0x0",
+    feeTokenAddress:
+      "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
   });
 
   await burnerManager.init();
@@ -41,10 +42,8 @@ export async function setup({ rpcUrl, network, setCreateBurner }: SetupProps) {
 
   return {
     config: {
-      masterAddress:
-        "0x5c84d31976a25d632deee7a1ed9bdbdc6795cb288103d7d601841030c976ee",
-      masterPrivateKey:
-        "0x22ab3e9b8c4fdf2c187609cb52550424675bb8fc7ee8c06b0fc170e56889ec0",
+      masterAddress: networkConfig[network!].masterAccount,
+      masterPrivateKey: networkConfig[network!].masterPrivateKey,
     },
     burnerManager,
     dojoProvider,
