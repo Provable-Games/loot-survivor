@@ -88,10 +88,6 @@ export const Spawn = ({
     (token: GameToken) => token.token_id
   );
 
-  const goldenTokenExists = goldenTokens?.length > 0;
-  // const goldenTokenExists = true;
-  console.log(goldenTokenExists);
-
   const getUsableGoldenToken = async (tokenIds: number[]) => {
     // Loop through contract calls to see if the token is usable, if none then return 0
     for (let tokenId of tokenIds) {
@@ -148,8 +144,6 @@ export const Spawn = ({
 
   const adventurers: Adventurer[] = adventurersByXPdata?.adventurers ?? [];
 
-  console.log(showPaymentDetails);
-
   return (
     <div className="flex flex-col w-full h-full justify-center">
       <span className="sm:hidden absolute top-0 h-20 w-full">
@@ -195,7 +189,7 @@ export const Spawn = ({
                           onMouseEnter={() => setIsHoveringLords(true)}
                           onMouseLeave={() => setIsHoveringLords(false)}
                           onClick={() => {
-                            if (goldenTokenExists) {
+                            if (usableToken !== "0") {
                               handlePayment(true);
                             } else {
                               handlePayment(false);
@@ -211,7 +205,7 @@ export const Spawn = ({
                                   : "bg-terminal-green/20"
                               }`}
                             >
-                              {goldenTokenExists ? (
+                              {usableToken !== "0" ? (
                                 <span className="relative h-40 w-full">
                                   <Image
                                     src="/golden-token.png"
@@ -228,7 +222,7 @@ export const Spawn = ({
                               <span className="relative h-40 w-full">
                                 <Image
                                   src={
-                                    goldenTokenExists
+                                    usableToken !== "0"
                                       ? isHoveringLords
                                         ? "/insert-golden-token-hover.png"
                                         : "/insert-golden-token.png"
@@ -243,64 +237,6 @@ export const Spawn = ({
                             </div>
                           </div>
                         </div>
-                        {/* <div
-                          className="border-8 border-terminal-green w-3/4 h-1/3 cursor-pointer"
-                          onMouseEnter={() => setIsHoveringGolden(true)}
-                          onMouseLeave={() => setIsHoveringGolden(false)}
-                          onClick={() => {
-                            if (goldenTokenExists) {
-                              handlePayment(true);
-                            }
-                          }}
-                        >
-                          <div className="flex flex-row h-full">
-                            <div className="w-1/4 border-r-8 border-terminal-green bg-terminal-yellow/25" />
-                            <div
-                              className={`relative flex flex-col gap-2 items-center justify-center w-3/4 p-2 uppercase ${
-                                isHoveringGolden && goldenTokenExists
-                                  ? "text-terminal-black bg-terminal-green animate-pulseFast"
-                                  : "bg-terminal-green/20"
-                              }`}
-                            >
-                              {!goldenTokenExists && (
-                                <>
-                                  <span className="absolute inset-0 w-full h-full bg-black/75 z-10" />
-                                  <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
-                                    <a
-                                      href={
-                                        networkConfig[network!]
-                                          .goldenTokenMintUrl
-                                      }
-                                      target="_blank"
-                                    >
-                                      <Button size={"md"} variant={"token"}>
-                                        Buy
-                                      </Button>
-                                    </a>
-                                  </span>
-                                </>
-                              )}
-                              <span className="relative h-24 w-3/4">
-                                <Image
-                                  src={"/golden-token.png"}
-                                  alt="golden-token"
-                                  fill
-                                />
-                              </span>
-                              <span className="relative h-24 w-full">
-                                <Image
-                                  src={
-                                    isHoveringGolden && goldenTokenExists
-                                      ? "/insert-golden-token-hover.png"
-                                      : "/insert-golden-token.png"
-                                  }
-                                  alt="insert-lords"
-                                  fill
-                                />
-                              </span>
-                            </div>
-                          </div>
-                        </div> */}
                       </div>
                     )}
                     <div
