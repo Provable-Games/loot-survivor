@@ -30,7 +30,7 @@ const EncounterDialog = () => {
             className="w-10 h-10 absolute top-0 left-[-40px] z-10 border-y border-l border-bottom border-terminal-green bg-terminal-black cursor-pointer"
             onClick={() => showEncounterTable(false)}
           />
-          <div className="flex flex-col gap-5 sm:gap-0 sm:flex-row justify-between w-[600px] bg-terminal-black max-h-[300px] border border-terminal-green text-xs sm:text-base overflow-y-scroll default-scroll cursor-pointer hover:shadow-lg">
+          <div className="flex flex-col gap-5 sm:gap-0 sm:flex-row justify-between w-[625px] bg-terminal-black max-h-[350px] border border-terminal-green text-xs sm:text-base overflow-y-scroll default-scroll cursor-pointer hover:shadow-lg">
             <EncounterTable />
           </div>
         </div>

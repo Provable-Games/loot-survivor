@@ -52,10 +52,8 @@ import useTransactionManager from "@/app/hooks/useTransactionManager";
 import useUIStore, { ScreenPage } from "@/app/hooks/useUIStore";
 import { fetchBalances, fetchEthBalance } from "@/app/lib/balances";
 import { goldenTokenClient } from "@/app/lib/clients";
-import { checkArcadeConnector } from "@/app/lib/connectors";
 import { VRF_WAIT_TIME } from "@/app/lib/constants";
 import { networkConfig } from "@/app/lib/networkConfig";
-import Storage from "@/app/lib/storage";
 import {
   calculateChaBoostRemoved,
   calculateVitBoostRemoved,
@@ -63,7 +61,7 @@ import {
   padAddress,
 } from "@/app/lib/utils";
 import { useSyscalls } from "@/app/lib/utils/syscalls";
-import { BurnerStorage, Menu, ZeroUpgrade } from "@/app/types";
+import { Menu, ZeroUpgrade } from "@/app/types";
 import { useQuery } from "@apollo/client";
 import CartridgeConnector from "@cartridge/connector";
 import { sepolia } from "@starknet-react/chains";
@@ -469,22 +467,10 @@ function Home() {
   );
 
   const goldenTokenVariables = useMemo(() => {
-    const storage: BurnerStorage = Storage.get("burners");
-    const isArcade = checkArcadeConnector(connector);
-    if (isArcade && address) {
-      const masterAccount = storage[address].masterAccount;
-      return {
-        contractAddress:
-          networkConfig[network!].goldenTokenAddress.toLowerCase(),
-        owner: padAddress(masterAccount ?? ""),
-      };
-    } else {
-      return {
-        contractAddress:
-          networkConfig[network!].goldenTokenAddress.toLowerCase(),
-        owner: padAddress(address ?? ""),
-      };
-    }
+    return {
+      contractAddress: networkConfig[network!].goldenTokenAddress.toLowerCase(),
+      owner: padAddress(address ?? ""),
+    };
   }, [address]);
 
   const goldenTokenClientInstance = useMemo(
