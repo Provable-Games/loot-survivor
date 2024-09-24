@@ -51,7 +51,6 @@ export const Spawn = ({
   const [formFilled, setFormFilled] = useState(false);
   const [usableToken, setUsableToken] = useState<string>("0");
   const [isHoveringLords, setIsHoveringLords] = useState(false);
-  const [isHoveringGolden, setIsHoveringGolden] = useState(false);
   const [showPaymentDetails, setShowPaymentDetails] = useState(false);
   const isWrongNetwork = useUIStore((state) => state.isWrongNetwork);
   const loading = useLoadingStore((state) => state.loading);
@@ -91,6 +90,7 @@ export const Spawn = ({
 
   const goldenTokenExists = goldenTokens?.length > 0;
   // const goldenTokenExists = true;
+  console.log(goldenTokenExists);
 
   const getUsableGoldenToken = async (tokenIds: number[]) => {
     // Loop through contract calls to see if the token is usable, if none then return 0
@@ -126,6 +126,7 @@ export const Spawn = ({
         lordsGameCost
       );
       await getBalances();
+      setPaymentInitiated(false);
     } catch (error) {
       console.error(error);
       setPaymentInitiated(false);
@@ -146,6 +147,8 @@ export const Spawn = ({
   );
 
   const adventurers: Adventurer[] = adventurersByXPdata?.adventurers ?? [];
+
+  console.log(showPaymentDetails);
 
   return (
     <div className="flex flex-col w-full h-full justify-center">
@@ -169,155 +172,176 @@ export const Spawn = ({
                 speed={40}
                 style={{ fontSize: "2em" }}
               />
+              <span className="hidden sm:block">
+                <TxActivity />
+              </span>
             </span>
           </>
         ) : (
           <>
             <div className="absolute inset-0 bg-black" />
             <div className="absolute inset-0 left-0 right-0 flex flex-col items-center text-center gap-4 z-10 p-5 sm:p-20">
-              <span className="hidden sm:block">
-                <TxActivity />
-              </span>
               {!onKatana ? (
                 <>
                   <div className="flex flex-row w-full h-full">
-                    <PaymentDetails
-                      adventurers={adventurers}
-                      showPaymentDetails={showPaymentDetails}
-                    />
-                    <div className="flex items-center justify-center w-full sm:w-1/2">
+                    {!showPaymentDetails && (
+                      <div className="flex flex-col gap-5 items-center justify-start sm:justify-center w-full sm:w-1/4 h-full pt-20 sm:p-0">
+                        <h1 className="m-0 text-6xl uppercase">
+                          Click To Play
+                        </h1>
+
+                        <div
+                          className="border-8 border-terminal-green w-3/4 h-1/2 cursor-pointer shadow-xl"
+                          onMouseEnter={() => setIsHoveringLords(true)}
+                          onMouseLeave={() => setIsHoveringLords(false)}
+                          onClick={() => {
+                            if (goldenTokenExists) {
+                              handlePayment(true);
+                            } else {
+                              handlePayment(false);
+                            }
+                          }}
+                        >
+                          <div className="flex flex-row h-full">
+                            <div className="w-1/4 border-[15px] border-terminal-green bg-terminal-black" />
+                            <div
+                              className={`flex flex-col sm:gap-2 justify-center w-3/4 p-2 uppercase ${
+                                isHoveringLords
+                                  ? "text-terminal-black bg-terminal-green animate-pulseFast"
+                                  : "bg-terminal-green/20"
+                              }`}
+                            >
+                              {goldenTokenExists ? (
+                                <span className="relative h-40 w-full">
+                                  <Image
+                                    src="/golden-token.png"
+                                    alt="insert-lords"
+                                    fill
+                                  />
+                                </span>
+                              ) : (
+                                <span className="flex flex-row gap-1 items-center justify-center">
+                                  <Lords className="self-center w-24 h-24 fill-current" />
+                                  <p className="text-6xl no-text-shadow">59</p>
+                                </span>
+                              )}
+                              <span className="relative h-40 w-full">
+                                <Image
+                                  src={
+                                    goldenTokenExists
+                                      ? isHoveringLords
+                                        ? "/insert-golden-token-hover.png"
+                                        : "/insert-golden-token.png"
+                                      : isHoveringLords
+                                      ? "/insert-lords-hover.png"
+                                      : "/insert-lords.png"
+                                  }
+                                  alt="insert-lords"
+                                  fill
+                                />
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        {/* <div
+                          className="border-8 border-terminal-green w-3/4 h-1/3 cursor-pointer"
+                          onMouseEnter={() => setIsHoveringGolden(true)}
+                          onMouseLeave={() => setIsHoveringGolden(false)}
+                          onClick={() => {
+                            if (goldenTokenExists) {
+                              handlePayment(true);
+                            }
+                          }}
+                        >
+                          <div className="flex flex-row h-full">
+                            <div className="w-1/4 border-r-8 border-terminal-green bg-terminal-yellow/25" />
+                            <div
+                              className={`relative flex flex-col gap-2 items-center justify-center w-3/4 p-2 uppercase ${
+                                isHoveringGolden && goldenTokenExists
+                                  ? "text-terminal-black bg-terminal-green animate-pulseFast"
+                                  : "bg-terminal-green/20"
+                              }`}
+                            >
+                              {!goldenTokenExists && (
+                                <>
+                                  <span className="absolute inset-0 w-full h-full bg-black/75 z-10" />
+                                  <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
+                                    <a
+                                      href={
+                                        networkConfig[network!]
+                                          .goldenTokenMintUrl
+                                      }
+                                      target="_blank"
+                                    >
+                                      <Button size={"md"} variant={"token"}>
+                                        Buy
+                                      </Button>
+                                    </a>
+                                  </span>
+                                </>
+                              )}
+                              <span className="relative h-24 w-3/4">
+                                <Image
+                                  src={"/golden-token.png"}
+                                  alt="golden-token"
+                                  fill
+                                />
+                              </span>
+                              <span className="relative h-24 w-full">
+                                <Image
+                                  src={
+                                    isHoveringGolden && goldenTokenExists
+                                      ? "/insert-golden-token-hover.png"
+                                      : "/insert-golden-token.png"
+                                  }
+                                  alt="insert-lords"
+                                  fill
+                                />
+                              </span>
+                            </div>
+                          </div>
+                        </div> */}
+                      </div>
+                    )}
+                    <div
+                      className={`${
+                        showPaymentDetails ? "flex" : "hidden sm:flex"
+                      } items-center justify-center w-full sm:w-1/2`}
+                    >
                       <div className="w-full h-full bg-black">
-                        <div className="flex flex-row h-full">
-                          <div className="hidden sm:flex flex-col items-center justify-center w-1/3 h-full">
+                        <div className="flex flex-row h-full w-full">
+                          <div className="hidden sm:flex flex-col items-center justify-center w-1/4 h-full">
                             <SpriteAnimation
-                              frameWidth={200}
-                              frameHeight={200}
+                              frameWidth={150}
+                              frameHeight={150}
                               columns={8}
                               rows={1}
                               frameRate={5}
                               className="coin-sprite"
                             />
-                            <DownArrowIcon className="self-center rotate-90 w-32" />
-                            <p className="uppercase text-4xl">IN</p>
+                            <DownArrowIcon className="self-center rotate-[-90deg] w-20" />
+                            <p className="uppercase text-4xl">Pay</p>
                           </div>
-                          {!showPaymentDetails && (
-                            <div className="flex flex-col gap-5 items-center justify-center w-full sm:w-1/3 h-full">
-                              <h1 className="absolute top-10 sm:top-20 m-0 text-6xl uppercase">
-                                Select Below
-                              </h1>
-
-                              <div
-                                className="border-8 border-terminal-green w-3/4 h-1/3 cursor-pointer shadow-xl"
-                                onMouseEnter={() => setIsHoveringLords(true)}
-                                onMouseLeave={() => setIsHoveringLords(false)}
-                                onClick={() => handlePayment(false)}
-                              >
-                                <div className="flex flex-row h-full">
-                                  <div className="w-1/4 border-r-8 border-terminal-green bg-terminal-yellow/25" />
-                                  <div
-                                    className={`flex flex-col sm:gap-2 justify-center w-3/4 p-2 uppercase ${
-                                      isHoveringLords
-                                        ? "text-terminal-black bg-terminal-green animate-pulseFast"
-                                        : "bg-terminal-green/20"
-                                    }`}
-                                  >
-                                    <span className="flex flex-row gap-1 items-center justify-center">
-                                      <Lords className="self-center w-16 h-16 fill-current" />
-                                      <p className="text-6xl no-text-shadow">
-                                        59
-                                      </p>
-                                    </span>
-                                    <span className="relative h-24 w-full">
-                                      <Image
-                                        src={
-                                          isHoveringLords
-                                            ? "/insert-lords-hover.png"
-                                            : "/insert-lords.png"
-                                        }
-                                        alt="insert-lords"
-                                        fill
-                                      />
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div
-                                className="border-8 border-terminal-green w-3/4 h-1/3 cursor-pointer"
-                                onMouseEnter={() => setIsHoveringGolden(true)}
-                                onMouseLeave={() => setIsHoveringGolden(false)}
-                                onClick={() => {
-                                  if (goldenTokenExists) {
-                                    handlePayment(true);
-                                  }
-                                }}
-                              >
-                                <div className="flex flex-row h-full">
-                                  <div className="w-1/4 border-r-8 border-terminal-green bg-terminal-yellow/25" />
-                                  <div
-                                    className={`relative flex flex-col gap-2 items-center justify-center w-3/4 p-2 uppercase ${
-                                      isHoveringGolden && goldenTokenExists
-                                        ? "text-terminal-black bg-terminal-green animate-pulseFast"
-                                        : "bg-terminal-green/20"
-                                    }`}
-                                  >
-                                    {!goldenTokenExists && (
-                                      <>
-                                        <span className="absolute inset-0 w-full h-full bg-black/75 z-10" />
-                                        <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
-                                          <a
-                                            href={
-                                              networkConfig[network!]
-                                                .goldenTokenMintUrl
-                                            }
-                                            target="_blank"
-                                          >
-                                            <Button
-                                              size={"md"}
-                                              variant={"token"}
-                                            >
-                                              Buy
-                                            </Button>
-                                          </a>
-                                        </span>
-                                      </>
-                                    )}
-                                    <span className="relative h-24 w-3/4">
-                                      <Image
-                                        src={"/golden-token.png"}
-                                        alt="golden-token"
-                                        fill
-                                      />
-                                    </span>
-                                    <span className="relative h-24 w-full">
-                                      <Image
-                                        src={
-                                          isHoveringGolden && goldenTokenExists
-                                            ? "/insert-golden-token-hover.png"
-                                            : "/insert-golden-token.png"
-                                        }
-                                        alt="insert-lords"
-                                        fill
-                                      />
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                          <div className="hidden sm:flex flex-col items-center justify-center w-1/3 h-full">
-                            <span className="relative w-32 h-32 mt-14">
+                          <div className="w-full sm:w-1/2">
+                            <PaymentDetails
+                              adventurers={adventurers}
+                              showPaymentDetails={showPaymentDetails}
+                            />
+                          </div>
+                          <div className="hidden sm:flex flex-col items-center justify-center w-1/4 h-full">
+                            <span className="relative w-24 h-24 mt-10">
                               <ProfileIcon className="text-terminal-green" />
                             </span>
                             <span className="flex flex-col">
-                              <DownArrowIcon className="self-center rotate-[-90deg] w-32" />
-                              <p className="uppercase text-4xl">OUT</p>
+                              <DownArrowIcon className="self-center rotate-[-90deg] w-20" />
+                              <p className="uppercase text-4xl">Mint</p>
                             </span>
                           </div>
                         </div>
                       </div>
                     </div>
                     <div className="hidden sm:flex items-center justify-start w-1/4">
-                      <div className="relative flex flex-col bg-terminal-black border-4 border-terminal-green w-3/4">
+                      <div className="relative flex flex-col bg-terminal-black border-4 border-terminal-green w-3/4 animate-pulse">
                         <div className={`flex flex-row`}>
                           {["str", "dex", "int", "vit", "wis", "cha"].map(
                             (stat) => (
@@ -379,7 +403,7 @@ export const Spawn = ({
               variant={"default"}
               onClick={() => setShowPaymentDetails(!showPaymentDetails)}
             >
-              Payment Details
+              {showPaymentDetails ? "Hide Payment Details" : "Payment Details"}
             </Button>
           </div>
         )}
