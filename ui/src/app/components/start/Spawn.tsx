@@ -166,9 +166,9 @@ export const Spawn = ({
                 speed={40}
                 style={{ fontSize: "2em" }}
               />
-              <span className="hidden sm:block">
-                <TxActivity />
-              </span>
+            </span>
+            <span className="absolute top-1/4 left-1/2 transform -translate-x-1/2 hidden sm:block">
+              <TxActivity />
             </span>
           </>
         ) : (
@@ -258,7 +258,7 @@ export const Spawn = ({
                             <DownArrowIcon className="self-center rotate-[-90deg] w-20" />
                             <p className="uppercase text-4xl">Pay</p>
                           </div>
-                          <div className="w-full sm:w-1/2">
+                          <div className="w-full flex justify-center sm:w-1/2">
                             <PaymentDetails
                               adventurers={adventurers}
                               showPaymentDetails={showPaymentDetails}
