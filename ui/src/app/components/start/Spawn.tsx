@@ -143,6 +143,7 @@ export const Spawn = ({
   );
 
   const adventurers: Adventurer[] = adventurersByXPdata?.adventurers ?? [];
+  const holdsBlobert = true;
 
   return (
     <div className="flex flex-col w-full h-full justify-center">
@@ -209,7 +210,15 @@ export const Spawn = ({
                                 <span className="relative h-40 w-full">
                                   <Image
                                     src="/golden-token.png"
-                                    alt="insert-lords"
+                                    alt="golden-token"
+                                    fill
+                                  />
+                                </span>
+                              ) : holdsBlobert ? (
+                                <span className="relative h-48 w-full">
+                                  <Image
+                                    src="/blobert.png"
+                                    alt="blobert"
                                     fill
                                   />
                                 </span>
@@ -226,6 +235,10 @@ export const Spawn = ({
                                       ? isHoveringLords
                                         ? "/insert-golden-token-hover.png"
                                         : "/insert-golden-token.png"
+                                      : holdsBlobert
+                                      ? isHoveringLords
+                                        ? "/insert-blobert-hover.png"
+                                        : "/insert-blobert.png"
                                       : isHoveringLords
                                       ? "/insert-lords-hover.png"
                                       : "/insert-lords.png"
