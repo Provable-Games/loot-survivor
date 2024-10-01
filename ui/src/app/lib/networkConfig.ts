@@ -14,6 +14,7 @@ export const networkConfig = {
       "0x041b6ffc02ce30c6e941f1b34244ef8af0b3e8a70f5528476a7a68765afd6b39",
     goldenTokenAddress:
       "0x07626660faba349aad9ad2aaa0ff8645c079fa8e043a168d640d92472806eeac",
+    tournamentWinnerAddress: "0x0",
     revenueAddresses: [
       "0x0314924118945405ac0bcd6181457712795c0effc29d8dd3be86d3f3ec62adc1",
     ],
@@ -45,6 +46,8 @@ export const networkConfig = {
       "0x0158160018d590d93528995b340260e65aedd76d28a686e9daa5c4e8fad0c5dd",
     goldenTokenAddress:
       "0x04f5e296c805126637552cf3930e857f380e7c078e8f00696de4fc8545356b1d",
+    tournamentWinnerAddress:
+      "0x00539f522b29ae9251dbf7443c7a950cf260372e69efab3710a11bf17a9599f1",
     revenueAddresses: [
       "0x036cE487952f25878a0158bA4A0C2Eb5eb66f0282567163a4B893A0EA5847D2d",
       "0x0616E6a5F9b1f86a0Ece6E965B2f3b27E3D784be79Cb2F6304D92Db100C7D29E",
@@ -77,6 +80,7 @@ export const networkConfig = {
     lordsAddress: "0x0",
     beastsAddress: "0x0",
     goldenTokenAddress: "0x0",
+    tournamentWinnerAddress: "0x0",
     revenueAddresses: ["0x0"],
     pragmaAddress: "0x0",
     rendererAddress: "0x0",
@@ -105,6 +109,7 @@ export const networkConfig = {
     lordsAddress: "0x0",
     beastsAddress: "0x0",
     goldenTokenAddress: "0x0",
+    tournamentWinnerAddress: "0x0",
     revenueAddresses: ["0x0"],
     pragmaAddress: "0x0",
     rendererAddress: "0x0",

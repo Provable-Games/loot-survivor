@@ -19,6 +19,7 @@ interface AdventurerScreenProps {
   spawn: (
     formData: FormData,
     goldenTokenId: string,
+    blobertTokenId: string,
     revenueAddresses: string[],
     costToPlay?: number
   ) => Promise<void>;
@@ -26,6 +27,7 @@ interface AdventurerScreenProps {
   lordsBalance?: bigint;
   gameContract: Contract;
   goldenTokenData: any;
+  blobertsData: any;
   getBalances: () => Promise<void>;
   mintLords: (lordsAmount: number) => Promise<void>;
   costToPlay: bigint;
@@ -47,6 +49,7 @@ export default function AdventurerScreen({
   lordsBalance,
   gameContract,
   goldenTokenData,
+  blobertsData,
   getBalances,
   mintLords,
   costToPlay,
@@ -136,6 +139,7 @@ export default function AdventurerScreen({
             spawn={spawn}
             lordsBalance={lordsBalance}
             goldenTokenData={goldenTokenData}
+            blobertsData={blobertsData}
             gameContract={gameContract}
             getBalances={getBalances}
             mintLords={mintLords}

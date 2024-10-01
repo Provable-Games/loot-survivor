@@ -411,7 +411,8 @@ export function createSyscalls({
     dollarPrice: bigint,
     freeVRF: boolean,
     costToPlay?: number,
-    goldenTokenId?: string
+    goldenTokenId?: string,
+    blobertTokenId?: string
   ) => [
     ...(freeVRF
       ? []
@@ -426,7 +427,7 @@ export function createSyscalls({
             ],
           },
         ]),
-    ...(goldenTokenId === "0"
+    ...(goldenTokenId === "0" && blobertTokenId === "0"
       ? [
           {
             contractAddress: lordsContract?.address ?? "",
@@ -450,6 +451,7 @@ export function createSyscalls({
   const spawn = async (
     formData: FormData,
     goldenTokenId: string,
+    blobertTokenId: string,
     revenueAddresses: string[],
     costToPlay?: number
   ) => {
@@ -466,7 +468,7 @@ export function createSyscalls({
         goldenTokenId,
         "0", // delay_stat_reveal
         rendererContractAddress,
-        "0",
+        blobertTokenId,
         "0",
       ],
     };
@@ -482,7 +484,7 @@ export function createSyscalls({
       if (!enoughEth && !freeVRF) {
         return handleInsufficientFunds("eth");
       }
-      if (!enoughLords && goldenTokenId === "0") {
+      if (!enoughLords && goldenTokenId === "0" && blobertTokenId === "0") {
         return handleInsufficientFunds("lords");
       }
 
@@ -491,7 +493,8 @@ export function createSyscalls({
         dollarPrice,
         freeVRF,
         costToPlay,
-        goldenTokenId
+        goldenTokenId,
+        blobertTokenId
       );
     }
 

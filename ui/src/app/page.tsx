@@ -39,6 +39,7 @@ import {
   getLastBeastDiscovery,
   getLatestDiscoveries,
   getLatestMarketItems,
+  getOwnerTokens,
 } from "@/app/hooks/graphql/queries";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
 import useControls from "@/app/hooks/useControls";
@@ -51,7 +52,7 @@ import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
 import useTransactionManager from "@/app/hooks/useTransactionManager";
 import useUIStore, { ScreenPage } from "@/app/hooks/useUIStore";
 import { fetchBalances, fetchEthBalance } from "@/app/lib/balances";
-import { goldenTokenClient } from "@/app/lib/clients";
+import { gameClient, goldenTokenClient } from "@/app/lib/clients";
 import { VRF_WAIT_TIME } from "@/app/lib/constants";
 import { networkConfig } from "@/app/lib/networkConfig";
 import {
@@ -473,6 +474,11 @@ function Home() {
     };
   }, [address]);
 
+  const gameClientInstance = useMemo(
+    () => gameClient(networkConfig[network!].lsGQLURL),
+    [network]
+  );
+
   const goldenTokenClientInstance = useMemo(
     () => goldenTokenClient(networkConfig[network!].tokensGQLURL),
     [network]
@@ -481,6 +487,20 @@ function Home() {
   const { data: goldenTokenData } = useQuery(getGoldenTokensByOwner, {
     client: goldenTokenClientInstance,
     variables: goldenTokenVariables,
+  });
+
+  const blobertTokenVariables = useMemo(() => {
+    return {
+      token: indexAddress(
+        networkConfig[network!].tournamentWinnerAddress.toLowerCase()
+      ),
+      owner: indexAddress(address ?? "").toLowerCase(),
+    };
+  }, [address, network]);
+
+  const { data: blobertsData } = useQuery(getOwnerTokens, {
+    client: gameClientInstance,
+    variables: blobertTokenVariables,
   });
 
   const handleSwitchAdventurer = useCallback(
@@ -871,6 +891,7 @@ function Home() {
                     lordsBalance={lordsBalance}
                     gameContract={gameContract!}
                     goldenTokenData={goldenTokenData}
+                    blobertsData={blobertsData}
                     getBalances={getBalances}
                     mintLords={mintLords}
                     costToPlay={costToPlay}

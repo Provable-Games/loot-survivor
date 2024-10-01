@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
 import { fetchBeastImage } from "@/app/api/fetchMetadata";
-import Image from "next/image";
-import useUIStore from "@/app/hooks/useUIStore";
-import { Contract } from "starknet";
-import { processBeastName } from "@/app/lib/utils";
+import { Button } from "@/app/components/buttons/Button";
 import TwitterShareButton from "@/app/components/buttons/TwitterShareButtons";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
-import { Button } from "@/app/components/buttons/Button";
+import useUIStore from "@/app/hooks/useUIStore";
 import { networkConfig } from "@/app/lib/networkConfig";
+import { processBeastName } from "@/app/lib/utils";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { Contract } from "starknet";
 
 interface SpecialBeastProps {
   beastsContract: Contract;
@@ -52,7 +52,8 @@ export const SpecialBeast = ({ beastsContract }: SpecialBeastProps) => {
   const beastUrl =
     (networkConfig[network!].beastsViewer ?? "") +
     "/" +
-    specialBeast?.tokenId?.toString();
+    specialBeast?.tokenId?.toString() +
+    "?beast_origin=client";
 
   return (
     <div className="top-0 left-0 fixed text-center h-full w-full z-40">

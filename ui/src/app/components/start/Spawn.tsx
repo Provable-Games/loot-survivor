@@ -24,12 +24,14 @@ export interface SpawnProps {
   spawn: (
     formData: FormData,
     goldenTokenId: string,
+    blobertTokenId: string,
     revenueAddresses: string[],
     costToPlay?: number
   ) => Promise<void>;
   handleBack: () => void;
   lordsBalance?: bigint;
   goldenTokenData: any;
+  blobertsData: any;
   gameContract: Contract;
   getBalances: () => Promise<void>;
   mintLords: (lordsAmount: number) => Promise<void>;
@@ -42,6 +44,7 @@ export const Spawn = ({
   handleBack,
   lordsBalance,
   goldenTokenData,
+  blobertsData,
   gameContract,
   getBalances,
   mintLords,
@@ -49,7 +52,8 @@ export const Spawn = ({
 }: SpawnProps) => {
   const [paymentInitiated, setPaymentInitiated] = useState(false);
   const [formFilled, setFormFilled] = useState(false);
-  const [usableToken, setUsableToken] = useState<string>("0");
+  const [usableGoldenToken, setUsableGoldenToken] = useState<string>("0");
+  const [usableBlobertToken, setUsableBlobertToken] = useState<string>("0");
   const [isHoveringLords, setIsHoveringLords] = useState(false);
   const [showPaymentDetails, setShowPaymentDetails] = useState(false);
   const isWrongNetwork = useUIStore((state) => state.isWrongNetwork);
@@ -75,6 +79,7 @@ export const Spawn = ({
     await spawn(
       formData,
       "0",
+      "0",
       networkConfig[network!].revenueAddresses,
       lordsGameCost
     );
@@ -83,8 +88,8 @@ export const Spawn = ({
     }
   };
 
-  const tokens = goldenTokenData?.getERC721Tokens;
-  const goldenTokens: number[] = tokens?.map(
+  const goldenTokens = goldenTokenData?.getERC721Tokens;
+  const goldenTokenIds: number[] = goldenTokens?.map(
     (token: GameToken) => token.token_id
   );
 
@@ -96,7 +101,26 @@ export const Spawn = ({
         CallData.compile(["0", tokenId.toString()])
       );
       if (canPlay) {
-        setUsableToken(tokenId.toString());
+        setUsableGoldenToken(tokenId.toString());
+        break;
+      }
+    }
+  };
+
+  const blobertTokens = blobertsData?.tokens;
+  const blobertTokenIds: number[] = blobertTokens?.map(
+    (token: any) => token.tokenId
+  );
+
+  const getUsableBlobertToken = async (tokenIds: number[]) => {
+    // Loop through contract calls to see if the token is usable, if none then return 0
+    for (let tokenId of tokenIds) {
+      const canPlay = await gameContract.call(
+        "free_game_available",
+        CallData.compile(["1", tokenId.toString()])
+      );
+      if (canPlay) {
+        setUsableBlobertToken(tokenId.toString());
         break;
       }
     }
@@ -105,11 +129,16 @@ export const Spawn = ({
   const { play: spawnPlay } = useUiSounds(soundSelector.spawn);
   const { play: coinPlay } = useUiSounds(soundSelector.coin);
 
+  const tournamentEnded = process.env.NEXT_PUBLIC_TOURNAMENT_ENDED === "true";
+
   useEffect(() => {
-    getUsableGoldenToken(goldenTokens ?? []);
+    getUsableGoldenToken(goldenTokenIds ?? []);
+    if (tournamentEnded) {
+      getUsableBlobertToken(blobertTokenIds ?? []);
+    }
   }, []);
 
-  const handlePayment = async (goldenToken: boolean) => {
+  const handlePayment = async (goldenToken: boolean, blobertToken: boolean) => {
     spawnPlay();
     coinPlay();
     resetNotification();
@@ -117,7 +146,8 @@ export const Spawn = ({
     try {
       await spawn(
         formData,
-        goldenToken ? usableToken : "0",
+        goldenToken ? usableGoldenToken : "0",
+        blobertToken && tournamentEnded ? usableBlobertToken : "0",
         networkConfig[network!].revenueAddresses,
         lordsGameCost
       );
@@ -143,7 +173,6 @@ export const Spawn = ({
   );
 
   const adventurers: Adventurer[] = adventurersByXPdata?.adventurers ?? [];
-  const holdsBlobert = true;
 
   return (
     <div className="flex flex-col w-full h-full justify-center">
@@ -190,11 +219,10 @@ export const Spawn = ({
                           onMouseEnter={() => setIsHoveringLords(true)}
                           onMouseLeave={() => setIsHoveringLords(false)}
                           onClick={() => {
-                            if (usableToken !== "0") {
-                              handlePayment(true);
-                            } else {
-                              handlePayment(false);
-                            }
+                            handlePayment(
+                              usableGoldenToken !== "0",
+                              usableBlobertToken !== "0"
+                            );
                           }}
                         >
                           <div className="flex flex-row h-full">
@@ -206,7 +234,7 @@ export const Spawn = ({
                                   : "bg-terminal-green/20"
                               }`}
                             >
-                              {usableToken !== "0" ? (
+                              {usableGoldenToken !== "0" ? (
                                 <span className="relative h-40 w-full">
                                   <Image
                                     src="/golden-token.png"
@@ -214,7 +242,7 @@ export const Spawn = ({
                                     fill
                                   />
                                 </span>
-                              ) : holdsBlobert ? (
+                              ) : usableBlobertToken !== "0" ? (
                                 <span className="relative h-48 w-full">
                                   <Image
                                     src="/blobert.png"
@@ -231,11 +259,11 @@ export const Spawn = ({
                               <span className="relative h-40 w-full">
                                 <Image
                                   src={
-                                    usableToken !== "0"
+                                    usableGoldenToken !== "0"
                                       ? isHoveringLords
                                         ? "/insert-golden-token-hover.png"
                                         : "/insert-golden-token.png"
-                                      : holdsBlobert
+                                      : usableBlobertToken !== "0"
                                       ? isHoveringLords
                                         ? "/insert-blobert-hover.png"
                                         : "/insert-blobert.png"
@@ -357,9 +385,19 @@ export const Spawn = ({
           </div>
         )}
         {!paymentInitiated && (
-          <div className="absolute bottom-5 sm:bottom-10 left-0 right-0 flex flex-col items-center gap-4 z-10 pb-8">
-            <Button size={"sm"} variant={"default"} onClick={handleBack}>
+          <div className="absolute bottom-5 sm:bottom-10 left-0 right-0 flex flex-row items-center justify-center gap-4 z-10 pb-8">
+            <Button size={"sm"} variant={"outline"} onClick={handleBack}>
               Back
+            </Button>
+            <Button
+              className="hidden sm:block"
+              size={"sm"}
+              variant={"default"}
+              onClick={() => {
+                handlePayment(true, true);
+              }}
+            >
+              Pay to Play
             </Button>
           </div>
         )}

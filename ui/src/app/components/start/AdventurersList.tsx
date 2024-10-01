@@ -1,32 +1,32 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import {
-  Contract,
-  AccountInterface,
-  validateAndParseAddress,
-  constants,
-} from "starknet";
-import { StarknetIdNavigator } from "starknetid.js";
-import { useProvider } from "@starknet-react/core";
 import { Button } from "@/app/components/buttons/Button";
-import useAdventurerStore from "@/app/hooks/useAdventurerStore";
 import {
+  CartridgeIcon,
+  ClockIcon,
   CoinIcon,
   HeartIcon,
   SkullIcon,
-  ClockIcon,
-  CartridgeIcon,
   StarknetIdIcon,
 } from "@/app/components/icons/Icons";
-import useUIStore from "@/app/hooks/useUIStore";
-import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import LootIconLoader from "@/app/components/icons/Loader";
-import useCustomQuery from "@/app/hooks/useCustomQuery";
-import { getAdventurersByOwner } from "@/app/hooks/graphql/queries";
-import useNetworkAccount from "@/app/hooks/useNetworkAccount";
-import { indexAddress, padAddress, calculateLevel } from "@/app/lib/utils";
-import { Adventurer } from "@/app/types";
 import { AdventurerListCard } from "@/app/components/start/AdventurerListCard";
+import { getAdventurersByOwner } from "@/app/hooks/graphql/queries";
+import useAdventurerStore from "@/app/hooks/useAdventurerStore";
+import useCustomQuery from "@/app/hooks/useCustomQuery";
+import useNetworkAccount from "@/app/hooks/useNetworkAccount";
+import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
+import useUIStore from "@/app/hooks/useUIStore";
+import { calculateLevel, indexAddress, padAddress } from "@/app/lib/utils";
+import { Adventurer } from "@/app/types";
+import { useProvider } from "@starknet-react/core";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  AccountInterface,
+  constants,
+  Contract,
+  validateAndParseAddress,
+} from "starknet";
+import { StarknetIdNavigator } from "starknetid.js";
 
 export interface AdventurerListProps {
   isActive: boolean;
@@ -58,7 +58,7 @@ export const AdventurersList = ({
     constants.StarknetChainId.SN_MAIN
   );
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [showZeroHealth, setShowZeroHealth] = useState(true);
+  const [showZeroHealth, setShowZeroHealth] = useState(false);
   const [isTransferOpen, setIsTransferOpen] = useState(false);
   const [adventurerForTransfer, setAdventurerForTransfer] =
     useState<Adventurer | null>(null);
