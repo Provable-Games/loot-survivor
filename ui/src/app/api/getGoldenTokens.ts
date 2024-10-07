@@ -1,5 +1,6 @@
 import { Network } from "@/app/hooks/useUIStore";
 import { networkConfig } from "@/app/lib/networkConfig";
+import { indexAddress } from "@/app/lib/utils";
 
 export const getGoldenTokens = async (
   owner: string,
@@ -12,7 +13,9 @@ export const getGoldenTokens = async (
   ) => {
     let url = `${
       networkConfig[network!].blastUrl
-    }/builder/getWalletNFTs?contractAddress=${goldenTokenAddress}&walletAddress=${owner}&pageSize=100`;
+    }/builder/getWalletNFTs?contractAddress=${goldenTokenAddress}&walletAddress=${indexAddress(
+      owner
+    ).toLowerCase()}&pageSize=100`;
 
     if (nextPageKey) {
       url += `&pageKey=${nextPageKey}`;
