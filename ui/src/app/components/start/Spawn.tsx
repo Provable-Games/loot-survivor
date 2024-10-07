@@ -30,12 +30,10 @@ export interface SpawnProps {
     costToPlay?: number
   ) => Promise<void>;
   handleBack: () => void;
-  lordsBalance?: bigint;
   goldenTokens: number[];
   blobertsData: any;
   gameContract: Contract;
   getBalances: () => Promise<void>;
-  mintLords: (lordsAmount: number) => Promise<void>;
   costToPlay: bigint;
 }
 
@@ -43,12 +41,10 @@ export const Spawn = ({
   formData,
   spawn,
   handleBack,
-  lordsBalance,
   goldenTokens,
   blobertsData,
   gameContract,
   getBalances,
-  mintLords,
   costToPlay,
 }: SpawnProps) => {
   const [paymentInitiated, setPaymentInitiated] = useState(false);

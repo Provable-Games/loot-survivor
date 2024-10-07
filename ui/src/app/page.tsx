@@ -478,7 +478,7 @@ function Home() {
 
   useEffect(() => {
     handleFetchGoldenTokens();
-  }, [network]);
+  }, [address, network]);
 
   const blobertTokenVariables = useMemo(() => {
     return {
@@ -878,12 +878,10 @@ function Home() {
                   <AdventurerScreen
                     spawn={spawn}
                     handleSwitchAdventurer={handleSwitchAdventurer}
-                    lordsBalance={lordsBalance}
                     gameContract={gameContract!}
                     goldenTokens={goldenTokens}
                     blobertsData={blobertsData}
                     getBalances={getBalances}
-                    mintLords={mintLords}
                     costToPlay={costToPlay}
                     transferAdventurer={transferAdventurer}
                   />
