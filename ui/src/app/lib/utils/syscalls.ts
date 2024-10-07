@@ -1497,7 +1497,7 @@ export function createSyscalls({
       }
 
       setIsMintingLords(false);
-      getBalances();
+      !onKatana && getBalances();
     } catch (e) {
       setIsMintingLords(false);
       console.log(e);
@@ -1611,7 +1611,7 @@ export function createSyscalls({
         adventurers: [adventurer],
       });
 
-      getBalances();
+      !onKatana && getBalances();
       stopLoading("Transferred Adventurer", false, "Transfer");
     } catch (error) {
       console.error(error);
@@ -1681,7 +1681,7 @@ export function createSyscalls({
           ],
         });
 
-        getBalances();
+        !onKatana && getBalances();
         stopLoading("Changed Adventurer Name", false, "Change Name");
       }
     } catch (error) {

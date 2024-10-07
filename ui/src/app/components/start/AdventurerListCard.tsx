@@ -66,7 +66,12 @@ export const AdventurerListCard = ({
   >(null);
 
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [adventurerName, setAdventurerName] = useState("");
+  const [adventurerName, setAdventurerName] = useState(adventurer?.name || "");
+
+  useEffect(() => {
+    setAdventurerName(adventurer?.name!);
+  }, [adventurer]);
+
   const [isMaxLength, setIsMaxLength] = useState(false);
 
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
