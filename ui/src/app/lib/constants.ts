@@ -119,3 +119,11 @@ export const collectionData = [
 ];
 
 export const maxGamesPlayable = 1600;
+
+export const payouts = {
+  first: 0.27,
+  second: 0.16,
+  third: 0.1,
+  clientProvider: 0.27,
+  creator: 0.2,
+};

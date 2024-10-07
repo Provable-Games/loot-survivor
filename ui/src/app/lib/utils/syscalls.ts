@@ -410,7 +410,9 @@ export function createSyscalls({
     spawnCalls: Call[],
     dollarPrice: bigint,
     freeVRF: boolean,
-    costToPlay?: number
+    costToPlay?: number,
+    goldenTokenId?: string,
+    blobertTokenId?: string
   ) => [
     ...(freeVRF
       ? []
@@ -425,16 +427,19 @@ export function createSyscalls({
             ],
           },
         ]),
-
-    {
-      contractAddress: lordsContract?.address ?? "",
-      entrypoint: "approve",
-      calldata: [
-        gameContract?.address ?? "",
-        (costToPlay! * 1.1)!.toString(),
-        "0",
-      ],
-    },
+    ...(goldenTokenId === "0" && blobertTokenId === "0"
+      ? [
+          {
+            contractAddress: lordsContract?.address ?? "",
+            entrypoint: "approve",
+            calldata: [
+              gameContract?.address ?? "",
+              costToPlay!.toString(),
+              "0",
+            ],
+          },
+        ]
+      : []),
     ...spawnCalls,
   ];
 
@@ -446,6 +451,7 @@ export function createSyscalls({
   const spawn = async (
     formData: FormData,
     goldenTokenId: string,
+    blobertTokenId: string,
     revenueAddresses: string[],
     costToPlay?: number
   ) => {
@@ -462,7 +468,7 @@ export function createSyscalls({
         goldenTokenId,
         "0", // delay_stat_reveal
         rendererContractAddress,
-        "0",
+        blobertTokenId,
         "0",
       ],
     };
@@ -478,21 +484,19 @@ export function createSyscalls({
       if (!enoughEth && !freeVRF) {
         return handleInsufficientFunds("eth");
       }
-      if (!enoughLords) {
+      if (!enoughLords && goldenTokenId === "0" && blobertTokenId === "0") {
         return handleInsufficientFunds("lords");
       }
 
-      if (goldenTokenId === "0") {
-        spawnCalls = addApprovalCalls(
-          spawnCalls,
-          dollarPrice,
-          freeVRF,
-          costToPlay
-        );
-      }
+      spawnCalls = addApprovalCalls(
+        spawnCalls,
+        dollarPrice,
+        freeVRF,
+        costToPlay,
+        goldenTokenId,
+        blobertTokenId
+      );
     }
-
-    console.log(spawnCalls);
 
     await executeSpawn(formData, spawnCalls);
   };

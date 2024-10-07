@@ -13,6 +13,10 @@ input[type="text"] {
   outline-color: rgba(74, 246, 38, 1);
 }
 
+.no-text-shadow {
+  text-shadow: none;
+}
+
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;

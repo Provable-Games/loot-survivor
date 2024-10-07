@@ -64,7 +64,7 @@ export const AdventurersList = ({
     constants.StarknetChainId.SN_MAIN
   );
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [showZeroHealth, setShowZeroHealth] = useState(true);
+  const [showZeroHealth, setShowZeroHealth] = useState(false);
   const [isTransferOpen, setIsTransferOpen] = useState(false);
   const [adventurerForTransfer, setAdventurerForTransfer] =
     useState<Adventurer | null>(null);

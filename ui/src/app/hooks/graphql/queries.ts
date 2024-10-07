@@ -468,26 +468,42 @@ const getCollectionsTotals = gql`
   }
 `;
 
+const getOwnerTokens = gql`
+  query getOwnerTokens($token: HexValue, $owner: HexValue) {
+    tokens(
+      where: { token: { eq: $token }, nftOwnerAddress: { eq: $owner } }
+      limit: 1000
+    ) {
+      hash
+      nftOwnerAddress
+      timestamp
+      token
+      tokenId
+    }
+  }
+`;
+
 export {
-  getLatestDiscoveries,
-  getLastBeastDiscovery,
+  getAdventurerById,
+  getAdventurerCounts,
+  getAdventurerRank,
   getAdventurersByOwner,
   getAdventurersByOwnerCount,
-  getAdventurerById,
   getAdventurersInList,
-  getBeast,
-  getKilledBeasts,
-  getBattlesByBeast,
-  getDiscoveriesAndBattlesByAdventurerPaginated,
-  getLatestMarketItems,
-  getItemsByAdventurer,
-  getDeadAdventurersByXPPaginated,
   getAliveAdventurersByXPPaginated,
-  getScoresInList,
-  getGoldenTokensByOwner,
-  getAdventurerCounts,
   getAliveAdventurersCount,
-  getDiscoveryBattleCount,
-  getAdventurerRank,
+  getBattlesByBeast,
+  getBeast,
   getCollectionsTotals,
+  getDeadAdventurersByXPPaginated,
+  getDiscoveriesAndBattlesByAdventurerPaginated,
+  getDiscoveryBattleCount,
+  getGoldenTokensByOwner,
+  getItemsByAdventurer,
+  getKilledBeasts,
+  getLastBeastDiscovery,
+  getLatestDiscoveries,
+  getLatestMarketItems,
+  getOwnerTokens,
+  getScoresInList,
 };

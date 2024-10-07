@@ -1,31 +1,32 @@
-import React, { useState, useEffect } from "react";
-import { Contract } from "starknet";
+import { BeastSwapWarning } from "@/app/components/adventurer/BeastSwapWarning";
+import { BattleDialog } from "@/app/components/BattleDialog";
 import { BattleDisplay } from "@/app/components/beast/BattleDisplay";
 import { BeastDisplay } from "@/app/components/beast/BeastDisplay";
-import useLoadingStore from "@/app/hooks/useLoadingStore";
-import useAdventurerStore from "@/app/hooks/useAdventurerStore";
-import { useQueriesStore } from "@/app/hooks/useQueryStore";
-import { processBeastName, getItemData, getBeastData } from "@/app/lib/utils";
-import { Battle, NullBeast, ButtonData, Beast } from "@/app/types";
 import { Button } from "@/app/components/buttons/Button";
-import useUIStore from "@/app/hooks/useUIStore";
+import { FleeDialog } from "@/app/components/FleeDialog";
+import {
+  CompleteIcon,
+  GiBattleGearIcon,
+  HeartIcon,
+  SkullCrossedBonesIcon,
+} from "@/app/components/icons/Icons";
 import ActionMenu from "@/app/components/menu/ActionMenu";
 import { useController } from "@/app/context/ControllerContext";
+import useAdventurerStore from "@/app/hooks/useAdventurerStore";
+import useLoadingStore from "@/app/hooks/useLoadingStore";
+import { useQueriesStore } from "@/app/hooks/useQueryStore";
+import { soundSelector, useUiSounds } from "@/app/hooks/useUiSound";
+import useUIStore from "@/app/hooks/useUIStore";
+import { getBeastData, getItemData, processBeastName } from "@/app/lib/utils";
 import {
   getGoldReward,
   nextAttackResult,
   simulateBattle,
   simulateFlee,
 } from "@/app/lib/utils/processFutures";
-import {
-  GiBattleGearIcon,
-  HeartIcon,
-  SkullCrossedBonesIcon,
-  CompleteIcon,
-} from "@/app/components/icons/Icons";
-import { FleeDialog } from "@/app/components/FleeDialog";
-import { BattleDialog } from "@/app/components/BattleDialog";
-import { useUiSounds, soundSelector } from "@/app/hooks/useUiSound";
+import { Battle, Beast, ButtonData, NullBeast } from "@/app/types";
+import React, { useEffect, useState } from "react";
+import { Contract } from "starknet";
 
 interface BeastScreenProps {
   attack: (
@@ -56,6 +57,7 @@ export default function BeastScreen({
   const showFleeDialog = useUIStore((state) => state.showFleeDialog);
   const tillDeath = useUIStore((state) => state.tillDeath);
   const setTillDeath = useUIStore((state) => state.setTillDeath);
+  const equipItems = useUIStore((state) => state.equipItems);
   const resetNotification = useLoadingStore((state) => state.resetNotification);
   const [showBattleLog, setShowBattleLog] = useState(false);
   const [showFutures, setShowFutures] = useState(false);
@@ -67,6 +69,7 @@ export default function BeastScreen({
   const formatBattles = useQueriesStore(
     (state) => state.data.battlesByBeastQuery?.battles || []
   );
+  const [beastSwapWarning, setBeastSwapWarning] = useState<boolean>(false);
 
   const { play: clickPlay } = useUiSounds(soundSelector.click);
 
@@ -237,12 +240,25 @@ export default function BeastScreen({
     </div>
   );
 
+  useEffect(() => {
+    if (equipItems.length > 0 && hasBeast) {
+      setBeastSwapWarning(true);
+    }
+  }, [equipItems]);
+
   if (showBattleLog) {
     return <BattleLog />;
   }
 
   return (
     <div className="sm:w-2/3 flex flex-col sm:flex-row h-full">
+      {beastSwapWarning && (
+        <BeastSwapWarning
+          handleConfirmAction={() => {
+            setBeastSwapWarning(false);
+          }}
+        />
+      )}
       <div className="sm:w-1/2 order-1 sm:order-2 h-3/4 sm:h-full">
         {hasBeast ? (
           <BeastDisplay beastData={beastData} beastsContract={beastsContract} />

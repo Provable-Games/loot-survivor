@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useRef } from "react";
-import { Attribute, UpgradeStats, ZeroUpgrade } from "@/app/types";
-import useUIStore from "@/app/hooks/useUIStore";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
 import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
+import useUIStore from "@/app/hooks/useUIStore";
+import { Attribute, UpgradeStats, ZeroUpgrade } from "@/app/types";
+import React, { useEffect, useRef, useState } from "react";
 
 interface ButtonProps {
   amount: number;
@@ -26,7 +26,7 @@ const StatCard: React.FC<ButtonProps> = ({
   const [showInfo, setShowInfo] = useState(false);
   const [buttonClicked, setButtonClicked] = useState(false);
   const prevAmountRef = useRef<{ [key: string]: number }>({ ...ZeroUpgrade });
-  const maxNonBoosted = (attribute.stat ?? 0) + amount >= 31;
+  const maxNonBoosted = (attribute.nonBoostedStat ?? 0) + amount >= 31;
   const adventurer = useAdventurerStore((state) => state.adventurer);
   const upgrades = useUIStore((state) => state.upgrades);
   const removeEntrypointFromCalls = useTransactionCartStore(
@@ -76,7 +76,8 @@ const StatCard: React.FC<ButtonProps> = ({
     }
   }, [amount, buttonClicked]);
 
-  const maxed = upgradesTotal >= (adventurer?.statUpgrades ?? 0);
+  const maxed =
+    upgradesTotal >= (adventurer?.statUpgrades ?? 0) || maxNonBoosted;
 
   return (
     <div
@@ -120,6 +121,11 @@ const StatCard: React.FC<ButtonProps> = ({
             </span>
           )}
         </span>
+        {maxNonBoosted && (
+          <span className="absolute bottom-[-2px] text-sm text-terminal-yellow uppercase">
+            Maxed Out
+          </span>
+        )}
       </span>
       {showInfo && (
         <div className="fixed top-0 left-0 sm:top-40 sm:left-auto sm:right-80 w-full sm:w-80 flex flex-row gap-5 items-center p-2 bg-terminal-black border border-terminal-green text-terminal-green text-sm">

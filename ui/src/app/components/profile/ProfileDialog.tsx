@@ -1,17 +1,17 @@
+import { Button } from "@/app/components/buttons/Button";
+import { CartridgeIcon } from "@/app/components/icons/Icons";
+import useAdventurerStore from "@/app/hooks/useAdventurerStore";
+import useNetworkAccount from "@/app/hooks/useNetworkAccount";
+import { useQueriesStore } from "@/app/hooks/useQueryStore";
+import useUIStore from "@/app/hooks/useUIStore";
+import { checkCartridgeConnector } from "@/app/lib/connectors";
+import { copyToClipboard, displayAddress, padAddress } from "@/app/lib/utils";
+import { NullAdventurer } from "@/app/types";
+import CartridgeConnector from "@cartridge/connector";
+import { useConnect, useDisconnect } from "@starknet-react/core";
 import { useState } from "react";
 import { MdClose } from "react-icons/md";
-import useUIStore from "@/app/hooks/useUIStore";
-import { Button } from "@/app/components/buttons/Button";
-import { useDisconnect, useConnect } from "@starknet-react/core";
-import useAdventurerStore from "@/app/hooks/useAdventurerStore";
-import { useQueriesStore } from "@/app/hooks/useQueryStore";
-import { NullAdventurer } from "@/app/types";
-import useNetworkAccount from "@/app/hooks/useNetworkAccount";
-import { displayAddress, padAddress, copyToClipboard } from "@/app/lib/utils";
 import { AccountInterface } from "starknet";
-import { CartridgeIcon } from "@/app/components/icons/Icons";
-import { checkCartridgeConnector } from "@/app/lib/connectors";
-import CartridgeConnector from "@cartridge/connector";
 
 interface ProfileDialogprops {
   withdraw: (
@@ -134,7 +134,9 @@ export const ProfileDialog = ({
                     lordsBalance
                   )
                 }
-                disabled={controllerDelegate === "0x0"}
+                disabled={
+                  controllerDelegate === "0x0" || controllerDelegate === ""
+                }
               >
                 Withdraw
               </Button>

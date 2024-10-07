@@ -59,6 +59,9 @@ const EncounterTable = () => {
     data.itemsByAdventurerQuery?.items
       .map((item) => ({ ...item, ...getItemData(item.item ?? "") }))
       .filter((item) => {
+        return item.equipped;
+      })
+      .filter((item) => {
         return !["Weapon", "Ring", "Neck"].includes(item.slot!);
       }) || [];
 
@@ -91,7 +94,7 @@ const EncounterTable = () => {
             <th className="py-2 px-1 sm:pr-3 border-b border-terminal-green">
               XP
             </th>
-            <th className="py-2 px-1 sm:pr-3 border-b border-terminal-green">
+            <th className="py-2 px-1 sm:pr-3 border-b border-terminal-green w-20">
               Type
             </th>
             <th className="py-2 px-1 sm:pr-3 border-b border-terminal-green">
@@ -158,18 +161,20 @@ const EncounterTable = () => {
                       <span className="flex">{encounter.xp}</span>
                     </td>
                     <td
-                      className={`py-2 border-b border-terminal-green tooltip flex flex-row gap-1 ${
-                        nameMatch
-                          ? "text-red-500"
-                          : weaponMatch
-                          ? "text-green-500"
-                          : "text-terminal-yellow"
-                      }`}
+                      className={`relative py-2 border-b border-terminal-green tooltip flex flex-row gap-1 w-20`}
                     >
                       <span className="uppercase">{encounter.encounter}</span>
                       {encounter.encounter === "Beast" &&
                         encounter.level >= 19 && (
-                          <span className="tooltiptext bottom">
+                          <span
+                            className={`absolute bottom-[0px] text-xs w-20 whitespace-nowrap uppercase text-ellipsis overflow-hidden ${
+                              nameMatch
+                                ? "text-red-500"
+                                : weaponMatch
+                                ? "text-green-500"
+                                : "text-terminal-yellow"
+                            }`}
+                          >
                             {encounter.specialName}
                           </span>
                         )}

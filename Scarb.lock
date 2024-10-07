@@ -202,7 +202,7 @@ source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.15.1#2f
 [[package]]
 name = "pragma_lib"
 version = "1.0.0"
-source = "git+https://github.com/astraly-labs/pragma-lib#c4cdeaafbec19d99d740df61afc0301d78975204"
+source = "git+https://github.com/astraly-labs/pragma-lib?rev=c4cdeaafbec19d99d740df61afc0301d78975204#c4cdeaafbec19d99d740df61afc0301d78975204"
 
 [[package]]
 name = "snforge_std"

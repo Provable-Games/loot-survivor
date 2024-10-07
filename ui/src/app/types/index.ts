@@ -1,6 +1,6 @@
+import { ScreenPage } from "@/app/hooks/useUIStore";
 import { ReactElement } from "react";
 import { RawArgs } from "starknet";
-import { ScreenPage } from "@/app/hooks/useUIStore";
 
 export interface Adventurer {
   [key: string]: number | string | Date | undefined;
@@ -536,6 +536,7 @@ export type Attribute = {
   buttonText: string;
   abbrev: string;
   stat: number;
+  nonBoostedStat: number;
   upgrades: number;
 };
 

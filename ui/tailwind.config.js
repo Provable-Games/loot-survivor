@@ -66,6 +66,7 @@ module.exports = {
       boxShadow: {
         md: "0px 0px 20px -2px rgb(51 255 51 / 1)",
         lg: "0px 5px 20px -5px rgb(51 255 51 / 1)",
+        xl: "0px 10px 40px 10px rgb(51 255 51 / 0.5)",
       },
       height: {
         "1/8": "12.5%",

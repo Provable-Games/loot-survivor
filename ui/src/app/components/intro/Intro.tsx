@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
-import { TypeAnimation } from "react-type-animation";
-import Image from "next/image";
 import { Button } from "@/app/components/buttons/Button";
-import { prologue, chapter1, chapter2, chapter3 } from "@/app/lib/constants";
+import { chapter1, chapter2, chapter3, prologue } from "@/app/lib/constants";
+import Image from "next/image";
+import { useCallback, useEffect, useState } from "react";
+import { TypeAnimation } from "react-type-animation";
 
 interface IntroProps {
   onIntroComplete: () => void;
@@ -112,7 +112,7 @@ const Intro: React.FC<IntroProps> = ({ onIntroComplete }) => {
           () => setTimeout(() => setScreen(3), 3000),
         ])}
       {screen == 3 &&
-        renderScreen("/scenes/intro/fountain.png", "fountain", [
+        renderScreen("/scenes/intro/weapons.png", "fountain", [
           chapter3,
           () => setTimeout(() => setScreen(4), 3000),
         ])}

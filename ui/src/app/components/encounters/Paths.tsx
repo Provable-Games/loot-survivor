@@ -16,7 +16,7 @@ import { GameData } from "@/app/lib/data/GameData";
 import { calculateLevel, getItemData, getPotionPrice } from "@/app/lib/utils";
 import { Step } from "@/app/lib/utils/processFutures";
 import { Item } from "@/app/types";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   getItems,
   getPaths,
@@ -97,6 +97,10 @@ const Paths = () => {
       ),
     [updatedAdventurer, updatedAdventurer?.xp, adventurerEntropy, items]
   );
+
+  useEffect(() => {
+    setSelectedBeastEncounter(null);
+  }, [items, outcomesWithPath]);
 
   const startingLevel = adventurer?.level;
 
@@ -255,20 +259,22 @@ const Paths = () => {
                               <span className="flex">{encounter.xp}</span>
                             </td>
                             <td
-                              className={`py-2 border-b border-terminal-green tooltip flex flex-row gap-1 ${
-                                nameMatch
-                                  ? "text-red-500"
-                                  : weaponMatch
-                                  ? "text-green-500"
-                                  : "text-terminal-yellow"
-                              }`}
+                              className={`relative py-2 border-b border-terminal-green tooltip flex flex-row gap-1 w-20`}
                             >
                               <span className="uppercase">
                                 {encounter.encounter}
                               </span>
                               {encounter.encounter === "Beast" &&
                                 (encounter?.level || 1) >= 19 && (
-                                  <span className="tooltiptext bottom">
+                                  <span
+                                    className={`absolute bottom-[0px] text-xs w-20 whitespace-nowrap uppercase text-ellipsis overflow-hidden ${
+                                      nameMatch
+                                        ? "text-red-500"
+                                        : weaponMatch
+                                        ? "text-green-500"
+                                        : "text-terminal-yellow"
+                                    }`}
+                                  >
                                     {encounter.specialName}
                                   </span>
                                 )}
@@ -395,10 +401,8 @@ const Paths = () => {
                               }`}
                             >
                               {encounter.isCritical! && (
-                                <span className="flex justify-center">
-                                  {encounter.isCritical!
-                                    ? `${encounter.isCritical}%`
-                                    : "No"}
+                                <span className="flex justify-center uppercase">
+                                  Yes
                                 </span>
                               )}
                             </td>

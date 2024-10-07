@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Contract } from "starknet";
-import { FormData } from "@/app/types";
 import { AdventurerName } from "@/app/components/start/AdventurerName";
-import { WeaponSelect } from "@/app/components/start/WeaponSelect";
 import { Spawn } from "@/app/components/start/Spawn";
+import { WeaponSelect } from "@/app/components/start/WeaponSelect";
+import { FormData } from "@/app/types";
+import React, { useCallback, useEffect, useState } from "react";
+import { Contract } from "starknet";
 
 export interface CreateAdventurerProps {
   isActive: boolean;
@@ -11,6 +11,7 @@ export interface CreateAdventurerProps {
   spawn: (...args: any[]) => any;
   lordsBalance?: bigint;
   goldenTokenData: any;
+  blobertsData: any;
   gameContract: Contract;
   getBalances: () => Promise<void>;
   mintLords: (lordsAmount: number) => Promise<void>;
@@ -23,6 +24,7 @@ export const CreateAdventurer = ({
   spawn,
   lordsBalance,
   goldenTokenData,
+  blobertsData,
   gameContract,
   getBalances,
   mintLords,
@@ -119,6 +121,7 @@ export const CreateAdventurer = ({
               handleBack={handleBack}
               lordsBalance={lordsBalance}
               goldenTokenData={goldenTokenData}
+              blobertsData={blobertsData}
               gameContract={gameContract}
               getBalances={getBalances}
               mintLords={mintLords}
@@ -144,6 +147,7 @@ export const CreateAdventurer = ({
             handleBack={handleBack}
             lordsBalance={lordsBalance}
             goldenTokenData={goldenTokenData}
+            blobertsData={blobertsData}
             gameContract={gameContract}
             getBalances={getBalances}
             mintLords={mintLords}

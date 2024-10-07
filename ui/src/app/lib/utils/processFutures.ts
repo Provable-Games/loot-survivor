@@ -880,7 +880,7 @@ function beastEncounter(
     xp,
     specialName,
     isCritical,
-    damage,
+    damage: Math.max(2, damage),
   };
 }
 
@@ -939,7 +939,7 @@ function obstacleEncounter(
     dodgeRoll: Number(roll) + 1,
     nextXp: xp + Number(xp_reward),
     isCritical,
-    damage,
+    damage: Math.max(2, damage),
     xp,
   };
 }

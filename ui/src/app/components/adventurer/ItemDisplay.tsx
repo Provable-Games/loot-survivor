@@ -1,16 +1,21 @@
+import { InventoryDisplay } from "@/app/components/adventurer/InventoryDisplay";
+import { Button } from "@/app/components/buttons/Button";
+import Efficacyicon from "@/app/components/icons/EfficacyIcon";
+import { DownArrowIcon, SwapIcon } from "@/app/components/icons/Icons";
+import LootIcon from "@/app/components/icons/LootIcon";
+import { useQueriesStore } from "@/app/hooks/useQueryStore";
+import useUIStore from "@/app/hooks/useUIStore";
+import { GameData } from "@/app/lib/data/GameData";
+import {
+  calculateLevel,
+  getItemData,
+  getKeyFromValue,
+  getValueFromKey,
+  processItemName,
+} from "@/app/lib/utils";
+import { Item } from "@/app/types";
 import React, { useEffect, useState } from "react";
 import { Contract } from "starknet";
-import { Item } from "@/app/types";
-import LootIcon from "@/app/components/icons/LootIcon";
-import Efficacyicon from "@/app/components/icons/EfficacyIcon";
-import { processItemName, calculateLevel, getItemData } from "@/app/lib/utils";
-import { GameData } from "@/app/lib/data/GameData";
-import { getKeyFromValue, getValueFromKey } from "@/app/lib/utils";
-import { SwapIcon, DownArrowIcon } from "@/app/components/icons/Icons";
-import { Button } from "@/app/components/buttons/Button";
-import useUIStore from "@/app/hooks/useUIStore";
-import { InventoryDisplay } from "@/app/components/adventurer/InventoryDisplay";
-import { useQueriesStore } from "@/app/hooks/useQueryStore";
 
 interface ItemDisplayProps {
   item: Item;
@@ -190,7 +195,8 @@ export const ItemDisplay = ({
                     </span> */}
                     <span>
                       {item &&
-                        ` XP to Next Lvl: ${
+                        calculateLevel(item.xp ?? 0) !== 20 &&
+                        `XP to Next Lvl: ${
                           Math.floor(calculateLevel(item.xp ?? 0) + 1) ** 2 -
                           (item.xp ?? 0)
                         }`}
