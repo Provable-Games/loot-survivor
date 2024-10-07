@@ -6,7 +6,7 @@ export const getGoldenTokens = async (
   goldenTokenAddress: string,
   network: Network
 ) => {
-  const recursiveFetch = async (
+  const recursiveFetch: any = async (
     goldenTokens: any[],
     nextPageKey: string | null
   ) => {
