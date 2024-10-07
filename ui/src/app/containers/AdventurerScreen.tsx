@@ -26,7 +26,7 @@ interface AdventurerScreenProps {
   handleSwitchAdventurer: (adventurerId: number) => Promise<void>;
   lordsBalance?: bigint;
   gameContract: Contract;
-  goldenTokenData: any;
+  goldenTokens: number[];
   blobertsData: any;
   getBalances: () => Promise<void>;
   mintLords: (lordsAmount: number) => Promise<void>;
@@ -48,7 +48,7 @@ export default function AdventurerScreen({
   handleSwitchAdventurer,
   lordsBalance,
   gameContract,
-  goldenTokenData,
+  goldenTokens,
   blobertsData,
   getBalances,
   mintLords,
@@ -138,7 +138,7 @@ export default function AdventurerScreen({
             onEscape={() => setActiveMenu(0)}
             spawn={spawn}
             lordsBalance={lordsBalance}
-            goldenTokenData={goldenTokenData}
+            goldenTokens={goldenTokens}
             blobertsData={blobertsData}
             gameContract={gameContract}
             getBalances={getBalances}

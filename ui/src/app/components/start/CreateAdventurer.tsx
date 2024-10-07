@@ -10,7 +10,7 @@ export interface CreateAdventurerProps {
   onEscape: () => void;
   spawn: (...args: any[]) => any;
   lordsBalance?: bigint;
-  goldenTokenData: any;
+  goldenTokens: number[];
   blobertsData: any;
   gameContract: Contract;
   getBalances: () => Promise<void>;
@@ -23,7 +23,7 @@ export const CreateAdventurer = ({
   onEscape,
   spawn,
   lordsBalance,
-  goldenTokenData,
+  goldenTokens,
   blobertsData,
   gameContract,
   getBalances,
@@ -120,7 +120,7 @@ export const CreateAdventurer = ({
               spawn={spawn}
               handleBack={handleBack}
               lordsBalance={lordsBalance}
-              goldenTokenData={goldenTokenData}
+              goldenTokens={goldenTokens}
               blobertsData={blobertsData}
               gameContract={gameContract}
               getBalances={getBalances}
@@ -146,7 +146,7 @@ export const CreateAdventurer = ({
             spawn={spawn}
             handleBack={handleBack}
             lordsBalance={lordsBalance}
-            goldenTokenData={goldenTokenData}
+            goldenTokens={goldenTokens}
             blobertsData={blobertsData}
             gameContract={gameContract}
             getBalances={getBalances}
