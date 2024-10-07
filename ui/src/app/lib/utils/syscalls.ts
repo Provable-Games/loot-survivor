@@ -3,7 +3,7 @@ import { QueryData, QueryKey } from "@/app/hooks/useQueryStore";
 import { Network, ScreenPage } from "@/app/hooks/useUIStore";
 import { AdventurerClass } from "@/app/lib/classes";
 import { checkArcadeConnector } from "@/app/lib/connectors";
-import { getWaitRetryInterval } from "@/app/lib/constants";
+import { getMaxFee, getWaitRetryInterval } from "@/app/lib/constants";
 import { GameData } from "@/app/lib/data/GameData";
 import {
   DataType,
@@ -1543,9 +1543,19 @@ export function createSyscalls({
           ? [transferEthTx, transferLordsTx]
           : [transferEthTx];
 
-      const { transaction_hash } = await account.execute(calls);
+      const isArcade = checkArcadeConnector(connector!);
 
-      const result = await provider.waitForTransaction(transaction_hash, {
+      const tx = await handleSubmitCalls(
+        account!,
+        [...calls],
+        isArcade,
+        Number(ethBalance),
+        showTopUpDialog,
+        setTopUpAccount,
+        network
+      );
+
+      const result = await provider.waitForTransaction(tx?.transaction_hash, {
         retryInterval: getWaitRetryInterval(network!),
       });
 
@@ -1576,12 +1586,19 @@ export function createSyscalls({
         calldata: [from, recipient, adventurerId.toString() ?? "", "0"],
       };
 
-      const { transaction_hash } = await account.execute([
-        ...calls,
-        transferTx,
-      ]);
+      const isArcade = checkArcadeConnector(connector!);
 
-      const result = await provider.waitForTransaction(transaction_hash, {
+      const tx = await handleSubmitCalls(
+        account!,
+        [...calls, transferTx],
+        isArcade,
+        Number(ethBalance),
+        showTopUpDialog,
+        setTopUpAccount,
+        network
+      );
+
+      const result = await provider.waitForTransaction(tx?.transaction_hash, {
         retryInterval: getWaitRetryInterval(network!),
       });
 
@@ -1604,17 +1621,17 @@ export function createSyscalls({
   const changeAdventurerName = async (
     account: AccountInterface,
     adventurerId: number,
-    name: string
+    name: string,
+    index: number
   ) => {
-    try {
-      console.log(account);
-      startLoading(
-        "Change Name",
-        "Changing Adventurer Name",
-        undefined,
-        undefined
-      );
+    startLoading(
+      "Change Name",
+      "Changing Adventurer Name",
+      undefined,
+      undefined
+    );
 
+    try {
       const changeNameTx = {
         contractAddress: gameContract?.address ?? "",
         entrypoint: "update_adventurer_name",
@@ -1624,25 +1641,55 @@ export function createSyscalls({
         ],
       };
 
-      const { transaction_hash } = await account.execute([
-        ...calls,
-        changeNameTx,
-      ]);
+      const isArcade = checkArcadeConnector(connector!);
 
-      const result = await provider.waitForTransaction(transaction_hash, {
-        retryInterval: getWaitRetryInterval(network!),
-      });
+      const maxFee = getMaxFee(network!);
 
-      if (!result) {
-        throw new Error("Transaction did not complete successfully.");
+      if (ethBalance < maxFee) {
+        showTopUpDialog(true);
+        setTopUpAccount("eth");
+        throw new Error("Not enough eth for gas.");
+      } else {
+        const tx = await handleSubmitCalls(
+          account!,
+          [...calls, changeNameTx],
+          isArcade,
+          Number(ethBalance),
+          showTopUpDialog,
+          setTopUpAccount,
+          network
+        );
+
+        const result = await provider.waitForTransaction(tx?.transaction_hash, {
+          retryInterval: getWaitRetryInterval(network!),
+        });
+
+        if (!result) {
+          throw new Error("Transaction did not complete successfully.");
+        }
+
+        const adventurers =
+          queryData.adventurersByOwnerQuery?.adventurers ?? [];
+
+        setData("adventurersByOwnerQuery", {
+          adventurers: [
+            ...adventurers.slice(0, index),
+            { ...adventurers[index], name: name },
+            ...adventurers.slice(index + 1),
+          ],
+        });
+
+        console.log({
+          adventurers: [
+            ...adventurers.slice(0, index),
+            { ...adventurers[index], name: name },
+            ...adventurers.slice(index + 1),
+          ],
+        });
+
+        getBalances();
+        stopLoading("Changed Adventurer Name", false, "Change Name");
       }
-
-      setData("adventurersByOwnerQuery", {
-        adventurers: [adventurer],
-      });
-
-      getBalances();
-      stopLoading("Changed Adventurer Name", false, "Change Name");
     } catch (error) {
       console.error(error);
       stopLoading(error, true);

@@ -29,8 +29,10 @@ export interface AdventurerListCardProps {
   changeAdventurerName: (
     account: AccountInterface,
     adventurerId: number,
-    name: string
+    name: string,
+    index: number
   ) => Promise<void>;
+  index: number;
 }
 
 export const AdventurerListCard = ({
@@ -39,6 +41,7 @@ export const AdventurerListCard = ({
   handleSwitchAdventurer,
   transferAdventurer,
   changeAdventurerName,
+  index,
 }: AdventurerListCardProps) => {
   const { account, address } = useNetworkAccount();
   const { provider } = useProvider();
@@ -322,7 +325,7 @@ export const AdventurerListCard = ({
                     type="text"
                     value={adventurerName}
                     onChange={handleNameChange}
-                    className="p-1 h-12 text-2xl w-3/4 bg-terminal-black border border-terminal-green animate-pulse transform uppercase"
+                    className="p-1 h-12 text-2xl w-3/4 bg-terminal-black border border-terminal-green animate-pulse transform"
                   />
                   {isMaxLength && (
                     <p className="absolute top-14">MAX LENGTH!</p>
@@ -334,7 +337,8 @@ export const AdventurerListCard = ({
                         changeAdventurerName(
                           account!,
                           adventurer.id!,
-                          adventurerName
+                          adventurerName,
+                          index
                         )
                       }
                       disabled={adventurerName === ""}

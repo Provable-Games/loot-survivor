@@ -40,7 +40,8 @@ interface AdventurerScreenProps {
   changeAdventurerName: (
     account: AccountInterface,
     adventurerId: number,
-    name: string
+    name: string,
+    index: number
   ) => Promise<void>;
 }
 

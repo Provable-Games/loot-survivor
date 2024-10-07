@@ -44,7 +44,8 @@ export interface AdventurerListProps {
   changeAdventurerName: (
     account: AccountInterface,
     adventurerId: number,
-    name: string
+    name: string,
+    index: number
   ) => Promise<void>;
 }
 
@@ -555,6 +556,7 @@ export const AdventurersList = ({
                 handleSwitchAdventurer={handleSwitchAdventurer}
                 transferAdventurer={transferAdventurer}
                 changeAdventurerName={changeAdventurerName}
+                index={selectedIndex}
               />
             )}
           </div>
