@@ -1681,14 +1681,6 @@ export function createSyscalls({
           ],
         });
 
-        console.log({
-          adventurers: [
-            ...adventurers.slice(0, index),
-            { ...adventurers[index], name: name },
-            ...adventurers.slice(index + 1),
-          ],
-        });
-
         getBalances();
         stopLoading("Changed Adventurer Name", false, "Change Name");
       }
