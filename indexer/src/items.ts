@@ -1,43 +1,43 @@
 import type { Config } from "https://esm.sh/@apibara/indexer";
-import type { Block, Starknet } from "https://esm.sh/@apibara/indexer/starknet";
-import type { Mongo } from "https://esm.sh/@apibara/indexer/sink/mongo";
 import type { Console } from "https://esm.sh/@apibara/indexer/sink/console";
+import type { Mongo } from "https://esm.sh/@apibara/indexer/sink/mongo";
+import type { Block, Starknet } from "https://esm.sh/@apibara/indexer/starknet";
+import { MONGO_CONNECTION_STRING } from "./utils/constants.ts";
+import { GameData } from "./utils/data.ts";
+import { checkExistsInt } from "./utils/encode.ts";
 import {
   ADVENTURER_UPGRADED,
+  DISCOVERED_LOOT,
   DODGED_OBSTACLE,
   DROPPED_ITEMS,
+  EQUIPMENT_CHANGED,
   EQUIPPED_ITEMS,
   HIT_BY_OBSTACLE,
   ITEMS_LEVELED_UP,
-  UPGRADES_AVAILABLE,
   parseAdventurerUpgraded,
+  parseDiscoveredLoot,
   parseDodgedObstacle,
   parseDroppedItems,
+  parseEquipmentChanged,
   parseEquippedItems,
   parseHitByObstacle,
-  parseUpgradesAvailable,
   parseItemsLeveledUp,
   parsePurchasedItems,
   parseSlayedBeast,
   parseStartGame,
+  parseTransfer,
+  parseUpgradesAvailable,
   PURCHASED_ITEMS,
   SLAYED_BEAST,
   START_GAME,
-  DISCOVERED_LOOT,
-  parseDiscoveredLoot,
-  EQUIPMENT_CHANGED,
-  parseEquipmentChanged,
   TRANSFER,
-  parseTransfer,
+  UPGRADES_AVAILABLE,
 } from "./utils/events.ts";
 import {
   insertItem,
   updateItemsOwner,
   updateItemsXP,
 } from "./utils/helpers.ts";
-import { checkExistsInt } from "./utils/encode.ts";
-import { GameData } from "./utils/data.ts";
-import { MONGO_CONNECTION_STRING } from "./utils/constants.ts";
 
 const gameData = new GameData();
 
@@ -134,6 +134,12 @@ export default function transform({ header, events }: Block) {
               slot: gameData.ITEM_SLOTS[item.item.id],
               type: gameData.ITEM_TYPES[item.item.id],
               ownerAddress: checkExistsInt(BigInt(as.owner).toString(16)),
+              xp: 0,
+              greatness: 1,
+              special1: 0,
+              special2: 0,
+              special3: 0,
+              isAvailable: false,
               purchasedTime: new Date().toISOString(),
               timestamp: new Date().toISOString(),
             },
