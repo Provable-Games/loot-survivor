@@ -176,7 +176,7 @@ export const AdventurersList = ({
     };
   }, [owner, skip, showZeroHealth]);
 
-  useCustomQuery(
+  const adventurersData = useCustomQuery(
     network,
     "adventurersByOwnerQuery",
     getAdventurersByOwner,
@@ -184,11 +184,14 @@ export const AdventurersList = ({
     owner === ""
   );
 
-  const adventurersData = data.adventurersByOwnerQuery;
+  useEffect(() => {
+    setData("adventurersByOwnerQuery", adventurersData);
+  }, [adventurersData]);
 
   const isLoading = adventurersData === undefined;
 
-  const adventurers: Adventurer[] = adventurersData?.adventurers ?? [];
+  const adventurers: Adventurer[] =
+    data.adventurersByOwnerQuery?.adventurers ?? [];
 
   const totalPages = useMemo(
     () =>
