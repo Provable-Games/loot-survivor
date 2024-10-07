@@ -13,7 +13,7 @@ import useUIStore from "@/app/hooks/useUIStore";
 import { battle } from "@/app/lib/constants";
 import { networkConfig } from "@/app/lib/networkConfig";
 import { formatLords } from "@/app/lib/utils";
-import { Adventurer, FormData, GameToken } from "@/app/types";
+import { Adventurer, FormData } from "@/app/types";
 import Image from "next/image";
 import Lords from "public/icons/lords.svg";
 import { useEffect, useMemo, useState } from "react";
@@ -30,12 +30,10 @@ export interface SpawnProps {
     costToPlay?: number
   ) => Promise<void>;
   handleBack: () => void;
-  lordsBalance?: bigint;
-  goldenTokenData: any;
+  goldenTokens: number[];
   blobertsData: any;
   gameContract: Contract;
   getBalances: () => Promise<void>;
-  mintLords: (lordsAmount: number) => Promise<void>;
   costToPlay: bigint;
 }
 
@@ -43,12 +41,10 @@ export const Spawn = ({
   formData,
   spawn,
   handleBack,
-  lordsBalance,
-  goldenTokenData,
+  goldenTokens,
   blobertsData,
   gameContract,
   getBalances,
-  mintLords,
   costToPlay,
 }: SpawnProps) => {
   const [paymentInitiated, setPaymentInitiated] = useState(false);
@@ -89,11 +85,6 @@ export const Spawn = ({
     }
   };
 
-  const goldenTokens = goldenTokenData?.getERC721Tokens;
-  const goldenTokenIds: number[] = goldenTokens?.map(
-    (token: GameToken) => token.token_id
-  );
-
   const getUsableGoldenToken = async (tokenIds: number[]) => {
     // Loop through contract calls to see if the token is usable, if none then return 0
     for (let tokenId of tokenIds) {
@@ -133,7 +124,7 @@ export const Spawn = ({
   const tournamentEnded = process.env.NEXT_PUBLIC_TOURNAMENT_ENDED === "true";
 
   useEffect(() => {
-    getUsableGoldenToken(goldenTokenIds ?? []);
+    getUsableGoldenToken(goldenTokens ?? []);
     if (tournamentEnded) {
       getUsableBlobertToken(blobertTokenIds ?? []);
     }

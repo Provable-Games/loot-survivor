@@ -1,21 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ApolloProvider } from "@apollo/client";
+import BurnerLoader from "@/app/components/animations/BurnerLoader";
+import Intro from "@/app/components/intro/Intro";
+import LoginIntro from "@/app/components/onboarding/Intro";
 import { ControllerProvider } from "@/app/context/ControllerContext";
-import { gameClient, goldenTokenClient } from "@/app/lib/clients";
-import useUIStore from "@/app/hooks/useUIStore";
-import { StarknetProvider } from "@/app/provider";
 import { DojoProvider } from "@/app/dojo/DojoContext";
 import { setup } from "@/app/dojo/setup";
-import LoginIntro from "@/app/components/onboarding/Intro";
-import Intro from "@/app/components/intro/Intro";
 import "@/app/globals.css";
-import { BurnerManager } from "@dojoengine/create-burner";
-import { RpcProvider } from "starknet";
 import Head from "@/app/head";
+import useUIStore from "@/app/hooks/useUIStore";
+import { gameClient } from "@/app/lib/clients";
+import { StarknetProvider } from "@/app/provider";
+import { ApolloProvider } from "@apollo/client";
+import { BurnerManager } from "@dojoengine/create-burner";
 import { Analytics } from "@vercel/analytics/react";
-import BurnerLoader from "@/app/components/animations/BurnerLoader";
+import { useEffect, useState } from "react";
+import { RpcProvider } from "starknet";
 import { networkConfig } from "./lib/networkConfig";
 
 type SetupResult = {
@@ -83,15 +83,11 @@ export default function RootLayout({
           </main>
         ) : (
           <ApolloProvider client={gameClient(networkConfig[network].lsGQLURL!)}>
-            <ApolloProvider
-              client={goldenTokenClient(networkConfig[network].tokensGQLURL)}
-            >
-              <ControllerProvider>
-                <StarknetProvider network={network}>
-                  <DojoProvider value={setupResult}>{children}</DojoProvider>
-                </StarknetProvider>
-              </ControllerProvider>
-            </ApolloProvider>
+            <ControllerProvider>
+              <StarknetProvider network={network}>
+                <DojoProvider value={setupResult}>{children}</DojoProvider>
+              </StarknetProvider>
+            </ControllerProvider>
           </ApolloProvider>
         )}
       </body>

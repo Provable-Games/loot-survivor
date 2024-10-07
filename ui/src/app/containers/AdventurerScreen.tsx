@@ -24,12 +24,10 @@ interface AdventurerScreenProps {
     costToPlay?: number
   ) => Promise<void>;
   handleSwitchAdventurer: (adventurerId: number) => Promise<void>;
-  lordsBalance?: bigint;
   gameContract: Contract;
-  goldenTokenData: any;
+  goldenTokens: number[];
   blobertsData: any;
   getBalances: () => Promise<void>;
-  mintLords: (lordsAmount: number) => Promise<void>;
   costToPlay: bigint;
   transferAdventurer: (
     account: AccountInterface,
@@ -52,12 +50,10 @@ interface AdventurerScreenProps {
 export default function AdventurerScreen({
   spawn,
   handleSwitchAdventurer,
-  lordsBalance,
   gameContract,
-  goldenTokenData,
+  goldenTokens,
   blobertsData,
   getBalances,
-  mintLords,
   costToPlay,
   transferAdventurer,
   changeAdventurerName,
@@ -144,12 +140,10 @@ export default function AdventurerScreen({
             isActive={activeMenu == 1}
             onEscape={() => setActiveMenu(0)}
             spawn={spawn}
-            lordsBalance={lordsBalance}
-            goldenTokenData={goldenTokenData}
+            goldenTokens={goldenTokens}
             blobertsData={blobertsData}
             gameContract={gameContract}
             getBalances={getBalances}
-            mintLords={mintLords}
             costToPlay={costToPlay}
           />
         </div>

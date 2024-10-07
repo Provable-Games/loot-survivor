@@ -4,8 +4,10 @@ import EthBalanceFragment from "@/app/abi/EthBalanceFragment.json";
 import Game from "@/app/abi/Game.json";
 import Lords from "@/app/abi/Lords.json";
 import Pragma from "@/app/abi/Pragma.json";
+import { getGoldenTokens } from "@/app/api/getGoldenTokens";
 import { DeathDialog } from "@/app/components/adventurer/DeathDialog";
 import Player from "@/app/components/adventurer/Player";
+import { StatRemovalWarning } from "@/app/components/adventurer/StatRemovalWarning";
 import TokenLoader from "@/app/components/animations/TokenLoader";
 import EncounterDialog from "@/app/components/encounters/EnounterDialog";
 import WalletSelect from "@/app/components/intro/WalletSelect";
@@ -20,11 +22,13 @@ import { SpecialBeast } from "@/app/components/notifications/SpecialBeast";
 import { ProfileDialog } from "@/app/components/profile/ProfileDialog";
 import ActionsScreen from "@/app/containers/ActionsScreen";
 import AdventurerScreen from "@/app/containers/AdventurerScreen";
+import CollectionsLeaderboardScreen from "@/app/containers/CollectionsLeaderboardScreen";
 import EncountersScreen from "@/app/containers/EncountersScreen";
 import GuideScreen from "@/app/containers/GuideScreen";
 import InterludeScreen from "@/app/containers/InterludeScreen";
 import InventoryScreen from "@/app/containers/InventoryScreen";
 import LeaderboardScreen from "@/app/containers/LeaderboardScreen";
+import Onboarding from "@/app/containers/Onboarding";
 import Profile from "@/app/containers/ProfileScreen";
 import TopUp from "@/app/containers/TopUp";
 import UpgradeScreen from "@/app/containers/UpgradeScreen";
@@ -34,7 +38,6 @@ import {
   getAdventurersByOwner,
   getBattlesByBeast,
   getBeast,
-  getGoldenTokensByOwner,
   getItemsByAdventurer,
   getLastBeastDiscovery,
   getLatestDiscoveries,
@@ -52,7 +55,6 @@ import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
 import useTransactionManager from "@/app/hooks/useTransactionManager";
 import useUIStore, { ScreenPage } from "@/app/hooks/useUIStore";
 import { fetchBalances, fetchEthBalance } from "@/app/lib/balances";
-import { gameClient, goldenTokenClient } from "@/app/lib/clients";
 import { VRF_WAIT_TIME } from "@/app/lib/constants";
 import { networkConfig } from "@/app/lib/networkConfig";
 import {
@@ -69,9 +71,6 @@ import { sepolia } from "@starknet-react/chains";
 import { useConnect, useContract, useProvider } from "@starknet-react/core";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { constants } from "starknet";
-import { StatRemovalWarning } from "./components/adventurer/StatRemovalWarning";
-import CollectionsLeaderboardScreen from "./containers/CollectionsLeaderboardScreen";
-import Onboarding from "./containers/Onboarding";
 
 export default function Main() {
   return (
@@ -95,6 +94,7 @@ function Home() {
   const updateAdventurerStats = useAdventurerStore(
     (state) => state.updateAdventurerStats
   );
+  const [goldenTokens, setGoldenTokens] = useState<number[]>([]);
   const calls = useTransactionCartStore((state) => state.calls);
   const screen = useUIStore((state) => state.screen);
   const setScreen = useUIStore((state) => state.setScreen);
@@ -468,27 +468,18 @@ function Home() {
     beastVariables
   );
 
-  const goldenTokenVariables = useMemo(() => {
-    return {
-      contractAddress: networkConfig[network!].goldenTokenAddress.toLowerCase(),
-      owner: padAddress(address ?? ""),
-    };
-  }, [address]);
+  const handleFetchGoldenTokens = async () => {
+    const goldenTokens = await getGoldenTokens(
+      address ?? "",
+      networkConfig[network!].goldenTokenAddress,
+      network
+    );
+    setGoldenTokens(goldenTokens);
+  };
 
-  const gameClientInstance = useMemo(
-    () => gameClient(networkConfig[network!].lsGQLURL),
-    [network]
-  );
-
-  const goldenTokenClientInstance = useMemo(
-    () => goldenTokenClient(networkConfig[network!].tokensGQLURL),
-    [network]
-  );
-
-  const { data: goldenTokenData } = useQuery(getGoldenTokensByOwner, {
-    client: goldenTokenClientInstance,
-    variables: goldenTokenVariables,
-  });
+  useEffect(() => {
+    handleFetchGoldenTokens();
+  }, [address, network]);
 
   const blobertTokenVariables = useMemo(() => {
     return {
@@ -500,7 +491,6 @@ function Home() {
   }, [address, network]);
 
   const { data: blobertsData } = useQuery(getOwnerTokens, {
-    client: gameClientInstance,
     variables: blobertTokenVariables,
   });
 
@@ -889,12 +879,10 @@ function Home() {
                   <AdventurerScreen
                     spawn={spawn}
                     handleSwitchAdventurer={handleSwitchAdventurer}
-                    lordsBalance={lordsBalance}
                     gameContract={gameContract!}
-                    goldenTokenData={goldenTokenData}
+                    goldenTokens={goldenTokens}
                     blobertsData={blobertsData}
                     getBalances={getBalances}
-                    mintLords={mintLords}
                     costToPlay={costToPlay}
                     transferAdventurer={transferAdventurer}
                     changeAdventurerName={changeAdventurerName}
