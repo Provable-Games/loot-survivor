@@ -333,14 +333,15 @@ export const AdventurerListCard = ({
                   <div className="flex flex-row gap-2 items-center">
                     <Button
                       size={"lg"}
-                      onClick={() =>
+                      onClick={() => {
                         changeAdventurerName(
                           account!,
                           adventurer.id!,
                           adventurerName,
                           index
-                        )
-                      }
+                        );
+                        setIsEditOpen(false);
+                      }}
                       disabled={adventurerName === ""}
                     >
                       Save

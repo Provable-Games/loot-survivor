@@ -77,7 +77,7 @@ export const AdventurersList = ({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const skip = (currentPage - 1) * adventurersPerPage;
 
-  const { refetch, setData } = useQueriesStore();
+  const { refetch, setData, data } = useQueriesStore();
 
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
 
@@ -176,13 +176,15 @@ export const AdventurersList = ({
     };
   }, [owner, skip, showZeroHealth]);
 
-  const adventurersData = useCustomQuery(
+  useCustomQuery(
     network,
     "adventurersByOwnerQuery",
     getAdventurersByOwner,
     adventurersVariables,
     owner === ""
   );
+
+  const adventurersData = data.adventurersByOwnerQuery;
 
   const isLoading = adventurersData === undefined;
 

@@ -1597,6 +1597,7 @@ export function createSyscalls({
         setTopUpAccount,
         network
       );
+      setTxHash(tx?.transaction_hash);
 
       const result = await provider.waitForTransaction(tx?.transaction_hash, {
         retryInterval: getWaitRetryInterval(network!),
@@ -1645,7 +1646,7 @@ export function createSyscalls({
 
       const maxFee = getMaxFee(network!);
 
-      if (ethBalance < maxFee) {
+      if (!onKatana && ethBalance < maxFee) {
         showTopUpDialog(true);
         setTopUpAccount("eth");
         throw new Error("Not enough eth for gas.");
@@ -1659,6 +1660,7 @@ export function createSyscalls({
           setTopUpAccount,
           network
         );
+        setTxHash(tx?.transaction_hash);
 
         const result = await provider.waitForTransaction(tx?.transaction_hash, {
           retryInterval: getWaitRetryInterval(network!),
