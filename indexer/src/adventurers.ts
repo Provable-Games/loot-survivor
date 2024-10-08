@@ -355,6 +355,7 @@ export default function transform({ header, events }: Block) {
             }),
           ];
         }
+        return [];
       }
       case UPDATE_ADVENTURER_NAME: {
         console.log("UPDATE_ADVENTURER_NAME", "->", "ADVENTURER UPDATES");

@@ -53,7 +53,7 @@ export const NEW_COLLECTION_TOTAL = eventKey("NewCollectionTotal");
 // Tokens
 export const TRANSFER = eventKey("Transfer");
 export const CLAIMED_FREE_GAME = eventKey("ClaimedFreeGame");
-export const UPDATE_ADVENTURER_NAME = eventKey("UpdateAdventurerName");
+export const UPDATE_ADVENTURER_NAME = eventKey("UpdatedAdventurerName");
 
 export const parseStats = combineParsers({
   strength: { index: 0, parser: parseU8 },

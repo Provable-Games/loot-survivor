@@ -7,6 +7,7 @@ import { padAddress } from "@/app/lib/utils";
 import { Adventurer } from "@/app/types";
 import { useProvider } from "@starknet-react/core";
 import { ChangeEvent, useEffect, useState } from "react";
+import { MdClose } from "react-icons/md";
 import {
   AccountInterface,
   constants,
@@ -175,18 +176,27 @@ export const AdventurerListCard = ({
     }
   };
 
+  const birthstamp = parseInt(adventurer?.birthDate!);
+  const currentTimestamp = Math.floor(Date.now() / 1000);
+  const tenDaysInSeconds = 10 * 24 * 60 * 60; // 10 days in seconds
+  const futureTimestamp = birthstamp + tenDaysInSeconds;
+
+  const expired = currentTimestamp >= futureTimestamp;
+  const dead = adventurer?.health === 0;
+
   return (
     <>
       {adventurer && (
         <div className="absolute bottom-0 flex flex-row bg-terminal-black items-center justify-center w-full z-[2]">
           <Button
             size={"lg"}
-            variant={"default"}
+            variant={dead || expired ? "token" : "default"}
             onClick={() => {
               setAdventurer(adventurer);
               handleSwitchAdventurer(adventurer.id!);
             }}
             className="w-1/2"
+            disabled={dead || expired}
           >
             Play
           </Button>
@@ -203,6 +213,7 @@ export const AdventurerListCard = ({
             variant={"token"}
             onClick={() => setIsEditOpen(!isEditOpen)}
             className="w-1/4"
+            disabled={dead || expired}
           >
             Edit
           </Button>
@@ -210,11 +221,7 @@ export const AdventurerListCard = ({
             <>
               <div className="absolute bottom-20 bg-terminal-black border border-terminal-green flex flex-col gap-2 items-center justify-center w-3/4 p-2">
                 <div className="flex flex-row items-center justify-between w-full">
-                  <div className="w-1/4"></div>
-                  <span className="uppercase text-2xl text-center flex-grow">
-                    Enter Address
-                  </span>
-                  <span className="flex flex-row w-1/4 justify-end gap-2">
+                  <span className="flex flex-row w-1/4 justify-start gap-2">
                     <Button
                       onClick={() => setSubdomain(".ctrl")}
                       variant={
@@ -246,6 +253,15 @@ export const AdventurerListCard = ({
                       <StarknetIdIcon className="w-6 h-6" />
                     </Button>
                   </span>
+                  <span className="uppercase text-2xl text-center flex-grow">
+                    Enter Address
+                  </span>
+                  <div className="flex justify-end w-1/4">
+                    <MdClose
+                      onClick={() => setIsTransferOpen(false)}
+                      className="w-10 h-10 cursor-pointer"
+                    />
+                  </div>
                 </div>
                 <div className="flex flex-col w-full items-center justify-center gap-10">
                   <input
@@ -321,9 +337,16 @@ export const AdventurerListCard = ({
             <>
               <div className="absolute bottom-20 bg-terminal-black border border-terminal-green flex flex-col gap-2 items-center justify-center w-3/4 p-2">
                 <div className="flex flex-row items-center justify-center w-full">
-                  <span className="uppercase text-2xl text-center flex-grow">
+                  <div className="w-1/4"></div>
+                  <span className="uppercase text-2xl text-center flex-grow whitespace-nowrap">
                     Change Adventurer Name
                   </span>
+                  <div className="flex justify-end w-1/4">
+                    <MdClose
+                      onClick={() => setIsEditOpen(false)}
+                      className="w-10 h-10 cursor-pointer"
+                    />
+                  </div>
                 </div>
                 <div className="relative flex flex-col w-full items-center justify-center gap-10">
                   <input
@@ -347,7 +370,10 @@ export const AdventurerListCard = ({
                         );
                         setIsEditOpen(false);
                       }}
-                      disabled={adventurerName === ""}
+                      disabled={
+                        adventurerName === "" ||
+                        adventurerName === adventurer?.name
+                      }
                     >
                       Save
                     </Button>
