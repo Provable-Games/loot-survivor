@@ -5,6 +5,7 @@ import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import useUIStore from "@/app/hooks/useUIStore";
 import { checkCartridgeConnector } from "@/app/lib/connectors";
+import { networkConfig } from "@/app/lib/networkConfig";
 import { copyToClipboard, displayAddress, padAddress } from "@/app/lib/utils";
 import { NullAdventurer } from "@/app/types";
 import CartridgeConnector from "@cartridge/connector";
@@ -22,7 +23,12 @@ interface ProfileDialogprops {
     account: AccountInterface,
     ethBalance: bigint,
     lordsBalance: bigint,
-    beasts: number[]
+    goldenTokenAddress: string,
+    goldenTokens: number[],
+    beasts: number[],
+    blobertsAddress: string,
+    bloberts: any[],
+    tournamentEnded: boolean
   ) => Promise<void>;
   ethBalance: bigint;
   lordsBalance: bigint;
@@ -53,6 +59,7 @@ export const ProfileDialog = ({
   const username = useUIStore((state) => state.username);
   const controllerDelegate = useUIStore((state) => state.controllerDelegate);
   const handleOffboarded = useUIStore((state) => state.handleOffboarded);
+  const network = useUIStore((state) => state.network);
   const { connector } = useConnect();
 
   const handleCopy = () => {
@@ -68,6 +75,9 @@ export const ProfileDialog = ({
   };
 
   const tournamentEnded = process.env.NEXT_PUBLIC_TOURNAMENT_ENDED === "true";
+
+  const goldenTokenAddress = networkConfig[network!].goldenTokenAddress;
+  const blobertsAddress = networkConfig[network!].tournamentWinnerAddress;
 
   return (
     <div className="fixed w-full h-full sm:w-3/4 sm:h-3/4 top-0 sm:top-1/8 bg-terminal-black border border-terminal-green flex flex-col items-center p-10 z-30">
@@ -178,7 +188,12 @@ export const ProfileDialog = ({
                     account!,
                     ethBalance,
                     lordsBalance,
-                    beasts
+                    goldenTokenAddress,
+                    goldenTokens,
+                    beasts,
+                    blobertsAddress,
+                    blobertsData?.tokens,
+                    tournamentEnded
                   )
                 }
                 disabled={
