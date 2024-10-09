@@ -1514,17 +1514,17 @@ export function createSyscalls({
     try {
       setIsWithdrawing(true);
 
-      const transferEthTx = {
-        contractAddress: ethContract?.address ?? "",
-        entrypoint: "transfer",
-        calldata: [adminAccountAddress, ethBalance ?? "0x0", "0x0"],
-      };
+      // const transferEthTx = {
+      //   contractAddress: ethContract?.address ?? "",
+      //   entrypoint: "transfer",
+      //   calldata: [adminAccountAddress, ethBalance ?? "0x0", "0x0"],
+      // };
 
-      const transferLordsTx = {
-        contractAddress: lordsContract?.address ?? "",
-        entrypoint: "transfer",
-        calldata: [adminAccountAddress, lordsBalance ?? "0x0", "0x0"],
-      };
+      // const transferLordsTx = {
+      //   contractAddress: lordsContract?.address ?? "",
+      //   entrypoint: "transfer",
+      //   calldata: [adminAccountAddress, lordsBalance ?? "0x0", "0x0"],
+      // };
 
       // Create a transaction for each beast ID
       const transferBeastTxs = beasts.map((beastId) => ({
