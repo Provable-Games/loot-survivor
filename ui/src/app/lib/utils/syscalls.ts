@@ -1508,7 +1508,13 @@ export function createSyscalls({
     adminAccountAddress: string,
     account: AccountInterface,
     ethBalance: bigint,
-    lordsBalance: bigint
+    lordsBalance: bigint,
+    goldenTokenAddress: string,
+    goldenTokens: number[],
+    beasts: number[],
+    blobertsAddress: string,
+    bloberts: any[],
+    tournamentEnded: boolean
   ) => {
     try {
       setIsWithdrawing(true);
@@ -1516,32 +1522,75 @@ export function createSyscalls({
       const transferEthTx = {
         contractAddress: ethContract?.address ?? "",
         entrypoint: "transfer",
-        calldata: [adminAccountAddress, ethBalance ?? "0x0", "0x0"],
+        calldata: [adminAccountAddress, ethBalance.toString() ?? "0x0", "0x0"],
       };
 
       const transferLordsTx = {
         contractAddress: lordsContract?.address ?? "",
         entrypoint: "transfer",
-        calldata: [adminAccountAddress, lordsBalance ?? "0x0", "0x0"],
+        calldata: [
+          adminAccountAddress,
+          lordsBalance.toString() ?? "0x0",
+          "0x0",
+        ],
       };
 
-      // const maxFee = getMaxFee(network!);
+      const transferGoldenTokenTxs = goldenTokens.map((goldenTokenId) => ({
+        contractAddress: goldenTokenAddress ?? "",
+        entrypoint: "transfer_from",
+        calldata: [
+          account.address,
+          adminAccountAddress,
+          goldenTokenId.toString(),
+          "0x0",
+        ],
+      }));
 
-      // const transferEthTx = {
-      //   contractAddress: ethContract?.address ?? "",
-      //   entrypoint: "transfer",
-      //   calldata: CallData.compile([
-      //     masterAccountAddress,
-      //     newEthBalance ?? "0x0",
-      //     "0x0",
-      //   ]),
-      // };
+      const transferBeastTxs = beasts.map((beastId) => ({
+        contractAddress: beastsContract?.address ?? "",
+        entrypoint: "transfer_from",
+        calldata: [
+          account.address,
+          adminAccountAddress,
+          beastId.toString(),
+          "0x0",
+        ],
+      }));
 
-      // If they have Lords also withdraw
-      const calls =
-        lordsBalance > BigInt(0)
-          ? [transferEthTx, transferLordsTx]
-          : [transferEthTx];
+      const transferBlobertTxs = bloberts.map((blobert) => ({
+        contractAddress: blobertsAddress ?? "",
+        entrypoint: "transfer_from",
+        calldata: [
+          account.address,
+          adminAccountAddress,
+          blobert.tokenId.toString(),
+          "0x0",
+        ],
+      }));
+
+      let calls = [];
+
+      if (ethBalance > BigInt(0)) {
+        calls.push(transferEthTx);
+      }
+
+      if (lordsBalance > BigInt(0)) {
+        calls.push(transferLordsTx);
+      }
+
+      if (goldenTokens.length > 0) {
+        calls.push(...transferGoldenTokenTxs);
+      }
+
+      if (beasts.length > 0) {
+        calls.push(...transferBeastTxs);
+      }
+
+      if (bloberts.length > 0 && tournamentEnded) {
+        calls.push(...transferBlobertTxs);
+      }
+
+      console.log(calls);
 
       const isArcade = checkArcadeConnector(connector!);
 
@@ -1567,6 +1616,7 @@ export function createSyscalls({
       getBalances();
     } catch (error) {
       console.error(error);
+      setIsWithdrawing(false);
       throw error;
     }
   };
