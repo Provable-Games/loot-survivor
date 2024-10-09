@@ -1508,7 +1508,8 @@ export function createSyscalls({
     adminAccountAddress: string,
     account: AccountInterface,
     ethBalance: bigint,
-    lordsBalance: bigint
+    lordsBalance: bigint,
+    beasts: number[]
   ) => {
     try {
       setIsWithdrawing(true);
@@ -1525,25 +1526,37 @@ export function createSyscalls({
         calldata: [adminAccountAddress, lordsBalance ?? "0x0", "0x0"],
       };
 
-      // const maxFee = getMaxFee(network!);
+      // Create a transaction for each beast ID
+      const transferBeastTxs = beasts.map((beastId) => ({
+        contractAddress: beastsContract?.address ?? "",
+        entrypoint: "transfer_from",
+        calldata: [
+          account.address,
+          adminAccountAddress,
+          beastId.toString(),
+          "0x0",
+        ],
+      }));
 
-      // const transferEthTx = {
-      //   contractAddress: ethContract?.address ?? "",
-      //   entrypoint: "transfer",
-      //   calldata: CallData.compile([
-      //     masterAccountAddress,
-      //     newEthBalance ?? "0x0",
-      //     "0x0",
-      //   ]),
-      // };
+      let calls = [];
 
-      // If they have Lords also withdraw
-      const calls =
-        lordsBalance > BigInt(0)
-          ? [transferEthTx, transferLordsTx]
-          : [transferEthTx];
+      // if (ethBalance > BigInt(0)) {
+      //   calls.push(transferEthTx);
+      // }
 
-      const { transaction_hash } = await account.execute(calls);
+      // if (lordsBalance > BigInt(0)) {
+      //   calls.push(transferLordsTx);
+      // }
+
+      if (beasts.length > 0) {
+        calls.push(...transferBeastTxs);
+      }
+
+      console.log(calls[calls.length - 1]);
+
+      const { transaction_hash } = await account.execute(
+        calls[calls.length - 1]
+      );
 
       const result = await provider.waitForTransaction(transaction_hash, {
         retryInterval: getWaitRetryInterval(network!),
@@ -1557,6 +1570,7 @@ export function createSyscalls({
       getBalances();
     } catch (error) {
       console.error(error);
+      setIsWithdrawing(false);
       throw error;
     }
   };

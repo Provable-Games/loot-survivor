@@ -4,6 +4,7 @@ import EthBalanceFragment from "@/app/abi/EthBalanceFragment.json";
 import Game from "@/app/abi/Game.json";
 import Lords from "@/app/abi/Lords.json";
 import Pragma from "@/app/abi/Pragma.json";
+import { getBeasts } from "@/app/api/getBeasts";
 import { getGoldenTokens } from "@/app/api/getGoldenTokens";
 import { DeathDialog } from "@/app/components/adventurer/DeathDialog";
 import Player from "@/app/components/adventurer/Player";
@@ -95,6 +96,7 @@ function Home() {
     (state) => state.updateAdventurerStats
   );
   const [goldenTokens, setGoldenTokens] = useState<number[]>([]);
+  const [beasts, setBeasts] = useState<number[]>([]);
   const calls = useTransactionCartStore((state) => state.calls);
   const screen = useUIStore((state) => state.screen);
   const setScreen = useUIStore((state) => state.setScreen);
@@ -275,11 +277,11 @@ function Home() {
 
   useEffect(() => {
     const init = async () => {
-      const username = await (
-        connector as unknown as CartridgeConnector
-      ).username();
+      const cartridgeConnector = connector as unknown as CartridgeConnector;
+      const username = await cartridgeConnector.username();
+      const delegate = await cartridgeConnector.delegateAccount();
       setUsername(username || "");
-      setControllerDelegate("");
+      setControllerDelegate(delegate || "");
     };
     if (connector?.id.includes("controller")) {
       setIsController(true);
@@ -476,8 +478,18 @@ function Home() {
     setGoldenTokens(goldenTokens);
   };
 
+  const handleFetchBeasts = async () => {
+    const beasts = await getBeasts(
+      address ?? "",
+      networkConfig[network!].beastsAddress,
+      network
+    );
+    setBeasts(beasts);
+  };
+
   useEffect(() => {
     handleFetchGoldenTokens();
+    handleFetchBeasts();
   }, [address, network]);
 
   const blobertTokenVariables = useMemo(() => {
@@ -928,6 +940,9 @@ function Home() {
                       lordsBalance={lordsBalance}
                       ethContractAddress={ethContract!.address}
                       lordsContractAddress={lordsContract!.address}
+                      goldenTokens={goldenTokens}
+                      beasts={beasts}
+                      blobertsData={blobertsData}
                     />
                   </div>
                 )}
