@@ -66,7 +66,7 @@ import {
 import { useSyscalls } from "@/app/lib/utils/syscalls";
 import { Menu, ZeroUpgrade } from "@/app/types";
 import { useQuery } from "@apollo/client";
-import CartridgeConnector from "@cartridge/connector";
+import ControllerConnector from "@cartridge/connector/controller";
 import { sepolia } from "@starknet-react/chains";
 import { useConnect, useContract, useProvider } from "@starknet-react/core";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -276,7 +276,7 @@ function Home() {
   useEffect(() => {
     const init = async () => {
       const username = await (
-        connector as unknown as CartridgeConnector
+        connector as unknown as ControllerConnector
       ).username();
       setUsername(username || "");
       setControllerDelegate("");
