@@ -1,10 +1,10 @@
 import { Button } from "@/app/components/buttons/Button";
 import { CompleteIcon } from "@/app/components/icons/Icons";
-import { displayAddress, padAddress, copyToClipboard } from "@/app/lib/utils";
-import { useConnect, useDisconnect } from "@starknet-react/core";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 import useUIStore from "@/app/hooks/useUIStore";
 import { getWalletConnectors } from "@/app/lib/connectors";
+import { copyToClipboard, displayAddress, padAddress } from "@/app/lib/utils";
+import { useConnect, useDisconnect } from "@starknet-react/core";
 
 interface WalletSectionProps {
   step: number;
@@ -18,7 +18,7 @@ const WalletSection = ({ step }: WalletSectionProps) => {
   const isController = useUIStore((state) => state.isController);
 
   const walletConnectors = getWalletConnectors(connectors);
-  const cartridgeConnector = connectors.find(
+  const controllerConnector = connectors.find(
     (connector) => connector.id === "controller"
   );
 
@@ -58,7 +58,7 @@ const WalletSection = ({ step }: WalletSectionProps) => {
           <Button
             onClick={() => {
               disconnect();
-              connect({ connector: cartridgeConnector });
+              connect({ connector: controllerConnector });
             }}
           >
             Login with Cartridge Controller
@@ -80,7 +80,7 @@ const WalletSection = ({ step }: WalletSectionProps) => {
           <Button
             onClick={() => {
               disconnect();
-              connect({ connector: cartridgeConnector });
+              connect({ connector: controllerConnector });
             }}
           >
             Login with Cartridge Controller
