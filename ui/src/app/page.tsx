@@ -1,9 +1,11 @@
 "use client";
-import Beasts from "@/app/abi/Beasts.json";
-import EthBalanceFragment from "@/app/abi/EthBalanceFragment.json";
-import Game from "@/app/abi/Game.json";
-import Lords from "@/app/abi/Lords.json";
-import Pragma from "@/app/abi/Pragma.json";
+import {
+  beastsAbi,
+  ethAbi,
+  gameAbi,
+  lordsAbi,
+  pragmaAbi,
+} from "@/app/abi/abis";
 import { getGoldenTokens } from "@/app/api/getGoldenTokens";
 import { DeathDialog } from "@/app/components/adventurer/DeathDialog";
 import Player from "@/app/components/adventurer/Player";
@@ -216,24 +218,24 @@ function Home() {
   );
 
   const { contract: gameContract } = useContract({
-    address: networkConfig[network!].gameAddress,
-    abi: Game,
+    address: networkConfig[network!].gameAddress as `0x${string}`,
+    abi: gameAbi,
   });
   const { contract: lordsContract } = useContract({
-    address: networkConfig[network!].lordsAddress,
-    abi: Lords,
+    address: networkConfig[network!].lordsAddress as `0x${string}`,
+    abi: lordsAbi,
   });
   const { contract: ethContract } = useContract({
-    address: networkConfig[network!].ethAddress,
-    abi: EthBalanceFragment,
+    address: networkConfig[network!].ethAddress as `0x${string}`,
+    abi: ethAbi,
   });
   const { contract: beastsContract } = useContract({
-    address: networkConfig[network!].beastsAddress,
-    abi: Beasts,
+    address: networkConfig[network!].beastsAddress as `0x${string}`,
+    abi: beastsAbi,
   });
   const { contract: pragmaContract } = useContract({
-    address: networkConfig[network!].pragmaAddress,
-    abi: Pragma,
+    address: networkConfig[network!].pragmaAddress as `0x${string}`,
+    abi: pragmaAbi,
   });
 
   const { addTransaction } = useTransactionManager();

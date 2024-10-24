@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
-import { InvokeTransactionReceiptResponse } from "starknet";
-import { useWaitForTransaction } from "@starknet-react/core";
-import { displayAddress, padAddress } from "@/app/lib/utils";
-import useLoadingStore from "@/app/hooks/useLoadingStore";
 import LootIconLoader from "@/app/components/icons/Loader";
+import useLoadingStore from "@/app/hooks/useLoadingStore";
 import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
 import useUIStore from "@/app/hooks/useUIStore";
 import { networkConfig } from "@/app/lib/networkConfig";
+import { displayAddress, padAddress } from "@/app/lib/utils";
+import { useTransactionReceipt } from "@starknet-react/core";
+import { useEffect, useState } from "react";
+import { InvokeTransactionReceiptResponse } from "starknet";
 
 export const TxActivity = () => {
   const stopLoading = useLoadingStore((state) => state.stopLoading);
@@ -18,7 +18,7 @@ export const TxActivity = () => {
   const setError = useTransactionCartStore((state) => state.setError);
   const network = useUIStore((state) => state.network);
 
-  const { data } = useWaitForTransaction({
+  const { data } = useTransactionReceipt({
     hash: hash ? hash : "0x0",
   }) as { data: InvokeTransactionReceiptResponse };
 

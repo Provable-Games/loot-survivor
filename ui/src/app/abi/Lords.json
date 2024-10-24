@@ -1,7 +1,7 @@
 [
   {
-    "name": "constructor",
     "type": "function",
+    "name": "constructor",
     "inputs": [
       {
         "name": "l2_bridge",
@@ -12,8 +12,8 @@
     "state_mutability": "external"
   },
   {
+    "type": "function",
     "name": "name",
-    "type": "function",
     "inputs": [],
     "outputs": [
       {
@@ -23,8 +23,8 @@
     "state_mutability": "view"
   },
   {
+    "type": "function",
     "name": "symbol",
-    "type": "function",
     "inputs": [],
     "outputs": [
       {
@@ -34,8 +34,8 @@
     "state_mutability": "view"
   },
   {
-    "name": "decimals",
     "type": "function",
+    "name": "decimals",
     "inputs": [],
     "outputs": [
       {
@@ -45,8 +45,8 @@
     "state_mutability": "view"
   },
   {
+    "type": "function",
     "name": "total_supply",
-    "type": "function",
     "inputs": [],
     "outputs": [
       {
@@ -56,8 +56,8 @@
     "state_mutability": "view"
   },
   {
+    "type": "function",
     "name": "totalSupply",
-    "type": "function",
     "inputs": [],
     "outputs": [
       {
@@ -67,8 +67,8 @@
     "state_mutability": "view"
   },
   {
+    "type": "function",
     "name": "balance_of",
-    "type": "function",
     "inputs": [
       {
         "name": "account",
@@ -83,8 +83,8 @@
     "state_mutability": "view"
   },
   {
+    "type": "function",
     "name": "balanceOf",
-    "type": "function",
     "inputs": [
       {
         "name": "account",
@@ -99,8 +99,8 @@
     "state_mutability": "view"
   },
   {
-    "name": "allowance",
     "type": "function",
+    "name": "allowance",
     "inputs": [
       {
         "name": "owner",
@@ -119,8 +119,8 @@
     "state_mutability": "view"
   },
   {
-    "name": "approve",
     "type": "function",
+    "name": "approve",
     "inputs": [
       {
         "name": "spender",
@@ -139,8 +139,8 @@
     "state_mutability": "external"
   },
   {
+    "type": "function",
     "name": "transfer",
-    "type": "function",
     "inputs": [
       {
         "name": "recipient",
@@ -159,8 +159,8 @@
     "state_mutability": "external"
   },
   {
+    "type": "function",
     "name": "transfer_from",
-    "type": "function",
     "inputs": [
       {
         "name": "sender",
@@ -183,8 +183,8 @@
     "state_mutability": "external"
   },
   {
+    "type": "function",
     "name": "transferFrom",
-    "type": "function",
     "inputs": [
       {
         "name": "sender",
@@ -207,8 +207,8 @@
     "state_mutability": "external"
   },
   {
-    "name": "mint",
     "type": "function",
+    "name": "mint",
     "inputs": [
       {
         "name": "recipient",
@@ -227,8 +227,8 @@
     "state_mutability": "external"
   },
   {
-    "name": "burn",
     "type": "function",
+    "name": "burn",
     "inputs": [
       {
         "name": "owner",
@@ -247,9 +247,10 @@
     "state_mutability": "external"
   },
   {
+    "type": "struct",
     "name": "Transfer",
-    "type": "event",
-    "inputs": [
+    "kind": "event",
+    "members": [
       {
         "name": "from",
         "type": "core::starknet::contract_address::ContractAddress"
@@ -265,9 +266,10 @@
     ]
   },
   {
+    "type": "struct",
     "name": "Approval",
-    "type": "event",
-    "inputs": [
+    "kind": "event",
+    "members": [
       {
         "name": "owner",
         "type": "core::starknet::contract_address::ContractAddress"

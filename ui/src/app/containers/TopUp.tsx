@@ -1,42 +1,27 @@
-import { useState } from "react";
-import { Contract } from "starknet";
-import { MdClose } from "react-icons/md";
+import { Button } from "@/app/components/buttons/Button";
+import { CartridgeIcon } from "@/app/components/icons/Icons";
+import useNetworkAccount from "@/app/hooks/useNetworkAccount";
+import useUIStore from "@/app/hooks/useUIStore";
+import { checkCartridgeConnector } from "@/app/lib/connectors";
 import {
-  displayAddress,
   copyToClipboard,
+  displayAddress,
   formatNumber,
   padAddress,
 } from "@/app/lib/utils";
+import { useConnect } from "@starknet-react/core";
 import Eth from "public/icons/eth.svg";
 import Lords from "public/icons/lords.svg";
-import { Button } from "@/app/components/buttons/Button";
-import useUIStore from "@/app/hooks/useUIStore";
-import { checkCartridgeConnector } from "@/app/lib/connectors";
-import { CartridgeIcon } from "@/app/components/icons/Icons";
-import { useConnect } from "@starknet-react/core";
-import useNetworkAccount from "@/app/hooks/useNetworkAccount";
+import { useState } from "react";
+import { MdClose } from "react-icons/md";
 
 interface TopUpProps {
   ethBalance: bigint;
   lordsBalance: bigint;
-  costToPlay: bigint;
-  mintLords: () => Promise<void>;
-  gameContract: Contract;
-  lordsContract: Contract;
-  ethContract: Contract;
   showTopUpDialog: (value: boolean) => void;
 }
 
-const TopUp = ({
-  ethBalance,
-  lordsBalance,
-  costToPlay,
-  mintLords,
-  gameContract,
-  lordsContract,
-  ethContract,
-  showTopUpDialog,
-}: TopUpProps) => {
+const TopUp = ({ ethBalance, lordsBalance, showTopUpDialog }: TopUpProps) => {
   const { address } = useNetworkAccount();
   const { connector } = useConnect();
   const topUpAccount = useUIStore((state) => state.topUpAccount);

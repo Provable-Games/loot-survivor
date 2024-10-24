@@ -1,3 +1,10 @@
+import {
+  beastsAbi,
+  ethAbi,
+  gameAbi,
+  lordsAbi,
+  pragmaAbi,
+} from "@/app/abi/abis";
 import { processNotifications } from "@/app/components/notifications/NotificationHandler";
 import { QueryData, QueryKey } from "@/app/hooks/useQueryStore";
 import { Network, ScreenPage } from "@/app/hooks/useUIStore";
@@ -28,22 +35,21 @@ import {
   TransactionParams,
   UpgradeStats,
 } from "@/app/types";
-import { Connector } from "@starknet-react/core";
+import { Connector, StarknetTypedContract } from "@starknet-react/core";
 import { JSXElementConstructor, ReactElement, useMemo } from "react";
 import {
   AccountInterface,
-  Contract,
   InvokeTransactionReceiptResponse,
   ProviderInterface,
   RevertedTransactionReceiptResponse,
 } from "starknet";
 
 export interface SyscallsProps {
-  gameContract: Contract;
-  ethContract: Contract;
-  lordsContract: Contract;
-  beastsContract: Contract;
-  pragmaContract: Contract;
+  gameContract: StarknetTypedContract<typeof gameAbi>;
+  ethContract: StarknetTypedContract<typeof ethAbi>;
+  lordsContract: StarknetTypedContract<typeof lordsAbi>;
+  beastsContract: StarknetTypedContract<typeof beastsAbi>;
+  pragmaContract: StarknetTypedContract<typeof pragmaAbi>;
   rendererContractAddress: string;
   addTransaction: ({ hash, metadata }: TransactionParams) => void;
   queryData: QueryData;
@@ -281,10 +287,21 @@ export function createSyscalls({
     showDeathDialog(true);
   };
 
+  function toObjectToUnion(obj: {
+    variant: string;
+    unwrap: () => string;
+  }): string | number | bigint {
+    // Assuming unwrap() returns the correct value
+    return obj.unwrap();
+  }
+
   // Helper functions
   const checkBalances = async (costToPlay?: number) => {
-    const result = await pragmaContract.call("get_data_median", [
-      DataType.SpotEntry("19514442401534788"),
+    const spotEntryValue = toObjectToUnion(
+      DataType.SpotEntry("19514442401534788")
+    ); // Adjust this line
+    const result = await pragmaContract.populate("get_data_median", [
+      spotEntryValue,
     ]);
     const dollarToWei = BigInt(5) * BigInt(10) ** BigInt(17);
     const ethToWei = (result as PragmaPrice).price / BigInt(10) ** BigInt(8);

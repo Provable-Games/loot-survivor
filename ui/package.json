@@ -15,7 +15,7 @@
     "@fontsource/vt323": "^4.5.10",
     "@scure/starknet": "^1.0.0",
     "@starknet-react/chains": "^0.1.7",
-    "@starknet-react/core": "^2.9.0",
+    "@starknet-react/core": "^3.0.3",
     "@svgr/webpack": "^7.0.0",
     "@types/js-cookie": "^3.0.3",
     "@types/node": "18.15.11",
