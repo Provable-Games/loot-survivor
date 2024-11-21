@@ -7,6 +7,11 @@
   resolved "https://registry.yarnpkg.com/@adraffy/ens-normalize/-/ens-normalize-1.10.0.tgz#d2a39395c587e092d77cbbc80acf956a54f38bf7"
   integrity sha512-nA9XHtlAkYfJxY7bce8DcN7eKxWWCWkU+1GR9d+U6MbNpfwQp8TI7vqOsBsMcHoT4mBu2kypKoSKnghEzOOq5Q==
 
+"@adraffy/ens-normalize@1.11.0":
+  version "1.11.0"
+  resolved "https://registry.yarnpkg.com/@adraffy/ens-normalize/-/ens-normalize-1.11.0.tgz#42cc67c5baa407ac25059fcd7d405cc5ecdb0c33"
+  integrity sha512-/3DDPKHqqIqxUULp8yP4zODUY1i+2xvVWsv8A79xGWdCAG+8sb0hRh0Rk2QyOJUnnbyPUAZYcpBuRe3nS2OIUg==
+
 "@alloc/quick-lru@^5.2.0":
   version "5.2.0"
   resolved "https://registry.npmjs.org/@alloc/quick-lru/-/quick-lru-5.2.0.tgz"
@@ -1875,27 +1880,29 @@
     "@babel/helper-validator-identifier" "^7.24.7"
     to-fast-properties "^2.0.0"
 
-"@cartridge/account-wasm@^0.3.44":
-  version "0.3.44"
-  resolved "https://registry.yarnpkg.com/@cartridge/account-wasm/-/account-wasm-0.3.44.tgz#02b001d529343415367ede24884b085ea793344c"
-  integrity sha512-nC4nSk1P9FIHzbTnjNxhU0ChwjQ6NUJTOUgRHt6l3390W5sNEL7rbXMi6gWox3780C5NGd+G+Z38iZ9zXYTsHg==
+"@cartridge/account-wasm@^0.5.0-alpha.0":
+  version "0.5.0-alpha.0"
+  resolved "https://registry.yarnpkg.com/@cartridge/account-wasm/-/account-wasm-0.5.0-alpha.0.tgz#d0551aac1c537d1ad277a1f1058f5e928f1f7853"
+  integrity sha512-vkCkdA7MPPmlONoQuuI2VuJzJjU1Zu9qrH+gWrbmrGKjD9WXFEuzpgdgpzVQp2lyYOoyJmgFRp9kq+aS+v4PdA==
 
-"@cartridge/connector@^0.3.44":
-  version "0.3.44"
-  resolved "https://registry.yarnpkg.com/@cartridge/connector/-/connector-0.3.44.tgz#4d66305edaecf89c2e8d524ff31edbd510819a0e"
-  integrity sha512-aF3VSJauX+G717X/7iIGsVj48mGAZTKws+aIgrOZDf2Tp0mHNo4AaCZSvFAdhobyyz/YZqagEOzAjGZd2hzshA==
+"@cartridge/connector@0.5.0-alpha.0":
+  version "0.5.0-alpha.0"
+  resolved "https://registry.yarnpkg.com/@cartridge/connector/-/connector-0.5.0-alpha.0.tgz#08f781ad0058553783be42ac4646de0be854319c"
+  integrity sha512-PzD5HDSOm1BkmUdcDTV8L2uwLdCV+AYD6oevst00QcACGO/MFPsXlnaTe5nsFRrP/lYvx0hmgmqiji6/XPnvJA==
   dependencies:
-    "@cartridge/controller" "^0.3.44"
-    "@starknet-react/core" "^2.1.5"
+    "@cartridge/controller" "^0.5.0-alpha.0"
+    "@starknet-react/core" "^3.0.2"
     starknet "^6.11.0"
 
-"@cartridge/controller@^0.3.44":
-  version "0.3.44"
-  resolved "https://registry.yarnpkg.com/@cartridge/controller/-/controller-0.3.44.tgz#27cbe12fe8b147c0d91d7f77c3686a2ca0a8941c"
-  integrity sha512-T4KBdf8L3Z5Lk4Q0njnOXN/Kn9Rm1nF8abc7vKJIikiOCK2Sq0bzVpKoQBkUGmbJbu8m71rE+pf1qX8VWNuKYA==
+"@cartridge/controller@^0.5.0-alpha.0":
+  version "0.5.0-alpha.0"
+  resolved "https://registry.yarnpkg.com/@cartridge/controller/-/controller-0.5.0-alpha.0.tgz#0561f0e1f95451f9c4af5f68a5280b25db29bc6a"
+  integrity sha512-G0shoWqszHF1Uwen2W7ss1kO6ohWhM9718DYGkZfyKLicKE7am7vKrJn2IHriZaONYEC+k/iUtEAj/W8ujEDZA==
   dependencies:
-    "@cartridge/account-wasm" "^0.3.44"
+    "@cartridge/account-wasm" "^0.5.0-alpha.0"
     "@cartridge/penpal" "^6.2.3"
+    "@starknet-io/types-js" "^0.7.7"
+    "@telegram-apps/sdk" "^2.4.0"
     base64url "^3.0.1"
     cbor-x "^1.5.0"
     fast-deep-equal "^3.1.3"
@@ -2213,6 +2220,13 @@
   dependencies:
     "@noble/hashes" "1.3.2"
 
+"@noble/curves@1.6.0", "@noble/curves@^1.4.0", "@noble/curves@~1.6.0":
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@noble/curves/-/curves-1.6.0.tgz#be5296ebcd5a1730fccea4786d420f87abfeb40b"
+  integrity sha512-TlaHRXDehJuRNR9TfZDNQ45mMEd5dwUwmicsafcIX4SsNiqnCHKjE/1alYPd/lDRVhxdhUAlv8uEhMCI5zjIJQ==
+  dependencies:
+    "@noble/hashes" "1.5.0"
+
 "@noble/curves@~1.3.0":
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/@noble/curves/-/curves-1.3.0.tgz#01be46da4fd195822dab821e72f71bf4aeec635e"
@@ -2241,6 +2255,11 @@
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-1.4.0.tgz#45814aa329f30e4fe0ba49426f49dfccdd066426"
   integrity sha512-V1JJ1WTRUqHHrOSh597hURcMqVKVGL/ea3kv0gSnEdsEZ0/+VyPghM1lMNGc00z7CIQorSvbKpuJkxvuHbvdbg==
+
+"@noble/hashes@1.5.0", "@noble/hashes@~1.5.0":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-1.5.0.tgz#abadc5ca20332db2b1b2aa3e496e9af1213570b0"
+  integrity sha512-1j6kQFb7QRru7eKN3ZDvRcP13rugwdxZqCjbiAVZfIJwgj2A65UmT4TgARXGlXgnRkORLTDTrO19ZErt7+QXgA==
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
@@ -2431,6 +2450,11 @@
   resolved "https://registry.yarnpkg.com/@scure/base/-/base-1.1.6.tgz#8ce5d304b436e4c84f896e0550c83e4d88cb917d"
   integrity sha512-ok9AWwhcgYuGG3Zfhyqg+zwl+Wn5uE+dwC0NV/2qQkx4dABbb/bx96vWu8NSj+BNjjSjno+JRYRjle1jV08k3g==
 
+"@scure/base@~1.1.7", "@scure/base@~1.1.8":
+  version "1.1.9"
+  resolved "https://registry.yarnpkg.com/@scure/base/-/base-1.1.9.tgz#e5e142fbbfe251091f9c5f1dd4c834ac04c3dbd1"
+  integrity sha512-8YKhl8GHiNI/pU2VMaofa2Tor7PJRAjwQLBBuilkJ9L5+13yVbC7JO/wS7piioAvPSwR3JKM1IJ/u4xQzbcXKg==
+
 "@scure/bip32@1.3.2":
   version "1.3.2"
   resolved "https://registry.yarnpkg.com/@scure/bip32/-/bip32-1.3.2.tgz#90e78c027d5e30f0b22c1f8d50ff12f3fb7559f8"
@@ -2439,6 +2463,15 @@
     "@noble/curves" "~1.2.0"
     "@noble/hashes" "~1.3.2"
     "@scure/base" "~1.1.2"
+
+"@scure/bip32@1.5.0":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@scure/bip32/-/bip32-1.5.0.tgz#dd4a2e1b8a9da60e012e776d954c4186db6328e6"
+  integrity sha512-8EnFYkqEQdnkuGBVpCzKxyIwDCBLDVj3oiX0EKUFre/tOjL/Hqba1D6n/8RcmaQy4f95qQFrO2A8Sr6ybh4NRw==
+  dependencies:
+    "@noble/curves" "~1.6.0"
+    "@noble/hashes" "~1.5.0"
+    "@scure/base" "~1.1.7"
 
 "@scure/bip32@^1.4.0":
   version "1.4.0"
@@ -2456,6 +2489,14 @@
   dependencies:
     "@noble/hashes" "~1.3.0"
     "@scure/base" "~1.1.0"
+
+"@scure/bip39@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@scure/bip39/-/bip39-1.4.0.tgz#664d4f851564e2e1d4bffa0339f9546ea55960a6"
+  integrity sha512-BEEm6p8IueV/ZTfQLp/0vhw4NPnT9oWf5+28nvmeUICjP99f4vr2d+qc7AVGDDtwRep6ifR43Yed9ERVmiITzw==
+  dependencies:
+    "@noble/hashes" "~1.5.0"
+    "@scure/base" "~1.1.8"
 
 "@scure/starknet@^1.0.0", "@scure/starknet@~1.0.0":
   version "1.0.0"
@@ -2609,6 +2650,11 @@
   resolved "https://registry.yarnpkg.com/@starknet-react/chains/-/chains-0.1.7.tgz#58503379e2ffabe33b4f6e0f2aef775e84745a4d"
   integrity sha512-UNh97I1SvuJKaAhKOmpEk8JcWuZWMlPG/ba2HcvFYL9x/47BKndJ+Da9V+iJFtkHUjreVnajT1snsaz1XMG+UQ==
 
+"@starknet-react/chains@^3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@starknet-react/chains/-/chains-3.0.2.tgz#7ad6797fe6fb2df6777df84d2f3c1345309780c8"
+  integrity sha512-kVB1GVirfhrZjSSjXJKGPos9cNWmgdErnaDKflZ8R7ffui1oIMqKHdONx3qwynT8q2TGXwL9Vt844bCLXkNZOA==
+
 "@starknet-react/core@2.3.0":
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/@starknet-react/core/-/core-2.3.0.tgz#3fa9a664569cb7dd3f6da68ec6af00cb03fc73f1"
@@ -2620,7 +2666,7 @@
     immutable "^4.3.4"
     zod "^3.22.2"
 
-"@starknet-react/core@^2.1.5", "@starknet-react/core@^2.9.0":
+"@starknet-react/core@^2.9.0":
   version "2.9.0"
   resolved "https://registry.yarnpkg.com/@starknet-react/core/-/core-2.9.0.tgz#216ee363540bff10961e22a633a9420f0a42e105"
   integrity sha512-UdRo454/g2lb0YsNAUJohJ2w21LlahcEXQlkWrddoKFubRY6Q0b39hec0eZOCqfU0Z1Sh7kF1XYvI5t9xL4yTQ==
@@ -2630,6 +2676,18 @@
     eventemitter3 "^5.0.1"
     immutable "^4.3.4"
     zod "^3.22.2"
+
+"@starknet-react/core@^3.0.2":
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/@starknet-react/core/-/core-3.0.3.tgz#3ff2e28a98eb017b6d24415044ab226ad2d71d3a"
+  integrity sha512-SJvwbmqYlskkcyJG0eUzJ1FQ8zJljrY5zyDg94EwLwvGENFykeQHDP1t7NBvpk6KVpXcSIAOvDp1Buwl6KveHw==
+  dependencies:
+    "@starknet-io/types-js" "^0.7.7"
+    "@starknet-react/chains" "^3.0.2"
+    "@tanstack/react-query" "^5.25.0"
+    eventemitter3 "^5.0.1"
+    viem "^2.19.1"
+    zod "^3.22.4"
 
 "@surma/rollup-plugin-off-main-thread@^2.2.3":
   version "2.2.3"
@@ -2758,12 +2816,76 @@
   resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.28.4.tgz#fa416532f8b33ca8608d40bb9728b60e2e1a38dc"
   integrity sha512-uQZqOFqLWUvXNIQZ63XdKzg22NtHzgCBUfDmjDHi3BoF+nUYeBNvMi/xFPtFrMhqRzG2Ir4mYaGsWZzmiEjXpA==
 
+"@tanstack/query-core@5.59.16":
+  version "5.59.16"
+  resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.59.16.tgz#aa4616e8a9c12afeef4cfbf3ed0f55f404d66e67"
+  integrity sha512-crHn+G3ltqb5JG0oUv6q+PMz1m1YkjpASrXTU+sYWW9pLk0t2GybUHNRqYPZWhxgjPaVGC4yp92gSFEJgYEsPw==
+
 "@tanstack/react-query@^5.0.1":
   version "5.28.4"
   resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.28.4.tgz#32e56ca4fd08513a906fe6323908f0e38ffccbba"
   integrity sha512-BErcoB/QQG6YwLSUKnaGxF+lSc270RH2w3kMBpG0i4YzDCsFs2pdxPX1WVknQvFk9bNgukMb158hc2Zb4SdwSA==
   dependencies:
     "@tanstack/query-core" "5.28.4"
+
+"@tanstack/react-query@^5.25.0":
+  version "5.59.16"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.59.16.tgz#1e701c6e6681965c04aa426df9da54b8edc6db1b"
+  integrity sha512-MuyWheG47h6ERd4PKQ6V8gDyBu3ThNG22e1fRVwvq6ap3EqsFhyuxCAwhNP/03m/mLg+DAb0upgbPaX6VB+CkQ==
+  dependencies:
+    "@tanstack/query-core" "5.59.16"
+
+"@telegram-apps/bridge@^1.3.0":
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/@telegram-apps/bridge/-/bridge-1.3.0.tgz#bf9e3ad69806980d0953108a454038eb8a3360bc"
+  integrity sha512-9P2SEhr1SSo8JQsbfm4fIzYhZY0wwH6PEOmSZ0kNXZ4xX1iSftJ3T7kSbcaQL2zIVrKO8PJxKeH4Etmkk9Oqgg==
+  dependencies:
+    "@telegram-apps/signals" "^1.0.1"
+    "@telegram-apps/toolkit" "^1.0.0"
+    "@telegram-apps/transformers" "^1.0.1"
+    "@telegram-apps/types" "^1.0.1"
+
+"@telegram-apps/navigation@^1.0.4":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@telegram-apps/navigation/-/navigation-1.0.4.tgz#5d936ec51f0c5099ba1a60d17aad9ac6f06fe3ae"
+  integrity sha512-I+wwfhR7O29ofzJ+x4HzErDbvYGjXlJaeaTxwYLCvcS014pv4+5ijbfKSBAmNIxWZC+s97+WzTD86jeze79K3w==
+  dependencies:
+    "@telegram-apps/bridge" "^1.3.0"
+    "@telegram-apps/signals" "^1.0.1"
+    "@telegram-apps/toolkit" "^1.0.0"
+
+"@telegram-apps/sdk@^2.4.0":
+  version "2.5.2"
+  resolved "https://registry.yarnpkg.com/@telegram-apps/sdk/-/sdk-2.5.2.tgz#a7b3d5159a92604f45baa068dbc0930e9702c13c"
+  integrity sha512-LlK07tFeL4QNJt/5dO/yh7ilWuqr3ja+Nr9xnDvQsxO7NroldC7moEqAzGnTq8Fu7mu1WFf/UMkmZnOMkK8OWw==
+  dependencies:
+    "@telegram-apps/bridge" "^1.3.0"
+    "@telegram-apps/navigation" "^1.0.4"
+    "@telegram-apps/signals" "^1.0.1"
+    "@telegram-apps/transformers" "^1.0.1"
+
+"@telegram-apps/signals@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@telegram-apps/signals/-/signals-1.0.1.tgz#08bd20da8fd796bb3645cd30560042d760f6dd00"
+  integrity sha512-+DAltcPtLBeNPjX+BxEh9smh0cbxCXuEcsOEyDCovp6HJHusWFv1tDyJuV0/rXFmcDs+VwU7SjmINdjld2nFHw==
+
+"@telegram-apps/toolkit@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@telegram-apps/toolkit/-/toolkit-1.0.0.tgz#e0fb3541100bcfe2956ab163dd51b9577cc6c2d0"
+  integrity sha512-fSVoveLuMzwRKWeXEufMSXxH+HvjsFKb1DeT3pG5qLpnb2rdtejnNcwAt6WEPtiZ3a4YntYaFuR3KYgVv0ZxeQ==
+
+"@telegram-apps/transformers@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@telegram-apps/transformers/-/transformers-1.0.1.tgz#42821eb836598e714362865231e6ef01a3c92632"
+  integrity sha512-SsI+FhCOkkZFUPqr+ib11Fi25fRCpdMsI2Flp51NrdtKaPDnKFkBBG4GcSEaGL8sXquW9uAANjc499jSaZK5jQ==
+  dependencies:
+    "@telegram-apps/toolkit" "^1.0.0"
+    "@telegram-apps/types" "^1.0.1"
+
+"@telegram-apps/types@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@telegram-apps/types/-/types-1.0.1.tgz#211597cfa0d515b544917e491031f07c01faf394"
+  integrity sha512-8tGy1zG/1MEt0KF8nR0ffZ93whKveEJIkBI+qxHCRgatKwKVJV2dVSXrrBspFKn7FIIo1/CvmB8zP4vKPzglbg==
 
 "@trpc/client@^10.38.1":
   version "10.45.2"
@@ -3176,6 +3298,11 @@ abitype@1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/abitype/-/abitype-1.0.0.tgz#237176dace81d90d018bebf3a45cb42f2a2d9e97"
   integrity sha512-NMeMah//6bJ56H5XRj8QCV4AwuW6hB6zqz2LnhhLdcWVQOsXki6/Pn3APeqxCma62nXIcmZWdu1DlHWS74umVQ==
+
+abitype@1.0.6:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/abitype/-/abitype-1.0.6.tgz#76410903e1d88e34f1362746e2d407513c38565b"
+  integrity sha512-MMSqYh4+C/aVqI2RQaWqbvI4Kxo5cQV40WQ4QFtDnNzCkqChm8MuENhElmynZlO0qUy/ObkEUaXtKqYnx1Kp3A==
 
 acorn-jsx@^5.3.2:
   version "5.3.2"
@@ -5639,6 +5766,11 @@ isows@1.0.3:
   resolved "https://registry.yarnpkg.com/isows/-/isows-1.0.3.tgz#93c1cf0575daf56e7120bab5c8c448b0809d0d74"
   integrity sha512-2cKei4vlmg2cxEjm3wVSqn8pcoRF/LX/wpifuuNquFO4SQmPwarClT+SUCA2lt+l581tTeZIPIZuIDo2jWN1fg==
 
+isows@1.0.6:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/isows/-/isows-1.0.6.tgz#0da29d706fa51551c663c627ace42769850f86e7"
+  integrity sha512-lPHCayd40oW98/I0uvgaHKWCSvkzY27LjWLbtzOm64yQ+G3Q5npjjbdppU65iZXkK1Zt+kH9pfegli0AYfwYYw==
+
 jake@^10.8.5:
   version "10.9.1"
   resolved "https://registry.yarnpkg.com/jake/-/jake-10.9.1.tgz#8dc96b7fcc41cb19aa502af506da4e1d56f5e62b"
@@ -7975,6 +8107,29 @@ viem@2.9.20:
     isows "1.0.3"
     ws "8.13.0"
 
+viem@^2.19.1:
+  version "2.21.34"
+  resolved "https://registry.yarnpkg.com/viem/-/viem-2.21.34.tgz#5206148a6aa659113d7844db53247a411d28569e"
+  integrity sha512-IR8ucya4dkVJv1jzv/qBz1TxYbSoXZuJPuqQk1/AybU9VuGdMUayittYwr0Navs97XFNml6UWGVya07apoaBmQ==
+  dependencies:
+    "@adraffy/ens-normalize" "1.11.0"
+    "@noble/curves" "1.6.0"
+    "@noble/hashes" "1.5.0"
+    "@scure/bip32" "1.5.0"
+    "@scure/bip39" "1.4.0"
+    abitype "1.0.6"
+    isows "1.0.6"
+    webauthn-p256 "0.0.10"
+    ws "8.18.0"
+
+webauthn-p256@0.0.10:
+  version "0.0.10"
+  resolved "https://registry.yarnpkg.com/webauthn-p256/-/webauthn-p256-0.0.10.tgz#877e75abe8348d3e14485932968edf3325fd2fdd"
+  integrity sha512-EeYD+gmIT80YkSIDb2iWq0lq2zbHo1CxHlQTeJ+KkCILWpVy3zASH3ByD4bopzfk0uCwXxLqKGLqp2W4O28VFA==
+  dependencies:
+    "@noble/curves" "^1.4.0"
+    "@noble/hashes" "^1.4.0"
+
 webidl-conversions@^3.0.0:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/webidl-conversions/-/webidl-conversions-3.0.1.tgz#24534275e2a7bc6be7bc86611cc16ae0a5654871"
@@ -8258,6 +8413,11 @@ ws@8.13.0:
   version "8.13.0"
   resolved "https://registry.yarnpkg.com/ws/-/ws-8.13.0.tgz#9a9fb92f93cf41512a0735c8f4dd09b8a1211cd0"
   integrity sha512-x9vcZYTrFPC7aSIbj7sRCYo7L/Xb8Iy+pW0ng0wt2vCJv7M9HOMy0UoN3rr+IFC7hb7vXoqS+P9ktyLLLhO+LA==
+
+ws@8.18.0:
+  version "8.18.0"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-8.18.0.tgz#0d7505a6eafe2b0e712d232b42279f53bc289bbc"
+  integrity sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==
 
 ws@^7.5.1:
   version "7.5.9"

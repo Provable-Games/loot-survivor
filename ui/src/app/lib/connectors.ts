@@ -1,6 +1,5 @@
+import ControllerConnector from "@cartridge/connector/controller";
 import { Connector } from "@starknet-react/core";
-import CartridgeConnector from "@cartridge/connector";
-import { shortString } from "starknet";
 // import { WebWalletConnector } from "starknetkit/webwallet";
 
 export const checkArcadeConnector = (connector?: Connector) => {
@@ -49,13 +48,13 @@ export const providerInterfaceCamel = (provider: string) => {
 //   url: argentWebWalletUrl(),
 // });
 
-export const cartridgeConnector = (
+export const controllerConnector = (
   gameAddress: string,
   lordsAddress: string,
   ethAddress: string,
   rpcUrl: string
 ) =>
-  new CartridgeConnector({
+  new ControllerConnector({
     policies: [
       {
         target: gameAddress,
@@ -102,9 +101,6 @@ export const cartridgeConnector = (
         method: "approve",
       },
     ],
-    paymaster: {
-      caller: shortString.encodeShortString("ANY_CALLER"),
-    },
     rpc: rpcUrl,
     theme: "loot-survivor",
   }) as never as Connector;
