@@ -1,6 +1,9 @@
-import { useState, ChangeEvent } from "react";
 import { Button } from "@/app/components/buttons/Button";
+import useLoadingStore from "@/app/hooks/useLoadingStore";
+import useUIStore from "@/app/hooks/useUIStore";
+import { networkConfig } from "@/app/lib/networkConfig";
 import { FormData } from "@/app/types";
+import { ChangeEvent, useState } from "react";
 
 export interface AdventurerNameProps {
   setFormData: (data: FormData) => void;
@@ -8,6 +11,13 @@ export interface AdventurerNameProps {
   handleBack: () => void;
   step: number;
   setStep: (step: number) => void;
+  spawn: (
+    formData: FormData,
+    goldenTokenId: string,
+    blobertTokenId: string,
+    revenueAddresses: string[],
+    costToPlay?: number
+  ) => Promise<void>;
 }
 
 export const AdventurerName = ({
@@ -16,8 +26,12 @@ export const AdventurerName = ({
   handleBack,
   step,
   setStep,
+  spawn,
 }: AdventurerNameProps) => {
   const [isMaxLength, setIsMaxLength] = useState(false);
+  const { onKatana } = useUIStore();
+  const resetNotification = useLoadingStore((state) => state.resetNotification);
+  const network = useUIStore((state) => state.network);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -34,11 +48,26 @@ export const AdventurerName = ({
     }
   };
 
-  const handleNameEntry = (name: string) => {
+  const handleNameEntry = async (name: string) => {
     setFormData({ ...formData, name: name });
-    setTimeout(() => {
-      setStep(step + 1);
-    }, 1000);
+    if (!onKatana) {
+      setTimeout(() => {
+        setStep(step + 1);
+      }, 1000);
+    } else {
+      resetNotification();
+      try {
+        await spawn(
+          formData,
+          "0",
+          "0",
+          networkConfig[network!].revenueAddresses,
+          0
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    }
   };
 
   return (

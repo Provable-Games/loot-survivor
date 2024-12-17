@@ -95,6 +95,7 @@ export const CreateAdventurer = ({
               handleBack={handleBack}
               step={step}
               setStep={setStep}
+              spawn={spawn}
             />
           </div>
           <div className="sm:hidden">
@@ -129,6 +130,7 @@ export const CreateAdventurer = ({
               handleBack={handleBack}
               step={step}
               setStep={setStep}
+              spawn={spawn}
             />
           </div>
         </>

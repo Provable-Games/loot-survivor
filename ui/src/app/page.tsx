@@ -9,6 +9,7 @@ import { DeathDialog } from "@/app/components/adventurer/DeathDialog";
 import Player from "@/app/components/adventurer/Player";
 import { StatRemovalWarning } from "@/app/components/adventurer/StatRemovalWarning";
 import TokenLoader from "@/app/components/animations/TokenLoader";
+import { Button } from "@/app/components/buttons/Button";
 import EncounterDialog from "@/app/components/encounters/EnounterDialog";
 import WalletSelect from "@/app/components/intro/WalletSelect";
 import ScreenMenu from "@/app/components/menu/ScreenMenu";
@@ -20,6 +21,7 @@ import { TxActivity } from "@/app/components/navigation/TxActivity";
 import { NotificationDisplay } from "@/app/components/notifications/NotificationDisplay";
 import { SpecialBeast } from "@/app/components/notifications/SpecialBeast";
 import { ProfileDialog } from "@/app/components/profile/ProfileDialog";
+import { Toaster } from "@/app/components/season/toaster";
 import ActionsScreen from "@/app/containers/ActionsScreen";
 import AdventurerScreen from "@/app/containers/AdventurerScreen";
 import CollectionsLeaderboardScreen from "@/app/containers/CollectionsLeaderboardScreen";
@@ -51,6 +53,7 @@ import useLoadingStore from "@/app/hooks/useLoadingStore";
 import { useMusic } from "@/app/hooks/useMusic";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
+import { useToast } from "@/app/hooks/useToast";
 import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
 import useTransactionManager from "@/app/hooks/useTransactionManager";
 import useUIStore, { ScreenPage } from "@/app/hooks/useUIStore";
@@ -134,6 +137,7 @@ function Home() {
   const setG20Unlock = useUIStore((state) => state.setG20Unlock);
   const freeVRF = useUIStore((state) => state.freeVRF);
   const setFreeVRF = useUIStore((state) => state.setFreeVRF);
+  const { toast } = useToast();
 
   const allMenuItems: Menu[] = useMemo(
     () => [
@@ -336,6 +340,7 @@ function Home() {
     beastsContract: beastsContract!,
     pragmaContract: pragmaContract!,
     rendererContractAddress: networkConfig[network!].rendererAddress,
+    tournamentContractAddress: networkConfig[network!].tournamentAddress,
     addTransaction,
     queryData: data,
     resetData,
@@ -779,8 +784,17 @@ function Home() {
     }
   }, [vitBoostRemoved, chaBoostRemoved]);
 
+  useEffect(() => {
+    toast({
+      title: "Season 0 is live!",
+      description: `Ancient powers have stirred within the depths of the dungeon. The Adventurer's Trial – where legends are born and etched into the scrolls of time.`,
+      action: <Button>Enter Season</Button>,
+    });
+  }, []);
+
   return (
     <>
+      <Toaster />
       {openInterlude && !onKatana && (
         <InterludeScreen type={fetchUnlocksEntropy ? "item" : "level"} />
       )}

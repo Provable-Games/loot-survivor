@@ -1,5 +1,5 @@
-import { Connector } from "@starknet-react/core";
 import CartridgeConnector from "@cartridge/connector";
+import { Connector } from "@starknet-react/core";
 import { shortString } from "starknet";
 // import { WebWalletConnector } from "starknetkit/webwallet";
 

@@ -22,6 +22,7 @@ export const networkConfig = {
     pragmaAddress:
       "0x036031daa264c24520b11d93af622c848b2499b66b41d611bac95e13cfca131a",
     rendererAddress: "0x0",
+    tournamentAddress: "0x0",
     appUrl: "https://sepolia.lootsurvivor.io",
     beastsViewer: "https://testnet.realms.world/collection/beasts",
     goldenTokenMintUrl: "https://testnet.realms.world/collection/goldenToken",
@@ -59,6 +60,7 @@ export const networkConfig = {
     pragmaAddress:
       "0x2a85bd616f912537c50a49a4076db02c00b29b2cdc8a197ce92ed1837fa875b",
     rendererAddress: "0x0",
+    tournamentAddress: "0x0",
     appUrl: "https://lootsurvivor.io/",
     beastsViewer:
       "https://market.realms.world/token/0x0158160018d590d93528995b340260e65aedd76d28a686e9daa5c4e8fad0c5dd",
@@ -86,6 +88,7 @@ export const networkConfig = {
     revenueAddresses: ["0x0"],
     pragmaAddress: "0x0",
     rendererAddress: "0x0",
+    tournamentAddress: "0x0",
     appUrl: "https://lootsurvivor.io",
     beastsViewer: "",
     goldenTokenMintUrl: "",
@@ -115,6 +118,7 @@ export const networkConfig = {
     revenueAddresses: ["0x0"],
     pragmaAddress: "0x0",
     rendererAddress: "0x0",
+    tournamentAddress: "0x0",
     appUrl: "http://localhost:3000/",
     beastsViewer: "",
     goldenTokenMintUrl: "",
