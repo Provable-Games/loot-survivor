@@ -425,15 +425,16 @@ export function createSyscalls({
     approveAddress: string,
     dollarPrice: bigint,
     freeVRF: boolean,
-    costToPlay?: number,
-    goldenTokenId?: string,
-    blobertTokenId?: string
-  ) => [
+    costToPlay: number = 0, // Default value instead of optional
+    goldenTokenId: string = "0", // Default value instead of optional
+    blobertTokenId: string = "0" // Default value instead of optional
+  ): Call[] => [
+    // Explicit return type
     ...(freeVRF
       ? []
       : [
           {
-            contractAddress: ethContract?.address ?? "",
+            contractAddress: ethContract?.address || "",
             entrypoint: "approve",
             calldata: [approveAddress, dollarPrice.toString(), "0"],
           },
@@ -441,9 +442,28 @@ export function createSyscalls({
     ...(goldenTokenId === "0" && blobertTokenId === "0"
       ? [
           {
-            contractAddress: lordsContract?.address ?? "",
+            contractAddress: lordsContract?.address || "",
             entrypoint: "approve",
-            calldata: [approveAddress, costToPlay!.toString(), "0"],
+            calldata: [approveAddress, costToPlay.toString(), "0"],
+          },
+        ]
+      : []),
+    ...(goldenTokenId !== "0"
+      ? [
+          {
+            contractAddress: networkConfig[network!]?.goldenTokenAddress || "",
+            entrypoint: "approve",
+            calldata: [approveAddress, goldenTokenId, "0"],
+          },
+        ]
+      : []),
+    ...(blobertTokenId !== "0"
+      ? [
+          {
+            contractAddress:
+              networkConfig[network!]?.tournamentWinnerAddress || "",
+            entrypoint: "approve",
+            calldata: [approveAddress, blobertTokenId, "0"],
           },
         ]
       : []),
@@ -1657,8 +1677,8 @@ export function createSyscalls({
         false,
         new CairoOption(CairoOptionVariant.Some, 1),
         selectedRevenueAddress,
-        goldenTokenId !== "0" ? [goldenTokenId, "0"] : "0",
-        blobertTokenId !== "0" ? [blobertTokenId, "0"] : "0",
+        ...(goldenTokenId !== "0" ? ["1", goldenTokenId, "0"] : ["0"]),
+        ...(blobertTokenId !== "0" ? ["1", blobertTokenId, "0"] : ["0"]),
         getKeyFromValue(gameData.ITEMS, formData.startingWeapon) ?? "",
         stringToFelt(formData.name).toString(),
       ]),
