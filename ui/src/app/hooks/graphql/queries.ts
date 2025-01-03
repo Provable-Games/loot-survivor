@@ -496,6 +496,20 @@ const getOwnerTokens = gql`
   }
 `;
 
+const getTournamentDetails = gql`
+  query getTournamentDetails($tournamentId: String) {
+    lsTournamentsV0TournamentModels(where: { tournament_id: $tournamentId }) {
+      edges {
+        node {
+          tournament_id
+          start_time
+          end_time
+        }
+      }
+    }
+  }
+`;
+
 const getTournamentGames = gql`
   query getTournamentGames($tournamentId: String) {
     lsTournamentsV0TournamentGameModels(
@@ -565,6 +579,7 @@ export {
   getLatestMarketItems,
   getOwnerTokens,
   getScoresInList,
+  getTournamentDetails,
   getTournamentGames,
   getTournamentPrizes,
 };

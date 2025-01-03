@@ -3,7 +3,10 @@ import { AdventurerName } from "@/app/components/start/AdventurerName";
 import Prizes from "@/app/components/start/Prizes";
 import { Spawn } from "@/app/components/start/Spawn";
 import { WeaponSelect } from "@/app/components/start/WeaponSelect";
-import { getTournamentPrizes } from "@/app/hooks/graphql/queries";
+import {
+  getTournamentDetails,
+  getTournamentPrizes,
+} from "@/app/hooks/graphql/queries";
 import useLoadingStore from "@/app/hooks/useLoadingStore";
 import useUIStore from "@/app/hooks/useUIStore";
 import { tournamentClient } from "@/app/lib/clients";
@@ -51,7 +54,23 @@ export const CreateAdventurer = ({
   const network = useUIStore((state) => state.network);
   const [lordsValue, setLordsValue] = useState(0n);
 
-  // Memoize both the variables AND the client
+  const {
+    variables: tournamentDetailsVariables,
+    client: tournamentDetailsClient,
+  } = useMemo(() => {
+    return {
+      variables: {
+        tournamentId: networkConfig[network!].tournamentId,
+      },
+      client: tournamentClient(networkConfig[network!].tournamentGQLURL),
+    };
+  }, [network]);
+
+  const { data: tournamentDetails } = useQuery(getTournamentDetails, {
+    client: tournamentDetailsClient,
+    variables: tournamentDetailsVariables,
+  });
+
   const { variables, client } = useMemo(() => {
     return {
       variables: {
@@ -59,14 +78,12 @@ export const CreateAdventurer = ({
       },
       client: tournamentClient(networkConfig[network!].tournamentGQLURL),
     };
-  }, [network]); // Only recreate when network changes
+  }, [network]);
 
   const { data: tournamentPrizes } = useQuery(getTournamentPrizes, {
     client,
     variables,
   });
-
-  console.log(tournamentPrizes);
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLInputElement> | KeyboardEvent) => {
@@ -141,6 +158,8 @@ export const CreateAdventurer = ({
     handleGetLordsValue();
     console.log(lordsValue);
   }, [lordsValue]);
+
+  console.log(tournamentDetails);
 
   return (
     <>
