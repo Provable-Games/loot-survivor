@@ -45,14 +45,13 @@ const SeasonTable = ({
   });
 
   const gameIds = useMemo(() => {
-    if (!tournamentGames?.tournamentTournamentStartIdsModelModels?.edges) {
+    if (!tournamentGames?.lsTournamentsV0TournamentGameModels?.edges) {
       return [];
     }
 
-    return tournamentGames.tournamentTournamentStartIdsModelModels.edges
-      .flatMap((edge: any) => edge.node.game_ids)
-      .filter(Boolean)
-      .map((id: any) => parseInt(id, 10));
+    return tournamentGames.lsTournamentsV0TournamentGameModels.edges.map(
+      (edge: any) => Number(edge.node.game_id)
+    );
   }, [tournamentGames]);
 
   const adventurersByXPdata = useCustomQuery(
@@ -65,8 +64,6 @@ const SeasonTable = ({
   const adventurers = adventurersByXPdata?.adventurers ?? [];
 
   const totalPages = Math.ceil(adventurers.length / itemsPerPage);
-
-  console.log(adventurers);
 
   const handleRowSelected = async (adventurerId: number) => {
     try {
