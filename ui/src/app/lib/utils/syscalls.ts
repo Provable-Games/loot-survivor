@@ -3,7 +3,7 @@ import { QueryData, QueryKey } from "@/app/hooks/useQueryStore";
 import { Network, ScreenPage } from "@/app/hooks/useUIStore";
 import { AdventurerClass } from "@/app/lib/classes";
 import { checkArcadeConnector } from "@/app/lib/connectors";
-import { getWaitRetryInterval } from "@/app/lib/constants";
+import { getMaxFee, getWaitRetryInterval } from "@/app/lib/constants";
 import { GameData } from "@/app/lib/data/GameData";
 import { networkConfig } from "@/app/lib/networkConfig";
 import {
@@ -1505,7 +1505,7 @@ export function createSyscalls({
       }
 
       setIsMintingLords(false);
-      getBalances();
+      !onKatana && getBalances();
     } catch (e) {
       setIsMintingLords(false);
       console.log(e);
@@ -1551,9 +1551,19 @@ export function createSyscalls({
           ? [transferEthTx, transferLordsTx]
           : [transferEthTx];
 
-      const { transaction_hash } = await account.execute(calls);
+      const isArcade = checkArcadeConnector(connector!);
 
-      const result = await provider.waitForTransaction(transaction_hash, {
+      const tx = await handleSubmitCalls(
+        account!,
+        [...calls],
+        isArcade,
+        Number(ethBalance),
+        showTopUpDialog,
+        setTopUpAccount,
+        network
+      );
+
+      const result = await provider.waitForTransaction(tx?.transaction_hash, {
         retryInterval: getWaitRetryInterval(network!),
       });
 
@@ -1584,12 +1594,20 @@ export function createSyscalls({
         calldata: [from, recipient, adventurerId.toString() ?? "", "0"],
       };
 
-      const { transaction_hash } = await account.execute([
-        ...calls,
-        transferTx,
-      ]);
+      const isArcade = checkArcadeConnector(connector!);
 
-      const result = await provider.waitForTransaction(transaction_hash, {
+      const tx = await handleSubmitCalls(
+        account!,
+        [...calls, transferTx],
+        isArcade,
+        Number(ethBalance),
+        showTopUpDialog,
+        setTopUpAccount,
+        network
+      );
+      setTxHash(tx?.transaction_hash);
+
+      const result = await provider.waitForTransaction(tx?.transaction_hash, {
         retryInterval: getWaitRetryInterval(network!),
       });
 
@@ -1601,7 +1619,7 @@ export function createSyscalls({
         adventurers: [adventurer],
       });
 
-      getBalances();
+      !onKatana && getBalances();
       stopLoading("Transferred Adventurer", false, "Transfer");
     } catch (error) {
       console.error(error);
@@ -1793,6 +1811,77 @@ export function createSyscalls({
   //   };
   // };
 
+  const changeAdventurerName = async (
+    account: AccountInterface,
+    adventurerId: number,
+    name: string,
+    index: number
+  ) => {
+    startLoading(
+      "Change Name",
+      "Changing Adventurer Name",
+      undefined,
+      undefined
+    );
+
+    try {
+      const changeNameTx = {
+        contractAddress: gameContract?.address ?? "",
+        entrypoint: "update_adventurer_name",
+        calldata: [
+          adventurerId.toString() ?? "",
+          stringToFelt(name).toString(),
+        ],
+      };
+
+      const isArcade = checkArcadeConnector(connector!);
+
+      const maxFee = getMaxFee(network!);
+
+      if (!onKatana && ethBalance < maxFee) {
+        showTopUpDialog(true);
+        setTopUpAccount("eth");
+        throw new Error("Not enough eth for gas.");
+      } else {
+        const tx = await handleSubmitCalls(
+          account!,
+          [...calls, changeNameTx],
+          isArcade,
+          Number(ethBalance),
+          showTopUpDialog,
+          setTopUpAccount,
+          network
+        );
+        setTxHash(tx?.transaction_hash);
+
+        const result = await provider.waitForTransaction(tx?.transaction_hash, {
+          retryInterval: getWaitRetryInterval(network!),
+        });
+
+        if (!result) {
+          throw new Error("Transaction did not complete successfully.");
+        }
+
+        const adventurers =
+          queryData.adventurersByOwnerQuery?.adventurers ?? [];
+
+        setData("adventurersByOwnerQuery", {
+          adventurers: [
+            ...adventurers.slice(0, index),
+            { ...adventurers[index], name: name },
+            ...adventurers.slice(index + 1),
+          ],
+        });
+
+        !onKatana && getBalances();
+        stopLoading("Changed Adventurer Name", false, "Change Name");
+      }
+    } catch (error) {
+      console.error(error);
+      stopLoading(error, true);
+    }
+  };
+
   return {
     spawn,
     explore,
@@ -1805,6 +1894,7 @@ export function createSyscalls({
     transferAdventurer,
     startSeason,
     lordsDollarValue,
+    changeAdventurerName,
   };
 }
 

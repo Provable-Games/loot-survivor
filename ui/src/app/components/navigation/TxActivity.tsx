@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
-import { InvokeTransactionReceiptResponse } from "starknet";
-import { useWaitForTransaction } from "@starknet-react/core";
-import { displayAddress, padAddress } from "@/app/lib/utils";
-import useLoadingStore from "@/app/hooks/useLoadingStore";
 import LootIconLoader from "@/app/components/icons/Loader";
+import useLoadingStore from "@/app/hooks/useLoadingStore";
 import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
 import useUIStore from "@/app/hooks/useUIStore";
 import { networkConfig } from "@/app/lib/networkConfig";
+import { displayAddress, padAddress } from "@/app/lib/utils";
+import { useWaitForTransaction } from "@starknet-react/core";
+import { useEffect, useState } from "react";
+import { InvokeTransactionReceiptResponse } from "starknet";
 
 export const TxActivity = () => {
   const stopLoading = useLoadingStore((state) => state.stopLoading);

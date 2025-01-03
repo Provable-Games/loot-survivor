@@ -1,57 +1,60 @@
 import type { Config } from "https://esm.sh/@apibara/indexer";
-import type { Block, Starknet } from "https://esm.sh/@apibara/indexer/starknet";
-import type { Mongo } from "https://esm.sh/@apibara/indexer/sink/mongo";
 import type { Console } from "https://esm.sh/@apibara/indexer/sink/console";
+import type { Mongo } from "https://esm.sh/@apibara/indexer/sink/mongo";
+import type { Block, Starknet } from "https://esm.sh/@apibara/indexer/starknet";
+import { MONGO_CONNECTION_STRING } from "./utils/constants.ts";
+import { getLevelFromXp } from "./utils/encode.ts";
 import {
+  ADVENTURER_DIED,
   ADVENTURER_UPGRADED,
+  AMBUSHED_BY_BEAST,
+  ATTACKED_BEAST,
+  ATTACKED_BY_BEAST,
+  DISCOVERED_BEAST,
   DISCOVERED_GOLD,
   DISCOVERED_HEALTH,
+  DISCOVERED_LOOT,
+  DODGED_OBSTACLE,
+  DROPPED_ITEMS,
+  EQUIPPED_ITEMS,
+  FLEE_FAILED,
+  FLEE_SUCCEEDED,
+  HIT_BY_OBSTACLE,
+  ITEMS_LEVELED_UP,
+  parseAdventurerDied,
   parseAdventurerUpgraded,
+  parseAmbushedByBeast,
+  parseAttackedByBeast,
+  parseDiscoveredBeast,
   parseDiscoveredGold,
   parseDiscoveredHealth,
-  parseStartGame,
-  START_GAME,
-  PURCHASED_ITEMS,
-  ATTACKED_BY_BEAST,
-  ADVENTURER_DIED,
-  parseAdventurerDied,
-  parseAttackedByBeast,
-  AMBUSHED_BY_BEAST,
-  parseAmbushedByBeast,
-  ATTACKED_BEAST,
-  SLAYED_BEAST,
-  parseSlayedBeast,
-  FLEE_FAILED,
-  parseFleeFailed,
-  FLEE_SUCCEEDED,
-  parseFleeSucceeded,
-  ITEMS_LEVELED_UP,
-  parseItemsLeveledUp,
-  EQUIPPED_ITEMS,
-  parsePurchasedItems,
-  parseEquippedItems,
-  DROPPED_ITEMS,
-  parseDroppedItems,
-  HIT_BY_OBSTACLE,
-  parseHitByObstacle,
-  DODGED_OBSTACLE,
-  parseDodgedObstacle,
-  UPGRADES_AVAILABLE,
-  parseUpgradesAvailable,
-  DISCOVERED_BEAST,
-  parseDiscoveredBeast,
-  DISCOVERED_LOOT,
   parseDiscoveredLoot,
-  TRANSFER,
+  parseDodgedObstacle,
+  parseDroppedItems,
+  parseEquippedItems,
+  parseFleeFailed,
+  parseFleeSucceeded,
+  parseHitByObstacle,
+  parseItemsLeveledUp,
+  parsePurchasedItems,
+  parseSlayedBeast,
+  parseStartGame,
   parseTransfer,
+  parseUpdateAdventurerName,
+  parseUpgradesAvailable,
+  PURCHASED_ITEMS,
+  SLAYED_BEAST,
+  START_GAME,
+  TRANSFER,
+  UPDATE_ADVENTURER_NAME,
+  UPGRADES_AVAILABLE,
 } from "./utils/events.ts";
 import {
   insertAdventurer,
   updateAdventurer,
+  updateAdventurerName,
   updateAdventurerOwner,
 } from "./utils/helpers.ts";
-import { MONGO_CONNECTION_STRING } from "./utils/constants.ts";
-import { getLevelFromXp } from "./utils/encode.ts";
 
 const GAME = Deno.env.get("GAME");
 const START = +(Deno.env.get("START") || 0);
@@ -83,6 +86,7 @@ const filter = {
     { fromAddress: GAME, keys: [UPGRADES_AVAILABLE] },
     { fromAddress: GAME, keys: [ADVENTURER_UPGRADED] },
     { fromAddress: GAME, keys: [TRANSFER] },
+    { fromAddress: GAME, keys: [UPDATE_ADVENTURER_NAME] },
   ],
 };
 
@@ -351,6 +355,17 @@ export default function transform({ header, events }: Block) {
             }),
           ];
         }
+        return [];
+      }
+      case UPDATE_ADVENTURER_NAME: {
+        console.log("UPDATE_ADVENTURER_NAME", "->", "ADVENTURER UPDATES");
+        const { value } = parseUpdateAdventurerName(event.data, 0);
+        return [
+          updateAdventurerName({
+            adventurerId: value.adventurerId,
+            adventurerName: value.name,
+          }),
+        ];
       }
       default: {
         console.warn("Unknown event", event.keys[0]);

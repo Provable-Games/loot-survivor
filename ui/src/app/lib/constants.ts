@@ -40,9 +40,7 @@ export const getWaitRetryInterval = (network: string) =>
 export const ETH_INCREMENT = 0.001;
 export const LORDS_INCREMENT = 5;
 export const getMaxFee = (network: string) =>
-  network === "mainnet" || network === "sepolia"
-    ? 0.3 * 10 ** 18
-    : 0.03 * 10 ** 18; // 0.3ETH on mainnet or sepolia, 0.0003ETH on goerli
+  network === "mainnet" ? 0.001 * 10 ** 18 : 0.3 * 10 ** 18; // 0.001ETH on mainnet, 0.3ETH on sepolia
 export const ETH_PREFUND_AMOUNT = (network: string) =>
   network === "mainnet" || network === "sepolia"
     ? "0x2386F26FC10000"

@@ -19,7 +19,14 @@ import useUIStore from "@/app/hooks/useUIStore";
 import { calculateLevel, indexAddress, padAddress } from "@/app/lib/utils";
 import { Adventurer } from "@/app/types";
 import { useProvider } from "@starknet-react/core";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ChangeEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   AccountInterface,
   constants,
@@ -41,6 +48,12 @@ export interface AdventurerListProps {
     from: string,
     recipient: string
   ) => Promise<void>;
+  changeAdventurerName: (
+    account: AccountInterface,
+    adventurerId: number,
+    name: string,
+    index: number
+  ) => Promise<void>;
 }
 
 export const AdventurersList = ({
@@ -51,6 +64,7 @@ export const AdventurersList = ({
   adventurersCount,
   aliveAdventurersCount,
   transferAdventurer,
+  changeAdventurerName,
 }: AdventurerListProps) => {
   const { provider } = useProvider();
   const starknetIdNavigator = new StarknetIdNavigator(
@@ -60,8 +74,12 @@ export const AdventurersList = ({
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showZeroHealth, setShowZeroHealth] = useState(false);
   const [isTransferOpen, setIsTransferOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [adventurerForTransfer, setAdventurerForTransfer] =
     useState<Adventurer | null>(null);
+  const [adventurerForEdit, setAdventurerForEdit] = useState<Adventurer | null>(
+    null
+  );
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const network = useUIStore((state) => state.network);
   const { account, address } = useNetworkAccount();
@@ -70,7 +88,7 @@ export const AdventurersList = ({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const skip = (currentPage - 1) * adventurersPerPage;
 
-  const { refetch, setData } = useQueriesStore();
+  const { refetch, setData, data } = useQueriesStore();
 
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
 
@@ -88,6 +106,10 @@ export const AdventurersList = ({
   const [confirmationAction, setConfirmationAction] = useState<
     "send" | "addToCart" | null
   >(null);
+
+  const [adventurerName, setAdventurerName] = useState("");
+
+  const [isMaxLength, setIsMaxLength] = useState(false);
 
   const addToCalls = useTransactionCartStore((state) => state.addToCalls);
 
@@ -177,9 +199,14 @@ export const AdventurersList = ({
     owner === ""
   );
 
+  useEffect(() => {
+    setData("adventurersByOwnerQuery", adventurersData);
+  }, [adventurersData]);
+
   const isLoading = adventurersData === undefined;
 
-  const adventurers: Adventurer[] = adventurersData?.adventurers ?? [];
+  const adventurers: Adventurer[] =
+    data.adventurersByOwnerQuery?.adventurers ?? [];
 
   const totalPages = useMemo(
     () =>
@@ -258,34 +285,44 @@ export const AdventurersList = ({
     setIsTransferOpen(false);
   };
 
+  const handleNameChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const value = e.target.value;
+    setAdventurerName(value.slice(0, 31));
+    if (value.length >= 31) {
+      setIsMaxLength(true);
+    } else {
+      setIsMaxLength(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center h-full">
-      {formatAdventurersCount > 0 ? (
-        <div className="flex flex-col gap-2 sm:flex-row sm:gap-5 w-full h-full items-center sm:items-start">
-          <div className="flex flex-col items-center sm:w-1/2 border border-terminal-green h-full w-full">
-            <span className="relative flex items-center justify-center bg-terminal-green-50 w-full">
-              <h2 className="text-xl uppercase text-center text-terminal-black h-10 flex items-center justify-center m-0">
-                Adventurers
-              </h2>
-              {formatAdventurersCount > 0 && (
-                <Button
-                  className="absolute right-0 w-auto h-8"
-                  size={"xs"}
-                  onClick={() => setShowZeroHealth(!showZeroHealth)}
-                  variant={showZeroHealth ? "default" : "contrast"}
-                >
-                  {showZeroHealth ? "Hide" : "Show"} dead
-                </Button>
-              )}
-            </span>
-            <div className="relative flex flex-col w-full overflow-y-auto default-scroll mx-2 sm:mx-0 border border-terminal-green sm:border-none h-[625px] 2xl:h-[625px]">
-              {isLoading && (
-                <div className="absolute flex top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                  <LootIconLoader size="w-10" />
-                </div>
-              )}
-              <div className="h-7/8 flex flex-col  w-full overflow-y-auto default-scrol">
-                {!isTransferOpen ? (
+      <div className="flex flex-col gap-2 sm:flex-row sm:gap-5 w-full h-full items-center sm:items-start">
+        <div className="flex flex-col items-center sm:w-1/2 border border-terminal-green h-full w-full">
+          <span className="relative flex items-center justify-center bg-terminal-green-50 w-full">
+            <h2 className="text-xl uppercase text-center text-terminal-black h-10 flex items-center justify-center m-0">
+              Adventurers
+            </h2>
+            <Button
+              className="absolute right-0 w-auto h-8"
+              size={"xs"}
+              onClick={() => setShowZeroHealth(!showZeroHealth)}
+              variant={showZeroHealth ? "default" : "contrast"}
+            >
+              {showZeroHealth ? "Hide" : "Show"} dead
+            </Button>
+          </span>
+          <div className="relative flex flex-col w-full overflow-y-auto default-scroll mx-2 sm:mx-0 border border-terminal-green sm:border-none h-[625px] 2xl:h-[625px]">
+            {isLoading && (
+              <div className="absolute flex top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <LootIconLoader size="w-10" />
+              </div>
+            )}
+            <div className="h-7/8 flex flex-col  w-full overflow-y-auto default-scrol">
+              {formatAdventurersCount > 0 ? (
+                !isTransferOpen && !isEditOpen ? (
                   adventurers.map((adventurer, index) => {
                     const birthstamp = parseInt(adventurer.birthDate!);
                     const currentTimestamp = Math.floor(Date.now() / 1000);
@@ -313,6 +350,7 @@ export const AdventurersList = ({
                                   setAdventurer(adventurer);
                                   handleSwitchAdventurer(adventurer.id!);
                                 }}
+                                disabled={dead || expired}
                               >
                                 Play
                               </Button>
@@ -326,6 +364,18 @@ export const AdventurersList = ({
                                 }}
                               >
                                 Transfer
+                              </Button>
+                              <Button
+                                size={"lg"}
+                                variant={"contrast"}
+                                className="border border-terminal-green"
+                                onClick={() => {
+                                  setAdventurerForEdit(adventurer);
+                                  setIsEditOpen(true);
+                                }}
+                                disabled={dead || expired}
+                              >
+                                Edit
                               </Button>
                             </div>
                           </>
@@ -342,7 +392,6 @@ export const AdventurersList = ({
                             setSelectedIndex(index);
                             await handleSelectAdventurer(adventurer.id!);
                           }}
-                          disabled={dead || expired}
                         >
                           {expired && !dead && (
                             <div className="flex items-center justify-center absolute inset-0 bg-terminal-black/50 text-terminal-yellow/50">
@@ -389,7 +438,7 @@ export const AdventurersList = ({
                       </div>
                     );
                   })
-                ) : (
+                ) : isTransferOpen ? (
                   <div className="sm:hidden flex flex-col bg-terminal-black gap-2 items-center justify-center w-full h-full p-2">
                     <Button
                       size="lg"
@@ -506,57 +555,105 @@ export const AdventurersList = ({
                       )}
                     </div>
                   </div>
-                )}
-              </div>
-              {formatAdventurersCount > 10 && (
-                <div className="absolute bottom-0 flex items-end justify-center w-full h-1/8">
-                  <Button
-                    variant={"token"}
-                    onClick={() =>
-                      currentPage > 1 && handleClick(currentPage - 1)
-                    }
-                    disabled={currentPage === 1}
-                    size={"lg"}
-                    className="w-1/2"
-                  >
-                    Back
-                  </Button>
-
-                  <Button
-                    variant={"token"}
-                    onClick={() =>
-                      currentPage < totalPages && handleClick(currentPage + 1)
-                    }
-                    disabled={currentPage === totalPages}
-                    size={"lg"}
-                    className="w-1/2"
-                  >
-                    Next
-                  </Button>
-                </div>
+                ) : (
+                  <div className="sm:hidden flex flex-col bg-terminal-black gap-2 items-center justify-center w-full h-full p-2">
+                    <Button
+                      size="lg"
+                      variant={"token"}
+                      onClick={() => setIsEditOpen(false)}
+                    >
+                      Back
+                    </Button>
+                    <div className="flex flex-row items-center justify-center w-full">
+                      <span className="uppercase text-2xl text-center flex-grow whitespace-nowrap">
+                        Change Adventurer Name
+                      </span>
+                    </div>
+                    <div className="relative flex flex-col w-full items-center justify-center gap-10">
+                      <input
+                        type="text"
+                        value={adventurerName}
+                        onChange={handleNameChange}
+                        className="p-1 h-12 text-2xl w-3/4 bg-terminal-black border border-terminal-green animate-pulse transform"
+                      />
+                      {isMaxLength && (
+                        <p className="absolute top-14">MAX LENGTH!</p>
+                      )}
+                      <div className="flex flex-row gap-2 items-center">
+                        <Button
+                          size={"lg"}
+                          onClick={() => {
+                            changeAdventurerName(
+                              account!,
+                              adventurerForEdit?.id!,
+                              adventurerName,
+                              selectedIndex
+                            );
+                            setIsEditOpen(false);
+                          }}
+                          disabled={
+                            adventurerName === "" ||
+                            adventurerName === adventurerForEdit?.name
+                          }
+                        >
+                          Save
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              ) : (
+                <p className="text-lg text-center uppercase flex-1">
+                  You do not have any adventurers!
+                </p>
               )}
             </div>
-          </div>
-          <div className="relative hidden sm:block sm:w-6/12 md:w-6/12 lg:w-1/2 w-full h-full">
-            {isLoading ? (
-              <div className="flex justify-center items-center h-full">
-                <LootIconLoader size="w-10" />
+            {formatAdventurersCount > 10 && (
+              <div className="absolute bottom-0 flex items-end justify-center w-full h-1/8">
+                <Button
+                  variant={"token"}
+                  onClick={() =>
+                    currentPage > 1 && handleClick(currentPage - 1)
+                  }
+                  disabled={currentPage === 1}
+                  size={"lg"}
+                  className="w-1/2"
+                >
+                  Back
+                </Button>
+
+                <Button
+                  variant={"token"}
+                  onClick={() =>
+                    currentPage < totalPages && handleClick(currentPage + 1)
+                  }
+                  disabled={currentPage === totalPages}
+                  size={"lg"}
+                  className="w-1/2"
+                >
+                  Next
+                </Button>
               </div>
-            ) : (
-              <AdventurerListCard
-                adventurer={adventurers[selectedIndex]}
-                gameContract={gameContract}
-                handleSwitchAdventurer={handleSwitchAdventurer}
-                transferAdventurer={transferAdventurer}
-              />
             )}
           </div>
         </div>
-      ) : (
-        <p className="text-lg uppercase flex-1">
-          You do not have any adventurers!
-        </p>
-      )}
+        <div className="relative hidden sm:block sm:w-6/12 md:w-6/12 lg:w-1/2 w-full h-full">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-full">
+              <LootIconLoader size="w-10" />
+            </div>
+          ) : (
+            <AdventurerListCard
+              adventurer={adventurers[selectedIndex]}
+              gameContract={gameContract}
+              handleSwitchAdventurer={handleSwitchAdventurer}
+              transferAdventurer={transferAdventurer}
+              changeAdventurerName={changeAdventurerName}
+              index={selectedIndex}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 };

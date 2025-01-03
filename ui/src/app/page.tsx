@@ -335,6 +335,7 @@ function Home() {
     transferAdventurer,
     startSeason,
     lordsDollarValue,
+    changeAdventurerName,
   } = useSyscalls({
     gameContract: gameContract!,
     ethContract: ethContract!,
@@ -878,6 +879,7 @@ function Home() {
                 costToPlay={costToPlay}
                 transferAdventurer={transferAdventurer}
                 lordsDollarValue={lordsDollarValue}
+                changeAdventurerName={changeAdventurerName}
               />
             )}
             {screen === "play" && (

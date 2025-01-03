@@ -8,8 +8,8 @@ import {
   parseU128,
   parseU16,
   parseU256,
-  parseU64,
   parseU32,
+  parseU64,
   parseU8,
 } from "./parser.ts";
 
@@ -53,6 +53,7 @@ export const NEW_COLLECTION_TOTAL = eventKey("NewCollectionTotal");
 // Tokens
 export const TRANSFER = eventKey("Transfer");
 export const CLAIMED_FREE_GAME = eventKey("ClaimedFreeGame");
+export const UPDATE_ADVENTURER_NAME = eventKey("UpdatedAdventurerName");
 
 export const parseStats = combineParsers({
   strength: { index: 0, parser: parseU8 },
@@ -383,4 +384,9 @@ export const parseNewCollectionTotal = combineParsers({
   collectionAddress: { index: 0, parser: parseFelt252 },
   xp: { index: 1, parser: parseU32 },
   gamesPlayed: { index: 2, parser: parseU32 },
+});
+
+export const parseUpdateAdventurerName = combineParsers({
+  adventurerId: { index: 0, parser: parseFelt252 },
+  name: { index: 1, parser: parseFelt252 },
 });
