@@ -6,14 +6,8 @@ import Profile from "public/icons/profile.svg";
 import QuestionMark from "public/icons/question-mark.svg";
 
 const Intro = () => {
-  const {
-    setLoginScreen,
-    setScreen,
-    handleOnboarded,
-    setNetwork,
-    setIsMuted,
-    isMuted,
-  } = useUIStore();
+  const { setScreen, handleOnboarded, setNetwork, setIsMuted, isMuted } =
+    useUIStore();
   const { play: clickPlay } = useUiSounds(soundSelector.click);
 
   let network = "";
@@ -64,7 +58,8 @@ const Intro = () => {
               <Button
                 size={"lg"}
                 onClick={() => {
-                  setLoginScreen(true);
+                  setScreen("start");
+                  handleOnboarded();
                   setNetwork(network! as Network);
                 }}
               >

@@ -53,6 +53,7 @@ export const cartridgeConnector = (
   gameAddress: string,
   lordsAddress: string,
   ethAddress: string,
+  tournamentAddress: string,
   rpcUrl: string
 ) =>
   new CartridgeConnector({
@@ -101,10 +102,19 @@ export const cartridgeConnector = (
         target: ethAddress,
         method: "approve",
       },
+      {
+        target: tournamentAddress,
+        method: "enter_tournament",
+      },
+      {
+        target: tournamentAddress,
+        method: "start_tournament",
+      },
     ],
     paymaster: {
       caller: shortString.encodeShortString("ANY_CALLER"),
     },
     rpc: rpcUrl,
     theme: "loot-survivor",
+    colorMode: "dark",
   }) as never as Connector;

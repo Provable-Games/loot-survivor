@@ -23,6 +23,14 @@ interface AdventurerScreenProps {
     revenueAddresses: string[],
     costToPlay?: number
   ) => Promise<void>;
+  startSeason: (
+    formData: FormData,
+    goldenTokenId: string,
+    blobertTokenId: string,
+    revenueAddresses: string[],
+    costToPlay?: number,
+    seasonCost?: number
+  ) => Promise<void>;
   handleSwitchAdventurer: (adventurerId: number) => Promise<void>;
   gameContract: Contract;
   goldenTokens: number[];
@@ -35,6 +43,7 @@ interface AdventurerScreenProps {
     from: string,
     recipient: string
   ) => Promise<void>;
+  lordsDollarValue: () => Promise<bigint>;
 }
 
 /**
@@ -43,6 +52,7 @@ interface AdventurerScreenProps {
  */
 export default function AdventurerScreen({
   spawn,
+  startSeason,
   handleSwitchAdventurer,
   gameContract,
   goldenTokens,
@@ -50,6 +60,7 @@ export default function AdventurerScreen({
   getBalances,
   costToPlay,
   transferAdventurer,
+  lordsDollarValue,
 }: AdventurerScreenProps) {
   const [activeMenu, setActiveMenu] = useState(0);
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
@@ -116,8 +127,8 @@ export default function AdventurerScreen({
   }, []);
 
   return (
-    <div className="flex flex-col sm:flex-row flex-wrap h-full">
-      <div className="w-full sm:w-2/12 h-10">
+    <div className="flex flex-col sm:flex-row w-full h-full">
+      <div className="w-full sm:w-1/6 h-10">
         <ButtonMenu
           buttonsData={menu}
           onSelected={(value) => setStartOption(value)}
@@ -128,16 +139,18 @@ export default function AdventurerScreen({
       </div>
 
       {startOption === "create adventurer" && (
-        <div className="flex flex-col sm:mx-auto sm:justify-center sm:flex-row gap-2 sm:w-8/12 md:w-10/12">
+        <div className="flex flex-col w-5/6 h-full mx-auto sm:justify-center sm:flex-row gap-2">
           <CreateAdventurer
             isActive={activeMenu == 1}
             onEscape={() => setActiveMenu(0)}
             spawn={spawn}
+            startSeason={startSeason}
             goldenTokens={goldenTokens}
             blobertsData={blobertsData}
             gameContract={gameContract}
             getBalances={getBalances}
             costToPlay={costToPlay}
+            lordsDollarValue={lordsDollarValue}
           />
         </div>
       )}

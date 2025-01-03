@@ -9,7 +9,6 @@ import { DeathDialog } from "@/app/components/adventurer/DeathDialog";
 import Player from "@/app/components/adventurer/Player";
 import { StatRemovalWarning } from "@/app/components/adventurer/StatRemovalWarning";
 import TokenLoader from "@/app/components/animations/TokenLoader";
-import { Button } from "@/app/components/buttons/Button";
 import EncounterDialog from "@/app/components/encounters/EnounterDialog";
 import WalletSelect from "@/app/components/intro/WalletSelect";
 import ScreenMenu from "@/app/components/menu/ScreenMenu";
@@ -20,6 +19,7 @@ import Settings from "@/app/components/navigation/Settings";
 import { TxActivity } from "@/app/components/navigation/TxActivity";
 import { NotificationDisplay } from "@/app/components/notifications/NotificationDisplay";
 import { SpecialBeast } from "@/app/components/notifications/SpecialBeast";
+import LoginDialog from "@/app/components/onboarding/LoginDialog";
 import { ProfileDialog } from "@/app/components/profile/ProfileDialog";
 import { Toaster } from "@/app/components/season/toaster";
 import ActionsScreen from "@/app/containers/ActionsScreen";
@@ -30,14 +30,12 @@ import GuideScreen from "@/app/containers/GuideScreen";
 import InterludeScreen from "@/app/containers/InterludeScreen";
 import InventoryScreen from "@/app/containers/InventoryScreen";
 import LeaderboardScreen from "@/app/containers/LeaderboardScreen";
-import Onboarding from "@/app/containers/Onboarding";
 import Profile from "@/app/containers/ProfileScreen";
 import TopUp from "@/app/containers/TopUp";
 import UpgradeScreen from "@/app/containers/UpgradeScreen";
 import { useController } from "@/app/context/ControllerContext";
 import {
   getAdventurerById,
-  getAdventurersByOwner,
   getBattlesByBeast,
   getBeast,
   getItemsByAdventurer,
@@ -58,6 +56,7 @@ import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
 import useTransactionManager from "@/app/hooks/useTransactionManager";
 import useUIStore, { ScreenPage } from "@/app/hooks/useUIStore";
 import { fetchBalances, fetchEthBalance } from "@/app/lib/balances";
+import { gameClient } from "@/app/lib/clients";
 import { VRF_WAIT_TIME } from "@/app/lib/constants";
 import { networkConfig } from "@/app/lib/networkConfig";
 import {
@@ -130,6 +129,7 @@ function Home() {
     (state) => state.setAdventurerEntropy
   );
   const showProfile = useUIStore((state) => state.showProfile);
+  const showLoginDialog = useUIStore((state) => state.showLoginDialog);
   const itemEntropy = useUIStore((state) => state.itemEntropy);
   const setItemEntropy = useUIStore((state) => state.setItemEntropy);
   const openInterlude = useUIStore((state) => state.openInterlude);
@@ -333,6 +333,8 @@ function Home() {
     mintLords,
     withdraw,
     transferAdventurer,
+    startSeason,
+    lordsDollarValue,
   } = useSyscalls({
     gameContract: gameContract!,
     ethContract: ethContract!,
@@ -393,22 +395,6 @@ function Home() {
   const { play, stop } = useMusic(playState, {
     loop: true,
   });
-
-  const ownerVariables = useMemo(() => {
-    return {
-      owner: indexAddress(owner ?? "0x0").toLowerCase(),
-      health: 0,
-      skip: 0,
-    };
-  }, [owner]);
-
-  const adventurersData = useCustomQuery(
-    network,
-    "adventurersByOwnerQuery",
-    getAdventurersByOwner,
-    ownerVariables,
-    owner === ""
-  );
 
   const adventurerVariables = useMemo(() => {
     return {
@@ -494,7 +480,13 @@ function Home() {
     };
   }, [address, network]);
 
+  const client = useMemo(
+    () => gameClient(networkConfig[network!].lsGQLURL),
+    [network]
+  );
+
   const { data: blobertsData } = useQuery(getOwnerTokens, {
+    client,
     variables: blobertTokenVariables,
   });
 
@@ -561,8 +553,6 @@ function Home() {
     ],
     [hasStatUpgrades]
   );
-
-  const adventurers = adventurersData?.adventurers;
 
   useEffect(() => {
     if (adventurer?.id && adventurer.health !== 0) {
@@ -788,7 +778,6 @@ function Home() {
     toast({
       title: "Season 0 is live!",
       description: `Ancient powers have stirred within the depths of the dungeon. The Adventurer's Trial – where legends are born and etched into the scrolls of time.`,
-      action: <Button>Enter Season</Button>,
     });
   }, []);
 
@@ -801,155 +790,140 @@ function Home() {
       <NetworkSwitchError network={network} isWrongNetwork={isWrongNetwork} />
       {isMintingLords && <TokenLoader isToppingUpLords={isMintingLords} />}
       {isWithdrawing && <TokenLoader isWithdrawing={isWithdrawing} />}
-      {screen === "onboarding" ? (
-        <Onboarding
+      <div className="flex flex-col w-full">
+        {specialBeastDefeated && (
+          <SpecialBeast beastsContract={beastsContract!} />
+        )}
+        {topUpDialog && (
+          <TopUp
+            ethBalance={ethBalance}
+            lordsBalance={lordsBalance}
+            costToPlay={costToPlay}
+            mintLords={mintLords}
+            gameContract={gameContract!}
+            lordsContract={lordsContract!}
+            ethContract={ethContract!}
+            showTopUpDialog={showTopUpDialog}
+          />
+        )}
+        {statRemovalWarning && (
+          <StatRemovalWarning
+            statWarning={statRemovalWarning}
+            handleConfirmAction={() => {
+              setStatRemovalWarning("");
+            }}
+          />
+        )}
+        {!spawnLoader && hash && (
+          <div className="sm:hidden">
+            <TxActivity />
+          </div>
+        )}
+        <Header
+          multicall={multicall}
+          mintLords={mintLords}
           ethBalance={ethBalance}
           lordsBalance={lordsBalance}
+          gameContract={gameContract!}
           costToPlay={costToPlay}
-          mintLords={mintLords}
-          getBalances={getBalances}
-          adventurers={adventurers}
         />
-      ) : (
+      </div>
+      <div className="w-full h-1 sm:h-6 sm:my-2 bg-terminal-green text-terminal-black px-4">
+        {!spawnLoader && hash && (
+          <div className="hidden sm:block">
+            <TxActivity />
+          </div>
+        )}
+      </div>
+      <NotificationDisplay />
+
+      {deathDialog && <DeathDialog />}
+      <div className="flex flex-col w-full h-[600px] sm:h-[625px]">
         <>
-          <div className="flex flex-col w-full">
-            {specialBeastDefeated && (
-              <SpecialBeast beastsContract={beastsContract!} />
-            )}
-            {topUpDialog && (
-              <TopUp
-                ethBalance={ethBalance}
-                lordsBalance={lordsBalance}
-                costToPlay={costToPlay}
-                mintLords={mintLords}
-                gameContract={gameContract!}
-                lordsContract={lordsContract!}
-                ethContract={ethContract!}
-                showTopUpDialog={showTopUpDialog}
-              />
-            )}
-            {statRemovalWarning && (
-              <StatRemovalWarning
-                statWarning={statRemovalWarning}
-                handleConfirmAction={() => {
-                  setStatRemovalWarning("");
-                }}
-              />
-            )}
-            {!spawnLoader && hash && (
-              <div className="sm:hidden">
-                <TxActivity />
-              </div>
-            )}
-            <Header
-              multicall={multicall}
-              mintLords={mintLords}
-              ethBalance={ethBalance}
-              lordsBalance={lordsBalance}
-              gameContract={gameContract!}
-              costToPlay={costToPlay}
+          <div className="sm:hidden flex  sm:justify-normal sm:pb-2">
+            <ScreenMenu
+              buttonsData={mobileMenuItems}
+              onButtonClick={(value) => {
+                setScreen(value);
+              }}
+              disabled={mobileMenuDisabled}
+              hideEncounters={
+                adventurerEntropy === BigInt(0) || !adventurer?.id
+              }
             />
           </div>
-          <div className="w-full h-1 sm:h-6 sm:my-2 bg-terminal-green text-terminal-black px-4">
-            {!spawnLoader && hash && (
-              <div className="hidden sm:block">
-                <TxActivity />
+          <div className="hidden sm:block flex justify-center sm:justify-normal sm:pb-2">
+            <ScreenMenu
+              buttonsData={allMenuItems}
+              onButtonClick={(value) => {
+                setScreen(value);
+              }}
+              disabled={allMenuDisabled}
+            />
+          </div>
+
+          <div className="sm:hidden">
+            <MobileHeader />
+          </div>
+          <div className="w-full h-[550px] xl:h-[500px] 2xl:h-[580px]">
+            {screen === "start" && (
+              <AdventurerScreen
+                spawn={spawn}
+                startSeason={startSeason}
+                handleSwitchAdventurer={handleSwitchAdventurer}
+                gameContract={gameContract!}
+                goldenTokens={goldenTokens}
+                blobertsData={blobertsData}
+                getBalances={getBalances}
+                costToPlay={costToPlay}
+                transferAdventurer={transferAdventurer}
+                lordsDollarValue={lordsDollarValue}
+              />
+            )}
+            {screen === "play" && (
+              <ActionsScreen
+                explore={explore}
+                attack={attack}
+                flee={flee}
+                gameContract={gameContract!}
+                beastsContract={beastsContract!}
+              />
+            )}
+            {screen === "inventory" && (
+              <InventoryScreen gameContract={gameContract!} />
+            )}
+            {screen === "leaderboard" && <LeaderboardScreen />}
+            {screen === "upgrade" && (
+              <UpgradeScreen upgrade={upgrade} gameContract={gameContract!} />
+            )}
+            {screen === "profile" && <Profile gameContract={gameContract!} />}
+            {screen === "encounters" && <EncountersScreen />}
+            {screen === "guide" && <GuideScreen />}
+            {screen === "collections leaderboard" && (
+              <CollectionsLeaderboardScreen />
+            )}
+            {screen === "settings" && <Settings />}
+            {screen === "player" && <Player gameContract={gameContract!} />}
+            {screen === "wallet" && <WalletSelect />}
+
+            {encounterTable && <EncounterDialog />}
+
+            {showProfile && (
+              <div className="absolute flex items-center justify-center top-0 right-0 left-0 w-full h-full bg-black/50">
+                <span className="w-full h-full bg-black/50" />
+                <ProfileDialog
+                  withdraw={withdraw}
+                  ethBalance={ethBalance}
+                  lordsBalance={lordsBalance}
+                  ethContractAddress={ethContract!.address}
+                  lordsContractAddress={lordsContract!.address}
+                />
               </div>
             )}
-          </div>
-          <NotificationDisplay />
-
-          {deathDialog && <DeathDialog />}
-          <div className="flex flex-col w-full h-[600px] sm:h-[625px]">
-            <>
-              <div className="sm:hidden flex  sm:justify-normal sm:pb-2">
-                <ScreenMenu
-                  buttonsData={mobileMenuItems}
-                  onButtonClick={(value) => {
-                    setScreen(value);
-                  }}
-                  disabled={mobileMenuDisabled}
-                  hideEncounters={
-                    adventurerEntropy === BigInt(0) || !adventurer?.id
-                  }
-                />
-              </div>
-              <div className="hidden sm:block flex justify-center sm:justify-normal sm:pb-2">
-                <ScreenMenu
-                  buttonsData={allMenuItems}
-                  onButtonClick={(value) => {
-                    setScreen(value);
-                  }}
-                  disabled={allMenuDisabled}
-                />
-              </div>
-
-              <div className="sm:hidden">
-                <MobileHeader />
-              </div>
-              <div className="h-[550px] xl:h-[500px] 2xl:h-[580px]">
-                {screen === "start" && (
-                  <AdventurerScreen
-                    spawn={spawn}
-                    handleSwitchAdventurer={handleSwitchAdventurer}
-                    gameContract={gameContract!}
-                    goldenTokens={goldenTokens}
-                    blobertsData={blobertsData}
-                    getBalances={getBalances}
-                    costToPlay={costToPlay}
-                    transferAdventurer={transferAdventurer}
-                  />
-                )}
-                {screen === "play" && (
-                  <ActionsScreen
-                    explore={explore}
-                    attack={attack}
-                    flee={flee}
-                    gameContract={gameContract!}
-                    beastsContract={beastsContract!}
-                  />
-                )}
-                {screen === "inventory" && (
-                  <InventoryScreen gameContract={gameContract!} />
-                )}
-                {screen === "leaderboard" && <LeaderboardScreen />}
-                {screen === "upgrade" && (
-                  <UpgradeScreen
-                    upgrade={upgrade}
-                    gameContract={gameContract!}
-                  />
-                )}
-                {screen === "profile" && (
-                  <Profile gameContract={gameContract!} />
-                )}
-                {screen === "encounters" && <EncountersScreen />}
-                {screen === "guide" && <GuideScreen />}
-                {screen === "collections leaderboard" && (
-                  <CollectionsLeaderboardScreen />
-                )}
-                {screen === "settings" && <Settings />}
-                {screen === "player" && <Player gameContract={gameContract!} />}
-                {screen === "wallet" && <WalletSelect />}
-
-                {encounterTable && <EncounterDialog />}
-
-                {showProfile && (
-                  <div className="absolute flex items-center justify-center top-0 right-0 left-0 w-full h-full bg-black/50">
-                    <span className="w-full h-full bg-black/50" />
-                    <ProfileDialog
-                      withdraw={withdraw}
-                      ethBalance={ethBalance}
-                      lordsBalance={lordsBalance}
-                      ethContractAddress={ethContract!.address}
-                      lordsContractAddress={lordsContract!.address}
-                    />
-                  </div>
-                )}
-              </div>
-            </>
+            {showLoginDialog && <LoginDialog />}
           </div>
         </>
-      )}
+      </div>
     </>
   );
 }

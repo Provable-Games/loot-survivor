@@ -5,6 +5,7 @@ import { AdventurerClass } from "@/app/lib/classes";
 import { checkArcadeConnector } from "@/app/lib/connectors";
 import { getWaitRetryInterval } from "@/app/lib/constants";
 import { GameData } from "@/app/lib/data/GameData";
+import { networkConfig } from "@/app/lib/networkConfig";
 import {
   DataType,
   getKeyFromValue,
@@ -34,6 +35,7 @@ import {
   AccountInterface,
   CairoOption,
   CairoOptionVariant,
+  CallData,
   Contract,
   InvokeTransactionReceiptResponse,
   ProviderInterface,
@@ -301,6 +303,14 @@ export function createSyscalls({
     };
   };
 
+  const lordsDollarValue = async () => {
+    const result = await pragmaContract.call("get_data_median", [
+      DataType.SpotEntry("1407668255603079598916"),
+    ]);
+    console.log(result);
+    return (result as PragmaPrice).price;
+  };
+
   const executeSpawn = async (formData: FormData, spawnCalls: Call[]) => {
     startLoading(
       "Create",
@@ -412,6 +422,7 @@ export function createSyscalls({
 
   const addApprovalCalls = (
     spawnCalls: Call[],
+    approveAddress: string,
     dollarPrice: bigint,
     freeVRF: boolean,
     costToPlay?: number,
@@ -424,11 +435,7 @@ export function createSyscalls({
           {
             contractAddress: ethContract?.address ?? "",
             entrypoint: "approve",
-            calldata: [
-              gameContract?.address ?? "",
-              dollarPrice.toString(),
-              "0",
-            ],
+            calldata: [approveAddress, dollarPrice.toString(), "0"],
           },
         ]),
     ...(goldenTokenId === "0" && blobertTokenId === "0"
@@ -436,11 +443,7 @@ export function createSyscalls({
           {
             contractAddress: lordsContract?.address ?? "",
             entrypoint: "approve",
-            calldata: [
-              gameContract?.address ?? "",
-              costToPlay!.toString(),
-              "0",
-            ],
+            calldata: [approveAddress, costToPlay!.toString(), "0"],
           },
         ]
       : []),
@@ -494,6 +497,7 @@ export function createSyscalls({
 
       spawnCalls = addApprovalCalls(
         spawnCalls,
+        gameContract?.address ?? "",
         dollarPrice,
         freeVRF,
         costToPlay,
@@ -1619,20 +1623,27 @@ export function createSyscalls({
     const enterTournamentTx = {
       contractAddress: tournamentContractAddress,
       entrypoint: "enter_tournament",
-      calldata: ["1", new CairoOption(CairoOptionVariant.None)],
+      calldata: CallData.compile([
+        networkConfig[network!].tournamentId,
+        new CairoOption(CairoOptionVariant.None),
+      ]),
     };
+
+    const tournamentId = networkConfig[network!].tournamentId;
 
     const startTournamentTx = {
       contractAddress: tournamentContractAddress,
       entrypoint: "start_tournament",
-      calldata: [
-        "1",
-        "0",
+      calldata: CallData.compile([
+        tournamentId,
+        false,
         new CairoOption(CairoOptionVariant.Some, 1),
         selectedRevenueAddress,
-        [goldenTokenId, "0"],
-        [blobertTokenId, "0"],
-      ],
+        goldenTokenId !== "0" ? [goldenTokenId, "0"] : "0",
+        blobertTokenId !== "0" ? [blobertTokenId, "0"] : "0",
+        getKeyFromValue(gameData.ITEMS, formData.startingWeapon) ?? "",
+        stringToFelt(formData.name).toString(),
+      ]),
     };
 
     addToCalls(enterTournamentTx);
@@ -1641,7 +1652,7 @@ export function createSyscalls({
 
     if (!onKatana) {
       const { enoughEth, enoughLords, dollarPrice } = await checkBalances(
-        costToPlay! + seasonCost!
+        (costToPlay ?? 0) + (seasonCost ?? 0)
       );
 
       if (!enoughEth && !freeVRF) {
@@ -1653,9 +1664,10 @@ export function createSyscalls({
 
       spawnCalls = addApprovalCalls(
         spawnCalls,
+        tournamentContractAddress,
         dollarPrice,
         freeVRF,
-        costToPlay! + seasonCost!,
+        (costToPlay ?? 0) + (seasonCost ?? 0),
         goldenTokenId,
         blobertTokenId
       );
@@ -1769,6 +1781,18 @@ export function createSyscalls({
     }
   };
 
+  // const updateAdventurerName = async (
+  //   account: AccountInterface,
+  //   adventurerId: number,
+  //   newName: string
+  // ) => {
+  //   const updateAdventurerName = {
+  //     contractAddress: gameContract?.address ?? "",
+  //     entrypoint: "update_adventurer_name",
+  //     calldata: [adventurerId.toString(), newName],
+  //   };
+  // };
+
   return {
     spawn,
     explore,
@@ -1780,6 +1804,7 @@ export function createSyscalls({
     withdraw,
     transferAdventurer,
     startSeason,
+    lordsDollarValue,
   };
 }
 

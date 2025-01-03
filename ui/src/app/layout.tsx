@@ -9,7 +9,7 @@ import { setup } from "@/app/dojo/setup";
 import "@/app/globals.css";
 import Head from "@/app/head";
 import useUIStore from "@/app/hooks/useUIStore";
-import { gameClient } from "@/app/lib/clients";
+import { gameClient, tournamentClient } from "@/app/lib/clients";
 import { StarknetProvider } from "@/app/provider";
 import { ApolloProvider } from "@apollo/client";
 import { BurnerManager } from "@dojoengine/create-burner";
@@ -83,11 +83,17 @@ export default function RootLayout({
           </main>
         ) : (
           <ApolloProvider client={gameClient(networkConfig[network].lsGQLURL!)}>
-            <ControllerProvider>
-              <StarknetProvider network={network}>
-                <DojoProvider value={setupResult}>{children}</DojoProvider>
-              </StarknetProvider>
-            </ControllerProvider>
+            <ApolloProvider
+              client={tournamentClient(
+                networkConfig[network].tournamentGQLURL!
+              )}
+            >
+              <ControllerProvider>
+                <StarknetProvider network={network}>
+                  <DojoProvider value={setupResult}>{children}</DojoProvider>
+                </StarknetProvider>
+              </ControllerProvider>
+            </ApolloProvider>
           </ApolloProvider>
         )}
       </body>

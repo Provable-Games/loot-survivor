@@ -1,5 +1,3 @@
-import Image from "next/image";
-import { Button } from "@/app/components/buttons/Button";
 import {
   BladeIcon,
   BludgeonIcon,
@@ -48,56 +46,32 @@ export const WeaponSelect = ({
       icon: <BludgeonIcon />,
     },
   ];
-  const handleWeaponSelectionMobile = (weapon: string) => {
-    setFormData({ ...formData, startingWeapon: weapon });
-    setStep(step + 1);
-  };
+  // const handleWeaponSelectionMobile = (weapon: string) => {
+  //   setFormData({ ...formData, startingWeapon: weapon });
+  //   setStep(step + 1);
+  // };
   const handleWeaponSelectionDesktop = (weapon: string) => {
     setFormData({ ...formData, startingWeapon: weapon });
   };
 
   return (
-    <div className="w-full p-4 2xl:flex 2xl:flex-col 2xl:gap-2 2xl:h-1/2">
-      <h3 className="uppercase text-center 2xl:text-5xl h-1/6 m-0 sm:mb-3">
-        Choose your weapon
-      </h3>
-      <div className="grid grid-cols-2 sm:flex flex-wrap sm:flex-row sm:justify-between gap-2 md:gap-5 h-5/6">
+    <div className="w-full flex flex-col items-center gap-2">
+      <p className="uppercase text-2xl m-0 text-terminal-green/75 no-text-shadow">
+        Choose Weapon
+      </p>
+      <div className="flex flex-row gap-2 h-full">
         {weapons.map((weapon) => (
           <div
             key={weapon.name}
-            className={`flex flex-col items-center border sm:w-56 md:w-48 2xl:w-64 2xl:h-64 ${
+            className={`flex flex-col gap-1 items-center justify-center w-20 sm:w-28 hover:cursor-pointer hover:bg-terminal-green hover:text-terminal-black p-1 sm:p-2 ${
               formData.startingWeapon == weapon.name
-                ? "border-terminal-yellow"
-                : "border-terminal-green"
+                ? "bg-terminal-green text-terminal-black"
+                : "border border-terminal-green"
             }`}
+            onClick={() => handleWeaponSelectionDesktop(weapon.name)}
           >
-            <div className="relative w-28 h-28 2xl:w-40 2xl:h-48">
-              <Image
-                src={weapon.image}
-                fill={true}
-                alt={weapon.name}
-                className="object-contains"
-                sizes="100%"
-              />
-            </div>
-            <div className="flex items-center pb-2 sm:pb-2 md:pb-4 text-base sm:text-md">
-              <div className="w-4">{weapon.icon}</div>
-              <p className="ml-2">{weapon.description}</p>
-            </div>
-            <Button
-              className="sm:hidden w-full mt-auto"
-              disabled={formData.startingWeapon == weapon.name}
-              onClick={() => handleWeaponSelectionMobile(weapon.name)}
-            >
-              {weapon.name}
-            </Button>
-            <Button
-              className={`hidden sm:block w-full  mt-auto`}
-              disabled={formData.startingWeapon == weapon.name}
-              onClick={() => handleWeaponSelectionDesktop(weapon.name)}
-            >
-              {weapon.name}
-            </Button>
+            <div className="w-4">{weapon.icon}</div>
+            <p className="uppercase text-sm sm:text-lg">{weapon.name}</p>
           </div>
         ))}
       </div>

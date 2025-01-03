@@ -242,6 +242,19 @@ const getAdventurersInList = gql`
   }
 `;
 
+const getAdventurersInListByXP = gql`
+  ${ADVENTURERS_FRAGMENT}
+  query get_adventurer_by_id($ids: [FeltValue!]) {
+    adventurers(
+      where: { id: { In: $ids } }
+      limit: 1000
+      orderBy: { xp: { desc: true } }
+    ) {
+      ...AdventurerFields
+    }
+  }
+`;
+
 const getDeadAdventurersByXPPaginated = gql`
   ${ADVENTURERS_FRAGMENT}
   query get_dead_adventurers_by_xp_paginated($skip: Int) {
@@ -483,6 +496,51 @@ const getOwnerTokens = gql`
   }
 `;
 
+const getTournamentGames = gql`
+  query getTournamentGames($tournamentId: String) {
+    lsTournamentsV0TournamentGameModels(
+      where: { tournament_id: $tournamentId }
+      limit: 1000
+    ) {
+      edges {
+        node {
+          tournament_id
+          address
+          game_id
+        }
+      }
+    }
+  }
+`;
+
+const getTournamentPrizes = gql`
+  query getTournamentPrizes($tournamentId: String) {
+    lsTournamentsV0TournamentPrizeModels(
+      where: { tournament_id: $tournamentId }
+      limit: 1000
+      order: { field: PAYOUT_POSITION, direction: ASC }
+    ) {
+      edges {
+        node {
+          tournament_id
+          prize_key
+          payout_position
+          token
+          token_data_type {
+            option
+            erc20 {
+              token_amount
+            }
+            erc721 {
+              token_id
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 export {
   getAdventurerById,
   getAdventurerCounts,
@@ -490,6 +548,7 @@ export {
   getAdventurersByOwner,
   getAdventurersByOwnerCount,
   getAdventurersInList,
+  getAdventurersInListByXP,
   getAliveAdventurersByXPPaginated,
   getAliveAdventurersCount,
   getBattlesByBeast,
@@ -506,4 +565,6 @@ export {
   getLatestMarketItems,
   getOwnerTokens,
   getScoresInList,
+  getTournamentGames,
+  getTournamentPrizes,
 };
