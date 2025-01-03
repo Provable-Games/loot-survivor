@@ -199,6 +199,7 @@ export const CreateAdventurer = ({
             getBalances={getBalances}
             costToPlay={costToPlay}
             lordsValue={lordsValue}
+            tournamentPrizes={tournamentPrizes}
           />
         </div>
       )}

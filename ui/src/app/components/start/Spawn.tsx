@@ -36,6 +36,7 @@ export interface SpawnProps {
   getBalances: () => Promise<void>;
   costToPlay: bigint;
   lordsValue: bigint;
+  tournamentPrizes: any;
 }
 
 export const Spawn = ({
@@ -49,6 +50,7 @@ export const Spawn = ({
   getBalances,
   costToPlay,
   lordsValue,
+  tournamentPrizes,
 }: SpawnProps) => {
   const [paymentInitiated, setPaymentInitiated] = useState(false);
   const [formFilled, setFormFilled] = useState(false);
@@ -308,7 +310,10 @@ export const Spawn = ({
                     </div>
                     <div className="hidden relative sm:flex flex-row items-center justify-start w-1/3">
                       <PlusIcon className="absolute left-[-50px] w-10 text-terminal-green/75" />
-                      <SeasonDetails />
+                      <SeasonDetails
+                        prizes={tournamentPrizes}
+                        lordsValue={lordsValue}
+                      />
                     </div>
                   </div>
                   <div className="relative flex flex-row sm:hidden w-full h-full">
@@ -317,7 +322,10 @@ export const Spawn = ({
                     </div>
                     <PlusIcon className="absolute left-1/2 top-1/3 -translate-x-1/2 w-8 text-terminal-yellow" />
                     <div className="w-1/2">
-                      <SeasonDetails />
+                      <SeasonDetails
+                        prizes={tournamentPrizes}
+                        lordsValue={lordsValue}
+                      />
                     </div>
                   </div>
                 </>

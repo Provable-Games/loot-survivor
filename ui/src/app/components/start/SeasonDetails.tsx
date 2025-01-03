@@ -1,7 +1,13 @@
 import { TournamentTrophyIcon } from "@/app/components/icons/Icons";
 import Lords from "public/icons/lords.svg";
 
-const SeasonTable = () => {
+interface SeasonDetailsProps {
+  prizes: any;
+  lordsValue: any;
+}
+
+const SeasonTable = ({ prizes, lordsValue }: SeasonDetailsProps) => {
+  const formattedPrizes = prizes.lsTournamentsV0TournamentPrizeModels.edges;
   return (
     <div className="flex flex-col sm:gap-2 items-center w-full">
       <span className="text-2xl sm:text-4xl uppercase text-terminal-yellow">
@@ -26,7 +32,15 @@ const SeasonTable = () => {
           <div className="flex flex-row gap-2 items-center">
             <div className="flex flex-row gap-1 items-center">
               <Lords className="self-center w-5 h-5 fill-current" />
-              <p className="text-2xl">$50</p>
+              <p className="text-2xl">
+                $
+                {(
+                  (formattedPrizes[0].node.token_data_type.erc20?.token_amount *
+                    Number(lordsValue)) /
+                  10 ** 8 /
+                  10 ** 18
+                ).toFixed(2)}
+              </p>
             </div>
           </div>
         </div>
@@ -40,7 +54,15 @@ const SeasonTable = () => {
           <div className="flex flex-row gap-2 items-center">
             <div className="flex flex-row gap-1 items-center">
               <Lords className="self-center w-5 h-5 fill-current" />
-              <p className="text-2xl">$33</p>
+              <p className="text-2xl">
+                $
+                {(
+                  (formattedPrizes[1].node.token_data_type.erc20?.token_amount *
+                    Number(lordsValue)) /
+                  10 ** 8 /
+                  10 ** 18
+                ).toFixed(2)}
+              </p>
             </div>
           </div>
         </div>
@@ -54,7 +76,15 @@ const SeasonTable = () => {
           <div className="flex flex-row gap-2 items-center">
             <div className="flex flex-row gap-1 items-center">
               <Lords className="self-center w-5 h-5 fill-current" />
-              <p className="text-2xl">$17</p>
+              <p className="text-2xl">
+                $
+                {(
+                  (formattedPrizes[2].node.token_data_type.erc20?.token_amount *
+                    Number(lordsValue)) /
+                  10 ** 8 /
+                  10 ** 18
+                ).toFixed(2)}
+              </p>
             </div>
           </div>
         </div>
@@ -63,13 +93,13 @@ const SeasonTable = () => {
   );
 };
 
-const SeasonDetails = () => {
+const SeasonDetails = ({ prizes, lordsValue }: SeasonDetailsProps) => {
   return (
     <>
       <div
         className={`flex-col items-center justify-center sm:gap-10 gap-5 w-full sm:w-1/2 no-text-shadow flex`}
       >
-        <SeasonTable />
+        <SeasonTable prizes={prizes} lordsValue={lordsValue} />
       </div>
       {/* {showPaymentDetails && (
         <div
