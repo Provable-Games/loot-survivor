@@ -152,7 +152,7 @@ export const CreateAdventurer = ({
             </h3>
             <p className="w-5/6 sm:text-xl text-center">
               Introducing onchain seasons for Loot Survivor. This is the first
-              weekly season with a prize pool of $100 LORDS.
+              weekly season with a prize pool of:
             </p>
             <div className="w-full sm:w-3/4">
               {tournamentPrizes && (
