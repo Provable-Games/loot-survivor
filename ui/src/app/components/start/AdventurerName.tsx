@@ -1,21 +1,14 @@
-import { useState, ChangeEvent } from "react";
-import { Button } from "@/app/components/buttons/Button";
 import { FormData } from "@/app/types";
+import { ChangeEvent, useState } from "react";
 
 export interface AdventurerNameProps {
   setFormData: (data: FormData) => void;
   formData: FormData;
-  handleBack: () => void;
-  step: number;
-  setStep: (step: number) => void;
 }
 
 export const AdventurerName = ({
   setFormData,
   formData,
-  handleBack,
-  step,
-  setStep,
 }: AdventurerNameProps) => {
   const [isMaxLength, setIsMaxLength] = useState(false);
 
@@ -34,54 +27,24 @@ export const AdventurerName = ({
     }
   };
 
-  const handleNameEntry = (name: string) => {
-    setFormData({ ...formData, name: name });
-    setTimeout(() => {
-      setStep(step + 1);
-    }, 1000);
-  };
-
   return (
     <>
-      <div className="sm:w-3/4 text-center p-4 uppercase 2xl:flex 2xl:flex-col 2xl:gap-5 2xl:h-1/2">
-        <h3 className="2xl:text-5xl">Enter adventurer name</h3>
-        <div className="relative items-center flex flex-col gap-2">
-          <input
-            type="text"
-            name="name"
-            onChange={handleChange}
-            className="p-1 m-2 2xl:h-16 2xl:w-64 2xl:text-4xl bg-terminal-black border border-terminal-green animate-pulse transform"
-            maxLength={31}
-          />
-          {isMaxLength && (
-            <p className="absolute top-10 sm:top-20">MAX LENGTH!</p>
-          )}
-        </div>
-        <div className="sm:hidden flex flex-row justify-between">
-          <Button size={"sm"} onClick={handleBack}>
-            Back
-          </Button>
-          <Button
-            size={"sm"}
-            disabled={
-              !formData.startingWeapon || !formData.name || formData.name === ""
-            }
-            onClick={() => handleNameEntry(formData.name)}
-          >
-            Next
-          </Button>
-        </div>
-        <div className="hidden sm:flex items-center justify-center">
-          <Button
-            size={"lg"}
-            disabled={
-              !formData.startingWeapon || !formData.name || formData.name === ""
-            }
-            onClick={() => handleNameEntry(formData.name)}
-          >
-            Next
-          </Button>
-        </div>
+      <div className="relative w-3/4 sm:w-1/3 flex flex-col items-center uppercase flex flex-col sm:gap-2">
+        <p className="uppercase text-center text-2xl m-0 text-terminal-green/75 no-text-shadow">
+          Name
+        </p>
+        <input
+          type="text"
+          name="name"
+          onChange={handleChange}
+          className="p-1 h-12 w-full text-2xl bg-terminal-black border border-terminal-green animate-pulse transform"
+          maxLength={31}
+        />
+        {isMaxLength && (
+          <p className="absolute bottom-[-30px] text-red-500 no-text-shadow">
+            MAX LENGTH!
+          </p>
+        )}
       </div>
     </>
   );

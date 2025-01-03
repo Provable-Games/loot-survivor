@@ -1,12 +1,14 @@
-import { useState, useMemo } from "react";
 import { Button } from "@/app/components/buttons/Button";
-import { getDeadAdventurersByXPPaginated } from "@/app/hooks/graphql/queries";
-import { Adventurer, Score } from "@/app/types";
-import ScoreRow from "@/app/components/leaderboard/ScoreRow";
-import useUIStore from "@/app/hooks/useUIStore";
-import { getScoresInList } from "@/app/hooks/graphql/queries";
-import useCustomQuery from "@/app/hooks/useCustomQuery";
 import LootIconLoader from "@/app/components/icons/Loader";
+import ScoreRow from "@/app/components/leaderboard/ScoreRow";
+import {
+  getDeadAdventurersByXPPaginated,
+  getScoresInList,
+} from "@/app/hooks/graphql/queries";
+import useCustomQuery from "@/app/hooks/useCustomQuery";
+import useUIStore from "@/app/hooks/useUIStore";
+import { Adventurer, Score } from "@/app/types";
+import { useMemo, useState } from "react";
 
 export interface ScoreLeaderboardTableProps {
   itemsPerPage: number;
@@ -110,8 +112,8 @@ const ScoreLeaderboardTable = ({
           <div className="relative flex flex-col w-full sm:mr-4 flex-grow-2 p-2 gap-2">
             {adventurers.length > 0 ? (
               <>
-                <h4 className="text-2xl text-center sm:text-2xl m-0">
-                  Leaderboard
+                <h4 className="text-2xl text-center sm:text-2xl m-0 uppercase">
+                  Global Leaderboard
                 </h4>
                 <table className="w-full sm:text-lg xl:text-xl border border-terminal-green">
                   <thead className="border border-terminal-green">

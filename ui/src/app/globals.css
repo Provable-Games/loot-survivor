@@ -378,3 +378,7 @@ body::-webkit-scrollbar-thumb,
 .animate-slide-out {
   animation: slideOut 0.5s ease-in forwards;
 }
+
+.no-text-shadow {
+  text-shadow: none;
+}

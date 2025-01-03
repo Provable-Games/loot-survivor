@@ -125,3 +125,5 @@ export const payouts = {
   clientProvider: 0.27,
   creator: 0.2,
 };
+
+export const seasonCost = 4000000000000000000;

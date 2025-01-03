@@ -1,4 +1,3 @@
-import { getApibaraStatus } from "@/app/api/api";
 import { Button } from "@/app/components/buttons/Button";
 import {
   CartIcon,
@@ -8,7 +7,6 @@ import {
   SoundOffIcon,
   SoundOnIcon,
 } from "@/app/components/icons/Icons";
-import ApibaraStatus from "@/app/components/navigation/ApibaraStatus";
 import TransactionCart from "@/app/components/navigation/TransactionCart";
 import TransactionHistory from "@/app/components/navigation/TransactionHistory";
 import { useController } from "@/app/context/ControllerContext";
@@ -70,7 +68,6 @@ export default function Header({
   const { disconnect } = useDisconnect();
   const resetData = useQueriesStore((state) => state.resetData);
   const { connector } = useConnect();
-  const [apibaraStatus, setApibaraStatus] = useState();
   const username = useUIStore((state) => state.username);
 
   const isMuted = useUIStore((state) => state.isMuted);
@@ -88,6 +85,7 @@ export default function Header({
   const handleOffboarded = useUIStore((state) => state.handleOffboarded);
   const setLoginScreen = useUIStore((state) => state.setLoginScreen);
   const setShowProfile = useUIStore((state) => state.setShowProfile);
+  const setShowLoginDialog = useUIStore((state) => state.setShowLoginDialog);
 
   const calls = useTransactionCartStore((state) => state.calls);
   const txInCart = calls.length > 0;
@@ -101,16 +99,7 @@ export default function Header({
 
   const lordsGameCost = Number(costToPlay);
 
-  const handleApibaraStatus = async () => {
-    const data = await getApibaraStatus();
-    setApibaraStatus(data.status.indicator);
-  };
-
   const checkCartridge = checkCartridgeConnector(connector);
-
-  useEffect(() => {
-    handleApibaraStatus();
-  }, []);
 
   const [notification, setNotification] = useState<any[]>([]);
   const [loadingMessage, setLoadingMessage] = useState<string[]>([]);
@@ -355,7 +344,6 @@ export default function Header({
         >
           Prescience
         </Button>
-        <ApibaraStatus status={apibaraStatus} />
         <Button
           size={"xs"}
           variant={"outline"}
@@ -488,13 +476,17 @@ export default function Header({
               variant={"outline"}
               size={"sm"}
               onClick={() => {
-                if (!onKatana) {
-                  setShowProfile(true);
+                if (account) {
+                  if (!onKatana) {
+                    setShowProfile(true);
+                  } else {
+                    disconnect();
+                    resetData();
+                    setAdventurer(NullAdventurer);
+                    setNetwork(undefined);
+                  }
                 } else {
-                  disconnect();
-                  resetData();
-                  setAdventurer(NullAdventurer);
-                  setNetwork(undefined);
+                  setShowLoginDialog(true);
                 }
               }}
               className="xl:px-5 p-0 hover:bg-terminal-green hover:text-terminal-black"
@@ -545,13 +537,17 @@ export default function Header({
               variant={"outline"}
               size={"sm"}
               onClick={() => {
-                if (!onKatana) {
-                  setShowProfile(true);
+                if (account) {
+                  if (!onKatana) {
+                    setShowProfile(true);
+                  } else {
+                    disconnect();
+                    resetData();
+                    setAdventurer(NullAdventurer);
+                    setNetwork(undefined);
+                  }
                 } else {
-                  disconnect();
-                  resetData();
-                  setAdventurer(NullAdventurer);
-                  setNetwork(undefined);
+                  setShowLoginDialog(true);
                 }
               }}
               className="xl:px-5 hover:bg-terminal-green hover:text-terminal-black"

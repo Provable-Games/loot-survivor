@@ -1,16 +1,15 @@
 "use client";
-import React from "react";
+import { cartridgeConnector } from "@/app/lib/connectors";
+import { Chain, mainnet, sepolia } from "@starknet-react/chains";
 import {
+  jsonRpcProvider,
   StarknetConfig,
   starkscan,
-  jsonRpcProvider,
+  useInjectedConnectors,
 } from "@starknet-react/core";
-import { mainnet, sepolia } from "@starknet-react/chains";
-import { Chain } from "@starknet-react/chains";
-import { networkConfig } from "./lib/networkConfig";
+import React from "react";
 import { Network } from "./hooks/useUIStore";
-import { useInjectedConnectors } from "@starknet-react/core";
-import { cartridgeConnector } from "@/app/lib/connectors";
+import { networkConfig } from "./lib/networkConfig";
 
 export function StarknetProvider({
   children,
@@ -42,6 +41,7 @@ export function StarknetProvider({
           networkConfig[network!].gameAddress,
           networkConfig[network!].lordsAddress,
           networkConfig[network!].ethAddress,
+          networkConfig[network!].tournamentAddress,
           networkConfig[network!].rpcUrl
         ),
       ]}

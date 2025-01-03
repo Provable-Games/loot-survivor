@@ -3,6 +3,7 @@ export const networkConfig = {
     rpcUrl:
       "https://starknet-sepolia.blastapi.io/5ef61753-e7c1-4593-bc62-97fdf96f8de5",
     lsGQLURL: "https://ls-indexer-sepolia.provable.games/graphql",
+    tournamentGQLURL: "",
     blastUrl:
       "https://starknet-mainnet.blastapi.io/5ef61753-e7c1-4593-bc62-97fdf96f8de5",
     ethAddress:
@@ -22,6 +23,8 @@ export const networkConfig = {
     pragmaAddress:
       "0x036031daa264c24520b11d93af622c848b2499b66b41d611bac95e13cfca131a",
     rendererAddress: "0x0",
+    tournamentAddress: "0x0",
+    tournamentId: "0",
     appUrl: "https://sepolia.lootsurvivor.io",
     beastsViewer: "https://testnet.realms.world/collection/beasts",
     goldenTokenMintUrl: "https://testnet.realms.world/collection/goldenToken",
@@ -36,6 +39,8 @@ export const networkConfig = {
   mainnet: {
     rpcUrl: "https://api.cartridge.gg/x/starknet/mainnet",
     lsGQLURL: "https://ls-indexer-sepolia.provable.games/graphql",
+    tournamentGQLURL:
+      "https://api.cartridge.gg/x/realms-world-04/torii/graphql",
     blastUrl:
       "https://starknet-mainnet.blastapi.io/5ef61753-e7c1-4593-bc62-97fdf96f8de5",
     ethAddress:
@@ -59,6 +64,9 @@ export const networkConfig = {
     pragmaAddress:
       "0x2a85bd616f912537c50a49a4076db02c00b29b2cdc8a197ce92ed1837fa875b",
     rendererAddress: "0x0",
+    tournamentAddress:
+      "0x0497bc529e17e59e0924c0a1f9671c7a66208508b731a79373eacfb17ecc7c08",
+    tournamentId: "0x6",
     appUrl: "https://lootsurvivor.io/",
     beastsViewer:
       "https://market.realms.world/token/0x0158160018d590d93528995b340260e65aedd76d28a686e9daa5c4e8fad0c5dd",
@@ -75,6 +83,7 @@ export const networkConfig = {
   katana: {
     rpcUrl: "https://ls-katana.provable.games:5443/",
     lsGQLURL: "https://ls-katana.provable.games:8080/graphql",
+    tournamentGQLURL: "",
     blastUrl: "",
     ethAddress: "0x0",
     gameAddress:
@@ -86,6 +95,8 @@ export const networkConfig = {
     revenueAddresses: ["0x0"],
     pragmaAddress: "0x0",
     rendererAddress: "0x0",
+    tournamentAddress: "0x0",
+    tournamentId: "0",
     appUrl: "https://lootsurvivor.io",
     beastsViewer: "",
     goldenTokenMintUrl: "",
@@ -104,6 +115,7 @@ export const networkConfig = {
     rpcUrl: "http://localhost:5050",
     rpcAPIKey: "",
     lsGQLURL: "http://localhost:8080/graphql",
+    tournamentGQLURL: "",
     blastUrl: "",
     ethAddress: "0x0",
     gameAddress:
@@ -115,6 +127,8 @@ export const networkConfig = {
     revenueAddresses: ["0x0"],
     pragmaAddress: "0x0",
     rendererAddress: "0x0",
+    tournamentAddress: "0x0",
+    tournamentId: "0",
     appUrl: "http://localhost:3000/",
     beastsViewer: "",
     goldenTokenMintUrl: "",

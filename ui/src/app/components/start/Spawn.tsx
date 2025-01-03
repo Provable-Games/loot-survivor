@@ -1,9 +1,8 @@
-import NftCard from "@/app/components/adventurer/NftCard";
-import SpriteAnimation from "@/app/components/animations/SpriteAnimation";
 import { Button } from "@/app/components/buttons/Button";
-import { DownArrowIcon, ProfileIcon } from "@/app/components/icons/Icons";
+import { DownArrowIcon, PlusIcon } from "@/app/components/icons/Icons";
 import { TxActivity } from "@/app/components/navigation/TxActivity";
 import PaymentDetails from "@/app/components/start/PaymentDetails";
+import SeasonDetails from "@/app/components/start/SeasonDetails";
 import { getDeadAdventurersByXPPaginated } from "@/app/hooks/graphql/queries";
 import useCustomQuery from "@/app/hooks/useCustomQuery";
 import useLoadingStore from "@/app/hooks/useLoadingStore";
@@ -29,30 +28,33 @@ export interface SpawnProps {
     revenueAddresses: string[],
     costToPlay?: number
   ) => Promise<void>;
+  startSeason: (...args: any[]) => any;
   handleBack: () => void;
   goldenTokens: number[];
   blobertsData: any;
   gameContract: Contract;
   getBalances: () => Promise<void>;
   costToPlay: bigint;
+  lordsValue: bigint;
 }
 
 export const Spawn = ({
   formData,
   spawn,
+  startSeason,
   handleBack,
   goldenTokens,
   blobertsData,
   gameContract,
   getBalances,
   costToPlay,
+  lordsValue,
 }: SpawnProps) => {
   const [paymentInitiated, setPaymentInitiated] = useState(false);
   const [formFilled, setFormFilled] = useState(false);
   const [usableGoldenToken, setUsableGoldenToken] = useState<string>("0");
   const [usableBlobertToken, setUsableBlobertToken] = useState<string>("0");
   const [isHoveringLords, setIsHoveringLords] = useState(false);
-  const [showPaymentDetails, setShowPaymentDetails] = useState(false);
   const isWrongNetwork = useUIStore((state) => state.isWrongNetwork);
   const loading = useLoadingStore((state) => state.loading);
   const estimatingFee = useUIStore((state) => state.estimatingFee);
@@ -128,7 +130,7 @@ export const Spawn = ({
     if (tournamentEnded) {
       getUsableBlobertToken(blobertTokenIds ?? []);
     }
-  }, []);
+  }, [goldenTokens, blobertTokenIds]);
 
   const handlePayment = async (goldenToken: boolean, blobertToken: boolean) => {
     spawnPlay();
@@ -137,6 +139,27 @@ export const Spawn = ({
     setPaymentInitiated(true);
     try {
       await spawn(
+        formData,
+        goldenToken ? usableGoldenToken : "0",
+        blobertToken && tournamentEnded ? usableBlobertToken : "0",
+        networkConfig[network!].revenueAddresses,
+        lordsGameCost
+      );
+      await getBalances();
+      setPaymentInitiated(false);
+    } catch (error) {
+      console.error(error);
+      setPaymentInitiated(false);
+    }
+  };
+
+  const enterSeason = async (goldenToken: boolean, blobertToken: boolean) => {
+    spawnPlay();
+    coinPlay();
+    resetNotification();
+    setPaymentInitiated(true);
+    try {
+      await startSeason(
         formData,
         goldenToken ? usableGoldenToken : "0",
         blobertToken && tournamentEnded ? usableBlobertToken : "0",
@@ -171,7 +194,7 @@ export const Spawn = ({
       <span className="sm:hidden absolute top-0 h-20 w-full">
         <TxActivity />
       </span>
-      <div className="flex flex-col h-full p-2">
+      <div className="flex flex-col h-full sm:p-2">
         {paymentInitiated ? (
           <>
             <Image
@@ -195,154 +218,106 @@ export const Spawn = ({
           </>
         ) : (
           <>
-            <div className="absolute inset-0 bg-black" />
-            <div className="absolute inset-0 left-0 right-0 flex flex-col items-center text-center gap-4 z-10 p-5 sm:p-20">
+            <Image
+              className="mx-auto absolute object-cover sm:py-4 sm:px-8"
+              src={"/scenes/intro/beast.png"}
+              alt="adventurer facing beast"
+              fill
+            />
+            <div className="absolute inset-0 bg-black opacity-60" />
+            <div className="absolute inset-0 left-0 right-0 flex flex-col items-center text-center gap-4 z-10 sm:py-10 sm:px-20 mt-5 sm:mt-0">
               {!onKatana ? (
                 <>
-                  <div className="flex flex-row w-full h-full">
-                    {!showPaymentDetails && (
-                      <div className="flex flex-col gap-5 items-center justify-start sm:justify-center w-full sm:w-1/4 h-full pt-20 sm:p-0">
-                        <h1 className="m-0 text-6xl uppercase">
-                          Click To Play
-                        </h1>
-
-                        <div
-                          className="border-8 border-terminal-green w-3/4 h-1/2 cursor-pointer shadow-xl"
-                          onMouseEnter={() => setIsHoveringLords(true)}
-                          onMouseLeave={() => setIsHoveringLords(false)}
-                          onClick={() => {
-                            handlePayment(
-                              usableGoldenToken !== "0",
-                              usableBlobertToken !== "0"
-                            );
-                          }}
-                        >
-                          <div className="flex flex-row h-full">
-                            <div className="w-1/4 border-[15px] border-terminal-green bg-terminal-black" />
-                            <div
-                              className={`flex flex-col sm:gap-2 justify-center w-3/4 p-2 uppercase ${
-                                isHoveringLords
-                                  ? "text-terminal-black bg-terminal-green animate-pulseFast"
-                                  : "bg-terminal-green/20"
-                              }`}
-                            >
-                              {usableGoldenToken !== "0" ? (
-                                <span className="relative h-40 w-full">
-                                  <Image
-                                    src="/golden-token.png"
-                                    alt="golden-token"
-                                    fill
-                                  />
-                                </span>
-                              ) : usableBlobertToken !== "0" ? (
-                                <span className="relative h-48 w-full">
-                                  <Image
-                                    src="/blobert.png"
-                                    alt="blobert"
-                                    fill
-                                  />
-                                </span>
-                              ) : (
-                                <span className="flex flex-row gap-1 items-center justify-center">
-                                  <Lords className="self-center w-24 h-24 fill-current" />
-                                  <p className="text-6xl no-text-shadow">
-                                    {formatLords(lordsGameCost)}
-                                  </p>
-                                </span>
-                              )}
-                              <span className="relative h-40 w-full">
-                                <Image
-                                  src={
-                                    usableGoldenToken !== "0"
-                                      ? isHoveringLords
-                                        ? "/insert-golden-token-hover.png"
-                                        : "/insert-golden-token.png"
-                                      : usableBlobertToken !== "0"
-                                      ? isHoveringLords
-                                        ? "/insert-blobert-hover.png"
-                                        : "/insert-blobert.png"
-                                      : isHoveringLords
-                                      ? "/insert-lords-hover.png"
-                                      : "/insert-lords.png"
-                                  }
-                                  alt="insert-lords"
-                                  fill
-                                />
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                  <div className="flex flex-col gap-5 items-center w-1/3">
+                    <h1 className="m-0 text-4xl uppercase">Play</h1>
                     <div
-                      className={`${
-                        showPaymentDetails ? "flex" : "hidden sm:flex"
-                      } items-center justify-center w-full sm:w-1/2`}
+                      className="border-8 border-terminal-green w-[150px] h-[150px] sm:w-[200px] sm:h-[200px] cursor-pointer transition-transform duration-200 hover:scale-105 hover:rotate-3 hover:shadow-xl"
+                      onMouseEnter={() => setIsHoveringLords(true)}
+                      onMouseLeave={() => setIsHoveringLords(false)}
+                      onClick={() => {
+                        enterSeason(
+                          usableGoldenToken !== "0",
+                          usableBlobertToken !== "0"
+                        );
+                      }}
                     >
-                      <div className="w-full h-full bg-black">
-                        <div className="flex flex-row h-full w-full">
-                          <div className="hidden sm:flex flex-col items-center justify-center w-1/4 h-full">
-                            <SpriteAnimation
-                              frameWidth={150}
-                              frameHeight={150}
-                              columns={8}
-                              rows={1}
-                              frameRate={5}
-                              className="coin-sprite"
-                            />
-                            <DownArrowIcon className="self-center rotate-[-90deg] w-20" />
-                            <p className="uppercase text-4xl">Pay</p>
-                          </div>
-                          <div className="w-full flex justify-center sm:w-1/2">
-                            <PaymentDetails
-                              adventurers={adventurers}
-                              showPaymentDetails={showPaymentDetails}
-                            />
-                          </div>
-                          <div className="hidden sm:flex flex-col items-center justify-center w-1/4 h-full">
-                            <span className="relative w-24 h-24 mt-10">
-                              <ProfileIcon className="text-terminal-green" />
+                      <div className="flex flex-row h-full w-full">
+                        <div className="w-1/4 border-[10px] border-terminal-green bg-terminal-black shadow-inner" />
+                        <div
+                          className={`flex flex-col sm:gap-2 justify-center w-3/4 p-2 uppercase ${
+                            isHoveringLords
+                              ? "text-terminal-black bg-terminal-green animate-pulseFast"
+                              : "bg-terminal-black"
+                          }`}
+                        >
+                          {usableGoldenToken !== "0" ? (
+                            <span className="relative h-40 w-full">
+                              <Image
+                                src="/golden-token.png"
+                                alt="golden-token"
+                                fill
+                              />
                             </span>
-                            <span className="flex flex-col">
-                              <DownArrowIcon className="self-center rotate-[-90deg] w-20" />
-                              <p className="uppercase text-4xl">Mint</p>
+                          ) : usableBlobertToken !== "0" ? (
+                            <span className="relative h-48 w-full">
+                              <Image src="/blobert.png" alt="blobert" fill />
                             </span>
-                          </div>
+                          ) : (
+                            <span className="flex flex-row gap-1 items-center justify-center">
+                              <Lords className="self-center w-10 h-10 sm:w-16 sm:h-16 fill-current" />
+                              <p className="text-4xl sm:text-6xl no-text-shadow">
+                                {formatLords(lordsGameCost)}
+                              </p>
+                            </span>
+                          )}
+                          <span className="relative h-32 w-full">
+                            <Image
+                              src={
+                                usableGoldenToken !== "0"
+                                  ? isHoveringLords
+                                    ? "/insert-golden-token-hover.png"
+                                    : "/insert-golden-token.png"
+                                  : usableBlobertToken !== "0"
+                                  ? isHoveringLords
+                                    ? "/insert-blobert-hover.png"
+                                    : "/insert-blobert.png"
+                                  : isHoveringLords
+                                  ? "/insert-lords-hover.png"
+                                  : "/insert-lords.png"
+                              }
+                              alt="insert-lords"
+                              fill
+                            />
+                          </span>
                         </div>
                       </div>
                     </div>
-                    <div className="hidden sm:flex items-center justify-start w-1/4">
-                      <div className="relative flex flex-col bg-terminal-black border-4 border-terminal-green w-3/4 animate-pulse">
-                        <div className={`flex flex-row`}>
-                          {["str", "dex", "int", "vit", "wis", "cha"].map(
-                            (stat) => (
-                              <span
-                                key={stat}
-                                className={`w-full flex flex-col text-center`}
-                              >
-                                <p>{stat.toUpperCase()}</p>
-                                <p>?</p>
-                              </span>
-                            )
-                          )}
-                        </div>
-                        <NftCard
-                          name={formData.name}
-                          weapon={formData.startingWeapon}
-                        />
-                        <Button
-                          className="absolute top-1/2 left-1/2 transform -translate-y-1/2 -translate-x-1/2 w-1/2 h-20"
-                          variant={"token"}
-                          onClick={() => {
-                            window.open(
-                              networkConfig[network!].adventurerViewer,
-                              "_blank"
-                            );
-                          }}
-                        >
-                          View Collection
-                        </Button>
+                  </div>
+                  <div
+                    className={`hidden sm:flex flex-row items-center w-full`}
+                  >
+                    {/* <div className="w-1/3 flex flex-col border border-terminal-green">
+                      <Logo className="w-full" />
+                    </div> */}
+                    <div className="w-1/3"></div>
+                    <div className="relative w-1/3 flex flex-col gap-2 items-center justify-center">
+                      <DownArrowIcon className="w-6 sm:w-10 text-terminal-green/75" />
+                      <div className="hidden sm:flex w-2/3">
+                        <PaymentDetails adventurers={adventurers} />
                       </div>
+                    </div>
+                    <div className="hidden relative sm:flex flex-row items-center justify-start w-1/3">
+                      <PlusIcon className="absolute left-[-50px] w-10 text-terminal-green/75" />
+                      <SeasonDetails />
+                    </div>
+                  </div>
+                  <div className="relative flex flex-row sm:hidden w-full h-full">
+                    <div className="w-1/2">
+                      <PaymentDetails adventurers={adventurers} />
+                    </div>
+                    <PlusIcon className="absolute left-1/2 top-1/3 -translate-x-1/2 w-8 text-terminal-yellow" />
+                    <div className="w-1/2">
+                      <SeasonDetails />
                     </div>
                   </div>
                 </>
@@ -368,18 +343,7 @@ export const Spawn = ({
           </>
         )}
         {!paymentInitiated && (
-          <div className="absolute sm:hidden bottom-16 left-0 right-0 flex flex-col items-center gap-4 z-10 pb-8">
-            <Button
-              size={"sm"}
-              variant={"default"}
-              onClick={() => setShowPaymentDetails(!showPaymentDetails)}
-            >
-              {showPaymentDetails ? "Hide Payment Details" : "Payment Details"}
-            </Button>
-          </div>
-        )}
-        {!paymentInitiated && (
-          <div className="absolute bottom-5 sm:bottom-10 left-0 right-0 flex flex-row items-center justify-center gap-4 z-10 pb-8">
+          <div className="absolute bottom-5 sm:bottom-10 sm:left-32 2xl:left-0 2xl:right-0 flex flex-row items-center 2xl:justify-center gap-4 z-10 pb-8">
             <Button size={"sm"} variant={"outline"} onClick={handleBack}>
               Back
             </Button>

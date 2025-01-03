@@ -1,10 +1,10 @@
-import { create } from "zustand";
 import {
   ItemPurchase,
+  SpecialBeast,
   UpgradeStats,
   ZeroUpgrade,
-  SpecialBeast,
 } from "@/app/types";
+import { create } from "zustand";
 
 export type ScreenPage =
   | "start"
@@ -130,6 +130,8 @@ type State = {
   setChaBoostRemoved: (value: number) => void;
   showProfile: boolean;
   setShowProfile: (value: boolean) => void;
+  showLoginDialog: boolean;
+  setShowLoginDialog: (value: boolean) => void;
   username: string;
   setUsername: (value: string) => void;
   isController: boolean;
@@ -246,6 +248,8 @@ const useUIStore = create<State>((set) => ({
   setChaBoostRemoved: (value) => set({ chaBoostRemoved: value }),
   showProfile: false,
   setShowProfile: (value) => set({ showProfile: value }),
+  showLoginDialog: false,
+  setShowLoginDialog: (value) => set({ showLoginDialog: value }),
   username: "",
   setUsername: (value) => set({ username: value }),
   isController: false,

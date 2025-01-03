@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from "react";
-import {
-  getAdventurerById,
-  getItemsByAdventurer,
-  getAdventurerCounts,
-} from "@/app/hooks/graphql/queries";
 import { Button } from "@/app/components/buttons/Button";
-import { useQueriesStore } from "@/app/hooks/useQueryStore";
-import useUIStore from "@/app/hooks/useUIStore";
-import useCustomQuery from "@/app/hooks/useCustomQuery";
-import { Adventurer } from "@/app/types";
 import BeastTable from "@/app/components/leaderboard/BeastTable";
 import ScoreTable from "@/app/components/leaderboard/ScoreTable";
-import LiveTable from "@/app/components/leaderboard/LiveTable";
+import SeasonTable from "@/app/components/leaderboard/SeasonTable";
+import {
+  getAdventurerById,
+  getAdventurerCounts,
+  getItemsByAdventurer,
+} from "@/app/hooks/graphql/queries";
+import useCustomQuery from "@/app/hooks/useCustomQuery";
+import { useQueriesStore } from "@/app/hooks/useQueryStore";
+import useUIStore from "@/app/hooks/useUIStore";
+import { Adventurer } from "@/app/types";
+import { useEffect, useState } from "react";
 // import { RefreshIcon } from "@/app/components/icons/Icons";
-import { ProfileIcon, SkullIcon } from "@/app/components/icons/Icons";
+import { SkullIcon } from "@/app/components/icons/Icons";
 
 /**
  * @container
@@ -83,31 +83,13 @@ export default function LeaderboardScreen() {
     <div className="flex flex-col items-center h-full xl:overflow-y-auto 2xl:overflow-hidden mt-5 sm:mt-0">
       <div className="flex flex-row gap-5 items-center">
         <div className="flex flex-row border border-terminal-green items-center justify-between w-16 h-8 sm:w-24 sm:h-12 px-2">
-          <ProfileIcon className="fill-current w-4 h-4 sm:w-8 sm:h-8" />
-          <p className="sm:text-2xl">
-            {adventurerCountsData?.countAliveAdventurers}
-          </p>
-        </div>
-        {/* <Button
-          onClick={async () => {
-            const adventurersByXPdata = await refetch(
-              "adventurersByXPQuery",
-              undefined
-            );
-            const sortedAdventurersByXP = handleSortXp(adventurersByXPdata);
-            setData("adventurersByXPQuery", sortedAdventurersByXP);
-          }}
-        >
-          <RefreshIcon className="w-4 sm:w-8" />
-        </Button> */}
-        <div className="flex flex-row border border-terminal-green items-center justify-between w-16 h-8 sm:w-24 sm:h-12 px-2">
           <SkullIcon className="fill-current w-4 h-4 sm:w-8 sm:h-8" />
           <p className="sm:text-2xl">
             {adventurerCountsData?.countDeadAdventurers}
           </p>
         </div>
         <Button onClick={() => setShowKilledBeasts(!showKilledBeasts)}>
-          {showKilledBeasts ? "Scores" : "Pragma Beast Leaderboard"}
+          {showKilledBeasts ? "Scores" : "Beast Leaderboard"}
         </Button>
       </div>
       {showKilledBeasts ? (
@@ -117,7 +99,7 @@ export default function LeaderboardScreen() {
           <div
             className={`${showScores ? "hidden " : ""}sm:block w-full sm:w-1/2`}
           >
-            <LiveTable
+            <SeasonTable
               itemsPerPage={itemsPerPage}
               handleFetchProfileData={handlefetchProfileData}
               adventurerCount={adventurerCountsData?.countAliveAdventurers}

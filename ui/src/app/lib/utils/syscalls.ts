@@ -5,6 +5,7 @@ import { AdventurerClass } from "@/app/lib/classes";
 import { checkArcadeConnector } from "@/app/lib/connectors";
 import { getMaxFee, getWaitRetryInterval } from "@/app/lib/constants";
 import { GameData } from "@/app/lib/data/GameData";
+import { networkConfig } from "@/app/lib/networkConfig";
 import {
   DataType,
   getKeyFromValue,
@@ -32,6 +33,9 @@ import { Connector } from "@starknet-react/core";
 import { JSXElementConstructor, ReactElement, useMemo } from "react";
 import {
   AccountInterface,
+  CairoOption,
+  CairoOptionVariant,
+  CallData,
   Contract,
   InvokeTransactionReceiptResponse,
   ProviderInterface,
@@ -45,6 +49,7 @@ export interface SyscallsProps {
   beastsContract: Contract;
   pragmaContract: Contract;
   rendererContractAddress: string;
+  tournamentContractAddress: string;
   addTransaction: ({ hash, metadata }: TransactionParams) => void;
   queryData: QueryData;
   resetData: (queryKey?: QueryKey) => void;
@@ -188,6 +193,7 @@ export function createSyscalls({
   beastsContract,
   pragmaContract,
   rendererContractAddress,
+  tournamentContractAddress,
   addTransaction,
   account,
   queryData,
@@ -295,6 +301,14 @@ export function createSyscalls({
       enoughLords: lordsBalance > BigInt(costToPlay ?? 0),
       dollarPrice,
     };
+  };
+
+  const lordsDollarValue = async () => {
+    const result = await pragmaContract.call("get_data_median", [
+      DataType.SpotEntry("1407668255603079598916"),
+    ]);
+    console.log(result);
+    return (result as PragmaPrice).price;
   };
 
   const executeSpawn = async (formData: FormData, spawnCalls: Call[]) => {
@@ -408,6 +422,7 @@ export function createSyscalls({
 
   const addApprovalCalls = (
     spawnCalls: Call[],
+    approveAddress: string,
     dollarPrice: bigint,
     freeVRF: boolean,
     costToPlay?: number,
@@ -420,11 +435,7 @@ export function createSyscalls({
           {
             contractAddress: ethContract?.address ?? "",
             entrypoint: "approve",
-            calldata: [
-              gameContract?.address ?? "",
-              dollarPrice.toString(),
-              "0",
-            ],
+            calldata: [approveAddress, dollarPrice.toString(), "0"],
           },
         ]),
     ...(goldenTokenId === "0" && blobertTokenId === "0"
@@ -432,11 +443,7 @@ export function createSyscalls({
           {
             contractAddress: lordsContract?.address ?? "",
             entrypoint: "approve",
-            calldata: [
-              gameContract?.address ?? "",
-              costToPlay!.toString(),
-              "0",
-            ],
+            calldata: [approveAddress, costToPlay!.toString(), "0"],
           },
         ]
       : []),
@@ -490,6 +497,7 @@ export function createSyscalls({
 
       spawnCalls = addApprovalCalls(
         spawnCalls,
+        gameContract?.address ?? "",
         dollarPrice,
         freeVRF,
         costToPlay,
@@ -1619,6 +1627,190 @@ export function createSyscalls({
     }
   };
 
+  const startSeason = async (
+    formData: FormData,
+    goldenTokenId: string,
+    blobertTokenId: string,
+    revenueAddresses: string[],
+    costToPlay?: number,
+    seasonCost?: number
+  ) => {
+    const randomInt = getRandomInt(0, revenueAddresses.length - 1);
+    const selectedRevenueAddress = revenueAddresses[randomInt];
+
+    const enterTournamentTx = {
+      contractAddress: tournamentContractAddress,
+      entrypoint: "enter_tournament",
+      calldata: CallData.compile([
+        networkConfig[network!].tournamentId,
+        new CairoOption(CairoOptionVariant.None),
+      ]),
+    };
+
+    const tournamentId = networkConfig[network!].tournamentId;
+
+    const startTournamentTx = {
+      contractAddress: tournamentContractAddress,
+      entrypoint: "start_tournament",
+      calldata: CallData.compile([
+        tournamentId,
+        false,
+        new CairoOption(CairoOptionVariant.Some, 1),
+        selectedRevenueAddress,
+        goldenTokenId !== "0" ? [goldenTokenId, "0"] : "0",
+        blobertTokenId !== "0" ? [blobertTokenId, "0"] : "0",
+        getKeyFromValue(gameData.ITEMS, formData.startingWeapon) ?? "",
+        stringToFelt(formData.name).toString(),
+      ]),
+    };
+
+    addToCalls(enterTournamentTx);
+    addToCalls(startTournamentTx);
+    let spawnCalls = [...calls, enterTournamentTx, startTournamentTx];
+
+    if (!onKatana) {
+      const { enoughEth, enoughLords, dollarPrice } = await checkBalances(
+        (costToPlay ?? 0) + (seasonCost ?? 0)
+      );
+
+      if (!enoughEth && !freeVRF) {
+        return handleInsufficientFunds("eth");
+      }
+      if (!enoughLords && goldenTokenId === "0" && blobertTokenId === "0") {
+        return handleInsufficientFunds("lords");
+      }
+
+      spawnCalls = addApprovalCalls(
+        spawnCalls,
+        tournamentContractAddress,
+        dollarPrice,
+        freeVRF,
+        (costToPlay ?? 0) + (seasonCost ?? 0),
+        goldenTokenId,
+        blobertTokenId
+      );
+    }
+
+    startLoading(
+      "Create",
+      "Entering Season",
+      "adventurersByOwnerQuery",
+      undefined
+    );
+
+    const isArcade = checkArcadeConnector(connector!);
+    try {
+      const tx = await handleSubmitCalls(
+        account,
+        spawnCalls,
+        isArcade,
+        Number(ethBalance),
+        showTopUpDialog,
+        setTopUpAccount,
+        network
+      );
+      addTransaction({
+        hash: tx?.transaction_hash,
+        metadata: {
+          method: `Spawn ${formData.name}`,
+        },
+      });
+      const receipt = await provider?.waitForTransaction(tx?.transaction_hash, {
+        retryInterval: getWaitRetryInterval(network!),
+      });
+      // Handle if the tx was reverted
+      if (
+        (receipt as RevertedTransactionReceiptResponse).execution_status ===
+        "REVERTED"
+      ) {
+        throw new Error(
+          (receipt as RevertedTransactionReceiptResponse).revert_reason
+        );
+      }
+      // Here we need to process the StartGame event first and use the output for AmbushedByBeast event
+      const startGameEvents = await parseEvents(
+        receipt as InvokeTransactionReceiptResponse,
+        undefined,
+        beastsContract.address,
+        "StartGame"
+      );
+      const events = await parseEvents(
+        receipt as InvokeTransactionReceiptResponse,
+        {
+          name: formData["name"],
+          startBlock: startGameEvents[0].data[0].startBlock,
+          revealBlock: startGameEvents[0].data[0].revealBlock,
+          createdTime: new Date(),
+        }
+      );
+      const adventurerState = events.find(
+        (event) => event.name === "AmbushedByBeast"
+      ).data[0];
+      setData("adventurersByOwnerQuery", {
+        adventurers: [
+          ...(queryData.adventurersByOwnerQuery?.adventurers ?? []),
+          adventurerState,
+        ],
+      });
+      setData("adventurerByIdQuery", {
+        adventurers: [adventurerState],
+      });
+      setAdventurer(adventurerState);
+      setData("latestDiscoveriesQuery", {
+        discoveries: [
+          events.find((event) => event.name === "AmbushedByBeast").data[1],
+        ],
+      });
+      setData("beastQuery", {
+        beasts: [
+          events.find((event) => event.name === "AmbushedByBeast").data[2],
+        ],
+      });
+      setData("battlesByBeastQuery", {
+        battles: [
+          events.find((event) => event.name === "AmbushedByBeast").data[3],
+        ],
+      });
+      setData("itemsByAdventurerQuery", {
+        items: [
+          {
+            item: adventurerState.weapon,
+            adventurerId: adventurerState["id"],
+            owner: true,
+            equipped: true,
+            ownerAddress: adventurerState["owner"],
+            xp: 0,
+            special1: null,
+            special2: null,
+            special3: null,
+            isAvailable: false,
+            purchasedTime: null,
+            timestamp: new Date(),
+          },
+        ],
+      });
+      stopLoading(`You have spawned ${formData.name}!`, false, "Create");
+      setAdventurer(adventurerState);
+      setScreen("play");
+      !onKatana && getEthBalance();
+    } catch (e) {
+      console.log(e);
+      stopLoading(e, true);
+    }
+  };
+
+  // const updateAdventurerName = async (
+  //   account: AccountInterface,
+  //   adventurerId: number,
+  //   newName: string
+  // ) => {
+  //   const updateAdventurerName = {
+  //     contractAddress: gameContract?.address ?? "",
+  //     entrypoint: "update_adventurer_name",
+  //     calldata: [adventurerId.toString(), newName],
+  //   };
+  // };
+
   const changeAdventurerName = async (
     account: AccountInterface,
     adventurerId: number,
@@ -1700,6 +1892,8 @@ export function createSyscalls({
     mintLords,
     withdraw,
     transferAdventurer,
+    startSeason,
+    lordsDollarValue,
     changeAdventurerName,
   };
 }

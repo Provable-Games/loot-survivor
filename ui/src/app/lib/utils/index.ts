@@ -70,12 +70,27 @@ const P = new BN(
 );
 
 export function feltToString(felt: number) {
-  const newStrB = Buffer.from(felt.toString(16), "hex");
-  return newStrB.toString();
+  // Convert to hex, remove '0x' if present, and pad to even length
+  const hex = felt.toString(16).replace("0x", "");
+  const hexPadded = hex.length % 2 ? "0" + hex : hex;
+
+  // Convert hex to string
+  const bytes = new Uint8Array(hexPadded.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(hexPadded.substr(i * 2, 2), 16);
+  }
+  return new TextDecoder().decode(bytes);
 }
 
 export function stringToFelt(str: string) {
-  return "0x" + Buffer.from(str).toString("hex");
+  // Convert string to hex
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(str);
+  let hex = "0x";
+  for (let i = 0; i < bytes.length; i++) {
+    hex += bytes[i].toString(16).padStart(2, "0");
+  }
+  return hex;
 }
 
 export function toNegativeNumber(felt: BN) {
