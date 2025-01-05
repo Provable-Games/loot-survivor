@@ -34,6 +34,7 @@ import DoubleArrow from "public/icons/double-arrow.svg";
 import Drop from "public/icons/drop.svg";
 import Encounters from "public/icons/encounters.svg";
 import Eye from "public/icons/eye.svg";
+import First from "public/icons/first.svg";
 import Flag from "public/icons/flag.svg";
 import Github from "public/icons/github.svg";
 import Guide from "public/icons/guide.svg";
@@ -52,6 +53,7 @@ import Profile from "public/icons/profile.svg";
 import QuestionMark from "public/icons/question-mark.svg";
 import Refresh from "public/icons/refresh.svg";
 import Scroll from "public/icons/scroll.svg";
+import Second from "public/icons/second.svg";
 import Settings from "public/icons/settings.svg";
 import Skull from "public/icons/skull.svg";
 import Smile from "public/icons/smile.svg";
@@ -61,6 +63,7 @@ import StarknetId from "public/icons/starknet-id.svg";
 import Swap from "public/icons/swap.svg";
 import Sword from "public/icons/sword.svg";
 import Target from "public/icons/target.svg";
+import Third from "public/icons/third.svg";
 import TournamentTrophy from "public/icons/tournament-trophy.svg";
 import Trophy from "public/icons/trophy.svg";
 import Twitter from "public/icons/twitter.svg";
@@ -122,6 +125,9 @@ const EyeIcon = Eye;
 const ClockIcon = Clock;
 const PlusIcon = Plus;
 const CloseIcon = Close;
+const FirstIcon = First;
+const SecondIcon = Second;
+const ThirdIcon = Third;
 
 const GithubIcon = Github;
 const DiscordIcon = Discord;
@@ -154,6 +160,7 @@ export {
   DownArrowIcon,
   EncountersIcon,
   EyeIcon,
+  FirstIcon,
   FlagIcon,
   GiBattleGearIcon,
   GiBruteIcon,
@@ -183,6 +190,7 @@ export {
   RefreshIcon,
   RightArrowIcon,
   ScrollIcon,
+  SecondIcon,
   SettingsIcon,
   SkullCrossedBonesIcon,
   SkullIcon,
@@ -194,6 +202,7 @@ export {
   StarknetIdIcon,
   SwapIcon,
   TargetIcon,
+  ThirdIcon,
   TournamentTrophyIcon,
   TrophyIcon,
   TwitterIcon,

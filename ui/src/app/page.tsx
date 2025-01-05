@@ -168,16 +168,6 @@ function Home() {
         disabled: false,
       },
       { id: 7, label: "Guide", screen: "guide" as ScreenPage, disabled: false },
-      ...(onKatana
-        ? []
-        : [
-            {
-              id: 8,
-              label: "Tournament",
-              screen: "collections leaderboard" as ScreenPage,
-              disabled: false,
-            },
-          ]),
     ],
     [onKatana]
   );
@@ -205,16 +195,6 @@ function Home() {
         disabled: false,
       },
       { id: 6, label: "Guide", screen: "guide" as ScreenPage, disabled: false },
-      ...(onKatana
-        ? []
-        : [
-            {
-              id: 7,
-              label: "Tournament",
-              screen: "collections leaderboard" as ScreenPage,
-              disabled: false,
-            },
-          ]),
     ],
     [onKatana]
   );

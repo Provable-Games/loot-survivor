@@ -1,3 +1,4 @@
+import { TournamentTrophyIcon } from "@/app/components/icons/Icons";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import { soundSelector, useUiSounds } from "@/app/hooks/useUiSound";
 import { calculateLevel } from "@/app/lib/utils";
@@ -38,7 +39,23 @@ const SeasonRow = ({ rank, adventurer, handleRowSelected }: SeasonRowProps) => {
         clickPlay();
       }}
     >
-      <td>{rank}</td>
+      <td>
+        {rank <= 3 ? (
+          <span
+            className={`w-6 h-6 flex m-auto ${
+              rank === 1
+                ? "text-terminal-gold"
+                : rank === 2
+                ? "text-terminal-silver"
+                : "text-terminal-bronze"
+            }`}
+          >
+            <TournamentTrophyIcon />
+          </span>
+        ) : (
+          <span>{rank}</span>
+        )}
+      </td>
       <td>{`${adventurer.name} - ${adventurer.id}`}</td>
       <td>{calculateLevel(adventurer.xp ?? 0)}</td>
       <td>

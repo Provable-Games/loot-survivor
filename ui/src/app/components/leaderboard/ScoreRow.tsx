@@ -1,7 +1,8 @@
-import Lords from "public/icons/lords.svg";
-import { useUiSounds, soundSelector } from "@/app/hooks/useUiSound";
-import { formatNumber, calculateLevel } from "@/app/lib/utils";
+import { FirstIcon, SecondIcon, ThirdIcon } from "@/app/components/icons/Icons";
+import { soundSelector, useUiSounds } from "@/app/hooks/useUiSound";
+import { calculateLevel, formatNumber } from "@/app/lib/utils";
 import { Adventurer } from "@/app/types";
+import Lords from "public/icons/lords.svg";
 
 interface ScoreLeaderboardRowProps {
   adventurer: Adventurer;
@@ -23,7 +24,23 @@ const ScoreRow = ({
         clickPlay();
       }}
     >
-      <td>{rank}</td>
+      <td>
+        {rank === 1 ? (
+          <span className="flex m-auto w-4 h-8">
+            <FirstIcon />
+          </span>
+        ) : rank === 2 ? (
+          <span className="flex m-auto  w-4 h-8">
+            <SecondIcon />
+          </span>
+        ) : rank === 3 ? (
+          <span className="flex m-auto  w-4 h-8">
+            <ThirdIcon />
+          </span>
+        ) : (
+          rank
+        )}
+      </td>
       <td>{`${adventurer.name} - ${adventurer.id}`}</td>
       <td>{calculateLevel(adventurer.xp ?? 0)}</td>
       <td>{adventurer.xp}</td>
