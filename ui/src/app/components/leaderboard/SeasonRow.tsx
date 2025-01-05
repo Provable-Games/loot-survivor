@@ -1,4 +1,3 @@
-import { CoinIcon } from "@/app/components/icons/Icons";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import { soundSelector, useUiSounds } from "@/app/hooks/useUiSound";
 import { calculateLevel } from "@/app/lib/utils";
@@ -44,12 +43,6 @@ const SeasonRow = ({ rank, adventurer, handleRowSelected }: SeasonRowProps) => {
       <td>{calculateLevel(adventurer.xp ?? 0)}</td>
       <td>
         <span className="flex justify-center">{adventurer.xp}</span>
-      </td>
-      <td>
-        <span className="flex justify-center text-terminal-yellow">
-          <CoinIcon className="self-center w-4 h-4 sm:w-6 sm:h-6 fill-current" />
-          {adventurer.gold ? adventurer.gold : 0}
-        </span>
       </td>
       <td>
         <span className="flex justify-center">{adventurer.health}</span>
