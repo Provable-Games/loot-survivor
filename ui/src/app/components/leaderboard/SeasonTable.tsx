@@ -63,6 +63,14 @@ const SeasonTable = ({
 
   const adventurers = adventurersByXPdata?.adventurers ?? [];
 
+  const pagedAdventurers = useMemo(() => {
+    if (!adventurers) return [];
+    return adventurers.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+  }, [adventurers, currentPage, itemsPerPage]);
+
   const totalPages = Math.ceil(adventurers.length / itemsPerPage);
 
   const handleRowSelected = async (adventurerId: number) => {
@@ -96,21 +104,24 @@ const SeasonTable = ({
             <table className="w-full xl:text-lg 2xl:text-xl border border-terminal-green">
               <thead className="border border-terminal-green">
                 <tr>
+                  <th className="p-1">Rank</th>
                   <th className="p-1">Adventurer</th>
                   <th className="p-1">Level</th>
                   <th className="p-1">XP</th>
-                  <th className="p-1">Gold</th>
                   <th className="p-1">Health</th>
                 </tr>
               </thead>
               <tbody>
-                {adventurers?.map((adventurer: Adventurer, index: number) => (
-                  <SeasonRow
-                    key={index}
-                    adventurer={adventurer}
-                    handleRowSelected={handleRowSelected}
-                  />
-                ))}
+                {pagedAdventurers?.map(
+                  (adventurer: Adventurer, index: number) => (
+                    <SeasonRow
+                      key={index}
+                      rank={index + 1}
+                      adventurer={adventurer}
+                      handleRowSelected={handleRowSelected}
+                    />
+                  )
+                )}
               </tbody>
             </table>
             {adventurers.length > 10 && (

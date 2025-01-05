@@ -126,6 +126,7 @@ export const Spawn = ({
   const { play: coinPlay } = useUiSounds(soundSelector.coin);
 
   const tournamentEnded = process.env.NEXT_PUBLIC_TOURNAMENT_ENDED === "true";
+  const seasonActive = process.env.NEXT_PUBLIC_SEASON_ACTIVE === "true";
 
   useEffect(() => {
     getUsableGoldenToken(goldenTokens ?? []);
@@ -237,10 +238,17 @@ export const Spawn = ({
                       onMouseEnter={() => setIsHoveringLords(true)}
                       onMouseLeave={() => setIsHoveringLords(false)}
                       onClick={() => {
-                        enterSeason(
-                          usableGoldenToken !== "0",
-                          usableBlobertToken !== "0"
-                        );
+                        if (seasonActive) {
+                          enterSeason(
+                            usableGoldenToken !== "0",
+                            usableBlobertToken !== "0"
+                          );
+                        } else {
+                          handlePayment(
+                            usableGoldenToken !== "0",
+                            usableBlobertToken !== "0"
+                          );
+                        }
                       }}
                     >
                       <div className="flex flex-row h-full w-full">
@@ -360,7 +368,17 @@ export const Spawn = ({
               size={"sm"}
               variant={"default"}
               onClick={() => {
-                handlePayment(true, true);
+                if (seasonActive) {
+                  enterSeason(
+                    usableGoldenToken !== "0",
+                    usableBlobertToken !== "0"
+                  );
+                } else {
+                  handlePayment(
+                    usableGoldenToken !== "0",
+                    usableBlobertToken !== "0"
+                  );
+                }
               }}
             >
               Pay to Play

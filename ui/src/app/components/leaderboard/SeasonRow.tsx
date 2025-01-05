@@ -5,11 +5,12 @@ import { calculateLevel } from "@/app/lib/utils";
 import { Adventurer } from "@/app/types";
 
 interface SeasonRowProps {
+  rank: number;
   adventurer: Adventurer;
   handleRowSelected: (id: number) => void;
 }
 
-const SeasonRow = ({ adventurer, handleRowSelected }: SeasonRowProps) => {
+const SeasonRow = ({ rank, adventurer, handleRowSelected }: SeasonRowProps) => {
   const { play: clickPlay } = useUiSounds(soundSelector.click);
   const adventurersByOwner = useQueriesStore(
     (state) => state.data.adventurersByOwnerQuery?.adventurers ?? []
@@ -38,6 +39,7 @@ const SeasonRow = ({ adventurer, handleRowSelected }: SeasonRowProps) => {
         clickPlay();
       }}
     >
+      <td>{rank}</td>
       <td>{`${adventurer.name} - ${adventurer.id}`}</td>
       <td>{calculateLevel(adventurer.xp ?? 0)}</td>
       <td>
