@@ -316,13 +316,15 @@ export const Spawn = ({
                         <PaymentDetails adventurers={adventurers} />
                       </div>
                     </div>
-                    <div className="hidden relative sm:flex flex-row items-center justify-start w-1/3">
-                      <PlusIcon className="absolute left-[-50px] w-10 text-terminal-green/75" />
-                      <SeasonDetails
-                        prizes={tournamentPrizes}
-                        lordsValue={lordsValue}
-                      />
-                    </div>
+                    {seasonActive && (
+                      <div className="hidden relative sm:flex flex-row items-center justify-start w-1/3">
+                        <PlusIcon className="absolute left-[-50px] w-10 text-terminal-green/75" />
+                        <SeasonDetails
+                          prizes={tournamentPrizes}
+                          lordsValue={lordsValue}
+                        />
+                      </div>
+                    )}
                   </div>
                   <div className="relative flex flex-row sm:hidden w-full h-full">
                     <div className="w-1/2">
@@ -330,10 +332,12 @@ export const Spawn = ({
                     </div>
                     <PlusIcon className="absolute left-1/2 top-1/3 -translate-x-1/2 w-8 text-terminal-yellow" />
                     <div className="w-1/2">
-                      <SeasonDetails
-                        prizes={tournamentPrizes}
-                        lordsValue={lordsValue}
-                      />
+                      {seasonActive && (
+                        <SeasonDetails
+                          prizes={tournamentPrizes}
+                          lordsValue={lordsValue}
+                        />
+                      )}
                     </div>
                   </div>
                 </>

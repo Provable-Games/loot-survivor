@@ -1678,7 +1678,9 @@ export function createSyscalls({
         new CairoOption(CairoOptionVariant.Some, 1),
         selectedRevenueAddress,
         ...(goldenTokenId !== "0" ? ["1", goldenTokenId, "0"] : ["0"]),
-        ...(blobertTokenId !== "0" ? ["1", blobertTokenId, "0"] : ["0"]),
+        ...(blobertTokenId !== "0" && goldenTokenId === "0"
+          ? ["1", blobertTokenId, "0"]
+          : ["0"]),
         getKeyFromValue(gameData.ITEMS, formData.startingWeapon) ?? "",
         stringToFelt(formData.name).toString(),
       ]),

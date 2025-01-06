@@ -1,5 +1,5 @@
 import { Button } from "@/app/components/buttons/Button";
-import { CloseIcon } from "@/app/components/icons/Icons";
+import { CartridgeIcon, CloseIcon } from "@/app/components/icons/Icons";
 import useUIStore from "@/app/hooks/useUIStore";
 import { useConnect, useDisconnect } from "@starknet-react/core";
 
@@ -8,6 +8,13 @@ export default function LoginDialog() {
   const { disconnect } = useDisconnect();
 
   const setShowLoginDialog = useUIStore((state) => state.setShowLoginDialog);
+
+  const walletConnectors = connectors.filter(
+    (connector) => connector.id !== "controller"
+  );
+  const cartridgeConnector = connectors.find(
+    (connector) => connector.id === "controller"
+  );
 
   return (
     <>
@@ -24,7 +31,18 @@ export default function LoginDialog() {
             <CloseIcon />
           </span>
         </div>
-        {connectors.map((connector, index) => (
+        <Button
+          size={"lg"}
+          onClick={() => {
+            disconnect();
+            connect({ connector: cartridgeConnector });
+          }}
+        >
+          <span className="flex flex-row items-center gap-1">
+            Login with Controller <CartridgeIcon className="w-8 h-8" />
+          </span>
+        </Button>
+        {walletConnectors.map((connector, index) => (
           <Button
             size={"lg"}
             onClick={() => {
@@ -33,6 +51,7 @@ export default function LoginDialog() {
               setShowLoginDialog(false);
             }}
             key={index}
+            className="bg-terminal-green/75"
           >
             {`Login With ${connector.id}`}
           </Button>

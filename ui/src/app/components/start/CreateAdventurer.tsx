@@ -51,6 +51,8 @@ export const CreateAdventurer = ({
   const network = useUIStore((state) => state.network);
   const [lordsValue, setLordsValue] = useState(0n);
 
+  const seasonActive = process.env.NEXT_PUBLIC_SEASON_ACTIVE === "true";
+
   // Memoize both the variables AND the client
   const { variables, client } = useMemo(() => {
     return {
@@ -146,23 +148,34 @@ export const CreateAdventurer = ({
     <>
       {step == 1 && (
         <div className="flex flex-col w-full justify-between items-center gap-2 sm:gap-0 py-2 sm:py-10">
-          <div className="flex flex-col items-center w-full gap-2 sm:gap-5">
-            <h3 className="uppercase text-center 2xl:text-5xl m-0">
-              Enter Season 0
-            </h3>
-            <p className="w-5/6 sm:text-xl text-center">
-              Introducing onchain seasons for Loot Survivor. This is the first
-              weekly season with a prize pool of:
-            </p>
-            <div className="w-full sm:w-3/4">
-              {tournamentPrizes && (
-                <Prizes
-                  prizes={tournamentPrizes}
-                  lordsDollarValue={lordsDollarValue}
-                />
-              )}
+          {seasonActive ? (
+            <div className="flex flex-col items-center w-full gap-2 sm:gap-5">
+              <h3 className="uppercase text-center 2xl:text-5xl m-0">
+                Enter Season 0
+              </h3>
+              <p className="w-5/6 sm:text-xl text-center">
+                Introducing onchain seasons for Loot Survivor. This is the first
+                weekly season with a prize pool of:
+              </p>
+              <div className="w-full sm:w-3/4">
+                {tournamentPrizes && (
+                  <Prizes
+                    prizes={tournamentPrizes}
+                    lordsDollarValue={lordsDollarValue}
+                  />
+                )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex flex-col items-center w-full gap-2 sm:gap-5">
+              <h3 className="uppercase text-center 2xl:text-5xl m-0">
+                Season Ended
+              </h3>
+              <p className="sm:text-xl text-center">
+                The season has ended. Stay tuned for the next one.
+              </p>
+            </div>
+          )}
           <WeaponSelect
             setFormData={setFormData}
             formData={formData}
