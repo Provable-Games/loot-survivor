@@ -36,6 +36,7 @@ export default function LoginDialog() {
           onClick={() => {
             disconnect();
             connect({ connector: cartridgeConnector });
+            setShowLoginDialog(false);
           }}
         >
           <span className="flex flex-row items-center gap-1">
