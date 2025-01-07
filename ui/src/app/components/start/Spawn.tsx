@@ -1,5 +1,12 @@
 import { Button } from "@/app/components/buttons/Button";
-import { DownArrowIcon, PlusIcon } from "@/app/components/icons/Icons";
+import {
+  CoinIcon,
+  DownArrowIcon,
+  GiBruteIcon,
+  PlusIcon,
+  SkullIcon,
+  SpikedWallIcon,
+} from "@/app/components/icons/Icons";
 import { TxActivity } from "@/app/components/navigation/TxActivity";
 import PaymentDetails from "@/app/components/start/PaymentDetails";
 import SeasonDetails from "@/app/components/start/SeasonDetails";
@@ -14,6 +21,7 @@ import { networkConfig } from "@/app/lib/networkConfig";
 import { formatLords } from "@/app/lib/utils";
 import { Adventurer, FormData } from "@/app/types";
 import Image from "next/image";
+import Logo from "public/icons/logo.svg";
 import Lords from "public/icons/lords.svg";
 import { useEffect, useMemo, useState } from "react";
 import { TypeAnimation } from "react-type-animation";
@@ -306,10 +314,39 @@ export const Spawn = ({
                   <div
                     className={`hidden sm:flex flex-row items-center w-full`}
                   >
-                    {/* <div className="w-1/3 flex flex-col border border-terminal-green">
-                      <Logo className="w-full" />
-                    </div> */}
-                    <div className="w-1/3"></div>
+                    <div className="w-1/3 flex flex-col gap-5 items-center border border-terminal-green p-5 top-[-50px]">
+                      <div className="flex flex-col items-center w-full">
+                        <Logo className="w-2/3" />
+                        <h3 className="text-4xl uppercase">Instructions</h3>
+                      </div>
+                      <ol className="list-none text-left list-inside uppercase w-full space-y-2">
+                        <li className="flex items-center gap-2">
+                          1. Insert Tokens{" "}
+                          <Lords className="fill-current w-5 h-5" />
+                        </li>
+                        <li className="flex items-center gap-2">
+                          2. Defeat the Beast
+                          <GiBruteIcon className="w-6 h-6" />
+                        </li>
+                        <li className="flex flex-row items-center gap-2">
+                          3. Choose your stat upgrades
+                          <DownArrowIcon className="h-5 transform rotate-180" />
+                        </li>
+                        <li className="flex flex-row items-center gap-2">
+                          4. Purchase items with gold on the market{" "}
+                          <CoinIcon className="text-terminal-yellow fill-current w-6 h-6" />
+                        </li>
+                        <li className="flex flex-row items-center gap-2">
+                          5. Explore, discover and dodge obstacles
+                          <SpikedWallIcon className="fill-current w-6 h-6" />
+                        </li>
+                        <li className="flex flex-row items-center gap-2">
+                          6. Die
+                          <SkullIcon className="fill-current w-6 h-6" />
+                        </li>
+                      </ol>
+                    </div>
+                    {/* <div className="w-1/3"></div> */}
                     <div className="relative w-1/3 flex flex-col gap-2 items-center justify-center">
                       <DownArrowIcon className="w-6 sm:w-10 text-terminal-green/75" />
                       <div className="hidden sm:flex w-2/3">
@@ -326,19 +363,21 @@ export const Spawn = ({
                       </div>
                     )}
                   </div>
-                  <div className="relative flex flex-row sm:hidden w-full h-full">
+                  <div className="relative flex flex-row justify-center sm:hidden w-full h-full">
                     <div className="w-1/2">
                       <PaymentDetails adventurers={adventurers} />
                     </div>
-                    <PlusIcon className="absolute left-1/2 top-1/3 -translate-x-1/2 w-8 text-terminal-yellow" />
-                    <div className="w-1/2">
-                      {seasonActive && (
+                    {seasonActive && (
+                      <PlusIcon className="absolute left-1/2 top-1/3 -translate-x-1/2 w-8 text-terminal-yellow" />
+                    )}
+                    {seasonActive && (
+                      <div className="w-1/2">
                         <SeasonDetails
                           prizes={tournamentPrizes}
                           lordsValue={lordsValue}
                         />
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </>
               ) : (
