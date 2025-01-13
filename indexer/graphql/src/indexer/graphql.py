@@ -1074,8 +1074,8 @@ class AdventurersFilter:
     ring: Optional[FeltValueFilter] = None
     beastHealth: Optional[FeltValueFilter] = None
     statUpgrades: Optional[FeltValueFilter] = None
-    birthDate: Optional[DateTimeFilter] = None
-    deathDate: Optional[DateTimeFilter] = None
+    birthDate: Optional[FeltValueFilter] = None
+    deathDate: Optional[FeltValueFilter] = None
     goldenTokenId: Optional[FeltValueFilter] = None
     launchTournamentWinnerTokenId: Optional[FeltValueFilter] = None
     customRenderer: Optional[HexValueFilter] = None
@@ -1908,8 +1908,8 @@ class Adventurer:
     ring: Optional[ItemValue]
     beastHealth: Optional[FeltValue]
     statUpgrades: Optional[FeltValue]
-    birthDate: Optional[str]
-    deathDate: Optional[str]
+    birthDate: Optional[FeltValue]
+    deathDate: Optional[FeltValue]
     goldenTokenId: Optional[FeltValue]
     launchTournamentWinnerTokenId: Optional[FeltValue]
     customRenderer: Optional[FeltValue]
