@@ -541,6 +541,18 @@ const getTournamentPrizes = gql`
   }
 `;
 
+const getTournament = gql`
+  query getTournament($tournamentId: String) {
+    lsTournamentsV0TournamentModels(where: { tournament_id: $tournamentId }) {
+      edges {
+        node {
+          tournament_id
+        }
+      }
+    }
+  }
+`;
+
 export {
   getAdventurerById,
   getAdventurerCounts,
@@ -565,6 +577,7 @@ export {
   getLatestMarketItems,
   getOwnerTokens,
   getScoresInList,
+  getTournament,
   getTournamentGames,
   getTournamentPrizes,
 };

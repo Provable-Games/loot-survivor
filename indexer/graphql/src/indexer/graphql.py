@@ -1,18 +1,18 @@
 import asyncio
-from typing import List, NewType, Optional, Dict, Union, Any
-import ssl
+import hashlib
 import json
 import logging
-import hashlib
+import ssl
+from typing import Any, Dict, List, NewType, Optional, Union
 
-import strawberry
 import aiohttp_cors
-from aiohttp import web
 import aioredis
+import strawberry
+from aiohttp import web
+from indexer.config import Config
+from indexer.utils import get_key_by_value
 from pymongo import MongoClient
 from strawberry.aiohttp.views import GraphQLView
-from indexer.utils import get_key_by_value
-from indexer.config import Config
 from strawberry.types import Info
 
 config = Config()
@@ -1074,14 +1074,14 @@ class AdventurersFilter:
     ring: Optional[FeltValueFilter] = None
     beastHealth: Optional[FeltValueFilter] = None
     statUpgrades: Optional[FeltValueFilter] = None
-    birthDate: Optional[OrderByInput] = None
-    deathDate: Optional[OrderByInput] = None
-    goldenTokenId: Optional[OrderByInput] = None
-    launchTournamentWinnerTokenId: Optional[OrderByInput] = None
-    customRenderer: Optional[OrderByInput] = None
-    battleActionCount: Optional[OrderByInput] = None
+    birthDate: Optional[DateTimeFilter] = None
+    deathDate: Optional[DateTimeFilter] = None
+    goldenTokenId: Optional[FeltValueFilter] = None
+    launchTournamentWinnerTokenId: Optional[FeltValueFilter] = None
+    customRenderer: Optional[HexValueFilter] = None
+    battleActionCount: Optional[FeltValueFilter] = None
     gold: Optional[FeltValueFilter] = None
-    createdTime: Optional[OrderByInput] = None
+    createdTime: Optional[DateTimeFilter] = None
     lastUpdatedTime: Optional[DateTimeFilter] = None
     timestamp: Optional[DateTimeFilter] = None
 

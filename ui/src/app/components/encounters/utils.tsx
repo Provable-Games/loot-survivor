@@ -63,6 +63,23 @@ export function getUpdatedAdventurer(
   return updatedAdventurer;
 }
 
+export function getEquippedItemsObjects(
+  equipItems: string[],
+  gameData: GameData,
+  items: Item[]
+): any[] {
+  const equippedItemsObjects = equipItems.map((item) => {
+    const itemName = gameData.ITEMS[Number(item)];
+    const itemData = getItemData(itemName);
+    return {
+      ...itemData,
+      ...items.find((item) => item.item === itemName),
+    };
+  });
+
+  return equippedItemsObjects;
+}
+
 export function getPurchaseItemsObjects(
   purchaseItems: ItemPurchase[],
   gameData: GameData
@@ -80,10 +97,16 @@ export function getPurchaseItemsObjects(
 }
 
 export function getItems(
+  equipItems: string[],
   purchaseItems: ItemPurchase[],
   data: QueryData,
   gameData: GameData
 ): Item[] {
+  const equippedItemsObjects = getEquippedItemsObjects(
+    equipItems,
+    gameData,
+    data.itemsByAdventurerQuery?.items!
+  );
   const purchaseItemsObjects = getPurchaseItemsObjects(purchaseItems, gameData);
 
   // const items = useMemo(() => {
@@ -99,6 +122,9 @@ export function getItems(
       })) || [];
 
   let updatedItems: Item[] = equippedItems.map((item: any) => {
+    const equipItem = equippedItemsObjects.find(
+      (equipItem) => equipItem.slot === item.slot
+    );
     const purchaseItem = purchaseItemsObjects
       .filter((item) => item.equip)
       .find((purchaseItem) => purchaseItem.slot === item.slot);
@@ -109,6 +135,9 @@ export function getItems(
         special3: undefined,
         xp: 1, // Default XP for new items
       };
+    }
+    if (equipItem) {
+      return equipItem;
     }
     return item;
   });

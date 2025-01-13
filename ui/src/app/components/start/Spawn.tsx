@@ -346,7 +346,6 @@ export const Spawn = ({
                         </li>
                       </ol>
                     </div>
-                    {/* <div className="w-1/3"></div> */}
                     <div className="relative w-1/3 flex flex-col gap-2 items-center justify-center">
                       <DownArrowIcon className="w-6 sm:w-10 text-terminal-green/75" />
                       <div className="hidden sm:flex w-2/3">
@@ -407,7 +406,6 @@ export const Spawn = ({
               Back
             </Button>
             <Button
-              className="hidden sm:block"
               size={"sm"}
               variant={"default"}
               onClick={() => {

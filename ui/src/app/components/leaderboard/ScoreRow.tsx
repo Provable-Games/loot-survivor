@@ -18,7 +18,7 @@ const ScoreRow = ({
   const { play: clickPlay } = useUiSounds(soundSelector.click);
   return (
     <tr
-      className="text-center border-b border-terminal-green hover:bg-terminal-green hover:text-terminal-black cursor-pointer xl:h-2 xl:text-lg 2xl:text-xl 2xl:h-10"
+      className="text-center border-b border-terminal-green hover:bg-terminal-green/75 hover:text-terminal-black cursor-pointer xl:h-2 xl:text-lg 2xl:text-xl 2xl:h-10"
       onClick={() => {
         handleRowSelected(adventurer.id ?? 0);
         clickPlay();
@@ -41,7 +41,9 @@ const ScoreRow = ({
           rank
         )}
       </td>
-      <td>{`${adventurer.name} - ${adventurer.id}`}</td>
+      <td>
+        <span className="block whitespace-nowrap overflow-hidden text-ellipsis w-40 sm:w-full">{`${adventurer.name} - ${adventurer.id}`}</span>
+      </td>
       <td>{calculateLevel(adventurer.xp ?? 0)}</td>
       <td>{adventurer.xp}</td>
       <td>
