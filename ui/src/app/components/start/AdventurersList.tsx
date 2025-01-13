@@ -9,7 +9,11 @@ import {
 } from "@/app/components/icons/Icons";
 import LootIconLoader from "@/app/components/icons/Loader";
 import { AdventurerListCard } from "@/app/components/start/AdventurerListCard";
-import { getAdventurersByOwner } from "@/app/hooks/graphql/queries";
+import {
+  getAdventurersByOwner,
+  getAdventurersByOwnerCount,
+  getAliveAdventurersCount,
+} from "@/app/hooks/graphql/queries";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
 import useCustomQuery from "@/app/hooks/useCustomQuery";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
@@ -40,8 +44,6 @@ export interface AdventurerListProps {
   onEscape: () => void;
   handleSwitchAdventurer: (adventurerId: number) => Promise<void>;
   gameContract: Contract;
-  adventurersCount: number;
-  aliveAdventurersCount: number;
   transferAdventurer: (
     account: AccountInterface,
     adventurerId: number,
@@ -61,8 +63,6 @@ export const AdventurersList = ({
   onEscape,
   handleSwitchAdventurer,
   gameContract,
-  adventurersCount,
-  aliveAdventurersCount,
   transferAdventurer,
   changeAdventurerName,
 }: AdventurerListProps) => {
@@ -112,6 +112,40 @@ export const AdventurersList = ({
   const [isMaxLength, setIsMaxLength] = useState(false);
 
   const addToCalls = useTransactionCartStore((state) => state.addToCalls);
+
+  const adventurersByOwnerCountData = useCustomQuery(
+    network,
+    "adventurersByOwnerCountQuery",
+    getAdventurersByOwnerCount,
+    {
+      owner: indexAddress(owner ?? "0x0").toLowerCase(),
+    },
+    owner === ""
+  );
+
+  let currentTimestamp = Math.floor(Date.now() / 1000);
+  let tenDaysInSeconds = 10 * 24 * 60 * 60;
+  let expiredStartCutoff = currentTimestamp - tenDaysInSeconds;
+
+  const aliveAdventurersVariables = useMemo(() => {
+    return {
+      owner: indexAddress(owner ?? "0x0").toLowerCase(),
+      birthDate: expiredStartCutoff,
+    };
+  }, [owner]);
+
+  const aliveAdventurersByOwnerCountData = useCustomQuery(
+    network,
+    "aliveAdventurersByOwnerCountQuery",
+    getAliveAdventurersCount,
+    aliveAdventurersVariables,
+    owner === ""
+  );
+
+  const adventurersCount = adventurersByOwnerCountData?.countTotalAdventurers;
+
+  const aliveAdventurersCount =
+    aliveAdventurersByOwnerCountData?.countAliveAdventurers;
 
   const handleAddTransferTx = (recipient: string, adventurerId: number) => {
     const transferTx = {
@@ -187,6 +221,7 @@ export const AdventurersList = ({
     return {
       owner: indexAddress(owner).toLowerCase(),
       health: showZeroHealth ? 0 : 1,
+      birthDate: showZeroHealth ? 0 : expiredStartCutoff,
       skip: skip,
     };
   }, [owner, skip, showZeroHealth]);
@@ -305,14 +340,19 @@ export const AdventurersList = ({
             <h2 className="text-xl uppercase text-center text-terminal-black h-10 flex items-center justify-center m-0">
               Adventurers
             </h2>
-            <Button
-              className="absolute right-0 w-auto h-8"
-              size={"xs"}
-              onClick={() => setShowZeroHealth(!showZeroHealth)}
-              variant={showZeroHealth ? "default" : "contrast"}
-            >
-              {showZeroHealth ? "Hide" : "Show"} dead
-            </Button>
+            <div className="absolute right-0 flex flex-row gap-2">
+              <Button
+                className="w-auto h-8"
+                size={"xs"}
+                onClick={() => {
+                  setShowZeroHealth(!showZeroHealth);
+                  setCurrentPage(1);
+                }}
+                variant={showZeroHealth ? "default" : "contrast"}
+              >
+                {showZeroHealth ? "Hide" : "Show"} dead
+              </Button>
+            </div>
           </span>
           <div className="relative flex flex-col w-full overflow-y-auto default-scroll mx-2 sm:mx-0 border border-terminal-green sm:border-none h-[625px] 2xl:h-[625px]">
             {isLoading && (
@@ -320,7 +360,7 @@ export const AdventurersList = ({
                 <LootIconLoader size="w-10" />
               </div>
             )}
-            <div className="h-7/8 flex flex-col  w-full overflow-y-auto default-scrol">
+            <div className="h-7/8 flex flex-col  w-full overflow-y-auto default-scroll">
               {formatAdventurersCount > 0 ? (
                 !isTransferOpen && !isEditOpen ? (
                   adventurers.map((adventurer, index) => {

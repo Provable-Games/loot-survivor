@@ -1,18 +1,14 @@
+import { Button } from "@/app/components/buttons/Button";
 import ButtonMenu from "@/app/components/menu/ButtonMenu";
 import { AdventurersList } from "@/app/components/start/AdventurersList";
 import { CreateAdventurer } from "@/app/components/start/CreateAdventurer";
-import {
-  getAdventurersByOwnerCount,
-  getAliveAdventurersCount,
-} from "@/app/hooks/graphql/queries";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
-import useCustomQuery from "@/app/hooks/useCustomQuery";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import useUIStore from "@/app/hooks/useUIStore";
-import { indexAddress, padAddress } from "@/app/lib/utils";
+import { padAddress } from "@/app/lib/utils";
 import { FormData, NullAdventurer } from "@/app/types";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AccountInterface, Contract } from "starknet";
 
 interface AdventurerScreenProps {
@@ -74,35 +70,9 @@ export default function AdventurerScreen({
   const resetData = useQueriesStore((state) => state.resetData);
   const startOption = useUIStore((state) => state.startOption);
   const setStartOption = useUIStore((state) => state.setStartOption);
-  const network = useUIStore((state) => state.network);
+  const setShowLoginDialog = useUIStore((state) => state.setShowLoginDialog);
   const { account } = useNetworkAccount();
   const owner = account?.address ? padAddress(account.address) : "";
-
-  const adventurersByOwnerCountData = useCustomQuery(
-    network,
-    "adventurersByOwnerCountQuery",
-    getAdventurersByOwnerCount,
-    {
-      owner: indexAddress(owner ?? "0x0").toLowerCase(),
-    },
-    owner === ""
-  );
-
-  const aliveAdventurersByOwnerCountData = useCustomQuery(
-    network,
-    "aliveAdventurersByOwnerCountQuery",
-    getAliveAdventurersCount,
-    {
-      owner: indexAddress(owner ?? "0x0").toLowerCase(),
-    },
-    owner === ""
-  );
-
-  const adventurersByOwnerCount =
-    adventurersByOwnerCountData?.countTotalAdventurers;
-
-  const aliveAdventurersByOwnerCount =
-    aliveAdventurersByOwnerCountData?.countAliveAdventurers;
 
   const menu = [
     {
@@ -123,15 +93,9 @@ export default function AdventurerScreen({
       action: () => {
         setStartOption("choose adventurer");
       },
-      disabled: adventurersByOwnerCount == 0,
+      disabled: false,
     },
   ];
-
-  useEffect(() => {
-    if (adventurersByOwnerCount == 0) {
-      setStartOption("create adventurer");
-    }
-  }, []);
 
   return (
     <div className="flex flex-col sm:flex-row w-full h-full">
@@ -162,20 +126,28 @@ export default function AdventurerScreen({
         </div>
       )}
 
-      {startOption === "choose adventurer" && (
-        <div className="flex flex-col sm:w-5/6 h-[500px] sm:h-full w-full">
-          <AdventurersList
-            isActive={activeMenu == 2}
-            onEscape={() => setActiveMenu(0)}
-            handleSwitchAdventurer={handleSwitchAdventurer}
-            gameContract={gameContract}
-            adventurersCount={adventurersByOwnerCount}
-            aliveAdventurersCount={aliveAdventurersByOwnerCount}
-            transferAdventurer={transferAdventurer}
-            changeAdventurerName={changeAdventurerName}
-          />
-        </div>
-      )}
+      {startOption === "choose adventurer" &&
+        (owner !== "" ? (
+          <div className="flex flex-col sm:w-5/6 h-[500px] sm:h-full w-full">
+            <AdventurersList
+              isActive={activeMenu == 2}
+              onEscape={() => setActiveMenu(0)}
+              handleSwitchAdventurer={handleSwitchAdventurer}
+              gameContract={gameContract}
+              transferAdventurer={transferAdventurer}
+              changeAdventurerName={changeAdventurerName}
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-5 sm:w-5/6 h-[500px] sm:h-full w-full justify-center items-center">
+            <p className="text-2xl uppercase">
+              You must have an account connected to view your owned adventurers.
+            </p>
+            <Button size="lg" onClick={() => setShowLoginDialog(true)}>
+              Connect Account
+            </Button>
+          </div>
+        ))}
     </div>
   );
 }

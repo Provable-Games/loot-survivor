@@ -1,32 +1,31 @@
-import { useEffect, useState } from "react";
-import { Contract } from "starknet";
-import useLoadingStore from "@/app/hooks/useLoadingStore";
-import useAdventurerStore from "@/app/hooks/useAdventurerStore";
-import Info from "@/app/components/adventurer/Info";
 import Prescience from "@/app/components/actions/Prescience";
-import { useQueriesStore } from "@/app/hooks/useQueryStore";
-import BeastScreen from "@/app/containers/BeastScreen";
-import MazeLoader from "@/app/components/icons/MazeLoader";
-import useUIStore from "@/app/hooks/useUIStore";
-import ActionMenu from "@/app/components/menu/ActionMenu";
-import { Beast } from "@/app/types";
-import { useController } from "@/app/context/ControllerContext";
-import { getItemData } from "@/app/lib/utils";
-import { getNextBigEncounter } from "@/app/lib/utils/processFutures";
+import Info from "@/app/components/adventurer/Info";
 import {
   BladeIcon,
   BludgeonIcon,
-  MagicIcon,
   ClothIcon,
-  HideIcon,
-  MetalIcon,
   CompleteIcon,
+  HideIcon,
+  MagicIcon,
+  MetalIcon,
 } from "@/app/components/icons/Icons";
 import LootIcon from "@/app/components/icons/LootIcon";
-import { useUiSounds, soundSelector } from "@/app/hooks/useUiSound";
-import { GameData } from "../lib/data/GameData";
+import MazeLoader from "@/app/components/icons/MazeLoader";
+import ActionMenu from "@/app/components/menu/ActionMenu";
+import BeastScreen from "@/app/containers/BeastScreen";
+import { useController } from "@/app/context/ControllerContext";
+import useAdventurerStore from "@/app/hooks/useAdventurerStore";
+import useLoadingStore from "@/app/hooks/useLoadingStore";
+import { useQueriesStore } from "@/app/hooks/useQueryStore";
+import { soundSelector, useUiSounds } from "@/app/hooks/useUiSound";
+import useUIStore from "@/app/hooks/useUIStore";
+import { getItemData } from "@/app/lib/utils";
+import { getNextBigEncounter } from "@/app/lib/utils/processFutures";
+import { Beast } from "@/app/types";
+import { useEffect, useMemo, useState } from "react";
+import { Contract } from "starknet";
 import { Button } from "../components/buttons/Button";
-import { useMemo } from "react";
+import { GameData } from "../lib/data/GameData";
 
 interface ActionsScreenProps {
   explore: (till_beast: boolean) => Promise<void>;
@@ -53,6 +52,7 @@ export default function ActionsScreen({
   const onKatana = useUIStore((state) => state.onKatana);
   const tillDeath = useUIStore((state) => state.tillDeath);
   const setTillDeath = useUIStore((state) => state.setTillDeath);
+  const setScreen = useUIStore((state) => state.setScreen);
 
   const hasBeast = useAdventurerStore((state) => state.computed.hasBeast);
   const resetNotification = useLoadingStore((state) => state.resetNotification);
@@ -132,316 +132,336 @@ export default function ActionsScreen({
 
   return (
     <div className="flex flex-col sm:flex-row flex-wrap h-full w-full">
-      <div className="hidden sm:block sm:w-1/2 lg:w-1/3 h-full">
-        <Info adventurer={adventurer} gameContract={gameContract} />
-      </div>
+      {adventurer?.id ? (
+        <>
+          <div className="hidden sm:block sm:w-1/2 lg:w-1/3 h-full">
+            <Info adventurer={adventurer} gameContract={gameContract} />
+          </div>
 
-      {hasBeast ? (
-        <BeastScreen
-          attack={attack}
-          flee={flee}
-          beastsContract={beastsContract}
-        />
-      ) : (
-        <div className="flex flex-col sm:flex-row h-full w-full sm:w-1/2 lg:w-2/3">
-          {adventurer?.id ? (
-            <div className="flex flex-col gap-2 sm:gap-0 items-center lg:w-1/2 bg-terminal-black order-1 sm:order-2 h-5/6 sm:h-full">
-              {!showFuture ? <Prescience /> : null}
-              <Button
-                className="uppercase sm:hidden"
-                onClick={() => setShowFuture(!showFuture)}
-              >
-                {showFuture ? "Hide Future" : "Show Future"}
-              </Button>
-              {nextEncounter && showFuture && (
-                <div className="sm:hidden flex-col items-center uppercase mt-8">
-                  <div className="text-center">Next Big Encounter</div>
+          {hasBeast ? (
+            <BeastScreen
+              attack={attack}
+              flee={flee}
+              beastsContract={beastsContract}
+            />
+          ) : (
+            <div className="flex flex-col sm:flex-row h-full w-full sm:w-1/2 lg:w-2/3">
+              {adventurer?.id ? (
+                <div className="flex flex-col gap-2 sm:gap-0 items-center lg:w-1/2 bg-terminal-black order-1 sm:order-2 h-5/6 sm:h-full">
+                  {!showFuture ? <Prescience /> : null}
+                  <Button
+                    className="uppercase sm:hidden"
+                    onClick={() => setShowFuture(!showFuture)}
+                  >
+                    {showFuture ? "Hide Future" : "Show Future"}
+                  </Button>
+                  {nextEncounter && showFuture && (
+                    <div className="sm:hidden flex-col items-center uppercase mt-8">
+                      <div className="text-center">Next Big Encounter</div>
 
-                  <div className="text-sm border p-2 border-terminal-green flex flex-col items-center mt-2 gap-1 w-[220px]">
-                    {nextEncounter?.encounter! === "levelup" && (
-                      <span className="text-base">Level Up!</span>
-                    )}
+                      <div className="text-sm border p-2 border-terminal-green flex flex-col items-center mt-2 gap-1 w-[220px]">
+                        {nextEncounter?.encounter! === "levelup" && (
+                          <span className="text-base">Level Up!</span>
+                        )}
 
-                    {nextEncounter?.encounter! === "Beast" && (
-                      <>
-                        <div className="flex flex-col items-center gap-2 mb-1">
-                          <span className="text-terminal-yellow text-center">
-                            Beast{" "}
-                            {nextEncounter.level >= 19
-                              ? `"${nextEncounter.specialName}"`
-                              : ""}
-                          </span>
+                        {nextEncounter?.encounter! === "Beast" && (
+                          <>
+                            <div className="flex flex-col items-center gap-2 mb-1">
+                              <span className="text-terminal-yellow text-center">
+                                Beast{" "}
+                                {nextEncounter.level >= 19
+                                  ? `"${nextEncounter.specialName}"`
+                                  : ""}
+                              </span>
 
-                          <span className="text-center">
-                            {gameData.BEASTS[nextEncounter.id]}
-                          </span>
+                              <span className="text-center">
+                                {gameData.BEASTS[nextEncounter.id]}
+                              </span>
 
-                          <span className="flex gap-4">
-                            <span>Tier {nextEncounter.tier}</span>
-                            <span>Level {nextEncounter.level}</span>
-                          </span>
+                              <span className="flex gap-4">
+                                <span>Tier {nextEncounter.tier}</span>
+                                <span>Level {nextEncounter.level}</span>
+                              </span>
 
-                          <span className="flex justify-center gap-2 items-center">
-                            {nextEncounter.type === "Blade" && (
-                              <BladeIcon className="h-4" />
-                            )}
-                            {nextEncounter.type === "Bludgeon" && (
-                              <BludgeonIcon className="h-4" />
-                            )}
-                            {nextEncounter.type === "Magic" && (
-                              <MagicIcon className="h-4" />
-                            )}
-                            <span>{nextEncounter.type}</span>
-                            <span>/</span>
-                            {nextEncounter.type === "Blade" && (
-                              <HideIcon className="h-4" />
-                            )}
-                            {nextEncounter.type === "Bludgeon" && (
-                              <MetalIcon className="h-4" />
-                            )}
-                            {nextEncounter.type === "Magic" && (
-                              <ClothIcon className="h-4" />
-                            )}
-                            {nextEncounter.type === "Blade"
-                              ? "Hide"
-                              : nextEncounter.type === "Bludgeon"
-                              ? "Metal"
-                              : "Cloth"}
-                          </span>
-                          {nextEncounter?.encounter === "Beast" &&
-                          nextEncounter.dodgeRoll <= adventurer?.wisdom! ? (
-                            <div className="text-sm">No Ambush</div>
-                          ) : (
-                            <div className="text-sm flex flex-col items-center">
-                              <span>Ambush!</span>
-                              <div className="flex gap-1 items-center">
-                                <span>
-                                  Damage to {nextEncounter.location} for{" "}
-                                  {nextEncounter.damage}
-                                </span>
-                                <span className="text-red-500">
-                                  <LootIcon
-                                    size={"w-4"}
-                                    type={nextEncounter.location}
-                                  />
-                                </span>
-                              </div>
+                              <span className="flex justify-center gap-2 items-center">
+                                {nextEncounter.type === "Blade" && (
+                                  <BladeIcon className="h-4" />
+                                )}
+                                {nextEncounter.type === "Bludgeon" && (
+                                  <BludgeonIcon className="h-4" />
+                                )}
+                                {nextEncounter.type === "Magic" && (
+                                  <MagicIcon className="h-4" />
+                                )}
+                                <span>{nextEncounter.type}</span>
+                                <span>/</span>
+                                {nextEncounter.type === "Blade" && (
+                                  <HideIcon className="h-4" />
+                                )}
+                                {nextEncounter.type === "Bludgeon" && (
+                                  <MetalIcon className="h-4" />
+                                )}
+                                {nextEncounter.type === "Magic" && (
+                                  <ClothIcon className="h-4" />
+                                )}
+                                {nextEncounter.type === "Blade"
+                                  ? "Hide"
+                                  : nextEncounter.type === "Bludgeon"
+                                  ? "Metal"
+                                  : "Cloth"}
+                              </span>
+                              {nextEncounter?.encounter === "Beast" &&
+                              nextEncounter.dodgeRoll <= adventurer?.wisdom! ? (
+                                <div className="text-sm">No Ambush</div>
+                              ) : (
+                                <div className="text-sm flex flex-col items-center">
+                                  <span>Ambush!</span>
+                                  <div className="flex gap-1 items-center">
+                                    <span>
+                                      Damage to {nextEncounter.location} for{" "}
+                                      {nextEncounter.damage}
+                                    </span>
+                                    <span className="text-red-500">
+                                      <LootIcon
+                                        size={"w-4"}
+                                        type={nextEncounter.location}
+                                      />
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      </>
-                    )}
+                          </>
+                        )}
 
-                    {nextEncounter?.encounter! === "Obstacle" && (
-                      <>
-                        <div className="flex flex-col items-center gap-1">
-                          <span className="text-base text-terminal-yellow">
-                            Obstacle
-                          </span>
+                        {nextEncounter?.encounter! === "Obstacle" && (
+                          <>
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-base text-terminal-yellow">
+                                Obstacle
+                              </span>
 
-                          <span className="text-base text-terminal-green">
-                            {gameData.OBSTACLES[parseInt(nextEncounter.id)]}
-                          </span>
+                              <span className="text-base text-terminal-green">
+                                {gameData.OBSTACLES[parseInt(nextEncounter.id)]}
+                              </span>
 
-                          <span className="flex gap-4">
-                            <span>Tier {nextEncounter.tier}</span>
-                            <span>Level {nextEncounter.level}</span>
-                          </span>
-                          <span className="flex justify-center gap-2 items-center">
-                            {nextEncounter.type === "Blade" && (
-                              <BladeIcon className="h-4" />
-                            )}
-                            {nextEncounter.type === "Bludgeon" && (
-                              <BludgeonIcon className="h-4" />
-                            )}
-                            {nextEncounter.type === "Magic" && (
-                              <MagicIcon className="h-4" />
-                            )}
-                            {nextEncounter.type}
-                          </span>
-                          {nextEncounter.dodgeRoll <=
-                          adventurer?.intelligence! ? (
-                            <div className="text-sm">Avoided</div>
-                          ) : (
-                            <div className="text-sm flex flex-col items-center gap-1">
-                              <div className="flex gap-1 items-center">
-                                <span>
-                                  Damage to {nextEncounter.location} for{" "}
-                                  {nextEncounter.damage}
-                                </span>
-                                <span className="text-red-500">
-                                  <LootIcon
-                                    size={"w-4"}
-                                    type={nextEncounter.location}
-                                  />
-                                </span>
-                              </div>
+                              <span className="flex gap-4">
+                                <span>Tier {nextEncounter.tier}</span>
+                                <span>Level {nextEncounter.level}</span>
+                              </span>
+                              <span className="flex justify-center gap-2 items-center">
+                                {nextEncounter.type === "Blade" && (
+                                  <BladeIcon className="h-4" />
+                                )}
+                                {nextEncounter.type === "Bludgeon" && (
+                                  <BludgeonIcon className="h-4" />
+                                )}
+                                {nextEncounter.type === "Magic" && (
+                                  <MagicIcon className="h-4" />
+                                )}
+                                {nextEncounter.type}
+                              </span>
+                              {nextEncounter.dodgeRoll <=
+                              adventurer?.intelligence! ? (
+                                <div className="text-sm">Avoided</div>
+                              ) : (
+                                <div className="text-sm flex flex-col items-center gap-1">
+                                  <div className="flex gap-1 items-center">
+                                    <span>
+                                      Damage to {nextEncounter.location} for{" "}
+                                      {nextEncounter.damage}
+                                    </span>
+                                    <span className="text-red-500">
+                                      <LootIcon
+                                        size={"w-4"}
+                                        type={nextEncounter.location}
+                                      />
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      </>
-                    )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xl text-center order-1 sm:order-2">
+                  Please Select an Adventurer
+                </p>
+              )}
+              <div className="flex flex-col items-center lg:w-1/2 sm:my-4 w-full px-4 sm:order-1 h-1/3 sm:h-full">
+                {loading && !onKatana && <MazeLoader />}
+                <div className="flex flex-col w-3/4 h-full sm:h-1/3 gap-5">
+                  <div className="h-1/2">
+                    <ActionMenu
+                      buttonsData={buttonsData}
+                      size="fill"
+                      title="Explore"
+                    />
+                  </div>
+                  <div className="flex flex-row items-center justify-center gap-5">
+                    <span
+                      onClick={() => setTillDeath(!tillDeath)}
+                      className="border border-terminal-green w-6 h-6 sm:w-10 sm:h-10 cursor-pointer"
+                    >
+                      {tillDeath && <CompleteIcon />}
+                    </span>
+                    <span className="uppercase">Till Death</span>
                   </div>
                 </div>
-              )}
+
+                {nextEncounter && (
+                  <div className="hidden sm:flex flex-col items-center uppercase mt-8 sm:mt-0">
+                    <div>Next Big Encounter</div>
+
+                    <div className="text-sm border p-2 border-terminal-green flex flex-col items-center mt-2 gap-1 w-[220px]">
+                      {nextEncounter?.encounter! === "levelup" && (
+                        <span className="text-base">Level Up!</span>
+                      )}
+
+                      {nextEncounter?.encounter! === "Beast" && (
+                        <>
+                          <div className="flex flex-col items-center gap-2 mb-1">
+                            <span className="text-terminal-yellow text-center">
+                              Beast{" "}
+                              {nextEncounter.level >= 19
+                                ? `"${nextEncounter.specialName}"`
+                                : ""}
+                            </span>
+
+                            <span className="text-center">
+                              {gameData.BEASTS[nextEncounter.id]}
+                            </span>
+
+                            <span className="flex gap-4">
+                              <span>Tier {nextEncounter.tier}</span>
+                              <span>Level {nextEncounter.level}</span>
+                            </span>
+
+                            <span className="flex justify-center gap-2 items-center">
+                              {nextEncounter.type === "Blade" && (
+                                <BladeIcon className="h-4" />
+                              )}
+                              {nextEncounter.type === "Bludgeon" && (
+                                <BludgeonIcon className="h-4" />
+                              )}
+                              {nextEncounter.type === "Magic" && (
+                                <MagicIcon className="h-4" />
+                              )}
+                              <span>{nextEncounter.type}</span>
+                              <span>/</span>
+                              {nextEncounter.type === "Blade" && (
+                                <HideIcon className="h-4" />
+                              )}
+                              {nextEncounter.type === "Bludgeon" && (
+                                <MetalIcon className="h-4" />
+                              )}
+                              {nextEncounter.type === "Magic" && (
+                                <ClothIcon className="h-4" />
+                              )}
+                              {nextEncounter.type === "Blade"
+                                ? "Hide"
+                                : nextEncounter.type === "Bludgeon"
+                                ? "Metal"
+                                : "Cloth"}
+                            </span>
+                            {nextEncounter?.encounter === "Beast" &&
+                            nextEncounter.dodgeRoll <= adventurer?.wisdom! ? (
+                              <div className="text-sm">No Ambush</div>
+                            ) : (
+                              <div className="text-sm flex flex-col items-center">
+                                <span>Ambush!</span>
+                                <div className="flex gap-1 items-center">
+                                  <span>
+                                    Damage to {nextEncounter.location} for{" "}
+                                    {nextEncounter.damage}
+                                  </span>
+                                  <span className="text-red-500">
+                                    <LootIcon
+                                      size={"w-4"}
+                                      type={nextEncounter.location}
+                                    />
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
+
+                      {nextEncounter?.encounter! === "Obstacle" && (
+                        <>
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="text-base text-terminal-yellow">
+                              Obstacle
+                            </span>
+
+                            <span className="text-base text-terminal-green">
+                              {gameData.OBSTACLES[parseInt(nextEncounter.id)]}
+                            </span>
+
+                            <span className="flex gap-4">
+                              <span>Tier {nextEncounter.tier}</span>
+                              <span>Level {nextEncounter.level}</span>
+                            </span>
+                            <span className="flex justify-center gap-2 items-center">
+                              {nextEncounter.type === "Blade" && (
+                                <BladeIcon className="h-4" />
+                              )}
+                              {nextEncounter.type === "Bludgeon" && (
+                                <BludgeonIcon className="h-4" />
+                              )}
+                              {nextEncounter.type === "Magic" && (
+                                <MagicIcon className="h-4" />
+                              )}
+                              {nextEncounter.type}
+                            </span>
+                            {nextEncounter.dodgeRoll <=
+                            adventurer?.intelligence! ? (
+                              <div className="text-sm">Avoided</div>
+                            ) : (
+                              <div className="text-sm flex flex-col items-center gap-1">
+                                <div className="flex gap-1 items-center">
+                                  <span>
+                                    Damage to {nextEncounter.location} for{" "}
+                                    {nextEncounter.damage}
+                                  </span>
+                                  <span className="text-red-500">
+                                    <LootIcon
+                                      size={"w-4"}
+                                      type={nextEncounter.location}
+                                    />
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          ) : (
-            <p className="text-xl text-center order-1 sm:order-2">
-              Please Select an Adventurer
-            </p>
           )}
-          <div className="flex flex-col items-center lg:w-1/2 sm:my-4 w-full px-4 sm:order-1 h-1/3 sm:h-full">
-            {loading && !onKatana && <MazeLoader />}
-            <div className="flex flex-col w-3/4 h-full sm:h-1/3 gap-5">
-              <div className="h-1/2">
-                <ActionMenu
-                  buttonsData={buttonsData}
-                  size="fill"
-                  title="Explore"
-                />
-              </div>
-              <div className="flex flex-row items-center justify-center gap-5">
-                <span
-                  onClick={() => setTillDeath(!tillDeath)}
-                  className="border border-terminal-green w-6 h-6 sm:w-10 sm:h-10 cursor-pointer"
-                >
-                  {tillDeath && <CompleteIcon />}
-                </span>
-                <span className="uppercase">Till Death</span>
-              </div>
-            </div>
-
-            {nextEncounter && (
-              <div className="hidden sm:flex flex-col items-center uppercase mt-8 sm:mt-0">
-                <div>Next Big Encounter</div>
-
-                <div className="text-sm border p-2 border-terminal-green flex flex-col items-center mt-2 gap-1 w-[220px]">
-                  {nextEncounter?.encounter! === "levelup" && (
-                    <span className="text-base">Level Up!</span>
-                  )}
-
-                  {nextEncounter?.encounter! === "Beast" && (
-                    <>
-                      <div className="flex flex-col items-center gap-2 mb-1">
-                        <span className="text-terminal-yellow text-center">
-                          Beast{" "}
-                          {nextEncounter.level >= 19
-                            ? `"${nextEncounter.specialName}"`
-                            : ""}
-                        </span>
-
-                        <span className="text-center">
-                          {gameData.BEASTS[nextEncounter.id]}
-                        </span>
-
-                        <span className="flex gap-4">
-                          <span>Tier {nextEncounter.tier}</span>
-                          <span>Level {nextEncounter.level}</span>
-                        </span>
-
-                        <span className="flex justify-center gap-2 items-center">
-                          {nextEncounter.type === "Blade" && (
-                            <BladeIcon className="h-4" />
-                          )}
-                          {nextEncounter.type === "Bludgeon" && (
-                            <BludgeonIcon className="h-4" />
-                          )}
-                          {nextEncounter.type === "Magic" && (
-                            <MagicIcon className="h-4" />
-                          )}
-                          <span>{nextEncounter.type}</span>
-                          <span>/</span>
-                          {nextEncounter.type === "Blade" && (
-                            <HideIcon className="h-4" />
-                          )}
-                          {nextEncounter.type === "Bludgeon" && (
-                            <MetalIcon className="h-4" />
-                          )}
-                          {nextEncounter.type === "Magic" && (
-                            <ClothIcon className="h-4" />
-                          )}
-                          {nextEncounter.type === "Blade"
-                            ? "Hide"
-                            : nextEncounter.type === "Bludgeon"
-                            ? "Metal"
-                            : "Cloth"}
-                        </span>
-                        {nextEncounter?.encounter === "Beast" &&
-                        nextEncounter.dodgeRoll <= adventurer?.wisdom! ? (
-                          <div className="text-sm">No Ambush</div>
-                        ) : (
-                          <div className="text-sm flex flex-col items-center">
-                            <span>Ambush!</span>
-                            <div className="flex gap-1 items-center">
-                              <span>
-                                Damage to {nextEncounter.location} for{" "}
-                                {nextEncounter.damage}
-                              </span>
-                              <span className="text-red-500">
-                                <LootIcon
-                                  size={"w-4"}
-                                  type={nextEncounter.location}
-                                />
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
-
-                  {nextEncounter?.encounter! === "Obstacle" && (
-                    <>
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="text-base text-terminal-yellow">
-                          Obstacle
-                        </span>
-
-                        <span className="text-base text-terminal-green">
-                          {gameData.OBSTACLES[parseInt(nextEncounter.id)]}
-                        </span>
-
-                        <span className="flex gap-4">
-                          <span>Tier {nextEncounter.tier}</span>
-                          <span>Level {nextEncounter.level}</span>
-                        </span>
-                        <span className="flex justify-center gap-2 items-center">
-                          {nextEncounter.type === "Blade" && (
-                            <BladeIcon className="h-4" />
-                          )}
-                          {nextEncounter.type === "Bludgeon" && (
-                            <BludgeonIcon className="h-4" />
-                          )}
-                          {nextEncounter.type === "Magic" && (
-                            <MagicIcon className="h-4" />
-                          )}
-                          {nextEncounter.type}
-                        </span>
-                        {nextEncounter.dodgeRoll <=
-                        adventurer?.intelligence! ? (
-                          <div className="text-sm">Avoided</div>
-                        ) : (
-                          <div className="text-sm flex flex-col items-center gap-1">
-                            <div className="flex gap-1 items-center">
-                              <span>
-                                Damage to {nextEncounter.location} for{" "}
-                                {nextEncounter.damage}
-                              </span>
-                              <span className="text-red-500">
-                                <LootIcon
-                                  size={"w-4"}
-                                  type={nextEncounter.location}
-                                />
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
+        </>
+      ) : (
+        <div className="flex flex-col gap-5 h-full w-full justify-center items-center p-5">
+          <p className="text-2xl uppercase text-center">
+            You have not selected an adventurer to play with.
+          </p>
+          <div className="flex flex-col gap-2">
+            <Button
+              size="md"
+              onClick={() => {
+                setScreen("start");
+              }}
+            >
+              Choose Adventurer
+            </Button>
           </div>
         </div>
       )}

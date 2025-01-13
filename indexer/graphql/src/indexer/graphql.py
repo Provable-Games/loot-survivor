@@ -1,18 +1,18 @@
 import asyncio
-from typing import List, NewType, Optional, Dict, Union, Any
-import ssl
+import hashlib
 import json
 import logging
-import hashlib
+import ssl
+from typing import Any, Dict, List, NewType, Optional, Union
 
-import strawberry
 import aiohttp_cors
-from aiohttp import web
 import aioredis
+import strawberry
+from aiohttp import web
+from indexer.config import Config
+from indexer.utils import get_key_by_value
 from pymongo import MongoClient
 from strawberry.aiohttp.views import GraphQLView
-from indexer.utils import get_key_by_value
-from indexer.config import Config
 from strawberry.types import Info
 
 config = Config()
@@ -1074,14 +1074,14 @@ class AdventurersFilter:
     ring: Optional[FeltValueFilter] = None
     beastHealth: Optional[FeltValueFilter] = None
     statUpgrades: Optional[FeltValueFilter] = None
-    birthDate: Optional[OrderByInput] = None
-    deathDate: Optional[OrderByInput] = None
-    goldenTokenId: Optional[OrderByInput] = None
-    launchTournamentWinnerTokenId: Optional[OrderByInput] = None
-    customRenderer: Optional[OrderByInput] = None
-    battleActionCount: Optional[OrderByInput] = None
+    birthDate: Optional[FeltValueFilter] = None
+    deathDate: Optional[FeltValueFilter] = None
+    goldenTokenId: Optional[FeltValueFilter] = None
+    launchTournamentWinnerTokenId: Optional[FeltValueFilter] = None
+    customRenderer: Optional[HexValueFilter] = None
+    battleActionCount: Optional[FeltValueFilter] = None
     gold: Optional[FeltValueFilter] = None
-    createdTime: Optional[OrderByInput] = None
+    createdTime: Optional[DateTimeFilter] = None
     lastUpdatedTime: Optional[DateTimeFilter] = None
     timestamp: Optional[DateTimeFilter] = None
 
@@ -1908,8 +1908,8 @@ class Adventurer:
     ring: Optional[ItemValue]
     beastHealth: Optional[FeltValue]
     statUpgrades: Optional[FeltValue]
-    birthDate: Optional[str]
-    deathDate: Optional[str]
+    birthDate: Optional[FeltValue]
+    deathDate: Optional[FeltValue]
     goldenTokenId: Optional[FeltValue]
     launchTournamentWinnerTokenId: Optional[FeltValue]
     customRenderer: Optional[FeltValue]
@@ -3333,7 +3333,7 @@ async def count_adventurers_with_zero_health(info) -> int:
 
 
 async def count_adventurers_with_positive_health(
-    info, owner: Optional[HexValue] = None
+    info, owner: Optional[HexValue] = None, birthDate: Optional[FeltValue] = None
 ) -> int:
     redis = info.context["redis"]
 
@@ -3342,6 +3342,13 @@ async def count_adventurers_with_positive_health(
     # Add adventurerId to the filter if provided
     if owner:
         filter["owner"] = {"$eq": owner}
+
+    # Add birthDate to the filter if provided
+    if birthDate:
+        filter["birthDate"] = {"$gt": birthDate}
+
+    # Add health filter
+    filter["health"] = {"$gt": 0}
 
     cache_key = f"count_adventurers_with_positive_health:{json.dumps(filter)}"
 
@@ -3352,7 +3359,7 @@ async def count_adventurers_with_positive_health(
 
     # If not in cache, query the database
     db = info.context["db"]
-    count = db["adventurers"].count_documents({**filter, "health": {"$gt": 0}})
+    count = db["adventurers"].count_documents(filter)
 
     # Store the result in the cache
     await redis.set(cache_key, count, ex=60)  # Set an expiration time of 60 seconds

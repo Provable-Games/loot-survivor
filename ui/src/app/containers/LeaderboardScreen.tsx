@@ -1,4 +1,5 @@
 import { Button } from "@/app/components/buttons/Button";
+import { SkullIcon } from "@/app/components/icons/Icons";
 import BeastTable from "@/app/components/leaderboard/BeastTable";
 import ScoreTable from "@/app/components/leaderboard/ScoreTable";
 import SeasonTable from "@/app/components/leaderboard/SeasonTable";
@@ -12,8 +13,6 @@ import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import useUIStore from "@/app/hooks/useUIStore";
 import { Adventurer } from "@/app/types";
 import { useEffect, useState } from "react";
-// import { RefreshIcon } from "@/app/components/icons/Icons";
-import { SkullIcon } from "@/app/components/icons/Icons";
 
 /**
  * @container
@@ -102,7 +101,6 @@ export default function LeaderboardScreen() {
             <SeasonTable
               itemsPerPage={itemsPerPage}
               handleFetchProfileData={handlefetchProfileData}
-              adventurerCount={adventurerCountsData?.countAliveAdventurers}
             />
           </div>
           <div

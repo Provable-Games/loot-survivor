@@ -54,7 +54,7 @@ export const CreateAdventurer = ({
   const seasonActive = process.env.NEXT_PUBLIC_SEASON_ACTIVE === "true";
 
   // Memoize both the variables AND the client
-  const { variables, client } = useMemo(() => {
+  const { variables: tournamentVariables, client } = useMemo(() => {
     return {
       variables: {
         tournamentId: networkConfig[network!].tournamentId,
@@ -65,10 +65,8 @@ export const CreateAdventurer = ({
 
   const { data: tournamentPrizes } = useQuery(getTournamentPrizes, {
     client,
-    variables,
+    variables: tournamentVariables,
   });
-
-  console.log(tournamentPrizes);
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLInputElement> | KeyboardEvent) => {
@@ -171,7 +169,7 @@ export const CreateAdventurer = ({
               <h3 className="uppercase text-center 2xl:text-5xl m-0">
                 Season Ended
               </h3>
-              <p className="sm:text-xl text-center">
+              <p className="sm:text-xl text-center uppercase">
                 The season has ended. Stay tuned for the next one.
               </p>
             </div>

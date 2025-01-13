@@ -161,13 +161,7 @@ function Home() {
         screen: "leaderboard" as ScreenPage,
         disabled: false,
       },
-      {
-        id: 6,
-        label: "Travel Log",
-        screen: "encounters" as ScreenPage,
-        disabled: false,
-      },
-      { id: 7, label: "Guide", screen: "guide" as ScreenPage, disabled: false },
+      { id: 6, label: "Guide", screen: "guide" as ScreenPage, disabled: false },
     ],
     [onKatana]
   );
@@ -188,13 +182,7 @@ function Home() {
         screen: "upgrade" as ScreenPage,
         disabled: false,
       },
-      {
-        id: 5,
-        label: "Travel Log",
-        screen: "encounters" as ScreenPage,
-        disabled: false,
-      },
-      { id: 6, label: "Guide", screen: "guide" as ScreenPage, disabled: false },
+      { id: 5, label: "Guide", screen: "guide" as ScreenPage, disabled: false },
     ],
     [onKatana]
   );

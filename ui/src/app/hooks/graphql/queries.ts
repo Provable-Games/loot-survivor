@@ -206,9 +206,14 @@ const getAdventurersByOwner = gql`
     $owner: HexValue
     $skip: Int
     $health: FeltValue
+    $birthDate: FeltValue
   ) {
     adventurers(
-      where: { owner: { eq: $owner }, health: { gte: $health } }
+      where: {
+        owner: { eq: $owner }
+        health: { gte: $health }
+        birthDate: { gt: $birthDate }
+      }
       limit: 10
       skip: $skip
       orderBy: { id: { asc: true } }
@@ -452,8 +457,8 @@ const getAdventurerCounts = gql`
 `;
 
 const getAliveAdventurersCount = gql`
-  query getAliveAdventurersCount($owner: HexValue) {
-    countAliveAdventurers(owner: $owner)
+  query getAliveAdventurersCount($owner: HexValue, $birthDate: FeltValue) {
+    countAliveAdventurers(owner: $owner, birthDate: $birthDate)
   }
 `;
 
@@ -541,6 +546,18 @@ const getTournamentPrizes = gql`
   }
 `;
 
+const getTournament = gql`
+  query getTournament($tournamentId: String) {
+    lsTournamentsV0TournamentModels(where: { tournament_id: $tournamentId }) {
+      edges {
+        node {
+          tournament_id
+        }
+      }
+    }
+  }
+`;
+
 export {
   getAdventurerById,
   getAdventurerCounts,
@@ -565,6 +582,7 @@ export {
   getLatestMarketItems,
   getOwnerTokens,
   getScoresInList,
+  getTournament,
   getTournamentGames,
   getTournamentPrizes,
 };

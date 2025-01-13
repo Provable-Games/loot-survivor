@@ -27,7 +27,7 @@ const SeasonRow = ({ rank, adventurer, handleRowSelected }: SeasonRowProps) => {
 
   return (
     <tr
-      className={`text-center border-b border-terminal-green hover:bg-terminal-green hover:text-terminal-black cursor-pointer xl:h-2 xl:text-lg 2xl:text-xl 2xl:h-10 ${
+      className={`text-center border-b border-terminal-green hover:bg-terminal-green/75 hover:text-terminal-black cursor-pointer xl:h-2 xl:text-lg 2xl:text-xl 2xl:h-10 ${
         topScoreAdventurer
           ? "bg-terminal-yellow-50"
           : ownedAdventurer

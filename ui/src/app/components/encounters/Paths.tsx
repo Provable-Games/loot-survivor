@@ -18,6 +18,7 @@ import { Step } from "@/app/lib/utils/processFutures";
 import { Item } from "@/app/types";
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  getEquippedItemsObjects,
   getItems,
   getPaths,
   getPurchaseItemsObjects,
@@ -32,6 +33,7 @@ const Paths = () => {
   const upgrades = useUIStore((state) => state.upgrades);
   const potionAmount = useUIStore((state) => state.potionAmount);
   const purchaseItems = useUIStore((state) => state.purchaseItems);
+  const equipItems = useUIStore((state) => state.equipItems);
 
   const [selectedBeastEncounter, setSelectedBeastEncounter] =
     useState<Step | null>(null);
@@ -54,6 +56,16 @@ const Paths = () => {
         return item.slot! === "Weapon";
       }) || [];
 
+  const equippedItemsObjects = useMemo(
+    () =>
+      getEquippedItemsObjects(
+        equipItems,
+        gameData,
+        data.itemsByAdventurerQuery?.items!
+      ),
+    [equipItems]
+  );
+
   const purchaseItemsObjects = useMemo(
     () => getPurchaseItemsObjects(purchaseItems, gameData),
     [purchaseItems]
@@ -65,7 +77,9 @@ const Paths = () => {
         adventurer,
         upgrades,
         potionAmount,
-        purchaseItemsObjects
+        purchaseItemsObjects,
+        equippedItemsObjects,
+        data.itemsByAdventurerQuery?.items!
       ),
     [
       adventurer,
@@ -77,12 +91,17 @@ const Paths = () => {
       upgrades.Vitality,
       potionAmount,
       purchaseItemsObjects,
+      equippedItemsObjects,
     ]
   );
 
   const items = useMemo(
-    () => getItems(purchaseItems, data, gameData),
-    [data.itemsByAdventurerQuery?.items, purchaseItemsObjects]
+    () => getItems(equipItems, purchaseItems, data, gameData),
+    [
+      data.itemsByAdventurerQuery?.items,
+      purchaseItemsObjects,
+      equippedItemsObjects,
+    ]
   );
 
   const outcomesWithPath = useMemo(
