@@ -123,13 +123,22 @@ export const AdventurersList = ({
     owner === ""
   );
 
+  let currentTimestamp = Math.floor(Date.now() / 1000);
+  let tenDaysInSeconds = 10 * 24 * 60 * 60;
+  let expiredStartCutoff = currentTimestamp - tenDaysInSeconds;
+
+  const aliveAdventurersVariables = useMemo(() => {
+    return {
+      owner: indexAddress(owner ?? "0x0").toLowerCase(),
+      birthDate: expiredStartCutoff,
+    };
+  }, [owner]);
+
   const aliveAdventurersByOwnerCountData = useCustomQuery(
     network,
     "aliveAdventurersByOwnerCountQuery",
     getAliveAdventurersCount,
-    {
-      owner: indexAddress(owner ?? "0x0").toLowerCase(),
-    },
+    aliveAdventurersVariables,
     owner === ""
   );
 
@@ -212,6 +221,7 @@ export const AdventurersList = ({
     return {
       owner: indexAddress(owner).toLowerCase(),
       health: showZeroHealth ? 0 : 1,
+      birthDate: showZeroHealth ? 0 : expiredStartCutoff,
       skip: skip,
     };
   }, [owner, skip, showZeroHealth]);
@@ -334,7 +344,10 @@ export const AdventurersList = ({
               <Button
                 className="w-auto h-8"
                 size={"xs"}
-                onClick={() => setShowZeroHealth(!showZeroHealth)}
+                onClick={() => {
+                  setShowZeroHealth(!showZeroHealth);
+                  setCurrentPage(1);
+                }}
                 variant={showZeroHealth ? "default" : "contrast"}
               >
                 {showZeroHealth ? "Hide" : "Show"} dead

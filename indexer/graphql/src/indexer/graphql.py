@@ -3333,7 +3333,7 @@ async def count_adventurers_with_zero_health(info) -> int:
 
 
 async def count_adventurers_with_positive_health(
-    info, owner: Optional[HexValue] = None
+    info, owner: Optional[HexValue] = None, birthDate: Optional[FeltValue] = None
 ) -> int:
     redis = info.context["redis"]
 
@@ -3342,6 +3342,13 @@ async def count_adventurers_with_positive_health(
     # Add adventurerId to the filter if provided
     if owner:
         filter["owner"] = {"$eq": owner}
+
+    # Add birthDate to the filter if provided
+    if birthDate:
+        filter["birthDate"] = {"$gt": birthDate}
+
+    # Add health filter
+    filter["health"] = {"$gt": 0}
 
     cache_key = f"count_adventurers_with_positive_health:{json.dumps(filter)}"
 
@@ -3352,7 +3359,7 @@ async def count_adventurers_with_positive_health(
 
     # If not in cache, query the database
     db = info.context["db"]
-    count = db["adventurers"].count_documents({**filter, "health": {"$gt": 0}})
+    count = db["adventurers"].count_documents(filter)
 
     # Store the result in the cache
     await redis.set(cache_key, count, ex=60)  # Set an expiration time of 60 seconds

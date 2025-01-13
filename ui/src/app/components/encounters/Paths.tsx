@@ -77,7 +77,9 @@ const Paths = () => {
         adventurer,
         upgrades,
         potionAmount,
-        purchaseItemsObjects
+        purchaseItemsObjects,
+        equippedItemsObjects,
+        data.itemsByAdventurerQuery?.items!
       ),
     [
       adventurer,
@@ -89,6 +91,7 @@ const Paths = () => {
       upgrades.Vitality,
       potionAmount,
       purchaseItemsObjects,
+      equippedItemsObjects,
     ]
   );
 

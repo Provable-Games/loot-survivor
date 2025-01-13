@@ -20,7 +20,11 @@ import { listAllEncounters } from "@/app/lib/utils/processFutures";
 import { Item } from "@/app/types";
 import React, { useMemo, useState } from "react";
 import Paths from "./Paths";
-import { getPurchaseItemsObjects, getUpdatedAdventurer } from "./utils";
+import {
+  getEquippedItemsObjects,
+  getPurchaseItemsObjects,
+  getUpdatedAdventurer,
+} from "./utils";
 
 const EncounterTable = () => {
   const adventurer = useAdventurerStore((state) => state.adventurer);
@@ -38,10 +42,21 @@ const EncounterTable = () => {
   const upgrades = useUIStore((state) => state.upgrades);
   const potionAmount = useUIStore((state) => state.potionAmount);
   const purchaseItems = useUIStore((state) => state.purchaseItems);
+  const equipItems = useUIStore((state) => state.equipItems);
 
   const purchaseItemsObjects = useMemo(
     () => getPurchaseItemsObjects(purchaseItems, gameData),
     [purchaseItems]
+  );
+
+  const equippedItemsObjects = useMemo(
+    () =>
+      getEquippedItemsObjects(
+        equipItems,
+        gameData,
+        data.itemsByAdventurerQuery?.items!
+      ),
+    [equipItems, data.itemsByAdventurerQuery?.items]
   );
 
   const updatedAdventurer = useMemo(
@@ -50,9 +65,17 @@ const EncounterTable = () => {
         adventurer,
         upgrades,
         potionAmount,
-        purchaseItemsObjects
+        purchaseItemsObjects,
+        equippedItemsObjects,
+        data.itemsByAdventurerQuery?.items!
       ),
-    [adventurer, upgrades, potionAmount, purchaseItemsObjects]
+    [
+      adventurer,
+      upgrades,
+      potionAmount,
+      purchaseItemsObjects,
+      equippedItemsObjects,
+    ]
   );
 
   let armoritems: Item[] =

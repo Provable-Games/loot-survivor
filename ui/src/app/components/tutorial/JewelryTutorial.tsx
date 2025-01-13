@@ -5,7 +5,7 @@ export const JewelryTutorial = () => {
     <table className="sm:w-[800px] border-collapse" key={0}>
       <thead>
         <tr className="bg-terminal-green/50">
-          <th className="border border-terminal-green p-2">Ring</th>
+          <th className="border border-terminal-green p-2">Neck</th>
           <th className="border border-terminal-green p-2">Boost</th>
         </tr>
       </thead>
@@ -33,7 +33,7 @@ export const JewelryTutorial = () => {
     <table className="sm:w-[800px] border-collapse" key={1}>
       <thead>
         <tr className="bg-terminal-green/50">
-          <th className="border border-terminal-green p-2">Neck</th>
+          <th className="border border-terminal-green p-2">Ring</th>
           <th className="border border-terminal-green p-2">Boost</th>
         </tr>
       </thead>

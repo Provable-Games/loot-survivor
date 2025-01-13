@@ -2,7 +2,12 @@ import { QueryData } from "@/app/hooks/useQueryStore";
 import { AdventurerClass } from "@/app/lib/classes";
 import { vitalityIncrease } from "@/app/lib/constants";
 import { GameData } from "@/app/lib/data/GameData";
-import { getItemData, getItemPrice } from "@/app/lib/utils";
+import {
+  getItemData,
+  getItemPrice,
+  getKeyFromValue,
+  getValueFromKey,
+} from "@/app/lib/utils";
 import {
   getDecisionTree,
   getOutcomesWithPath,
@@ -18,32 +23,170 @@ export function getUpdatedAdventurer(
   adventurer: AdventurerClass | undefined,
   upgrades: UpgradeStats,
   potionAmount: number,
-  purchaseItemsObjects: ItemPurchaseObject[]
+  purchaseItemsObjects: ItemPurchaseObject[],
+  equipItemsObjects: any[],
+  items: Item[]
 ): AdventurerClass | null {
   if (!adventurer) return null;
 
+  const gameData = new GameData();
+
   let updatedAdventurer: AdventurerClass = { ...adventurer };
 
-  if (upgrades.Strength > 0) {
-    updatedAdventurer.strength! += upgrades.Strength;
+  const equippedItems = items
+    ?.filter((item) => item.equipped)
+    .map((item) => ({
+      ...item,
+      ...getItemData(item.item ?? ""),
+    }));
+
+  let strengthModifier = 0;
+  let dexterityModifier = 0;
+  let vitalityModifier = 0;
+  let intelligenceModifier = 0;
+  let wisdomModifier = 0;
+  let charismaModifier = 0;
+
+  // handle removal of boosts from equipping purchased items
+  purchaseItemsObjects.forEach((purchaseItem) => {
+    const matchingEquippedItem = equippedItems?.find(
+      (equippedItem) => equippedItem.slot === purchaseItem.slot
+    );
+
+    if (matchingEquippedItem) {
+      const itemSuffix = parseInt(
+        getKeyFromValue(
+          gameData.ITEM_SUFFIXES,
+          matchingEquippedItem.special1 ?? ""
+        ) ?? ""
+      );
+      const boost = getValueFromKey(
+        gameData.ITEM_SUFFIX_BOOST,
+        itemSuffix ?? 0
+      );
+      const strMatch = boost?.match(/STR \+(\d+)/);
+      const dexMatch = boost?.match(/DEX \+(\d+)/);
+      const vitMatch = boost?.match(/VIT \+(\d+)/);
+      const intMatch = boost?.match(/INT \+(\d+)/);
+      const wisMatch = boost?.match(/WIS \+(\d+)/);
+      const chaMatch = boost?.match(/CHA \+(\d+)/);
+
+      if (strMatch) {
+        strengthModifier -= parseInt(strMatch[1]);
+      }
+      if (dexMatch) {
+        dexterityModifier -= parseInt(dexMatch[1]);
+      }
+      if (vitMatch) {
+        vitalityModifier -= parseInt(vitMatch[1]);
+      }
+      if (intMatch) {
+        intelligenceModifier -= parseInt(intMatch[1]);
+      }
+      if (wisMatch) {
+        wisdomModifier -= parseInt(wisMatch[1]);
+      }
+      if (chaMatch) {
+        charismaModifier -= parseInt(chaMatch[1]);
+      }
+    }
+  });
+
+  equipItemsObjects?.forEach((item) => {
+    const matchingEquippedItem = equippedItems?.find(
+      (equippedItem) => equippedItem.slot === item.slot
+    );
+    if (matchingEquippedItem) {
+      const itemSuffix = parseInt(
+        getKeyFromValue(
+          gameData.ITEM_SUFFIXES,
+          matchingEquippedItem.special1 ?? ""
+        ) ?? ""
+      );
+      const boost = getValueFromKey(
+        gameData.ITEM_SUFFIX_BOOST,
+        itemSuffix ?? 0
+      );
+      const strMatch = boost?.match(/STR \+(\d+)/);
+      const dexMatch = boost?.match(/DEX \+(\d+)/);
+      const vitMatch = boost?.match(/VIT \+(\d+)/);
+      const intMatch = boost?.match(/INT \+(\d+)/);
+      const wisMatch = boost?.match(/WIS \+(\d+)/);
+      const chaMatch = boost?.match(/CHA \+(\d+)/);
+
+      if (strMatch) {
+        strengthModifier -= parseInt(strMatch[1]);
+      }
+      if (dexMatch) {
+        dexterityModifier -= parseInt(dexMatch[1]);
+      }
+      if (vitMatch) {
+        vitalityModifier -= parseInt(vitMatch[1]);
+      }
+      if (intMatch) {
+        intelligenceModifier -= parseInt(intMatch[1]);
+      }
+      if (wisMatch) {
+        wisdomModifier -= parseInt(wisMatch[1]);
+      }
+      if (chaMatch) {
+        charismaModifier -= parseInt(chaMatch[1]);
+      }
+    }
+
+    const itemSuffix = parseInt(
+      getKeyFromValue(gameData.ITEM_SUFFIXES, item.special1 ?? "") ?? ""
+    );
+    const boost = getValueFromKey(gameData.ITEM_SUFFIX_BOOST, itemSuffix ?? 0);
+    const strMatch = boost?.match(/STR \+(\d+)/);
+    const dexMatch = boost?.match(/DEX \+(\d+)/);
+    const vitMatch = boost?.match(/VIT \+(\d+)/);
+    const intMatch = boost?.match(/INT \+(\d+)/);
+    const wisMatch = boost?.match(/WIS \+(\d+)/);
+    const chaMatch = boost?.match(/CHA \+(\d+)/);
+
+    if (strMatch) {
+      strengthModifier += parseInt(strMatch[1]);
+    }
+    if (dexMatch) {
+      dexterityModifier += parseInt(dexMatch[1]);
+    }
+    if (vitMatch) {
+      vitalityModifier += parseInt(vitMatch[1]);
+    }
+    if (intMatch) {
+      intelligenceModifier += parseInt(intMatch[1]);
+    }
+    if (wisMatch) {
+      wisdomModifier += parseInt(wisMatch[1]);
+    }
+    if (chaMatch) {
+      charismaModifier += parseInt(chaMatch[1]);
+    }
+  });
+
+  if (upgrades.Strength > 0 || strengthModifier !== 0) {
+    updatedAdventurer.strength! += upgrades.Strength + strengthModifier;
   }
-  if (upgrades.Dexterity > 0) {
-    updatedAdventurer.dexterity! += upgrades.Dexterity;
+  if (upgrades.Dexterity > 0 || dexterityModifier !== 0) {
+    updatedAdventurer.dexterity! += upgrades.Dexterity + dexterityModifier;
   }
-  if (upgrades.Vitality > 0) {
+  if (upgrades.Vitality > 0 || vitalityModifier !== 0) {
     updatedAdventurer.vitality =
-      Number(updatedAdventurer.vitality) + upgrades.Vitality;
+      Number(updatedAdventurer.vitality) + upgrades.Vitality + vitalityModifier;
     updatedAdventurer.health =
-      updatedAdventurer.health! + upgrades.Vitality! * vitalityIncrease;
+      updatedAdventurer.health! +
+      (upgrades.Vitality! + vitalityModifier) * vitalityIncrease;
   }
-  if (upgrades.Intelligence > 0) {
-    updatedAdventurer.intelligence! += upgrades.Intelligence;
+  if (upgrades.Intelligence > 0 || intelligenceModifier !== 0) {
+    updatedAdventurer.intelligence! +=
+      upgrades.Intelligence + intelligenceModifier;
   }
-  if (upgrades.Wisdom > 0) {
-    updatedAdventurer.wisdom! += upgrades.Wisdom;
+  if (upgrades.Wisdom > 0 || wisdomModifier !== 0) {
+    updatedAdventurer.wisdom! += upgrades.Wisdom + wisdomModifier;
   }
-  if (upgrades.Charisma > 0) {
-    updatedAdventurer.charisma! += upgrades.Charisma;
+  if (upgrades.Charisma > 0 || charismaModifier !== 0) {
+    updatedAdventurer.charisma! += upgrades.Charisma + charismaModifier;
   }
 
   // Apply purchased potions
