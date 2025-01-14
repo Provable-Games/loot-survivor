@@ -1,5 +1,5 @@
 "use client";
-import { cartridgeConnector } from "@/app/lib/connectors";
+import { controllerConnector } from "@/app/lib/connectors";
 import { Chain, mainnet, sepolia } from "@starknet-react/chains";
 import {
   jsonRpcProvider,
@@ -37,10 +37,8 @@ export function StarknetProvider({
       chains={[network === "mainnet" ? mainnet : sepolia]}
       connectors={[
         ...connectors,
-        cartridgeConnector(
+        controllerConnector(
           networkConfig[network!].gameAddress,
-          networkConfig[network!].lordsAddress,
-          networkConfig[network!].ethAddress,
           networkConfig[network!].tournamentAddress,
           networkConfig[network!].rpcUrl
         ),

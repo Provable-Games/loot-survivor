@@ -1,9 +1,10 @@
 "use client";
-import Beasts from "@/app/abi/Beasts.json";
-import EthBalanceFragment from "@/app/abi/EthBalanceFragment.json";
-import Game from "@/app/abi/Game.json";
-import Lords from "@/app/abi/Lords.json";
-import Pragma from "@/app/abi/Pragma.json";
+// import Game from "@/app/abi/Game.json";
+import { Beasts } from "@/app/abi/Beasts";
+import { Eth } from "@/app/abi/Eth";
+import { Game } from "@/app/abi/Game";
+import { Lords } from "@/app/abi/Lords";
+import { Pragma } from "@/app/abi/Pragma";
 import { getGoldenTokens } from "@/app/api/getGoldenTokens";
 import { DeathDialog } from "@/app/components/adventurer/DeathDialog";
 import Player from "@/app/components/adventurer/Player";
@@ -68,7 +69,7 @@ import {
 import { useSyscalls } from "@/app/lib/utils/syscalls";
 import { Menu, ZeroUpgrade } from "@/app/types";
 import { useQuery } from "@apollo/client";
-import CartridgeConnector from "@cartridge/connector";
+import ControllerConnector from "@cartridge/connector/controller";
 import { sepolia } from "@starknet-react/chains";
 import { useConnect, useContract, useProvider } from "@starknet-react/core";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -188,23 +189,23 @@ function Home() {
   );
 
   const { contract: gameContract } = useContract({
-    address: networkConfig[network!].gameAddress,
     abi: Game,
+    address: networkConfig[network!].gameAddress as `0x${string}`,
   });
   const { contract: lordsContract } = useContract({
-    address: networkConfig[network!].lordsAddress,
+    address: networkConfig[network!].lordsAddress as `0x${string}`,
     abi: Lords,
   });
   const { contract: ethContract } = useContract({
-    address: networkConfig[network!].ethAddress,
-    abi: EthBalanceFragment,
+    address: networkConfig[network!].ethAddress as `0x${string}`,
+    abi: Eth,
   });
   const { contract: beastsContract } = useContract({
-    address: networkConfig[network!].beastsAddress,
+    address: networkConfig[network!].beastsAddress as `0x${string}`,
     abi: Beasts,
   });
   const { contract: pragmaContract } = useContract({
-    address: networkConfig[network!].pragmaAddress,
+    address: networkConfig[network!].pragmaAddress as `0x${string}`,
     abi: Pragma,
   });
 
@@ -248,7 +249,7 @@ function Home() {
   useEffect(() => {
     const init = async () => {
       const username = await (
-        connector as unknown as CartridgeConnector
+        connector as unknown as ControllerConnector
       ).username();
       setUsername(username || "");
       setControllerDelegate("");
@@ -693,9 +694,11 @@ function Home() {
 
   useEffect(() => {
     const fetchFreeVRF = async () => {
-      await gameContract!.call("free_vrf_promotion_active", []).then((res) => {
-        setFreeVRF(res as boolean);
-      });
+      await gameContract!
+        .call("free_vrf_promotion_active", [])
+        .then((res: any) => {
+          setFreeVRF(res as boolean);
+        });
     };
     fetchFreeVRF();
   }, []);

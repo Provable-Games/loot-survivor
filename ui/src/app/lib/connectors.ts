@@ -1,7 +1,6 @@
-import CartridgeConnector from "@cartridge/connector";
+import ControllerConnector from "@cartridge/connector/controller";
 import { Connector } from "@starknet-react/core";
-import { shortString } from "starknet";
-// import { WebWalletConnector } from "starknetkit/webwallet";
+import { constants } from "starknet";
 
 export const checkArcadeConnector = (connector?: Connector) => {
   return typeof connector?.id === "string" && connector?.id.includes("0x");
@@ -49,72 +48,76 @@ export const providerInterfaceCamel = (provider: string) => {
 //   url: argentWebWalletUrl(),
 // });
 
-export const cartridgeConnector = (
+export const controllerConnector = (
   gameAddress: string,
-  lordsAddress: string,
-  ethAddress: string,
   tournamentAddress: string,
   rpcUrl: string
 ) =>
-  new CartridgeConnector({
-    policies: [
-      {
-        target: gameAddress,
-        method: "new_game",
+  new ControllerConnector({
+    policies: {
+      contracts: {
+        [gameAddress]: {
+          methods: [
+            {
+              name: "New Game",
+              entrypoint: "new_game",
+              description: "Starts a new Loot Survivor game.",
+            },
+            {
+              name: "Explore",
+              entrypoint: "explore",
+              description: "Explore the dungeon.",
+            },
+            {
+              name: "Attack",
+              entrypoint: "attack",
+              description: "Attack the beast.",
+            },
+            {
+              name: "Flee",
+              entrypoint: "flee",
+              description: "Flee the beast.",
+            },
+            {
+              name: "Equip",
+              entrypoint: "equip",
+              description: "Equip a LOOT item.",
+            },
+            {
+              name: "Drop",
+              entrypoint: "drop",
+              description: "Drop a LOOT item.",
+            },
+            {
+              name: "Upgrade",
+              entrypoint: "upgrade",
+              description: "Upgrade Adventurer.",
+            },
+            {
+              name: "Transfer",
+              entrypoint: "transfer_from",
+              description: "Transfer an Adventurer.",
+            },
+          ],
+        },
+        [tournamentAddress]: {
+          methods: [
+            {
+              name: "Enter Tournament",
+              entrypoint: "enter_tournament",
+              description: "Enter a tournament.",
+            },
+            {
+              name: "Start Tournament",
+              entrypoint: "start_tournament",
+              description: "Start a tournament.",
+            },
+          ],
+        },
       },
-      {
-        target: gameAddress,
-        method: "explore",
-      },
-      {
-        target: gameAddress,
-        method: "attack",
-      },
-      {
-        target: gameAddress,
-        method: "flee",
-      },
-      {
-        target: gameAddress,
-        method: "equip",
-      },
-      {
-        target: gameAddress,
-        method: "drop",
-      },
-      {
-        target: gameAddress,
-        method: "upgrade",
-      },
-      {
-        target: gameAddress,
-        method: "transfer_from",
-      },
-      {
-        target: lordsAddress,
-        method: "approve",
-      },
-      {
-        target: lordsAddress,
-        method: "mint_lords",
-      },
-      {
-        target: ethAddress,
-        method: "approve",
-      },
-      {
-        target: tournamentAddress,
-        method: "enter_tournament",
-      },
-      {
-        target: tournamentAddress,
-        method: "start_tournament",
-      },
-    ],
-    paymaster: {
-      caller: shortString.encodeShortString("ANY_CALLER"),
     },
-    rpc: rpcUrl,
+    chains: [{ rpcUrl: rpcUrl }],
+    defaultChainId: constants.StarknetChainId.SN_MAIN,
     theme: "loot-survivor",
     colorMode: "dark",
   }) as never as Connector;

@@ -36,6 +36,7 @@ import {
   UpgradeStats,
   ZeroUpgrade,
 } from "@/app/types";
+import CartridgeConnector from "@cartridge/connector/controller";
 import { useConnect, useDisconnect } from "@starknet-react/core";
 import Eth from "public/icons/eth.svg";
 import Logo from "public/icons/logo.svg";
@@ -539,7 +540,10 @@ export default function Header({
               onClick={() => {
                 if (account) {
                   if (!onKatana) {
-                    setShowProfile(true);
+                    (
+                      connector as unknown as CartridgeConnector
+                    ).controller.openProfile();
+                    // setShowProfile(true);
                   } else {
                     disconnect();
                     resetData();

@@ -7,7 +7,7 @@ import useUIStore from "@/app/hooks/useUIStore";
 import { checkCartridgeConnector } from "@/app/lib/connectors";
 import { copyToClipboard, displayAddress, padAddress } from "@/app/lib/utils";
 import { NullAdventurer } from "@/app/types";
-import CartridgeConnector from "@cartridge/connector";
+import CartridgeController from "@cartridge/connector/controller";
 import { useConnect, useDisconnect } from "@starknet-react/core";
 import { useState } from "react";
 import { MdClose } from "react-icons/md";
@@ -118,7 +118,9 @@ export const ProfileDialog = ({
                 </div>
                 <Button
                   onClick={() =>
-                    (connector as unknown as CartridgeConnector).openMenu()
+                    (
+                      connector as unknown as CartridgeController
+                    ).controller.openSettings()
                   }
                 >
                   Change Settings
