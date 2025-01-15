@@ -290,4 +290,21 @@ export const Lords = [
       },
     ],
   },
+  {
+    kind: "enum",
+    name: "Event",
+    type: "event",
+    variants: [
+      {
+        kind: "nested",
+        name: "Approval",
+        type: "Approval",
+      },
+      {
+        kind: "nested",
+        name: "Transfer",
+        type: "Transfer",
+      },
+    ],
+  },
 ] as const;

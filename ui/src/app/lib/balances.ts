@@ -1,5 +1,4 @@
-import { CallData, uint256, Contract } from "starknet";
-import { balanceSchema } from "@/app/lib/utils";
+import { CallData, Contract } from "starknet";
 
 export const fetchEthBalance = async (
   accountName: string,
@@ -9,9 +8,7 @@ export const fetchEthBalance = async (
     "balanceOf",
     CallData.compile({ account: accountName })
   );
-  return ethResult
-    ? uint256.uint256ToBN(balanceSchema.parse(ethResult).balance)
-    : BigInt(0);
+  return ethResult ? BigInt(ethResult[0]) : BigInt(0);
 };
 
 export const fetchBalances = async (
@@ -38,9 +35,7 @@ export const fetchBalances = async (
     })
   );
   return [
-    ethResult
-      ? uint256.uint256ToBN(balanceSchema.parse(ethResult).balance)
-      : BigInt(0),
+    ethResult ? BigInt(ethResult[0]) : BigInt(0),
     lordsBalanceResult as bigint,
     lordsAllowanceResult as bigint,
   ];
