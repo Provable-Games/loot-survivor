@@ -8,7 +8,7 @@ export const fetchEthBalance = async (
     "balanceOf",
     CallData.compile({ account: accountName })
   );
-  return ethResult ? BigInt(ethResult[0]) : BigInt(0);
+  return ethResult as bigint;
 };
 
 export const fetchBalances = async (
@@ -35,7 +35,7 @@ export const fetchBalances = async (
     })
   );
   return [
-    ethResult ? BigInt(ethResult[0]) : BigInt(0),
+    ethResult as bigint,
     lordsBalanceResult as bigint,
     lordsAllowanceResult as bigint,
   ];
