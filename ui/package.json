@@ -11,6 +11,7 @@
   "dependencies": {
     "@apollo/client": "^3.7.11",
     "@cartridge/connector": "^0.5.8",
+    "@cartridge/controller": "^0.5.8",
     "@dojoengine/create-burner": "^1.0.0-alpha.9",
     "@fontsource/vt323": "^4.5.10",
     "@radix-ui/react-toast": "^1.2.4",
@@ -62,5 +63,6 @@
     "@types/bn.js": "^5.1.1",
     "@types/lodash": "^4.14.194",
     "@types/react-transition-group": "^4.4.5"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
