@@ -51,6 +51,7 @@ export const providerInterfaceCamel = (provider: string) => {
 export const controllerConnector = (
   gameAddress: string,
   tournamentAddress: string,
+  lordsAddress: string,
   rpcUrl: string
 ) =>
   new ControllerConnector({
@@ -120,4 +121,7 @@ export const controllerConnector = (
     defaultChainId: constants.StarknetChainId.SN_MAIN,
     theme: "loot-survivor",
     colorMode: "dark",
+    tokens: {
+      erc20: [lordsAddress],
+    },
   }) as never as Connector;

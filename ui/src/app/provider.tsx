@@ -40,6 +40,7 @@ export function StarknetProvider({
         controllerConnector(
           networkConfig[network!].gameAddress,
           networkConfig[network!].tournamentAddress,
+          networkConfig[network!].lordsAddress,
           networkConfig[network!].rpcUrl
         ),
       ]}
