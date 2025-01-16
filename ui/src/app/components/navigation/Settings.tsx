@@ -1,19 +1,28 @@
-import Menu from "@/app/components/menu/ButtonMenu";
 import {
-  SoundOnIcon,
-  SoundOffIcon,
+  DiscordIcon,
   LedgerIcon,
+  LogoutIcon,
+  SoundOffIcon,
+  SoundOnIcon,
 } from "@/app/components/icons/Icons";
-import { DiscordIcon } from "@/app/components/icons/Icons";
+import Menu from "@/app/components/menu/ButtonMenu";
+import useAdventurerStore from "@/app/hooks/useAdventurerStore";
+import { useQueriesStore } from "@/app/hooks/useQueryStore";
 import useUIStore from "@/app/hooks/useUIStore";
-import { ButtonData } from "@/app/types";
+import { ButtonData, NullAdventurer } from "@/app/types";
+import { useDisconnect } from "@starknet-react/core";
 
 export default function Settings() {
+  const { disconnect } = useDisconnect();
+  const resetData = useQueriesStore((state) => state.resetData);
+  const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
   const isMuted = useUIStore((state) => state.isMuted);
   const setIsMuted = useUIStore((state) => state.setIsMuted);
   const displayHistory = useUIStore((state) => state.displayHistory);
   const setDisplayHistory = useUIStore((state) => state.setDisplayHistory);
   const setDisconnected = useUIStore((state) => state.setDisconnected);
+  const setNetwork = useUIStore((state) => state.setNetwork);
+  const handleOffboarded = useUIStore((state) => state.handleOffboarded);
 
   const buttonsData: ButtonData[] = [
     {
@@ -43,6 +52,18 @@ export default function Settings() {
       label: "Discord",
       icon: <DiscordIcon className="fill-current" />,
       action: () => window.open("https://discord.gg/realmsworld", "_blank"),
+    },
+    {
+      id: 5,
+      label: "Log Out",
+      icon: <LogoutIcon className="fill-current" />,
+      action: () => {
+        disconnect();
+        resetData();
+        setAdventurer(NullAdventurer);
+        setNetwork(undefined);
+        handleOffboarded();
+      },
     },
   ];
 

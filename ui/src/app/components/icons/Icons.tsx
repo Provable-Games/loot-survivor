@@ -45,6 +45,7 @@ import Hide from "public/icons/hide.svg";
 import Info from "public/icons/info.svg";
 import Ledger from "public/icons/ledger.svg";
 import Lightbulb from "public/icons/lightbulb.svg";
+import Logout from "public/icons/logout.svg";
 import Metal from "public/icons/metal.svg";
 import Mist from "public/icons/mist.svg";
 import Plus from "public/icons/plus.svg";
@@ -134,6 +135,7 @@ const DiscordIcon = Discord;
 const ArcadeIcon = Arcade;
 const QuestionMarkIcon = QuestionMark;
 const SettingsIcon = Settings;
+const LogoutIcon = Logout;
 
 const CompleteIcon = Complete;
 const CartridgeIcon = Cartridge;
@@ -178,6 +180,7 @@ export {
   InfoIcon,
   LedgerIcon,
   LightbulbIcon,
+  LogoutIcon,
   LootBagIcon,
   MagicIcon,
   MetalIcon,

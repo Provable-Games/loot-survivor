@@ -3,6 +3,7 @@ import {
   CartIcon,
   CartridgeIcon,
   GithubIcon,
+  LogoutIcon,
   SettingsIcon,
   SoundOffIcon,
   SoundOnIcon,
@@ -76,7 +77,6 @@ export default function Header({
   const displayCart = useUIStore((state) => state.displayCart);
   const setDisplayCart = useUIStore((state) => state.setDisplayCart);
   const displayHistory = useUIStore((state) => state.displayHistory);
-  const setDisplayHistory = useUIStore((state) => state.setDisplayHistory);
   const setScreen = useUIStore((state) => state.setScreen);
   const network = useUIStore((state) => state.network);
   const setNetwork = useUIStore((state) => state.setNetwork);
@@ -85,7 +85,6 @@ export default function Header({
   const vitBoostRemoved = useUIStore((state) => state.vitBoostRemoved);
   const handleOffboarded = useUIStore((state) => state.handleOffboarded);
   const setLoginScreen = useUIStore((state) => state.setLoginScreen);
-  const setShowProfile = useUIStore((state) => state.setShowProfile);
   const setShowLoginDialog = useUIStore((state) => state.setShowLoginDialog);
 
   const calls = useTransactionCartStore((state) => state.calls);
@@ -479,7 +478,9 @@ export default function Header({
               onClick={() => {
                 if (account) {
                   if (!onKatana) {
-                    setShowProfile(true);
+                    (
+                      connector as unknown as CartridgeConnector
+                    ).controller.openProfile();
                   } else {
                     disconnect();
                     resetData();
@@ -490,7 +491,7 @@ export default function Header({
                   setShowLoginDialog(true);
                 }
               }}
-              className="xl:px-5 p-0 hover:bg-terminal-green hover:text-terminal-black"
+              className="xl:px-5 p-0"
             >
               {account ? (
                 username ? (
@@ -518,21 +519,14 @@ export default function Header({
           </Button>
         </span>
         <div className="hidden sm:block sm:flex sm:flex-row sm:items-center sm:gap-1">
-          {account && (
-            <>
-              <Button
-                variant={"outline"}
-                size={"xs"}
-                ref={displayHistoryButtonRef}
-                onClick={() => {
-                  setDisplayHistory(!displayHistory);
-                }}
-                className="xl:px-5"
-              >
-                {displayHistory ? "Hide Ledger" : "Show Ledger"}
-              </Button>
-            </>
-          )}
+          <Button
+            variant={"outline"}
+            size={"sm"}
+            href="https://github.com/BibliothecaDAO/loot-survivor"
+            className="xl:px-5"
+          >
+            <GithubIcon className="w-6 fill-current" />
+          </Button>
           <div className="relative">
             <Button
               variant={"outline"}
@@ -543,7 +537,6 @@ export default function Header({
                     (
                       connector as unknown as CartridgeConnector
                     ).controller.openProfile();
-                    // setShowProfile(true);
                   } else {
                     disconnect();
                     resetData();
@@ -554,7 +547,7 @@ export default function Header({
                   setShowLoginDialog(true);
                 }
               }}
-              className="xl:px-5 hover:bg-terminal-green hover:text-terminal-black"
+              className="xl:px-5"
             >
               {account ? (
                 username ? (
@@ -575,14 +568,21 @@ export default function Header({
             )}
           </div>
 
-          <Button
-            variant={"outline"}
-            size={"sm"}
-            href="https://github.com/BibliothecaDAO/loot-survivor"
-            className="xl:px-5"
-          >
-            <GithubIcon className="w-6 fill-current" />
-          </Button>
+          {account && (
+            <Button
+              variant={"outline"}
+              size={"sm"}
+              onClick={() => {
+                disconnect();
+                resetData();
+                setAdventurer(NullAdventurer);
+                setNetwork(undefined);
+                handleOffboarded();
+              }}
+            >
+              <LogoutIcon className="w-5 h-5 fill-current" />
+            </Button>
+          )}
         </div>
         {account && displayHistory && (
           <TransactionHistory buttonRef={displayHistoryButtonRef} />
