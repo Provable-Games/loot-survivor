@@ -17,7 +17,7 @@ import { networkConfig } from "./lib/networkConfig";
 const controllerConnector = new ControllerConnector({
   policies: {
     contracts: {
-      ["0x018108b32cea514a78ef1b0e4a0753e855cdf620bc0565202c02456f618c4dc4"]: {
+      [networkConfig["mainnet"].gameAddress]: {
         methods: [
           {
             name: "New Game",
@@ -61,7 +61,7 @@ const controllerConnector = new ControllerConnector({
           },
         ],
       },
-      ["0x0497bc529e17e59e0924c0a1f9671c7a66208508b731a79373eacfb17ecc7c08"]: {
+      [networkConfig["mainnet"].tournamentAddress]: {
         methods: [
           {
             name: "Enter Tournament",
@@ -77,14 +77,12 @@ const controllerConnector = new ControllerConnector({
       },
     },
   },
-  chains: [{ rpcUrl: "https://api.cartridge.gg/x/starknet/mainnet" }],
+  chains: [{ rpcUrl: networkConfig["mainnet"].rpcUrl }],
   defaultChainId: constants.StarknetChainId.SN_MAIN,
   theme: "loot-survivor",
   colorMode: "dark",
   tokens: {
-    erc20: [
-      "0x0124aeb495b947201f5fac96fd1138e326ad86195b98df6dec9009158a533b49",
-    ],
+    erc20: [networkConfig["mainnet"].lordsAddress],
   },
 }) as never as Connector;
 
