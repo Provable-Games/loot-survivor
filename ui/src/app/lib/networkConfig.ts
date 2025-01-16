@@ -26,6 +26,7 @@ export const networkConfig = {
     tournamentAddress: "0x0",
     tournamentId: "0",
     appUrl: "https://sepolia.lootsurvivor.io",
+    tournamentAppUrl: "",
     beastsViewer: "https://testnet.realms.world/collection/beasts",
     goldenTokenMintUrl: "https://testnet.realms.world/collection/goldenToken",
     adventurerViewer:
@@ -69,6 +70,7 @@ export const networkConfig = {
       "0x0497bc529e17e59e0924c0a1f9671c7a66208508b731a79373eacfb17ecc7c08",
     tournamentId: "0x6",
     appUrl: "https://lootsurvivor.io/",
+    tournamentAppUrl: "https://ls-tournaments.vercel.app/",
     beastsViewer:
       "https://market.realms.world/token/0x0158160018d590d93528995b340260e65aedd76d28a686e9daa5c4e8fad0c5dd",
     goldenTokenMintUrl:
@@ -99,6 +101,7 @@ export const networkConfig = {
     tournamentAddress: "0x0",
     tournamentId: "0",
     appUrl: "https://lootsurvivor.io",
+    tournamentAppUrl: "",
     beastsViewer: "",
     goldenTokenMintUrl: "",
     adventurerViewer:
@@ -131,6 +134,7 @@ export const networkConfig = {
     tournamentAddress: "0x0",
     tournamentId: "0",
     appUrl: "http://localhost:3000/",
+    tournamentAppUrl: "",
     beastsViewer: "",
     goldenTokenMintUrl: "",
     adventurerViewer:
