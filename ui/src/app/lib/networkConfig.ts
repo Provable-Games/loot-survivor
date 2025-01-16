@@ -88,7 +88,7 @@ export const networkConfig = {
     blastUrl: "",
     ethAddress: "0x0",
     gameAddress:
-      "0x0145cf4b89a601cac41d7cb352256aa40602ffcbde1e187ae3214cb8505a0fc4",
+      "0x02dd0813452cfc077d463ba08726e3ed04bcc26f8c6cc17d8050006b14703ce7",
     lordsAddress: "0x0",
     beastsAddress: "0x0",
     goldenTokenAddress: "0x0",
