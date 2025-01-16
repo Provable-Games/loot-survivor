@@ -1,4 +1,4 @@
-import { hash } from "https://esm.sh/starknet@5.19.5";
+import { hash } from "https://esm.sh/starknet@6.11.0";
 
 import {
   combineParsers,
@@ -8,8 +8,8 @@ import {
   parseU128,
   parseU16,
   parseU256,
-  parseU64,
   parseU32,
+  parseU64,
   parseU8,
 } from "./parser.ts";
 
