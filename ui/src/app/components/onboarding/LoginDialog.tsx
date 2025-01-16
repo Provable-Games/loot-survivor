@@ -16,6 +16,8 @@ export default function LoginDialog() {
     (connector) => connector.id === "controller"
   );
 
+  console.log(cartridgeConnector);
+
   return (
     <>
       <div className="absolute inset-0 w-full h-full bg-black/50" />

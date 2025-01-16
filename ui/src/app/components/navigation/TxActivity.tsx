@@ -4,7 +4,7 @@ import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
 import useUIStore from "@/app/hooks/useUIStore";
 import { networkConfig } from "@/app/lib/networkConfig";
 import { displayAddress, padAddress } from "@/app/lib/utils";
-import { useWaitForTransaction } from "@starknet-react/core";
+import { useTransactionReceipt } from "@starknet-react/core";
 import { useEffect, useState } from "react";
 import { InvokeTransactionReceiptResponse } from "starknet";
 
@@ -18,7 +18,7 @@ export const TxActivity = () => {
   const setError = useTransactionCartStore((state) => state.setError);
   const network = useUIStore((state) => state.network);
 
-  const { data } = useWaitForTransaction({
+  const { data } = useTransactionReceipt({
     hash: hash ? hash : "0x0",
   }) as { data: InvokeTransactionReceiptResponse };
 

@@ -1,9 +1,9 @@
 import {
   BurnerAccount,
-  useBurnerManager,
   BurnerManager,
+  useBurnerManager,
 } from "@dojoengine/create-burner";
-import { createContext, ReactNode, useContext, useMemo } from "react";
+import { ReactNode, createContext, useContext, useMemo } from "react";
 import { Account, RpcProvider } from "starknet";
 
 interface DojoContextType {

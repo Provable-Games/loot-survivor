@@ -3,7 +3,7 @@ import { DiscordIcon } from "@/app/components/icons/Icons";
 
 export default function GuideScreen() {
   return (
-    <div className="flex justify-center items-center flex-col gap-10 h-full w-full">
+    <div className="flex justify-center items-center flex-col gap-10 h-full w-full p-5">
       <div className="flex flex-col gap-4 items-center">
         <span className="sm:text-xl text-center">
           The docs are here to help you master the game&apos;s mechanics,

@@ -1,7 +1,4 @@
-import CartridgeConnector from "@cartridge/connector";
 import { Connector } from "@starknet-react/core";
-import { shortString } from "starknet";
-// import { WebWalletConnector } from "starknetkit/webwallet";
 
 export const checkArcadeConnector = (connector?: Connector) => {
   return typeof connector?.id === "string" && connector?.id.includes("0x");
@@ -48,73 +45,3 @@ export const providerInterfaceCamel = (provider: string) => {
 // export const argentWebWalletConnector = new WebWalletConnector({
 //   url: argentWebWalletUrl(),
 // });
-
-export const cartridgeConnector = (
-  gameAddress: string,
-  lordsAddress: string,
-  ethAddress: string,
-  tournamentAddress: string,
-  rpcUrl: string
-) =>
-  new CartridgeConnector({
-    policies: [
-      {
-        target: gameAddress,
-        method: "new_game",
-      },
-      {
-        target: gameAddress,
-        method: "explore",
-      },
-      {
-        target: gameAddress,
-        method: "attack",
-      },
-      {
-        target: gameAddress,
-        method: "flee",
-      },
-      {
-        target: gameAddress,
-        method: "equip",
-      },
-      {
-        target: gameAddress,
-        method: "drop",
-      },
-      {
-        target: gameAddress,
-        method: "upgrade",
-      },
-      {
-        target: gameAddress,
-        method: "transfer_from",
-      },
-      {
-        target: lordsAddress,
-        method: "approve",
-      },
-      {
-        target: lordsAddress,
-        method: "mint_lords",
-      },
-      {
-        target: ethAddress,
-        method: "approve",
-      },
-      {
-        target: tournamentAddress,
-        method: "enter_tournament",
-      },
-      {
-        target: tournamentAddress,
-        method: "start_tournament",
-      },
-    ],
-    paymaster: {
-      caller: shortString.encodeShortString("ANY_CALLER"),
-    },
-    rpc: rpcUrl,
-    theme: "loot-survivor",
-    colorMode: "dark",
-  }) as never as Connector;

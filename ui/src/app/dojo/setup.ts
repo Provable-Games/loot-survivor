@@ -1,7 +1,7 @@
+import { Network } from "@/app/hooks/useUIStore";
+import { networkConfig } from "@/app/lib//networkConfig";
 import { BurnerManager } from "@dojoengine/create-burner";
 import { Account, RpcProvider } from "starknet";
-import { networkConfig } from "@/app/lib//networkConfig";
-import { Network } from "@/app/hooks/useUIStore";
 
 interface SetupProps {
   rpcUrl: string;
