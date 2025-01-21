@@ -52,8 +52,6 @@ export const CreateAdventurer = ({
   const [lordsValue, setLordsValue] = useState(0n);
 
   const seasonActive = process.env.NEXT_PUBLIC_SEASON_ACTIVE === "true";
-  const dsTournamentActive =
-    process.env.NEXT_PUBLIC_DS_TOURNAMENT_ACTIVE === "true";
 
   // Memoize both the variables AND the client
   const { variables: tournamentVariables, client } = useMemo(() => {
@@ -147,26 +145,7 @@ export const CreateAdventurer = ({
     <>
       {step == 1 && (
         <div className="flex flex-col w-full justify-between items-center gap-2 sm:gap-0 py-2 sm:py-10">
-          {dsTournamentActive ? (
-            <div className="flex flex-col items-center w-full gap-2 sm:gap-5">
-              <h3 className="uppercase text-center 2xl:text-5xl m-0">
-                Dark Shuffle Tournament Open
-              </h3>
-              <p className="w-5/6 sm:text-xl text-center">
-                Register for the Dark Shuffle Tournament on 20/01.
-              </p>
-              <Button
-                onClick={() => {
-                  window.open(
-                    networkConfig[network!].tournamentAppUrl,
-                    "_blank"
-                  );
-                }}
-              >
-                Registration Details
-              </Button>
-            </div>
-          ) : seasonActive ? (
+          {seasonActive ? (
             <div className="flex flex-col items-center w-full gap-2 sm:gap-5">
               <h3 className="uppercase text-center 2xl:text-5xl m-0">
                 Enter Season 0
@@ -187,10 +166,10 @@ export const CreateAdventurer = ({
           ) : (
             <div className="flex flex-col items-center w-full gap-2 sm:gap-5">
               <h3 className="uppercase text-center 2xl:text-5xl m-0">
-                Season Ended
+                No Season Active
               </h3>
               <p className="sm:text-xl text-center uppercase">
-                The season has ended. Stay tuned for the next one.
+                The previous season has ended. Stay tuned for the next one.
               </p>
             </div>
           )}

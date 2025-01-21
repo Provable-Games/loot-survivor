@@ -2,6 +2,7 @@ import { Button } from "@/app/components/buttons/Button";
 import ButtonMenu from "@/app/components/menu/ButtonMenu";
 import { AdventurersList } from "@/app/components/start/AdventurersList";
 import { CreateAdventurer } from "@/app/components/start/CreateAdventurer";
+import DSTournamentOverview from "@/app/components/start/DSTournamentOverview";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 import { useQueriesStore } from "@/app/hooks/useQueryStore";
@@ -74,6 +75,9 @@ export default function AdventurerScreen({
   const { account } = useNetworkAccount();
   const owner = account?.address ? padAddress(account.address) : "";
 
+  const isDSTournamentActive =
+    process.env.NEXT_PUBLIC_DS_TOURNAMENT_ACTIVE === "true";
+
   const menu = [
     {
       id: 1,
@@ -97,17 +101,55 @@ export default function AdventurerScreen({
     },
   ];
 
+  const dsTournamentMenu = [
+    {
+      id: 1,
+      label: "Dark Shuffle Tournament",
+      value: "ds tournament",
+      action: () => {
+        setStartOption("ds tournament");
+      },
+      disabled: false,
+    },
+    {
+      id: 2,
+      label: "Create Adventurer",
+      value: "create adventurer",
+      action: () => {
+        setStartOption("create adventurer");
+        setAdventurer(NullAdventurer);
+        resetData("adventurerByIdQuery");
+      },
+      disabled: false,
+    },
+    {
+      id: 3,
+      label: "Choose Adventurer",
+      value: "choose adventurer",
+      action: () => {
+        setStartOption("choose adventurer");
+      },
+      disabled: false,
+    },
+  ];
+
   return (
     <div className="flex flex-col sm:flex-row w-full h-full">
       <div className="w-full sm:w-1/6 h-10">
         <ButtonMenu
-          buttonsData={menu}
+          buttonsData={isDSTournamentActive ? dsTournamentMenu : menu}
           onSelected={(value) => setStartOption(value)}
           isActive={activeMenu == 0}
           setActiveMenu={setActiveMenu}
           className="sm:flex-col h-full"
         />
       </div>
+
+      {startOption === "ds tournament" && (
+        <div className="w-5/6 h-full">
+          <DSTournamentOverview lordsCost={costToPlay} />
+        </div>
+      )}
 
       {startOption === "create adventurer" && (
         <div className="flex flex-col w-5/6 h-full mx-auto sm:justify-center sm:flex-row gap-2">

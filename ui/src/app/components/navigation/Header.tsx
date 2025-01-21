@@ -20,13 +20,10 @@ import useUIStore from "@/app/hooks/useUIStore";
 import { soundSelector, useUiSounds } from "@/app/hooks/useUiSound";
 import { checkCartridgeConnector } from "@/app/lib/connectors";
 import { vitalityIncrease } from "@/app/lib/constants";
-import { networkConfig } from "@/app/lib/networkConfig";
 import {
   displayAddress,
-  formatNumber,
   getItemData,
   getItemPrice,
-  indexAddress,
   processItemName,
 } from "@/app/lib/utils";
 import {
@@ -39,9 +36,7 @@ import {
 } from "@/app/types";
 import CartridgeConnector from "@cartridge/connector/controller";
 import { useConnect, useDisconnect } from "@starknet-react/core";
-import Eth from "public/icons/eth.svg";
 import Logo from "public/icons/logo.svg";
-import Lords from "public/icons/lords.svg";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Contract } from "starknet";
 
@@ -78,7 +73,6 @@ export default function Header({
   const setDisplayCart = useUIStore((state) => state.setDisplayCart);
   const displayHistory = useUIStore((state) => state.displayHistory);
   const setScreen = useUIStore((state) => state.setScreen);
-  const network = useUIStore((state) => state.network);
   const setNetwork = useUIStore((state) => state.setNetwork);
   const onMainnet = useUIStore((state) => state.onMainnet);
   const onKatana = useUIStore((state) => state.onKatana);
@@ -94,10 +88,6 @@ export default function Header({
 
   const displayCartButtonRef = useRef<HTMLButtonElement>(null);
   const displayHistoryButtonRef = useRef<HTMLButtonElement>(null);
-
-  const [showLordsBuy, setShowLordsBuy] = useState(false);
-
-  const lordsGameCost = Number(costToPlay);
 
   const checkCartridge = checkCartridgeConnector(connector);
 
@@ -361,58 +351,7 @@ export default function Header({
         >
           {onMainnet ? "Play on Testnet" : "Play on Mainnet"}
         </Button>
-        {!onKatana && (
-          <div className="hidden sm:flex flex-row">
-            <Button
-              size={"xs"}
-              variant={"outline"}
-              className="self-center xl:px-5"
-            >
-              <span className="flex flex-row items-center justify-between w-full">
-                <Eth className="self-center sm:w-5 sm:h-5  h-3 w-3 fill-current mr-1" />
-                <p>
-                  {formatNumber(parseInt(ethBalance.toString()) / 10 ** 18)}
-                </p>
-              </span>
-            </Button>
-            <Button
-              size={"xs"}
-              variant={"outline"}
-              className="self-center xl:px-5 hover:bg-terminal-green"
-              onClick={async () => {
-                if (onMainnet) {
-                  const avnuLords = `https://app.avnu.fi/en?tokenFrom=${indexAddress(
-                    networkConfig[network!].ethAddress ?? ""
-                  )}&tokenTo=${indexAddress(
-                    networkConfig[network!].lordsAddress ?? ""
-                  )}&amount=0.001`;
-                  window.open(avnuLords, "_blank");
-                } else {
-                  await mintLords(lordsGameCost * 25);
-                }
-              }}
-              onMouseEnter={() => setShowLordsBuy(true)}
-              onMouseLeave={() => setShowLordsBuy(false)}
-            >
-              <span className="flex flex-row items-center justify-between w-full">
-                {!showLordsBuy ? (
-                  <>
-                    <Lords className="self-center sm:w-5 sm:h-5  h-3 w-3 fill-current mr-1" />
-                    <p>
-                      {formatNumber(
-                        parseInt(lordsBalance.toString()) / 10 ** 18
-                      )}
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-black">
-                    {onMainnet ? "Buy Lords" : "Mint Lords"}
-                  </p>
-                )}
-              </span>
-            </Button>
-          </div>
-        )}
+
         <Button
           size={"xs"}
           variant={"outline"}
@@ -529,7 +468,7 @@ export default function Header({
           </Button>
           <div className="relative">
             <Button
-              variant={"outline"}
+              variant={account ? "token" : "outline"}
               size={"sm"}
               onClick={() => {
                 if (account) {
@@ -562,7 +501,7 @@ export default function Header({
               )}
             </Button>
             {checkCartridge && (
-              <div className="absolute top-0 right-0">
+              <div className="absolute top-0 right-2">
                 <CartridgeIcon className="w-5 h-5 fill-current" />
               </div>
             )}
