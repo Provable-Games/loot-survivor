@@ -24,7 +24,8 @@ export type ScreenPage =
   | "onboarding"
   | "create adventurer"
   | "future"
-  | "collections leaderboard";
+  | "collections leaderboard"
+  | "tournament";
 
 export type Network =
   | "mainnet"

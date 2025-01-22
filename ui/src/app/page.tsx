@@ -22,6 +22,7 @@ import { NotificationDisplay } from "@/app/components/notifications/Notification
 import { SpecialBeast } from "@/app/components/notifications/SpecialBeast";
 import LoginDialog from "@/app/components/onboarding/LoginDialog";
 import { ProfileDialog } from "@/app/components/profile/ProfileDialog";
+import DSTournamentOverview from "@/app/components/start/DSTournamentOverview";
 import ActionsScreen from "@/app/containers/ActionsScreen";
 import AdventurerScreen from "@/app/containers/AdventurerScreen";
 import CollectionsLeaderboardScreen from "@/app/containers/CollectionsLeaderboardScreen";
@@ -160,6 +161,42 @@ function Home() {
         disabled: false,
       },
       { id: 6, label: "Guide", screen: "guide" as ScreenPage, disabled: false },
+    ],
+    [onKatana]
+  );
+
+  const isDSTournamentActive =
+    process.env.NEXT_PUBLIC_DS_TOURNAMENT_ACTIVE === "true";
+
+  const dsMenuItems: Menu[] = useMemo(
+    () => [
+      { id: 1, label: "Start", screen: "start" as ScreenPage, disabled: false },
+      { id: 2, label: "Play", screen: "play" as ScreenPage, disabled: false },
+      {
+        id: 3,
+        label: "Inventory",
+        screen: "inventory" as ScreenPage,
+        disabled: false,
+      },
+      {
+        id: 4,
+        label: "Upgrade",
+        screen: "upgrade" as ScreenPage,
+        disabled: false,
+      },
+      {
+        id: 5,
+        label: "Leaderboard",
+        screen: "leaderboard" as ScreenPage,
+        disabled: false,
+      },
+      { id: 6, label: "Guide", screen: "guide" as ScreenPage, disabled: false },
+      {
+        id: 7,
+        label: "Tournament",
+        screen: "tournament" as ScreenPage,
+        disabled: false,
+      },
     ],
     [onKatana]
   );
@@ -602,7 +639,7 @@ function Home() {
     if (!onboarded) {
       setScreen("onboarding");
     } else if (onboarded) {
-      setScreen("start");
+      setScreen("tournament");
     }
   }, [onboarded]);
 
@@ -816,7 +853,7 @@ function Home() {
           </div>
           <div className="hidden sm:block flex justify-center sm:justify-normal sm:pb-2">
             <ScreenMenu
-              buttonsData={allMenuItems}
+              buttonsData={isDSTournamentActive ? dsMenuItems : allMenuItems}
               onButtonClick={(value) => {
                 setScreen(value);
               }}
@@ -864,6 +901,9 @@ function Home() {
             {screen === "guide" && <GuideScreen />}
             {screen === "collections leaderboard" && (
               <CollectionsLeaderboardScreen />
+            )}
+            {screen === "tournament" && (
+              <DSTournamentOverview lordsCost={costToPlay} />
             )}
             {screen === "settings" && <Settings />}
             {screen === "player" && <Player gameContract={gameContract!} />}

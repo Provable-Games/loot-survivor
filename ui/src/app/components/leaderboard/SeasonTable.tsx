@@ -28,12 +28,17 @@ const SeasonTable = ({
   const network = useUIStore((state) => state.network);
 
   const seasonActive = process.env.NEXT_PUBLIC_SEASON_ACTIVE === "true";
+  const isDSTournamentActive =
+    process.env.NEXT_PUBLIC_DS_TOURNAMENT_ACTIVE === "true";
+  const dsTournamentId = process.env.NEXT_PUBLIC_DS_TOURNAMENT_ID ?? 0;
 
   // Memoize both the variables AND the client
   const { variables, client } = useMemo(() => {
     return {
       variables: {
-        tournamentId: networkConfig[network!].tournamentId,
+        tournamentId: isDSTournamentActive
+          ? dsTournamentId
+          : networkConfig[network!].tournamentId,
       },
       client: tournamentClient(networkConfig[network!].tournamentGQLURL),
     };
@@ -99,9 +104,13 @@ const SeasonTable = ({
         <div className="flex flex-col gap-5 sm:gap-0 sm:flex-row justify-between w-full">
           <div className="flex flex-col w-full sm:mr-4 flex-grow-2 p-2 gap-2">
             <h4 className="text-center text-2xl m-0 uppercase">
-              {seasonActive ? "Current Season" : "Season Ended"}
+              {isDSTournamentActive
+                ? "Dark Shuffle Tournament"
+                : seasonActive
+                ? "Current Season"
+                : "Season Ended"}
             </h4>
-            {seasonActive && (
+            {(isDSTournamentActive || seasonActive) && (
               <>
                 <table className="w-full xl:text-lg 2xl:text-xl border border-terminal-green">
                   <thead className="border border-terminal-green">
