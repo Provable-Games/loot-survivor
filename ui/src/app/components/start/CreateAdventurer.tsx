@@ -164,14 +164,15 @@ export const CreateAdventurer = ({
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center w-full gap-2 sm:gap-5">
-              <h3 className="uppercase text-center 2xl:text-5xl m-0">
-                No Season Active
-              </h3>
-              <p className="sm:text-xl text-center uppercase">
-                The previous season has ended. Stay tuned for the next one.
-              </p>
-            </div>
+            // <div className="flex flex-col items-center w-full gap-2 sm:gap-5">
+            //   <h3 className="uppercase text-center 2xl:text-5xl m-0">
+            //     No Season Active
+            //   </h3>
+            //   <p className="sm:text-xl text-center uppercase">
+            //     The previous season has ended. Stay tuned for the next one.
+            //   </p>
+            // </div>
+            <></>
           )}
           <WeaponSelect
             setFormData={setFormData}

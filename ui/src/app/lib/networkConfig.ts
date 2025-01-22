@@ -70,7 +70,7 @@ export const networkConfig = {
       "0x3347382d530ff6acb9283ac1d78471187aae8a4690e9316bb4e3c3365ff7a86",
     tournamentId: "0x1",
     appUrl: "https://lootsurvivor.io/",
-    tournamentAppUrl: "https://ls-tournaments.vercel.app/",
+    tournamentAppUrl: "https://tournaments.lootsurvivor.io/",
     beastsViewer:
       "https://market.realms.world/token/0x0158160018d590d93528995b340260e65aedd76d28a686e9daa5c4e8fad0c5dd",
     goldenTokenMintUrl:
