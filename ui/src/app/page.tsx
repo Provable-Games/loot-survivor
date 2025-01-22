@@ -902,7 +902,9 @@ function Home() {
             {screen === "collections leaderboard" && (
               <CollectionsLeaderboardScreen />
             )}
-            {screen === "tournament" && <DSTournamentOverview />}
+            {screen === "tournament" && (
+              <DSTournamentOverview lordsCost={costToPlay} />
+            )}
             {screen === "settings" && <Settings />}
             {screen === "player" && <Player gameContract={gameContract!} />}
             {screen === "wallet" && <WalletSelect />}

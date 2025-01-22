@@ -40,8 +40,7 @@ export const networkConfig = {
   mainnet: {
     rpcUrl: "https://api.cartridge.gg/x/starknet/mainnet",
     lsGQLURL: "https://ls-indexer-sepolia.provable.games/graphql",
-    tournamentGQLURL:
-      "https://api.cartridge.gg/x/realms-world-04/torii/graphql",
+    tournamentGQLURL: "https://api.cartridge.gg/x/ls-tournaments/torii/graphql",
     blastUrl:
       "https://starknet-mainnet.blastapi.io/5ef61753-e7c1-4593-bc62-97fdf96f8de5",
     ethAddress:
