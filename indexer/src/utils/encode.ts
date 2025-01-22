@@ -1,4 +1,4 @@
-import { hash, num } from "https://esm.sh/starknet@5.19.5";
+import { hash } from "https://esm.sh/starknet@6.16.0";
 
 export function encodeIntAsBytes(n: bigint): string {
   const arr = new Uint8Array(32);

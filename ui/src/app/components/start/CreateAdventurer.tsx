@@ -139,7 +139,6 @@ export const CreateAdventurer = ({
 
   useEffect(() => {
     handleGetLordsValue();
-    console.log(lordsValue);
   }, [lordsValue]);
 
   return (
@@ -167,10 +166,10 @@ export const CreateAdventurer = ({
           ) : (
             <div className="flex flex-col items-center w-full gap-2 sm:gap-5">
               <h3 className="uppercase text-center 2xl:text-5xl m-0">
-                Season Ended
+                No Season Active
               </h3>
               <p className="sm:text-xl text-center uppercase">
-                The season has ended. Stay tuned for the next one.
+                The previous season has ended. Stay tuned for the next one.
               </p>
             </div>
           )}
