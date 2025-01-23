@@ -16,13 +16,11 @@ export default function LoginDialog() {
     (connector) => connector.id === "controller"
   );
 
-  console.log(cartridgeConnector);
-
   return (
     <>
-      <div className="absolute inset-0 w-full h-full bg-black/50" />
+      <div className="absolute inset-0 w-full h-full bg-black/50 z-50" />
       <div
-        className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-terminal-black border border-terminal-green py-5 flex flex-col gap-2 w-full sm:w-1/4 p-5`}
+        className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-terminal-black border border-terminal-green py-5 flex flex-col gap-2 w-full sm:w-1/4 p-5 z-50`}
       >
         <div className="flex relative text-4xl h-16 w-full font-bold uppercase items-center justify-center">
           <p className="text-center">Select Wallet</p>
