@@ -70,6 +70,7 @@ export const Spawn = ({
   const estimatingFee = useUIStore((state) => state.estimatingFee);
   const network = useUIStore((state) => state.network);
   const onKatana = useUIStore((state) => state.onKatana);
+  const setShowLoginDialog = useUIStore((state) => state.setShowLoginDialog);
   const resetNotification = useLoadingStore((state) => state.resetNotification);
 
   useEffect(() => {
@@ -240,12 +241,25 @@ export const Spawn = ({
               {!onKatana ? (
                 <>
                   <div className="flex flex-col gap-5 items-center w-1/3">
-                    <h1 className="m-0 text-4xl uppercase">Play</h1>
+                    <h1
+                      className={`m-0 text-4xl uppercase ${
+                        !account ? "text-terminal-yellow" : ""
+                      }`}
+                    >
+                      {account ? "Play" : "Connect Wallet"}
+                    </h1>
                     <div
-                      className="border-8 border-terminal-green w-[150px] h-[150px] sm:w-[200px] sm:h-[200px] cursor-pointer transition-transform duration-200 hover:scale-105 hover:rotate-3 hover:shadow-xl"
-                      onMouseEnter={() => setIsHoveringLords(true)}
-                      onMouseLeave={() => setIsHoveringLords(false)}
+                      className={`border-8 border-terminal-green w-[150px] h-[150px] sm:w-[200px] sm:h-[200px] ${
+                        account
+                          ? "transition-transform duration-200 hover:scale-105 hover:rotate-3 hover:shadow-xl"
+                          : "bg-terminal-black opacity-50 cursor-not-allowed"
+                      }`}
+                      onMouseEnter={() => account && setIsHoveringLords(true)}
+                      onMouseLeave={() => account && setIsHoveringLords(false)}
                       onClick={() => {
+                        if (!account) {
+                          return;
+                        }
                         if (seasonActive) {
                           enterSeason(
                             usableGoldenToken !== "0",
@@ -310,6 +324,17 @@ export const Spawn = ({
                         </div>
                       </div>
                     </div>
+                    {!account && (
+                      <div className="absolute top-20 right-20 gap-5">
+                        <Button
+                          size={"md"}
+                          onClick={() => setShowLoginDialog(true)}
+                          className="animate-pulse"
+                        >
+                          Connect Wallet
+                        </Button>
+                      </div>
+                    )}
                   </div>
                   <div
                     className={`hidden sm:flex flex-row items-center w-full`}
@@ -421,6 +446,7 @@ export const Spawn = ({
                   );
                 }
               }}
+              disabled={!account}
             >
               Pay to Play
             </Button>
