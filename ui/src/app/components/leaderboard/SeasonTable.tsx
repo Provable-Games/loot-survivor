@@ -127,7 +127,7 @@ const SeasonTable = ({
                       (adventurer: Adventurer, index: number) => (
                         <SeasonRow
                           key={index}
-                          rank={index + 1}
+                          rank={index + 1 + (currentPage - 1) * itemsPerPage}
                           adventurer={adventurer}
                           handleRowSelected={handleRowSelected}
                         />
