@@ -639,7 +639,7 @@ function Home() {
     if (!onboarded) {
       setScreen("onboarding");
     } else if (onboarded) {
-      setScreen("tournament");
+      setScreen("start");
     }
   }, [onboarded]);
 
