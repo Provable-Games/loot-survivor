@@ -10,16 +10,21 @@ import {
 import { TxActivity } from "@/app/components/navigation/TxActivity";
 import PaymentDetails from "@/app/components/start/PaymentDetails";
 import SeasonDetails from "@/app/components/start/SeasonDetails";
-import { getDeadAdventurersByXPPaginated } from "@/app/hooks/graphql/queries";
+import {
+  getBlobertlaimedFreeGames,
+  getDeadAdventurersByXPPaginated,
+} from "@/app/hooks/graphql/queries";
 import useCustomQuery from "@/app/hooks/useCustomQuery";
 import useLoadingStore from "@/app/hooks/useLoadingStore";
 import useNetworkAccount from "@/app/hooks/useNetworkAccount";
 import { soundSelector, useUiSounds } from "@/app/hooks/useUiSound";
 import useUIStore from "@/app/hooks/useUIStore";
+import { gameClient } from "@/app/lib/clients";
 import { battle } from "@/app/lib/constants";
 import { networkConfig } from "@/app/lib/networkConfig";
 import { formatLords } from "@/app/lib/utils";
 import { Adventurer, FormData } from "@/app/types";
+import { useQuery } from "@apollo/client";
 import Image from "next/image";
 import Logo from "public/icons/logo.svg";
 import Lords from "public/icons/lords.svg";
@@ -112,20 +117,43 @@ export const Spawn = ({
   };
 
   const blobertTokens = blobertsData?.tokens;
-  const blobertTokenIds: number[] = blobertTokens?.map(
-    (token: any) => token.tokenId
+  const blobertTokenIds: number[] = blobertTokens?.map((token: any) =>
+    Number(token.tokenId)
   );
 
+  const client = useMemo(() => {
+    if (!network) return null;
+    return gameClient(networkConfig[network].lsGQLURL);
+  }, [network]);
+
+  const claimedFreeGameVariables = useMemo(() => {
+    return {
+      tokenIds: blobertTokenIds,
+    };
+  }, [blobertTokenIds]);
+
+  const { data: claimedFreeGamesData } = useQuery(getBlobertlaimedFreeGames, {
+    client,
+    variables: claimedFreeGameVariables,
+    skip: !client,
+  });
+
   const getUsableBlobertToken = async (tokenIds: number[]) => {
-    // Loop through contract calls to see if the token is usable, if none then return 0
     for (let tokenId of tokenIds) {
-      const canPlay = await gameContract.call(
-        "free_game_available",
-        CallData.compile(["1", tokenId.toString()])
-      );
-      if (canPlay) {
-        setUsableBlobertToken(tokenId.toString());
-        break;
+      const hasParticipatedInLaunch =
+        claimedFreeGamesData?.claimedFreeGames?.some(
+          (freeGame: any) => freeGame.tokenId === tokenId
+        );
+
+      if (hasParticipatedInLaunch) {
+        const canPlay = await gameContract.call(
+          "free_game_available",
+          CallData.compile(["1", tokenId.toString()])
+        );
+        if (canPlay) {
+          setUsableBlobertToken(tokenId.toString());
+          break;
+        }
       }
     }
   };
@@ -137,10 +165,22 @@ export const Spawn = ({
   const seasonActive = process.env.NEXT_PUBLIC_SEASON_ACTIVE === "true";
 
   useEffect(() => {
-    getUsableGoldenToken(goldenTokens ?? []);
-    if (tournamentEnded) {
-      getUsableBlobertToken(blobertTokenIds ?? []);
-    }
+    const checkTokens = async () => {
+      // Only check if we have new tokens to check
+      if (goldenTokens?.length && usableGoldenToken === "0") {
+        await getUsableGoldenToken(goldenTokens);
+      }
+
+      if (
+        tournamentEnded &&
+        blobertTokenIds?.length &&
+        usableBlobertToken === "0"
+      ) {
+        await getUsableBlobertToken(blobertTokenIds);
+      }
+    };
+
+    checkTokens();
   }, [goldenTokens, blobertTokenIds]);
 
   const handlePayment = async (goldenToken: boolean, blobertToken: boolean) => {

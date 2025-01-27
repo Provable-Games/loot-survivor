@@ -558,6 +558,27 @@ const getTournament = gql`
   }
 `;
 
+const getBlobertlaimedFreeGames = gql`
+  query getBlobertlaimedFreeGames($tokenIds: [FeltValue!]) {
+    claimedFreeGames(
+      where: {
+        token: {
+          eq: "0x539f522b29ae9251dbf7443c7a950cf260372e69efab3710a11bf17a9599f1"
+        }
+        tokenId: { In: $tokenIds }
+      }
+      limit: 1000
+    ) {
+      token
+      tokenId
+      adventurerId
+      gameOwnerAddress
+      revealed
+      hash
+    }
+  }
+`;
+
 export {
   getAdventurerById,
   getAdventurerCounts,
@@ -570,6 +591,7 @@ export {
   getAliveAdventurersCount,
   getBattlesByBeast,
   getBeast,
+  getBlobertlaimedFreeGames,
   getCollectionsTotals,
   getDeadAdventurersByXPPaginated,
   getDiscoveriesAndBattlesByAdventurerPaginated,
