@@ -15,71 +15,9 @@ import { Network } from "./hooks/useUIStore";
 import { networkConfig } from "./lib/networkConfig";
 
 const controllerConnector = new ControllerConnector({
-  policies: {
-    contracts: {
-      [networkConfig["mainnet"].gameAddress]: {
-        methods: [
-          {
-            name: "New Game",
-            entrypoint: "new_game",
-            description: "Starts a new Loot Survivor game.",
-          },
-          {
-            name: "Explore",
-            entrypoint: "explore",
-            description: "Explore the dungeon.",
-          },
-          {
-            name: "Attack",
-            entrypoint: "attack",
-            description: "Attack the beast.",
-          },
-          {
-            name: "Flee",
-            entrypoint: "flee",
-            description: "Flee the beast.",
-          },
-          {
-            name: "Equip",
-            entrypoint: "equip",
-            description: "Equip a LOOT item.",
-          },
-          {
-            name: "Drop",
-            entrypoint: "drop",
-            description: "Drop a LOOT item.",
-          },
-          {
-            name: "Upgrade",
-            entrypoint: "upgrade",
-            description: "Upgrade Adventurer.",
-          },
-          {
-            name: "Transfer",
-            entrypoint: "transfer_from",
-            description: "Transfer an Adventurer.",
-          },
-        ],
-      },
-      [networkConfig["mainnet"].tournamentAddress]: {
-        methods: [
-          {
-            name: "Enter Tournament",
-            entrypoint: "enter_tournament",
-            description: "Enter a tournament.",
-          },
-          {
-            name: "Start Tournament",
-            entrypoint: "start_tournament",
-            description: "Start a tournament.",
-          },
-        ],
-      },
-    },
-  },
   chains: [{ rpcUrl: networkConfig["mainnet"].rpcUrl }],
   defaultChainId: constants.StarknetChainId.SN_MAIN,
-  theme: "loot-survivor",
+  preset: "loot-survivor",
   colorMode: "dark",
   slot: "ls-tournament-tokens",
   tokens: {
