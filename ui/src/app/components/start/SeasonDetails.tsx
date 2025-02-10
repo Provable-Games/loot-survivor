@@ -19,7 +19,7 @@ const SeasonTable = ({ prizes, lordsValue }: SeasonDetailsProps) => {
       <div className="flex flex-col items-center border border-terminal-green b-5 bg-terminal-black text-terminal-green uppercase w-3/4">
         <div className="bg-terminal-green/75 w-full">
           <h1 className="m-0 p-2 text-lg sm:text-2xl text-terminal-black">
-            Season 0 Pool
+            Opus Season 1
           </h1>
         </div>
         <div className="flex flex-row w-full justify-between p-2 border-t border-terminal-green">
@@ -34,12 +34,8 @@ const SeasonTable = ({ prizes, lordsValue }: SeasonDetailsProps) => {
               <Lords className="self-center w-5 h-5 fill-current" />
               <p className="text-2xl">
                 $
-                {(
-                  (formattedPrizes[0].node.token_data_type.erc20?.token_amount *
-                    Number(lordsValue)) /
-                  10 ** 8 /
-                  10 ** 18
-                ).toFixed(2)}
+                {formattedPrizes[0].node.token_data_type.erc20?.token_amount /
+                  10 ** 18}
               </p>
             </div>
           </div>
@@ -56,12 +52,8 @@ const SeasonTable = ({ prizes, lordsValue }: SeasonDetailsProps) => {
               <Lords className="self-center w-5 h-5 fill-current" />
               <p className="text-2xl">
                 $
-                {(
-                  (formattedPrizes[1].node.token_data_type.erc20?.token_amount *
-                    Number(lordsValue)) /
-                  10 ** 8 /
-                  10 ** 18
-                ).toFixed(2)}
+                {formattedPrizes[1].node.token_data_type.erc20?.token_amount /
+                  10 ** 18}
               </p>
             </div>
           </div>
@@ -78,17 +70,14 @@ const SeasonTable = ({ prizes, lordsValue }: SeasonDetailsProps) => {
               <Lords className="self-center w-5 h-5 fill-current" />
               <p className="text-2xl">
                 $
-                {(
-                  (formattedPrizes[2].node.token_data_type.erc20?.token_amount *
-                    Number(lordsValue)) /
-                  10 ** 8 /
-                  10 ** 18
-                ).toFixed(2)}
+                {formattedPrizes[2].node.token_data_type.erc20?.token_amount /
+                  10 ** 18}
               </p>
             </div>
           </div>
         </div>
       </div>
+      <span className="uppercase text-lg">... more!</span>
     </div>
   );
 };

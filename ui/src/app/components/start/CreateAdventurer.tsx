@@ -144,16 +144,23 @@ export const CreateAdventurer = ({
   return (
     <>
       {step == 1 && (
-        <div className="flex flex-col w-full justify-between items-center gap-2 sm:gap-0 py-2 sm:py-10">
+        <div className="flex flex-col w-full justify-between items-center gap-5 sm:gap-0 py-2 sm:pt-10">
           {seasonActive ? (
             <div className="flex flex-col items-center w-full gap-2 sm:gap-5">
               <h3 className="uppercase text-center 2xl:text-5xl m-0">
-                Enter Season 0
+                Opus Season 1
               </h3>
               <p className="w-5/6 sm:text-xl text-center">
-                Introducing onchain seasons for Loot Survivor. This is the first
-                weekly season with a prize pool of:
+                We've teamed up with Opus to sponsor on-chain tournaments with
+                $CASH prizes.{" "}
+                <a
+                  className="underline uppercase"
+                  href="https://www.opus.money/"
+                >
+                  Visit Opus
+                </a>
               </p>
+              <p className="sm:text-xl text-center">Ends 17/02 14:00 UTC</p>
               <div className="w-full sm:w-3/4">
                 {tournamentPrizes && (
                   <Prizes
