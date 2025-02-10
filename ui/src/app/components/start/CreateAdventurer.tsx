@@ -151,8 +151,8 @@ export const CreateAdventurer = ({
                 Opus Season 1
               </h3>
               <p className="w-5/6 sm:text-xl text-center">
-                We&apos;ve teamed up with Opus to sponsor on-chain tournaments
-                with $CASH prizes.{" "}
+                We&apos;ve teamed up with Opus, a cross-margin credit protocol,
+                to sponsor on-chain tournaments with $CASH prizes.{" "}
                 <a
                   className="underline uppercase"
                   href="https://www.opus.money/"

@@ -1,5 +1,4 @@
 import { TournamentTrophyIcon } from "@/app/components/icons/Icons";
-import Lords from "public/icons/lords.svg";
 
 interface SeasonDetailsProps {
   prizes: any;
@@ -31,7 +30,6 @@ const SeasonTable = ({ prizes, lordsValue }: SeasonDetailsProps) => {
           </div>
           <div className="flex flex-row gap-2 items-center">
             <div className="flex flex-row gap-1 items-center">
-              <Lords className="self-center w-5 h-5 fill-current" />
               <p className="text-2xl">
                 $
                 {formattedPrizes[0].node.token_data_type.erc20?.token_amount /
@@ -49,7 +47,6 @@ const SeasonTable = ({ prizes, lordsValue }: SeasonDetailsProps) => {
           </div>
           <div className="flex flex-row gap-2 items-center">
             <div className="flex flex-row gap-1 items-center">
-              <Lords className="self-center w-5 h-5 fill-current" />
               <p className="text-2xl">
                 $
                 {formattedPrizes[1].node.token_data_type.erc20?.token_amount /
@@ -67,7 +64,6 @@ const SeasonTable = ({ prizes, lordsValue }: SeasonDetailsProps) => {
           </div>
           <div className="flex flex-row gap-2 items-center">
             <div className="flex flex-row gap-1 items-center">
-              <Lords className="self-center w-5 h-5 fill-current" />
               <p className="text-2xl">
                 $
                 {formattedPrizes[2].node.token_data_type.erc20?.token_amount /
