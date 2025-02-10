@@ -46,6 +46,7 @@ interface AdventurerScreenProps {
     name: string,
     index: number
   ) => Promise<void>;
+  tournamentPrizes: any;
 }
 
 /**
@@ -64,6 +65,7 @@ export default function AdventurerScreen({
   transferAdventurer,
   lordsDollarValue,
   changeAdventurerName,
+  tournamentPrizes,
 }: AdventurerScreenProps) {
   const [activeMenu, setActiveMenu] = useState(0);
   const setAdventurer = useAdventurerStore((state) => state.setAdventurer);
@@ -122,6 +124,7 @@ export default function AdventurerScreen({
             getBalances={getBalances}
             costToPlay={costToPlay}
             lordsDollarValue={lordsDollarValue}
+            tournamentPrizes={tournamentPrizes}
           />
         </div>
       )}

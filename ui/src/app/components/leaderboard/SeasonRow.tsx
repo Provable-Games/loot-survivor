@@ -8,9 +8,15 @@ interface SeasonRowProps {
   rank: number;
   adventurer: Adventurer;
   handleRowSelected: (id: number) => void;
+  prize: any;
 }
 
-const SeasonRow = ({ rank, adventurer, handleRowSelected }: SeasonRowProps) => {
+const SeasonRow = ({
+  rank,
+  adventurer,
+  handleRowSelected,
+  prize,
+}: SeasonRowProps) => {
   const { play: clickPlay } = useUiSounds(soundSelector.click);
   const adventurersByOwner = useQueriesStore(
     (state) => state.data.adventurersByOwnerQuery?.adventurers ?? []
@@ -24,6 +30,17 @@ const SeasonRow = ({ rank, adventurer, handleRowSelected }: SeasonRowProps) => {
     (a, b) => (b.xp ?? 0) - (a.xp ?? 0)
   );
   const topScoreAdventurer = topScores[0]?.id === adventurer.id;
+
+  const variant = prize?.[0]?.token_data_type?.option as "erc20" | "erc721";
+
+  const isERC20 = variant === "erc20";
+  const tokenValue = prize
+    ? Number(
+        isERC20
+          ? prize?.[0]?.token_data_type?.erc20?.token_amount
+          : prize?.[0]?.token_data_type?.erc721?.token_id
+      )
+    : 0;
 
   return (
     <tr
@@ -64,6 +81,7 @@ const SeasonRow = ({ rank, adventurer, handleRowSelected }: SeasonRowProps) => {
       <td>
         <span className="flex justify-center">{adventurer.health}</span>
       </td>
+      <td>{tokenValue !== 0 ? `$${tokenValue / 10 ** 18} CASH` : "-"}</td>
     </tr>
   );
 };

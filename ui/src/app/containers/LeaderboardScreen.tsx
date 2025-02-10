@@ -14,11 +14,17 @@ import useUIStore from "@/app/hooks/useUIStore";
 import { Adventurer } from "@/app/types";
 import { useEffect, useState } from "react";
 
+interface LeaderboardScreenProps {
+  tournamentPrizes: any;
+}
+
 /**
  * @container
  * @description Provides the leaderboard screen for the adventurer.
  */
-export default function LeaderboardScreen() {
+export default function LeaderboardScreen({
+  tournamentPrizes,
+}: LeaderboardScreenProps) {
   const itemsPerPage = 10;
   const [showScores, setShowScores] = useState(false);
   const [showKilledBeasts, setShowKilledBeasts] = useState(false);
@@ -101,6 +107,7 @@ export default function LeaderboardScreen() {
             <SeasonTable
               itemsPerPage={itemsPerPage}
               handleFetchProfileData={handlefetchProfileData}
+              prizes={tournamentPrizes}
             />
           </div>
           <div

@@ -3,14 +3,11 @@ import { AdventurerName } from "@/app/components/start/AdventurerName";
 import Prizes from "@/app/components/start/Prizes";
 import { Spawn } from "@/app/components/start/Spawn";
 import { WeaponSelect } from "@/app/components/start/WeaponSelect";
-import { getTournamentPrizes } from "@/app/hooks/graphql/queries";
 import useLoadingStore from "@/app/hooks/useLoadingStore";
 import useUIStore from "@/app/hooks/useUIStore";
-import { tournamentClient } from "@/app/lib/clients";
 import { networkConfig } from "@/app/lib/networkConfig";
 import { FormData } from "@/app/types";
-import { useQuery } from "@apollo/client";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Contract } from "starknet";
 
 export interface CreateAdventurerProps {
@@ -24,6 +21,7 @@ export interface CreateAdventurerProps {
   getBalances: () => Promise<void>;
   costToPlay: bigint;
   lordsDollarValue: () => Promise<bigint>;
+  tournamentPrizes: any;
 }
 
 export const CreateAdventurer = ({
@@ -37,6 +35,7 @@ export const CreateAdventurer = ({
   getBalances,
   costToPlay,
   lordsDollarValue,
+  tournamentPrizes,
 }: CreateAdventurerProps) => {
   const [formData, setFormData] = useState<FormData>({
     startingWeapon: "",
@@ -52,21 +51,6 @@ export const CreateAdventurer = ({
   const [lordsValue, setLordsValue] = useState(0n);
 
   const seasonActive = process.env.NEXT_PUBLIC_SEASON_ACTIVE === "true";
-
-  // Memoize both the variables AND the client
-  const { variables: tournamentVariables, client } = useMemo(() => {
-    return {
-      variables: {
-        tournamentId: networkConfig[network!].tournamentId,
-      },
-      client: tournamentClient(networkConfig[network!].tournamentGQLURL),
-    };
-  }, [network]); // Only recreate when network changes
-
-  const { data: tournamentPrizes } = useQuery(getTournamentPrizes, {
-    client,
-    variables: tournamentVariables,
-  });
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLInputElement> | KeyboardEvent) => {

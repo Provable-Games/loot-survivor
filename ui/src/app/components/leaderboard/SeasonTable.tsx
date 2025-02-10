@@ -16,11 +16,13 @@ import { useMemo, useState } from "react";
 export interface SeasonTableProps {
   itemsPerPage: number;
   handleFetchProfileData: (adventurerId: number) => void;
+  prizes: any;
 }
 
 const SeasonTable = ({
   itemsPerPage,
   handleFetchProfileData,
+  prizes,
 }: SeasonTableProps) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const setScreen = useUIStore((state) => state.setScreen);
@@ -94,6 +96,22 @@ const SeasonTable = ({
       setCurrentPage(newPage);
     }
   };
+
+  const formattedPrizes =
+    prizes?.lsTournamentsV0TournamentPrizeModels?.edges ?? [];
+
+  const groupedPrizes = formattedPrizes.reduce((acc: any, prize: any) => {
+    const key = prize.node.payout_position;
+    const isERC20 = prize.node.token_data_type.option === "erc20";
+    if (isERC20) {
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(prize.node);
+    } else {
+      acc[key] = [prize.node];
+    }
+    return acc;
+  }, {} as Record<string, typeof prizes>);
+
   return (
     <>
       {!adventurers ? (
@@ -120,6 +138,7 @@ const SeasonTable = ({
                       <th className="p-1">Level</th>
                       <th className="p-1">XP</th>
                       <th className="p-1">Health</th>
+                      <th className="p-1">Prize</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -130,6 +149,15 @@ const SeasonTable = ({
                           rank={index + 1 + (currentPage - 1) * itemsPerPage}
                           adventurer={adventurer}
                           handleRowSelected={handleRowSelected}
+                          prize={
+                            groupedPrizes[
+                              (
+                                index +
+                                1 +
+                                (currentPage - 1) * itemsPerPage
+                              ).toString()
+                            ]
+                          }
                         />
                       )
                     )}

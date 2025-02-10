@@ -44,6 +44,7 @@ import {
   getLatestDiscoveries,
   getLatestMarketItems,
   getOwnerTokens,
+  getTournamentPrizes,
 } from "@/app/hooks/graphql/queries";
 import useAdventurerStore from "@/app/hooks/useAdventurerStore";
 import useControls from "@/app/hooks/useControls";
@@ -56,7 +57,7 @@ import useTransactionCartStore from "@/app/hooks/useTransactionCartStore";
 import useTransactionManager from "@/app/hooks/useTransactionManager";
 import useUIStore, { ScreenPage } from "@/app/hooks/useUIStore";
 import { fetchBalances, fetchEthBalance } from "@/app/lib/balances";
-import { gameClient } from "@/app/lib/clients";
+import { gameClient, tournamentClient } from "@/app/lib/clients";
 import { VRF_WAIT_TIME } from "@/app/lib/constants";
 import { networkConfig } from "@/app/lib/networkConfig";
 import {
@@ -780,6 +781,22 @@ function Home() {
     }
   }, [vitBoostRemoved, chaBoostRemoved]);
 
+  // Memoize both the variables AND the client
+  const { variables: tournamentVariables, client: tournamentClientReturn } =
+    useMemo(() => {
+      return {
+        variables: {
+          tournamentId: networkConfig[network!].tournamentId,
+        },
+        client: tournamentClient(networkConfig[network!].tournamentGQLURL),
+      };
+    }, [network]); // Only recreate when network changes
+
+  const { data: tournamentPrizes } = useQuery(getTournamentPrizes, {
+    client: tournamentClientReturn,
+    variables: tournamentVariables,
+  });
+
   return (
     <>
       {/* <Toaster /> */}
@@ -878,6 +895,7 @@ function Home() {
                 transferAdventurer={transferAdventurer}
                 lordsDollarValue={lordsDollarValue}
                 changeAdventurerName={changeAdventurerName}
+                tournamentPrizes={tournamentPrizes}
               />
             )}
             {screen === "play" && (
@@ -892,7 +910,9 @@ function Home() {
             {screen === "inventory" && (
               <InventoryScreen gameContract={gameContract!} />
             )}
-            {screen === "leaderboard" && <LeaderboardScreen />}
+            {screen === "leaderboard" && (
+              <LeaderboardScreen tournamentPrizes={tournamentPrizes} />
+            )}
             {screen === "upgrade" && (
               <UpgradeScreen upgrade={upgrade} gameContract={gameContract!} />
             )}
