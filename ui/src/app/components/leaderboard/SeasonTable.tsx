@@ -107,7 +107,7 @@ const SeasonTable = ({
               {isDSTournamentActive
                 ? "Dark Shuffle Tournament"
                 : seasonActive
-                ? "Current Season"
+                ? "Opus Season 1"
                 : "Season Ended"}
             </h4>
             {(isDSTournamentActive || seasonActive) && (
