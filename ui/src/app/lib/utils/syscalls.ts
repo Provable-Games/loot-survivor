@@ -1658,16 +1658,16 @@ export function createSyscalls({
     const randomInt = getRandomInt(0, revenueAddresses.length - 1);
     const selectedRevenueAddress = revenueAddresses[randomInt];
 
+    const tournamentId = networkConfig[network!].tournamentId;
+
     const enterTournamentTx = {
       contractAddress: tournamentContractAddress,
       entrypoint: "enter_tournament",
       calldata: CallData.compile([
-        networkConfig[network!].tournamentId,
+        tournamentId,
         new CairoOption(CairoOptionVariant.None),
       ]),
     };
-
-    const tournamentId = networkConfig[network!].tournamentId;
 
     const startTournamentTx = {
       contractAddress: tournamentContractAddress,
@@ -1709,7 +1709,7 @@ export function createSyscalls({
         freeVRF,
         (costToPlay ?? 0) + (seasonCost ?? 0),
         goldenTokenId,
-        blobertTokenId
+        goldenTokenId !== "0" ? "0" : blobertTokenId
       );
     }
 
