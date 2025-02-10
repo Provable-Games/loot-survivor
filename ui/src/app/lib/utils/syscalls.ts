@@ -1709,7 +1709,7 @@ export function createSyscalls({
         freeVRF,
         (costToPlay ?? 0) + (seasonCost ?? 0),
         goldenTokenId,
-        blobertTokenId
+        goldenTokenId !== "0" ? "0" : blobertTokenId
       );
     }
 
