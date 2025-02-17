@@ -83,7 +83,10 @@ const controllerConnector = new ControllerConnector({
   colorMode: "dark",
   slot: "ls-tournament-tokens",
   tokens: {
-    erc20: [networkConfig["mainnet"].lordsAddress],
+    erc20: [
+      networkConfig["mainnet"].lordsAddress,
+      "0x0498EDFaF50CA5855666a700C25Dd629D577EB9aFcCDf3B5977aEC79AEE55ADA",
+    ],
   },
 }) as never as Connector;
 
