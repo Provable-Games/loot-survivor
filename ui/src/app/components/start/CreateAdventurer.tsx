@@ -132,7 +132,7 @@ export const CreateAdventurer = ({
           {seasonActive ? (
             <div className="flex flex-col items-center w-full gap-2 sm:gap-5">
               <h3 className="uppercase text-center 2xl:text-5xl m-0">
-                Opus Season 1
+                Opus Season 2
               </h3>
               <p className="w-5/6 sm:text-xl text-center">
                 We&apos;ve teamed up with Opus, a cross-margin credit protocol,
@@ -144,7 +144,7 @@ export const CreateAdventurer = ({
                   Visit Opus
                 </a>
               </p>
-              <p className="sm:text-xl text-center">Ends 17/02 14:00 UTC</p>
+              <p className="sm:text-xl text-center">Ends 24/02 15:00 UTC</p>
               <div className="w-full sm:w-3/4">
                 {tournamentPrizes && (
                   <Prizes

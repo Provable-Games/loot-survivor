@@ -67,7 +67,7 @@ export const networkConfig = {
     rendererAddress: "0x0",
     tournamentAddress:
       "0x3347382d530ff6acb9283ac1d78471187aae8a4690e9316bb4e3c3365ff7a86",
-    tournamentId: "0x4",
+    tournamentId: "0x6",
     appUrl: "https://lootsurvivor.io/",
     tournamentAppUrl: "https://tournaments.lootsurvivor.io/",
     beastsViewer:
