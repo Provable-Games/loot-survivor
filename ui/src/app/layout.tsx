@@ -16,6 +16,7 @@ import { BurnerManager } from "@dojoengine/create-burner";
 import { Analytics } from "@vercel/analytics/react";
 import { useEffect, useState } from "react";
 import { RpcProvider } from "starknet";
+import TemporaryOutage from "./components/intro/TemporaryOutage";
 import { networkConfig } from "./lib/networkConfig";
 
 type SetupResult = {
@@ -36,6 +37,8 @@ export default function RootLayout({
   const [introComplete, setIntroComplete] = useState(false);
   const [setupResult, setSetupResult] = useState<SetupResult | null>(null);
   const [createBurner, setCreateBurner] = useState(false);
+
+  const temporaryOutage = process.env.NEXT_PUBLIC_TEMPORARY_OUTAGE === "true";
 
   const handleIntroComplete = () => {
     setIntroComplete(true);
@@ -72,7 +75,9 @@ export default function RootLayout({
           <main
             className={`min-h-screen container mx-auto flex flex-col sm:pt-8 sm:p-8 lg:p-10 2xl:p-20 `}
           >
-            {introComplete ? (
+            {temporaryOutage ? (
+              <TemporaryOutage />
+            ) : introComplete ? (
               <>
                 <LoginIntro />
                 {createBurner && <BurnerLoader />}
