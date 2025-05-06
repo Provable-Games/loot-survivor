@@ -79,8 +79,7 @@ const controllerConnector = new ControllerConnector({
   },
   chains: [{ rpcUrl: networkConfig["mainnet"].rpcUrl }],
   defaultChainId: constants.StarknetChainId.SN_MAIN,
-  theme: "loot-survivor",
-  colorMode: "dark",
+  preset: "loot-survivor",
   slot: "ls-tournament-tokens",
   tokens: {
     erc20: [
