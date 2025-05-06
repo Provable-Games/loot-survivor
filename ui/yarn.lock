@@ -2024,26 +2024,26 @@
     "@babel/helper-string-parser" "^7.25.9"
     "@babel/helper-validator-identifier" "^7.25.9"
 
-"@cartridge/account-wasm@0.7.13":
-  version "0.7.13"
-  resolved "https://registry.yarnpkg.com/@cartridge/account-wasm/-/account-wasm-0.7.13.tgz#07f5ee6bf8e23961294c29a276fafab758203979"
-  integrity sha512-2/cFS96jN31N9piK2Hs/Egxz6cstJ9gV8pgBrqo5vSPckFv2yD9u/8euqDD26MJtLnDa59OYefNJBbKgsK9vHg==
+"@cartridge/account-wasm@0.7.14-alpha.1":
+  version "0.7.14-alpha.1"
+  resolved "https://registry.yarnpkg.com/@cartridge/account-wasm/-/account-wasm-0.7.14-alpha.1.tgz#d98f429a22fb5d6ddc6cce25a210bed4eab864f7"
+  integrity sha512-/9sf+xhXRWz1j4FZ4J04InjFPC2OM6IS1SsKzclrdeAkXF0L9S6ia4/lgaYGZu/Zt8i6LDXBmLthFX3hUeBbfQ==
 
-"@cartridge/connector@0.7.13":
-  version "0.7.13"
-  resolved "https://registry.yarnpkg.com/@cartridge/connector/-/connector-0.7.13.tgz#2ad26bdc18d7d584d49a5fe0c2e0721be1c756dd"
-  integrity sha512-OSlWo5mXiO0WLvHUddnO7Uvx/PlVJcKfkttJgOM4kQz3iSar8B2QlYPXQQ6uqIBFzJ4Pep5E5E3tpUbGNA9BFQ==
+"@cartridge/connector@0.7.14-alpha.1":
+  version "0.7.14-alpha.1"
+  resolved "https://registry.yarnpkg.com/@cartridge/connector/-/connector-0.7.14-alpha.1.tgz#e3e7b3160ea2390ea2a16fc859882734b39d81c0"
+  integrity sha512-v4SBMzS/4BahA09CfTgEJw63tIOKghZhhdC7OqE4yCaS9H0/jimo5cEEK1V21ah0qT5i6lwHKnVgBzJQpVfecQ==
   dependencies:
-    "@cartridge/controller" "0.7.13"
+    "@cartridge/controller" "0.7.14-alpha.1"
 
-"@cartridge/controller@0.7.13":
-  version "0.7.13"
-  resolved "https://registry.yarnpkg.com/@cartridge/controller/-/controller-0.7.13.tgz#48e07f57faae7469388f4f623a462f1057698f40"
-  integrity sha512-LBor+FxYtAETgj8+m+23BDVhwXEZ+FqtwaLAVBEen6oz4//o3pU+wP2xBl8YAtcAL6mJ8gYcOhfqdHK/Ux5rwQ==
+"@cartridge/controller@0.7.14-alpha.1":
+  version "0.7.14-alpha.1"
+  resolved "https://registry.yarnpkg.com/@cartridge/controller/-/controller-0.7.14-alpha.1.tgz#a81291ac6d749efb13e42528aeb972dbcb0ae319"
+  integrity sha512-w/rpYpok8QBCRpTwHpxuoZnImqytc3ZUVEEMdHUai85U1JVejw1pd/jdgrPZYRnP8tgZ8VF404ACPV7dSGRX4w==
   dependencies:
-    "@cartridge/account-wasm" "0.7.13"
+    "@cartridge/account-wasm" "0.7.14-alpha.1"
     "@cartridge/penpal" "^6.2.4"
-    "@cartridge/utils" "0.7.13"
+    "@cartridge/utils" "0.7.14-alpha.1"
     "@starknet-io/types-js" "^0.7.7"
     "@telegram-apps/sdk" "^2.4.0"
     "@turnkey/sdk-browser" "^4.0.0"
@@ -2057,10 +2057,10 @@
   resolved "https://registry.yarnpkg.com/@cartridge/penpal/-/penpal-6.2.4.tgz#8712b507942596485c3b2d5f35931254214cbd35"
   integrity sha512-tdpOnSJJBFMlgLZ1+z9Ho5e6cG5EgMAb1Cmmh1lGT2tmplogU/XPMjLE6CwvKAPDoe6a38iMnbH+ySTAWWIOKA==
 
-"@cartridge/utils@0.7.13":
-  version "0.7.13"
-  resolved "https://registry.yarnpkg.com/@cartridge/utils/-/utils-0.7.13.tgz#f65b72d2f69f57f4fabcf63bf1f2d99c6e9de1c9"
-  integrity sha512-gNoDw9TCvBaOPh3swGyGY383Am4e/gBFR9mMFq0nkRyfqYOiMlnnxZkGGDYbFSz5LAqbyB80JizmgaTVtKsi4w==
+"@cartridge/utils@0.7.14-alpha.1":
+  version "0.7.14-alpha.1"
+  resolved "https://registry.yarnpkg.com/@cartridge/utils/-/utils-0.7.14-alpha.1.tgz#ec748e577d503be33a31eb16f7473f02c92d883f"
+  integrity sha512-DxQwrikAniQGXmml58rKOAkV7Lv/AnEt3DoEfZ4ojLQXwlES1VUUc8H1XPWvELn9KjpxJ01dayeu4BCZzj3YTg==
   dependencies:
     posthog-js-lite "3.2.1"
     react "^18.2.0"

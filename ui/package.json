@@ -10,8 +10,8 @@
   },
   "dependencies": {
     "@apollo/client": "^3.7.11",
-    "@cartridge/connector": "0.7.13",
-    "@cartridge/controller": "0.7.13",
+    "@cartridge/connector": "0.7.14-alpha.1",
+    "@cartridge/controller": "0.7.14-alpha.1",
     "@dojoengine/create-burner": "^1.0.0-alpha.9",
     "@fontsource/vt323": "^4.5.10",
     "@metamask/sdk": "^0.32.1",
